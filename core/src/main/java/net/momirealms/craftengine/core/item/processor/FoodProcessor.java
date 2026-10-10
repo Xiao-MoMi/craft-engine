@@ -10,7 +10,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Map;
 
-public final class FoodProcessor implements SimpleNetworkItemProcessor {
+public final class FoodProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<FoodProcessor> FACTORY = new Factory();
     private final int nutrition;
     private final float saturation;

@@ -5,13 +5,14 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
-import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.sparrow.nbt.CompoundTag;
 import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class HideTooltipProcessor implements ItemProcessor {
+public final class HideTooltipProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<HideTooltipProcessor> FACTORY = new Factory();
     public static final Map<Key, Integer> TO_LEGACY;
     public static final List<Key> COMPONENTS = List.of(
@@ -105,43 +106,29 @@ public final class HideTooltipProcessor implements ItemProcessor {
     }
 
     @Override
-    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
-        Item item = context.item();
-        if (VersionHelper.isOrAbove1_21_5) {
-            Tag previous = item.getComponentAsSparrowTag(DataComponentKeys.TOOLTIP_DISPLAY);
-            if (previous != null) {
-                networkData.put(DataComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(DataComponentKeys.TOOLTIP_DISPLAY.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        } else if (VersionHelper.isOrAbove1_20_5) {
-            for (Key component : this.components) {
-                Tag previous = item.getComponentAsSparrowTag(component);
-                if (previous != null) {
-                    networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-                } else {
-                    networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-                }
-            }
-        } else {
-            Tag previous = item.getSparrowTag("HideFlags");
-            if (previous != null) {
-                networkData.put("HideFlags", NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put("HideFlags", NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
-        }
+    public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+        return this.applier.apply(context.item(), networkData);
     }
 
     public interface Applier {
 
         void apply(Item item);
+
+        default boolean apply(Item item, @Nullable NetworkItemData networkData) {
+            this.apply(item);
+            return true;
+        }
     }
 
     public static class DummyApplier implements Applier {
 
         @Override
         public void apply(Item item) {
+        }
+
+        @Override
+        public boolean apply(Item item, @Nullable NetworkItemData networkData) {
+            return false;
         }
     }
 
@@ -154,11 +141,21 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
         @Override
         public void apply(Item item) {
+            this.apply(item, null);
+        }
+
+        @Override
+        public boolean apply(Item item, @Nullable NetworkItemData networkData) {
             Tag previous = item.getComponentAsSparrowTag(this.component);
             if (previous instanceof CompoundTag compoundTag) {
+                if (networkData != null) {
+                    networkData.saveComponent(this.component);
+                }
                 compoundTag.putBoolean("show_in_tooltip", false);
                 item.setSparrowTagComponent(this.component, compoundTag);
+                return true;
             }
+            return false;
         }
     }
 
@@ -166,9 +163,16 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
         @Override
         public void apply(Item item) {
-            for (Applier applier : appliers) {
-                applier.apply(item);
+            this.apply(item, null);
+        }
+
+        @Override
+        public boolean apply(Item item, @Nullable NetworkItemData networkData) {
+            boolean changed = false;
+            for (Applier applier : this.appliers) {
+                changed |= applier.apply(item, networkData);
             }
+            return changed;
         }
     }
 
@@ -192,12 +196,21 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
         @Override
         public void apply(Item item) {
+            this.apply(item, null);
+        }
+
+        @Override
+        public boolean apply(Item item, @Nullable NetworkItemData networkData) {
+            if (networkData != null) {
+                networkData.saveTag("HideFlags");
+            }
             Integer previousFlags = (Integer) item.getTagAsJava("HideFlags");
             if (previousFlags != null) {
                 item.setTag(this.legacyValue | previousFlags, "HideFlags");
             } else {
                 item.setTag(this.legacyValue, "HideFlags");
             }
+            return true;
         }
     }
 
@@ -214,6 +227,14 @@ public final class HideTooltipProcessor implements ItemProcessor {
 
         @Override
         public void apply(Item item) {
+            this.apply(item, null);
+        }
+
+        @Override
+        public boolean apply(Item item, @Nullable NetworkItemData networkData) {
+            if (networkData != null) {
+                networkData.saveComponent(DataComponentKeys.TOOLTIP_DISPLAY);
+            }
             Object tooltipDisplayJava = item.getComponentAsJava(DataComponentKeys.TOOLTIP_DISPLAY);
             if (tooltipDisplayJava == null) {
                 item.setJavaComponent(DataComponentKeys.TOOLTIP_DISPLAY, Map.of("hidden_components", this.components));
@@ -234,6 +255,7 @@ public final class HideTooltipProcessor implements ItemProcessor {
                     item.setJavaComponent(DataComponentKeys.TOOLTIP_DISPLAY, newData);
                 }
             }
+            return true;
         }
     }
 

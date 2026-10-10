@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.recipe.DatapackRecipeResult;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
@@ -99,6 +100,14 @@ public interface ItemManager extends Manageable, ModelGenerator {
     Optional<Item> s2c(Item item, @Nullable Player player);
 
     Optional<Item> s2c(Item item, @Nullable Player player, ItemPacketSource source);
+
+    void registerGlobalNetworkItemProcessor(Key id, int priority, NetworkItemProcessor processor);
+
+    default void registerGlobalNetworkItemProcessor(Key id, NetworkItemProcessor processor) {
+        this.registerGlobalNetworkItemProcessor(id, 100, processor);
+    }
+
+    boolean unregisterGlobalNetworkItemProcessor(Key id);
 
     Item applyTrim(Item base, Item addition, Item template, Key pattern);
 

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class AttributeModifiersProcessor implements SimpleNetworkItemProcessor {
+public final class AttributeModifiersProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<AttributeModifiersProcessor> FACTORY = new Factory();
     public static final Map<Key, Key> CONVERTOR = new HashMap<>();
     private static final Object[] NBT_PATH = new Object[]{"AttributeModifiers"};

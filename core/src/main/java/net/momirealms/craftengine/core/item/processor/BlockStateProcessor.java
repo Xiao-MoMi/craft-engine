@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public final class BlockStateProcessor implements SimpleNetworkItemProcessor {
+public final class BlockStateProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<BlockStateProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"BlockStateTag"};
     private final LazyReference<Map<String, String>> wrapper;

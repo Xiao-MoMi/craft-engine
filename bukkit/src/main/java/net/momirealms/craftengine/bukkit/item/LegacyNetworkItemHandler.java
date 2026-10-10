@@ -1,31 +1,20 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
-import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemPipeline;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
-import net.momirealms.craftengine.core.item.processor.ItemProcessor;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
-import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
-import net.momirealms.craftengine.core.util.AdventureHelper;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.proxy.minecraft.nbt.ByteTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.ListTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.ListTag;
-import net.momirealms.sparrow.nbt.StringTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -34,13 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 @SuppressWarnings("DuplicatedCode")
 public final class LegacyNetworkItemHandler implements NetworkItemHandler {
-    private static final Object[] DISPLAY_NAME = new Object[]{"display", "Name"};
-    private static final Object[] DISPLAY_LORE = new Object[]{"display", "Lore"};
-    private static final BiConsumer<String, CompoundTag> NOOP_PUT = (s, c) -> {};
 
     @Override
     public Optional<Item> c2s(Item wrapped) {
@@ -190,180 +175,25 @@ public final class LegacyNetworkItemHandler implements NetworkItemHandler {
         }
 
         ItemDefinition customItemDefinition = wrapped.getDefinitionOrNull();
-        // 不是自定义物品或修改过的原版物品
-        if (customItemDefinition == null) {
-            if (!Config.interceptItem()) {
-                return forceReturn ? Optional.of(wrapped) : Optional.empty();
+        Item original = wrapped;
+        NetworkItemProcessor[] itemProcessors = NetworkItemPipeline.EMPTY_PROCESSORS;
+        if (customItemDefinition != null) {
+            BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
+            if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem()) != customItem.clientItem()) {
+                wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
+                forceReturn = true;
             }
-            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
+            itemProcessors = customItem.clientBoundProcessors();
         }
-
-        // legacy 物品无需保留 original副本，因为不存在组件默认值设定
-        // 应用 client-bound-material
-        BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
-        if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem()) != customItem.clientItem()) {
-            wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
-            forceReturn = true;
-        }
-
-        // 没有客户端侧组件
-        if (!customItem.hasClientBoundProcessor()) {
-            if (!Config.interceptItem()) {
-                return forceReturn ? Optional.of(wrapped) : Optional.empty();
-            }
-            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
-        }
-
-        // 应用client-bound-data
-        // 创建context
-        NetworkItemBuildContext context = NetworkItemBuildContext.of(player, wrapped);
-        // 容器外的物品客户端不会回传，无需记录原始数据
-        CompoundTag tag;
-        if (source.requireNetworkTag) {
-            tag = new CompoundTag();
-            for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-                if (modifier.shouldSkip(source)) continue;
-                modifier.prepareNetworkItem(context, tag);
-            }
-        } else {
-            tag = null;
-        }
-        BiConsumer<String, CompoundTag> callback = tag == null ? NOOP_PUT : tag::put;
-        boolean changed = false;
-        // 如果拦截物品的描述名称等
-        if (Config.interceptItem()) {
-            if (source.canSkipName) {
-                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_NAME)) {
-                    wrapped.removeTag(DISPLAY_NAME);
-                    changed = true;
-                }
-            } else {
-                if (wrapped.hasTag(DISPLAY_NAME)) {
-                    changed |= processCustomName(wrapped, callback, context);
-                }
-            }
-            if (source.canSkipLore) {
-                if (Config.minimizeItems() && wrapped.hasTag(DISPLAY_LORE)) {
-                    wrapped.removeTag(DISPLAY_LORE);
-                    changed = true;
-                }
-            } else {
-                if (wrapped.hasTag(DISPLAY_LORE)) {
-                    changed |= processLore(wrapped, callback, context);
-                }
-            }
-        }
-        // 应用阶段
-        for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            if (modifier.shouldSkip(source)) continue;
-            changed = true;
-            modifier.apply(context);
-        }
-        wrapped = context.item();
-        // 如果tag不空，则需要返回
+        NetworkItemPipeline.Result result = NetworkItemPipeline.process(original, wrapped, player, source, itemProcessors, BukkitItemManager.instance().globalNetworkItemProcessors());
+        wrapped = result.item();
+        forceReturn |= result.changed();
+        CompoundTag tag = result.networkData();
         if (tag != null && !tag.isEmpty()) {
             wrapped.setTag(ItemCrypto.encrypt(tag), NETWORK_ITEM_TAG);
-            forceReturn = true;
-        } else if (changed) {
             forceReturn = true;
         }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
     }
 
-    public static boolean processCustomName(Item item, BiConsumer<String, CompoundTag> callback, Context context) {
-        Optional<JsonElement> optionalCustomName = item.customNameJson();
-        if (optionalCustomName.isPresent()) {
-            JsonElement json = optionalCustomName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
-            if (!tokens.isEmpty()) {
-                item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(json), tokens, context)));
-                callback.accept("display.Name", NetworkItemHandler.pack(Operation.ADD, new StringTag(json.toString())));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean processLore(Item item, BiConsumer<String, CompoundTag> callback, Context context) {
-        Optional<JsonArray> optionalLore = item.loreJson();
-        if (optionalLore.isPresent()) {
-            boolean changed = false;
-            JsonArray lore = optionalLore.get();
-            JsonArray newLore = new JsonArray();
-            for (JsonElement element : lore) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(element);
-                if (tokens.isEmpty()) {
-                    newLore.add(element);
-                } else {
-                    newLore.add(AdventureHelper.componentToJsonElement(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(element), tokens, context)));
-                    changed = true;
-                }
-            }
-            if (changed) {
-                item.loreJson(newLore);
-                ListTag listTag = new ListTag();
-                for (JsonElement element : lore) {
-                    listTag.add(new StringTag(element.toString()));
-                }
-                callback.accept("display.Lore", NetworkItemHandler.pack(Operation.ADD, listTag));
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static class OtherItem {
-        private final Item item;
-        private final boolean forceReturn;
-        private final ItemPacketSource source;
-        private boolean globalChanged = false;
-        private CompoundTag networkTag;
-
-        public OtherItem(Item item, boolean forceReturn, ItemPacketSource source) {
-            this.item = item;
-            this.forceReturn = forceReturn;
-            this.source = source;
-        }
-
-        public Optional<Item> process(Context context) {
-            BiConsumer<String, CompoundTag> callback = this.source.requireNetworkTag ? (s, c) -> networkTag().put(s, c) : NOOP_PUT;
-            if (this.source.canSkipLore) {
-                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_LORE)) {
-                    this.item.removeTag(DISPLAY_LORE);
-                    this.globalChanged = true;
-                }
-            } else {
-                if (processLore(this.item, callback, context)) {
-                    this.globalChanged = true;
-                }
-            }
-            if (this.source.canSkipName) {
-                if (Config.minimizeItems() && this.item.hasTag(DISPLAY_NAME)) {
-                    this.item.removeTag(DISPLAY_NAME);
-                    this.globalChanged = true;
-                }
-            } else {
-                if (processCustomName(this.item, callback, context)) {
-                    this.globalChanged = true;
-                }
-            }
-            if (this.globalChanged) {
-                if (this.networkTag != null) {
-                    this.item.setTag(ItemCrypto.encrypt(this.networkTag), NETWORK_ITEM_TAG);
-                }
-                return Optional.of(this.item);
-            } else if (this.forceReturn) {
-                return Optional.of(this.item);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        public CompoundTag networkTag() {
-            if (this.networkTag == null) {
-                this.networkTag = new CompoundTag();
-            }
-            return this.networkTag;
-        }
-    }
 }

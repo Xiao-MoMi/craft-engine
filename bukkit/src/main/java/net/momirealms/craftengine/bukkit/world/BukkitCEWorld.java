@@ -5,12 +5,12 @@ import net.momirealms.craftengine.bukkit.util.LightUtils;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.SectionPosUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.minecraft.world.TickRateManagerProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageAdaptor;
 import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
+import net.momirealms.craftengine.proxy.minecraft.world.TickRateManagerProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 
 public class BukkitCEWorld extends CEWorld {
     protected boolean runBlockEntityTick;

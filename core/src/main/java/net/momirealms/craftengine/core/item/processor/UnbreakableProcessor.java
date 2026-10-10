@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class UnbreakableProcessor implements SimpleNetworkItemProcessor {
+public final class UnbreakableProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<UnbreakableProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"Unbreakable"};
     private final boolean argument;

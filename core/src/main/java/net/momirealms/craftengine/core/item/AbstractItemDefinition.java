@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item;
 import net.momirealms.craftengine.core.item.behavior.EmptyItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -23,7 +24,7 @@ public abstract class AbstractItemDefinition implements ItemDefinition {
     protected final Key material;
     protected final Key clientBoundMaterial;
     protected final ItemProcessor[] processors;
-    protected final ItemProcessor[] clientBoundProcessors;
+    protected final NetworkItemProcessor[] clientBoundProcessors;
     protected final ItemBehavior behavior;
     protected final ItemSettings settings;
     protected final Map<EventTrigger, List<Function<Context>>> events;
@@ -32,7 +33,7 @@ public abstract class AbstractItemDefinition implements ItemDefinition {
     public AbstractItemDefinition(boolean isVanillaItem, UniqueKey id, Key material, Key clientBoundMaterial,
                                   ItemBehavior behavior,
                                   List<ItemProcessor> processors,
-                                  List<ItemProcessor> clientBoundProcessors,
+                                  List<NetworkItemProcessor> clientBoundProcessors,
                                   ItemSettings settings,
                                   Map<EventTrigger, List<Function<Context>>> events,
                                   ItemUpdateConfig updater) {
@@ -44,7 +45,7 @@ public abstract class AbstractItemDefinition implements ItemDefinition {
         // unchecked cast
         this.processors = processors.toArray(new ItemProcessor[0]);
         // unchecked cast
-        this.clientBoundProcessors = clientBoundProcessors.toArray(new ItemProcessor[0]);
+        this.clientBoundProcessors = clientBoundProcessors.toArray(new NetworkItemProcessor[0]);
         this.behavior = Optional.ofNullable(behavior).orElse(EmptyItemBehavior.INSTANCE);
         this.settings = settings;
         this.updater = updater;
@@ -96,7 +97,7 @@ public abstract class AbstractItemDefinition implements ItemDefinition {
     }
 
     @Override
-    public ItemProcessor[] clientBoundProcessors() {
+    public NetworkItemProcessor[] clientBoundProcessors() {
         return this.clientBoundProcessors;
     }
 

@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class EnchantmentsProcessor implements SimpleNetworkItemProcessor {
+public final class EnchantmentsProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<EnchantmentsProcessor> FACTORY = new Factory();
     private static final Object[] STORED_ENCHANTMENTS = new Object[] {"StoredEnchantments"};
     private static final Object[] ENCHANTMENTS = new Object[] {"Enchantments"};

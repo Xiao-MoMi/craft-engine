@@ -6,7 +6,7 @@ import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class TooltipStyleProcessor implements SimpleNetworkItemProcessor {
+public final class TooltipStyleProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<TooltipStyleProcessor> FACTORY = new Factory();
     private final Key argument;
 

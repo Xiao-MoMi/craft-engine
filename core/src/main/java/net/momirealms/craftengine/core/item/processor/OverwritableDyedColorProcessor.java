@@ -3,13 +3,16 @@ package net.momirealms.craftengine.core.item.processor;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public final class OverwritableDyedColorProcessor implements SimpleNetworkItemProcessor {
+public final class OverwritableDyedColorProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<OverwritableDyedColorProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"display", "color"};
     private final Color color;
@@ -24,10 +27,25 @@ public final class OverwritableDyedColorProcessor implements SimpleNetworkItemPr
 
     @Override
     public void apply(ItemBuildContext context) {
+        this.apply(context, null);
+    }
+
+    @Override
+    public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+        return this.apply(context, networkData);
+    }
+
+    private boolean apply(ItemBuildContext context, @Nullable NetworkItemData networkData) {
         Item item = context.item();
         Optional<Color> previous = item.dyedColor();
-        if (previous.isPresent()) return;
+        if (previous.isPresent()) {
+            return false;
+        }
+        if (networkData != null) {
+            this.prepareNetworkItem((NetworkItemBuildContext) context, networkData);
+        }
         item.dyedColor(this.color);
+        return true;
     }
 
     @Override

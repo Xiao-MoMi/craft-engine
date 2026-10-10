@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item.equipment;
 
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.processor.HideTooltipProcessor;
-import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.processor.OverwritableEquippableAssetIdProcessor;
 import net.momirealms.craftengine.core.item.processor.TrimProcessor;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
@@ -37,7 +37,7 @@ public final class TrimBasedEquipment extends AbstractEquipment {
     }
 
     @Override
-    public List<ItemProcessor> modifiers() {
+    public List<NetworkItemProcessor> modifiers() {
         if (VersionHelper.isOrAbove1_21_2) {
             return List.of(
                     new TrimProcessor(Key.of(AbstractPackManager.NEW_TRIM_MATERIAL), this.assetId),

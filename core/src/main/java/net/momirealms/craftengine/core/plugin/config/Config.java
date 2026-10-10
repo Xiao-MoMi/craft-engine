@@ -369,6 +369,7 @@ public final class Config {
                             YamlUtils.route("chunk-system.process-invalid-furniture.convert"),
                             YamlUtils.route("item.custom-model-data-starting-value.overrides"),
                             YamlUtils.route("item.break-power"),
+                            YamlUtils.route("item.global-network-processors"),
                             YamlUtils.route("damage-indicator.schemes"),
                             YamlUtils.route("block.deceive-bukkit-material.overrides")
                     )

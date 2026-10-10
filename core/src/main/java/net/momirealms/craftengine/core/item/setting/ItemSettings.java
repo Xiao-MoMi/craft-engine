@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.item.processor.EquippableProcessor;
 import net.momirealms.craftengine.core.item.processor.FoodProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainder;
 import net.momirealms.craftengine.core.item.setting.value.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -87,8 +88,8 @@ public final class ItemSettings {
     }
 
     @SuppressWarnings("unchecked")
-    public List<ItemProcessor> clientBoundProcessors() {
-        ArrayList<ItemProcessor> processors = new ArrayList<>();
+    public List<NetworkItemProcessor> clientBoundProcessors() {
+        ArrayList<NetworkItemProcessor> processors = new ArrayList<>();
         if (this.equipment != null) {
             if (this.equipment.clientBoundModel().asBoolean(Config.globalClientboundModel())) {
                 processors.addAll(this.equipment.equipment().modifiers());

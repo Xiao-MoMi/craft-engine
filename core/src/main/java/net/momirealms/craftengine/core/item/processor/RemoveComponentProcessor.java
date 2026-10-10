@@ -3,16 +3,15 @@ package net.momirealms.craftengine.core.item.processor;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
-import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
-public final class RemoveComponentProcessor implements ItemProcessor {
+public final class RemoveComponentProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<RemoveComponentProcessor> FACTORY = new Factory();
     private final List<Key> arguments;
 
@@ -33,17 +32,31 @@ public final class RemoveComponentProcessor implements ItemProcessor {
     }
 
     @Override
+    public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+        Item item = context.item();
+        boolean changed = false;
+        for (Key component : this.arguments) {
+            if (item.hasComponent(component)) {
+                if (networkData != null) {
+                    networkData.saveComponent(component);
+                }
+                item.removeComponent(component);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    @Override
     public boolean isConstant() {
         return true;
     }
 
     @Override
-    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
-        Item item = context.item();
+    public void prepareNetworkItem(NetworkItemBuildContext context, NetworkItemData networkData) {
         for (Key component : this.arguments) {
-            Tag previous = item.getComponentAsSparrowTag(component);
-            if (previous != null) {
-                networkData.put(component.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
+            if (!networkData.contains(component.asString()) && context.item().hasComponent(component)) {
+                networkData.saveComponent(component);
             }
         }
     }

@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.item.behavior.*;
 import net.momirealms.craftengine.core.item.customdata.*;
 import net.momirealms.craftengine.core.item.equipment.*;
+import net.momirealms.craftengine.core.item.network.GlobalNetworkItemProcessors;
 import net.momirealms.craftengine.core.item.processor.*;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
@@ -33,6 +34,7 @@ import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvider;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +54,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected static final List<Key> VANILLA_ITEMS = new ObjectArrayList<>(1024);
     protected static final Map<Key, Set<Key>> VANILLA_ITEM_TO_TAGS = new HashMap<>(1024);
     protected static final Map<Key, List<UniqueKey>> VANILLA_TAG_TO_ITEMS = new HashMap<>();
+    private final GlobalNetworkItemProcessors globalNetworkItemProcessors = new GlobalNetworkItemProcessors();
     // 解析器
     private final ItemParser itemParser;
     private final EquipmentParser equipmentParser;
@@ -100,8 +103,36 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    public void registerGlobalNetworkItemProcessor(Key id, int priority, NetworkItemProcessor processor) {
+        this.globalNetworkItemProcessors.register(id, priority, processor);
+    }
+
+    @Override
+    public boolean unregisterGlobalNetworkItemProcessor(Key id) {
+        return this.globalNetworkItemProcessors.unregister(id);
+    }
+
+    @ApiStatus.Internal
+    public NetworkItemProcessor[] globalNetworkItemProcessors() {
+        return this.globalNetworkItemProcessors.processors();
+    }
+
+    @Override
     public ConfigParser[] parsers() {
         return new ConfigParser[]{this.itemParser, this.equipmentParser};
+    }
+
+    @Override
+    public void delayedLoad() {
+        Object value = YamlUtils.reader(this.plugin.config().settings()).getValue("item.global-network-processors");
+        try {
+            List<ConfigSection> sections = value == null ? List.of() : ConfigValue.of("item.global-network-processors", value).getAsList(ConfigValue::getAsSection);
+            this.globalNetworkItemProcessors.loadConfig(sections);
+        } catch (KnownResourceException e) {
+            this.plugin.logger().warn("Failed to load config.yml at " + e.node() + ": " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load item.global-network-processors from config.yml", e);
+        }
     }
 
     @Override
@@ -669,7 +700,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 // 应用客户端侧数据
                 try {
                     if (VersionHelper.PREMIUM) {
-                        ItemProcessors.collectProcessors(section.getSection(CLIENT_BOUND_DATA), itemBuilder::clientBoundProcessor);
+                        ItemProcessors.collectNetworkProcessors(section.getSection(CLIENT_BOUND_DATA), itemBuilder::clientBoundProcessor);
                     }
                 } catch (KnownResourceException e) {
                     error(e, path);

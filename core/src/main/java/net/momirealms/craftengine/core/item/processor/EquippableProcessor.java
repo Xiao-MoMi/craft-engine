@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public final class EquippableProcessor implements SimpleNetworkItemProcessor {
+public final class EquippableProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<EquippableProcessor> FACTORY = new Factory();
     private final EquipmentData data;
 

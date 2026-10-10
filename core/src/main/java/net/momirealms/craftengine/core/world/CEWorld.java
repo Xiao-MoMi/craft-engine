@@ -5,8 +5,8 @@ import ca.spottedleaf.concurrentutil.map.concurrent.longs.ConcurrentChainedLong2
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
-import net.momirealms.craftengine.core.block.entity.tick.TickingBlockEntity;
 import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTickerScheduler;
+import net.momirealms.craftengine.core.block.entity.tick.TickingBlockEntity;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;

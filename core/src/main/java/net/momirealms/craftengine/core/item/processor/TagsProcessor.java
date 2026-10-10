@@ -4,18 +4,16 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
-import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
-public final class TagsProcessor implements ItemProcessor {
+public final class TagsProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<TagsProcessor> FACTORY = new Factory();
     private final Map<String, Object> arguments;
 
@@ -73,25 +71,12 @@ public final class TagsProcessor implements ItemProcessor {
     }
 
     @Override
-    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
-        Item item = context.item();
+    public void prepareNetworkItem(NetworkItemBuildContext context, NetworkItemData networkData) {
         if (VersionHelper.isOrAbove1_20_5) {
-            Tag previous = item.getComponentAsSparrowTag(DataComponentKeys.CUSTOM_DATA);
-            if (previous != null) {
-                networkData.put(DataComponentKeys.CUSTOM_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(DataComponentKeys.CUSTOM_DATA.asString(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+            networkData.saveComponent(DataComponentKeys.CUSTOM_DATA);
         } else {
-            for (Map.Entry<String, Object> entry : this.arguments.entrySet()) {
-                String key = entry.getKey();
-                String[] split = key.split("\\.");
-                Tag previous = item.getSparrowTag((Object[]) split);
-                if (previous != null) {
-                    networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-                } else {
-                    networkData.put(entry.getKey(), NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-                }
+            for (String key : this.arguments.keySet()) {
+                networkData.saveTag(key);
             }
         }
     }

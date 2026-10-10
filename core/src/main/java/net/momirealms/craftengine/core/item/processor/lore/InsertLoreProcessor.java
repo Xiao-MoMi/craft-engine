@@ -5,13 +5,16 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
-import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +22,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-public final class InsertLoreProcessor implements SimpleNetworkItemProcessor {
+public final class InsertLoreProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<InsertLoreProcessor> FACTORY = new Factory();
     private final Pattern pattern;
     private final Position position;
@@ -62,9 +65,18 @@ public final class InsertLoreProcessor implements SimpleNetworkItemProcessor {
 
     @Override
     public void apply(ItemBuildContext context) {
+        this.apply(context, null);
+    }
+
+    @Override
+    public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+        return this.apply(context, networkData);
+    }
+
+    private boolean apply(ItemBuildContext context, @Nullable NetworkItemData networkData) {
         List<Component> loreToInsert = getLore(context).toList();
         if (loreToInsert.isEmpty()) {
-            return;
+            return false;
         }
 
         Item item = context.item();
@@ -99,14 +111,18 @@ public final class InsertLoreProcessor implements SimpleNetworkItemProcessor {
                     finalLore.addAll(originalLore.subList(insertAt, originalLore.size()));
                 } else {
                     if (this.fallback != null) {
-                        this.fallback.apply(context);
+                        return this.fallback.apply(context, networkData);
                     }
-                    return;
+                    return false;
                 }
             }
         }
 
+        if (networkData != null) {
+            this.prepareNetworkItem((NetworkItemBuildContext) context, networkData);
+        }
         item.loreComponent(finalLore);
+        return true;
     }
 
     public enum Position {

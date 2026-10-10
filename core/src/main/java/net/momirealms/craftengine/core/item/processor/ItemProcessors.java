@@ -81,6 +81,14 @@ public final class ItemProcessors {
     }
 
     public static void collectProcessors(ConfigSection dataSection, Consumer<ItemProcessor> callback) {
+        collectProcessors(dataSection, callback, false);
+    }
+
+    public static void collectNetworkProcessors(ConfigSection dataSection, Consumer<NetworkItemProcessor> callback) {
+        collectProcessors(dataSection, processor -> callback.accept((NetworkItemProcessor) processor), true);
+    }
+
+    private static void collectProcessors(ConfigSection dataSection, Consumer<ItemProcessor> callback, boolean network) {
         ExceptionCollector<KnownResourceException> errorCollector = new ExceptionCollector<>(KnownResourceException.class);
         if (dataSection != null) {
             for (String type : dataSection.keySet()) {
@@ -92,7 +100,17 @@ public final class ItemProcessors {
                     if (processorType != null) {
                         ItemProcessorFactory<? extends ItemProcessor> factory = processorType.factory();
                         if (factory != null) {
-                            callback.accept(factory.create(value));
+                            ItemProcessor processor = factory.create(value);
+                            if (network) {
+                                ItemProcessor unsupported = processor instanceof NetworkItemProcessor ? null : processor;
+                                if (processor instanceof ConditionalProcessor conditional) {
+                                    unsupported = conditional.unsupportedNetworkProcessor();
+                                }
+                                if (unsupported != null) {
+                                    throw new KnownResourceException("resource.item.processor.not_network", value.path(), type, unsupported.getClass().getSimpleName());
+                                }
+                            }
+                            callback.accept(processor);
                         }
                     } else if (VersionHelper.COMPONENT_RELEASE) {
                         // 找不到对应的 data 类型时，若键是已知的组件类型，则按组件处理

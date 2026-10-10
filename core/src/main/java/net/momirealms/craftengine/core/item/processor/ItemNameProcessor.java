@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.plugin.text.minimessage.FormattedLine;
 import net.momirealms.craftengine.core.util.AdventureHelper;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class ItemNameProcessor implements SimpleNetworkItemProcessor {
+public final class ItemNameProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<ItemNameProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"display", "Name"};
     private final String argument;

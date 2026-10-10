@@ -366,3 +366,5 @@ resource_pack.packsquash_started: '正在使用配置<arg:0>运行PackSquash...'
 resource_pack.packsquash_finished: 'PackSquash处理完成，耗时<arg:0>毫秒'
 resource_pack.zip_loaded: '已加载资源包ZIP <arg:0>，耗时<arg:1>毫秒'
 resource_pack.export_finished: '已导出资源包到<arg:0>，耗时<arg:1>毫秒'
+
+resource.item.processor.not_network: "物品处理器 '<arg:0>' 包含不支持客户端数据处理的 '<arg:1>'"

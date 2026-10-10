@@ -99,6 +99,7 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.slotChangeListener = VersionHelper.isOrAbove1_20_3 && VersionHelper.hasPaperPatch ? new PaperSlotChangeListener(this) : null;
         this.paperItemEventListener = VersionHelper.hasPaperPatch ? new PaperItemEventListener() : null;
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5 ? new ModernNetworkItemHandler(this) : new LegacyNetworkItemHandler();
+        this.registerGlobalNetworkItemProcessor(Key.ce("common"), 0, VersionHelper.isOrAbove1_20_5 ? new ModernCommonGlobalItemProcessor() : new LegacyCommonGlobalItemProcessor());
         this.registerAllVanillaItems();
         this.bedrockItemHolder = Objects.requireNonNull(RegistryUtils.getHolder(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))));
         this.registerCustomTrimMaterial();

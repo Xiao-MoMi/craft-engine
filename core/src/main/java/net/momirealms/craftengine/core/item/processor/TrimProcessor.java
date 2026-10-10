@@ -10,7 +10,7 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class TrimProcessor implements SimpleNetworkItemProcessor {
+public final class TrimProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<TrimProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[] {"Trim"};
     private final Key material;

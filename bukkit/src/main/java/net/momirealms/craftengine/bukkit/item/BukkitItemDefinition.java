@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.plugin.context.Context;
@@ -32,7 +33,7 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
 
     public BukkitItemDefinition(boolean isVanillaItem, UniqueKey id, Object item, Object clientItem, Key materialKey, Key clientBoundMaterialKey,
                                 ItemBehavior behavior,
-                                List<ItemProcessor> modifiers, List<ItemProcessor> clientBoundModifiers,
+                                List<ItemProcessor> modifiers, List<NetworkItemProcessor> clientBoundModifiers,
                                 ItemSettings settings,
                                 Map<EventTrigger, List<Function<Context>>> events,
                                 ItemUpdateConfig updater) {
@@ -126,7 +127,7 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         private final Map<EventTrigger, List<Function<Context>>> events = new HashMap<>();
         private ItemBehavior behavior;
         private final List<ItemProcessor> processors = new ArrayList<>(4);
-        private final List<ItemProcessor> clientBoundProcessors = new ArrayList<>(4);
+        private final List<NetworkItemProcessor> clientBoundProcessors = new ArrayList<>(4);
         private ItemSettings settings;
         private ItemUpdateConfig updater;
 
@@ -172,13 +173,13 @@ public final class BukkitItemDefinition extends AbstractItemDefinition {
         }
 
         @Override
-        public Builder clientBoundProcessor(ItemProcessor modifier) {
+        public Builder clientBoundProcessor(NetworkItemProcessor modifier) {
             this.clientBoundProcessors.add(modifier);
             return this;
         }
 
         @Override
-        public Builder clientBoundProcessors(List<ItemProcessor> modifiers) {
+        public Builder clientBoundProcessors(List<NetworkItemProcessor> modifiers) {
             this.clientBoundProcessors.addAll(modifiers);
             return null;
         }

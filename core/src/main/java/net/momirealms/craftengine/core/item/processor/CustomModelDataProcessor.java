@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class CustomModelDataProcessor implements SimpleNetworkItemProcessor {
+public final class CustomModelDataProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<CustomModelDataProcessor> FACTORY = new Factory();
     private final NumberProvider argument;
 

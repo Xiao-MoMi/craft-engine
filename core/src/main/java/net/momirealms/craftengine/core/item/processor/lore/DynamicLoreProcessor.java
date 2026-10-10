@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
-import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -15,7 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public final class DynamicLoreProcessor implements SimpleNetworkItemProcessor {
+public final class DynamicLoreProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<DynamicLoreProcessor> FACTORY = new Factory();
     public static final String CONTEXT_TAG_KEY = "craftengine:display_context";
     private final Map<String, LoreProcessor> displayContexts;

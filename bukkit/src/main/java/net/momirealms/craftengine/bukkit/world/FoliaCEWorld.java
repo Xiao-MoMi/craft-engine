@@ -13,7 +13,6 @@ import net.momirealms.craftengine.core.world.chunk.storage.WorldDataStorage;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class FoliaCEWorld extends BukkitCEWorld {
     private final Map<ChunkPos, TickingChunk> tickingChunkByPos = new ConcurrentHashMap<>(128, 0.5f);

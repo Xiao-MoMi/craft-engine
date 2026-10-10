@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item.equipment;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.processor.OverwritableEquippableAssetIdProcessor;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
@@ -27,7 +27,7 @@ public final class ComponentBasedEquipment extends AbstractEquipment implements 
     }
 
     @Override
-    public List<ItemProcessor> modifiers() {
+    public List<NetworkItemProcessor> modifiers() {
         return List.of(new OverwritableEquippableAssetIdProcessor(this.assetId));
     }
 

@@ -362,6 +362,20 @@ item:
     enable: true
     fallback-version: server # https://minecraft.wiki/w/Data_version#Java_Edition
 
+  # Applies network item processors globally to items sent to clients.
+  # 'data' uses the same syntax as 'client-bound-data' and only accepts network item processors.
+  # Lower priorities run first; the default priority is 100. The built-in processor uses priority 0.
+  # Entries with the same priority run in registration order.
+  # global-network-processors:
+  #   - priority: 100
+  #     data:
+  #       lore:
+  #         - "<gray>Example description"
+  #   - priority: 200
+  #     data:
+  #       custom-name: "<yellow>Example name"
+  global-network-processors: []
+
 equipment:
   # The sacrificed-vanilla-armor argument determines which vanilla armor gets completely removed (loses all its trims)
   # when you create new armor using trim types, freeing up a slot for your custom armor.

@@ -1,26 +1,14 @@
 package net.momirealms.craftengine.bukkit.item;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.component.DataComponentIds;
-import net.momirealms.craftengine.core.item.component.DataComponentKeys;
-import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
-import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
 import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemPipeline;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
-import net.momirealms.craftengine.core.item.processor.ItemProcessor;
-import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
-import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
-import net.momirealms.craftengine.core.util.AdventureHelper;
-import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.component.DataComponentMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.component.PatchedDataComponentMapProxy;
@@ -28,15 +16,11 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.BundleContentsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.ItemContainerContentsProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.component.ItemLoreProxy;
 import net.momirealms.sparrow.nbt.CompoundTag;
-import net.momirealms.sparrow.nbt.ListTag;
-import net.momirealms.sparrow.nbt.StringTag;
 import net.momirealms.sparrow.nbt.Tag;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 
 @SuppressWarnings("DuplicatedCode")
 public final class ModernNetworkItemHandler implements NetworkItemHandler {
@@ -254,91 +238,21 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             }
         }
 
-        // 不是自定义物品或修改过的原版物品
         ItemDefinition customItemDefinition = wrapped.getDefinitionOrNull();
-        if (customItemDefinition == null) {
-            if (!Config.interceptItem()) {
-                return forceReturn ? Optional.of(wrapped) : Optional.empty();
-            }
-            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
-        }
-
-        BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
-        // 提前复制，这和物品类型相关
         Item original = wrapped;
-        // 应用 client-bound-material前提是服务端侧物品类型和客户端侧的不同
-        if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem()) != customItem.clientItem()) {
-            wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
-            forceReturn = true;
-        }
-        // 没有 client-bound-data
-        if (!customItem.hasClientBoundProcessor()) {
-            if (!Config.interceptItem()) {
-                return forceReturn ? Optional.of(wrapped) : Optional.empty();
+        NetworkItemProcessor[] itemProcessors = NetworkItemPipeline.EMPTY_PROCESSORS;
+        if (customItemDefinition != null) {
+            BukkitItemDefinition customItem = (BukkitItemDefinition) customItemDefinition;
+            if (customItem.hasClientboundMaterial() && ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem()) != customItem.clientItem()) {
+                wrapped = wrapped.unsafeTransmuteCopy(customItem.clientItem(), wrapped.count());
+                forceReturn = true;
             }
-            return new OtherItem(wrapped, forceReturn, source).process(NetworkTextReplaceContext.of(player));
+            itemProcessors = customItem.clientBoundProcessors();
         }
-        // 创建context
-        NetworkItemBuildContext context = NetworkItemBuildContext.of(player, original);
-        // 容器外的物品客户端不会回传，无需记录原始数据
-        CompoundTag tag;
-        if (source.requireNetworkTag) {
-            tag = new CompoundTag();
-            for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-                if (modifier.shouldSkip(source)) continue;
-                modifier.prepareNetworkItem(context, tag);
-            }
-        } else {
-            tag = null;
-        }
-        Supplier<CompoundTag> tagSupplier = tag == null ? null : () -> tag;
-        boolean changed = false;
-        // 如果拦截物品的描述名称等
-        if (Config.interceptItem()) {
-            if (source.canSkipName) {
-                if (Config.minimizeItems()) {
-                    if (wrapped.hasNonDefaultComponent(DataComponentTypes.ITEM_NAME)) {
-                        wrapped.resetComponent(DataComponentTypes.ITEM_NAME);
-                        changed = true;
-                    }
-                    if (wrapped.hasNonDefaultComponent(DataComponentTypes.CUSTOM_NAME)) {
-                        wrapped.resetComponent(DataComponentTypes.CUSTOM_NAME);
-                        changed = true;
-                    }
-                }
-            } else {
-                if (wrapped.hasNonDefaultComponent(DataComponentTypes.ITEM_NAME)) {
-                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernItemName(wrapped, tagSupplier, context);
-                    else changed |= processLegacyItemName(wrapped, tagSupplier, context);
-                }
-                if (wrapped.hasNonDefaultComponent(DataComponentTypes.CUSTOM_NAME)) {
-                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernCustomName(wrapped, tagSupplier, context);
-                    else changed |= processLegacyCustomName(wrapped, tagSupplier, context);
-                }
-            }
-            if (source.canSkipLore) {
-                if (Config.minimizeItems() && wrapped.hasComponent(DataComponentTypes.LORE)) {
-                    wrapped.resetComponent(DataComponentTypes.LORE);
-                    changed = true;
-                }
-            } else {
-                if (wrapped.hasComponent(DataComponentTypes.LORE)) {
-                    if (VersionHelper.isOrAbove1_21_5) changed |= processModernLore(wrapped, tagSupplier, context);
-                    else changed |= processLegacyLore(wrapped, tagSupplier, context);
-                }
-            }
-        }
-        // 应用阶段
-        for (ItemProcessor modifier : customItem.clientBoundProcessors()) {
-            if (modifier.shouldSkip(source)) continue;
-            changed = true;
-            modifier.apply(context);
-        }
-        wrapped = context.item();
-        if (VersionHelper.isOrAbove1_21_2 && Config.obfuscateItemModel()) {
-            changed |= processItemModel(wrapped, tagSupplier);
-        }
-        // 如果tag不空，则需要返回
+        NetworkItemPipeline.Result result = NetworkItemPipeline.process(original, wrapped, player, source, itemProcessors, this.itemManager.globalNetworkItemProcessors());
+        wrapped = result.item();
+        forceReturn |= result.changed();
+        CompoundTag tag = result.networkData();
         if (tag != null && !tag.isEmpty()) {
             CompoundTag customData = (CompoundTag) wrapped.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_DATA);
             if (customData == null) {
@@ -347,32 +261,14 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
             customData.put(NETWORK_ITEM_TAG, ItemCrypto.encrypt(tag));
             wrapped.setSparrowTagComponent(DataComponentTypes.CUSTOM_DATA, customData);
             forceReturn = true;
-        } else if (changed) {
-            forceReturn = true;
         }
-        Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
-        if (rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
-            forceReturn = true;
+        if (customItemDefinition != null && customItemDefinition.hasClientBoundProcessor()) {
+            Object clientItem = ItemStackProxy.INSTANCE.getItem(wrapped.minecraftItem());
+            if (rebase(wrapped.minecraftItem(), this.itemManager.originalVanillaItemComponents(clientItem))) {
+                forceReturn = true;
+            }
         }
         return forceReturn ? Optional.of(wrapped) : Optional.empty();
-    }
-
-    static boolean processItemModel(Item item, Supplier<CompoundTag> tagSupplier) {
-        Optional<String> itemModel = item.itemModel();
-        if (itemModel.isEmpty()) return false;
-        Key original = Key.of(itemModel.get());
-        Key mapped = ItemModelMappings.getMappings().get(original);
-        if (mapped == null || mapped.equals(original)) return false;
-
-        CompoundTag tag = tagSupplier == null ? null : tagSupplier.get();
-        // A processor may already have saved the server-side value before changing this component.
-        if (tag != null && !tag.containsKey(DataComponentIds.ITEM_MODEL)) {
-            tag.put(DataComponentIds.ITEM_MODEL, item.hasNonDefaultComponent(DataComponentKeys.ITEM_MODEL)
-                    ? NetworkItemHandler.pack(Operation.ADD, new StringTag(itemModel.get()))
-                    : NetworkItemHandler.pack(Operation.RESET));
-        }
-        item.itemModel(mapped.asString());
-        return true;
     }
 
     static boolean rebase(Object itemStack, @Nullable Object originalPrototype) {
@@ -399,235 +295,4 @@ public final class ModernNetworkItemHandler implements NetworkItemHandler {
         return !effectiveTypes.contains(originalType);
     }
 
-    public static boolean processLegacyLore(Item item, Supplier<CompoundTag> tag, Context context) {
-        Optional<JsonArray> optionalLore = item.loreJson();
-        if (optionalLore.isPresent()) {
-            boolean changed = false;
-            JsonArray lore = optionalLore.get();
-            JsonArray newLore = new JsonArray();
-            for (JsonElement element : lore) {
-                Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(element);
-                if (tokens.isEmpty()) {
-                    newLore.add(element);
-                } else {
-                    newLore.add(AdventureHelper.componentToJsonElement(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(element), tokens, context)));
-                    changed = true;
-                }
-            }
-            if (changed) {
-                item.loreJson(newLore);
-                ListTag listTag = new ListTag();
-                for (JsonElement element : lore) {
-                    listTag.add(new StringTag(element.toString()));
-                }
-                CompoundTag networkTag = tag == null ? null : tag.get();
-                if (networkTag != null) {
-                    networkTag.put(DataComponentIds.LORE, NetworkItemHandler.pack(Operation.ADD, listTag));
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-    
-    public static boolean processLegacyCustomName(Item item, Supplier<CompoundTag> tag, Context context) {
-        Optional<JsonElement> optionalCustomName = item.customNameJson();
-        if (optionalCustomName.isPresent()) {
-            JsonElement json = optionalCustomName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
-            if (!tokens.isEmpty()) {
-                item.customNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(json), tokens, context)));
-                CompoundTag networkTag = tag == null ? null : tag.get();
-                if (networkTag != null) {
-                    networkTag.put(DataComponentIds.CUSTOM_NAME, NetworkItemHandler.pack(Operation.ADD, new StringTag(json.toString())));
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean processLegacyItemName(Item item, Supplier<CompoundTag> tag, Context context) {
-        Optional<JsonElement> optionalItemName = item.itemNameJson();
-        if (optionalItemName.isPresent()) {
-            JsonElement json = optionalItemName.get();
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(json);
-            if (!tokens.isEmpty()) {
-                item.itemNameJson(AdventureHelper.componentToJsonElement(AdventureHelper.replaceText(AdventureHelper.jsonElementToComponent(json), tokens, context)));
-                CompoundTag networkTag = tag == null ? null : tag.get();
-                if (networkTag != null) {
-                    networkTag.put(DataComponentIds.ITEM_NAME, NetworkItemHandler.pack(Operation.ADD, new StringTag(json.toString())));
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static boolean processModernItemName(Item item, Supplier<CompoundTag> tag, Context context) {
-        Object itemName = item.getExactComponent(DataComponentTypes.ITEM_NAME);
-        if (itemName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(itemName)) {
-            return false;
-        }
-        Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.ITEM_NAME);
-        if (nameTag == null) return false;
-        Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(nameTag);
-        if (!tokens.isEmpty()) {
-            item.setSparrowTagComponent(DataComponentKeys.ITEM_NAME, AdventureHelper.componentToNbt(AdventureHelper.replaceText(AdventureHelper.nbtToComponent(nameTag), tokens, context)));
-            CompoundTag networkTag = tag == null ? null : tag.get();
-            if (networkTag != null) {
-                networkTag.put(DataComponentIds.ITEM_NAME, NetworkItemHandler.pack(Operation.ADD, nameTag));
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean processModernCustomName(Item item, Supplier<CompoundTag> tag, Context context) {
-        Object customName = item.getExactComponent(DataComponentTypes.CUSTOM_NAME);
-        if (customName == null) return false;
-        if (!ComponentUtils.hasNetworkTag(customName)) {
-            return false;
-        }
-        Tag nameTag = item.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_NAME);
-        if (nameTag == null) return false;
-        Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(nameTag);
-        if (!tokens.isEmpty()) {
-            item.setSparrowTagComponent(DataComponentKeys.CUSTOM_NAME, AdventureHelper.componentToNbt(AdventureHelper.replaceText(AdventureHelper.nbtToComponent(nameTag), tokens, context)));
-            CompoundTag networkTag = tag == null ? null : tag.get();
-            if (networkTag != null) {
-                networkTag.put(DataComponentIds.CUSTOM_NAME, NetworkItemHandler.pack(Operation.ADD, nameTag));
-            }
-            return true;
-        }
-        return false;
-    }
-
-    public static boolean processModernLore(Item item, Supplier<CompoundTag> tagSupplier, Context context) {
-        Object itemLore = item.getExactComponent(DataComponentTypes.LORE);
-        if (itemLore == null) return false;
-        List<Object> lines = ItemLoreProxy.INSTANCE.getStyleLines(itemLore);
-        if (lines == null) {
-            lines = ItemLoreProxy.INSTANCE.getLines(itemLore);
-        }
-        if (lines == null || lines.isEmpty()) return false;
-
-        boolean has = false;
-        for (Object line : lines) {
-            if (ComponentUtils.hasNetworkTag(line)) {
-                has = true;
-                break;
-            }
-        }
-        if (!has) return false;
-
-        Tag loreTag = item.getComponentAsSparrowTag(DataComponentTypes.LORE);
-        boolean changed = false;
-        if (!(loreTag instanceof ListTag listTag)) {
-            return false;
-        }
-
-        ListTag newLore = new ListTag();
-        for (Tag tag : listTag) {
-            Map<String, ComponentProvider> tokens = CraftEngine.instance().networkManager().matchNetworkTags(tag);
-            if (tokens.isEmpty()) {
-                newLore.add(tag);
-            } else {
-                newLore.add(AdventureHelper.componentToNbt(AdventureHelper.replaceText(AdventureHelper.nbtToComponent(tag), tokens, context)));
-                changed = true;
-            }
-        }
-        if (changed) {
-            item.setSparrowTagComponent(DataComponentKeys.LORE, newLore);
-            CompoundTag networkTag = tagSupplier == null ? null : tagSupplier.get();
-            if (networkTag != null) {
-                networkTag.put(DataComponentIds.LORE, NetworkItemHandler.pack(Operation.ADD, listTag));
-            }
-            return true;
-        }
-        return false;
-    }
-
-    static class OtherItem {
-        private final Item item;
-        private final boolean forceReturn;
-        private final ItemPacketSource source;
-        private boolean globalChanged = false;
-        private CompoundTag tag;
-
-        public OtherItem(Item item, boolean forceReturn, ItemPacketSource source) {
-            this.item = item;
-            this.forceReturn = forceReturn;
-            this.source = source;
-        }
-
-        public Optional<Item> process(Context context) {
-            Supplier<CompoundTag> tagSupplier = this.source.requireNetworkTag ? this::getOrCreateTag : null;
-            if (this.source.canSkipLore) {
-                if (Config.minimizeItems() && this.item.hasComponent(DataComponentTypes.LORE)) {
-                    this.item.resetComponent(DataComponentTypes.LORE);
-                    this.globalChanged = true;
-                }
-            } else {
-                if (VersionHelper.isOrAbove1_21_5) {
-                    if (processModernLore(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                } else {
-                    if (processLegacyLore(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                }
-            }
-            if (this.source.canSkipName) {
-                if (Config.minimizeItems()) {
-                    if (this.item.hasComponent(DataComponentTypes.ITEM_NAME)) {
-                        this.item.resetComponent(DataComponentTypes.ITEM_NAME);
-                        this.globalChanged = true;
-                    }
-                    if (this.item.hasComponent(DataComponentTypes.CUSTOM_NAME)) {
-                        this.item.resetComponent(DataComponentTypes.CUSTOM_NAME);
-                        this.globalChanged = true;
-                    }
-                }
-            } else {
-                if (VersionHelper.isOrAbove1_21_5) {
-                    if (processModernCustomName(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                    if (processModernItemName(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                } else {
-                    if (processLegacyCustomName(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                    if (processLegacyItemName(this.item, tagSupplier, context))
-                        this.globalChanged = true;
-                }
-            }
-            if (VersionHelper.isOrAbove1_21_2 && Config.obfuscateItemModel() && processItemModel(this.item, tagSupplier)) {
-                this.globalChanged = true;
-            }
-
-            if (this.globalChanged) {
-                if (this.tag != null) {
-                    CompoundTag customData = (CompoundTag) this.item.getComponentAsSparrowTag(DataComponentTypes.CUSTOM_DATA);
-                    if (customData == null) {
-                        customData = new CompoundTag();
-                    }
-                    customData.put(NETWORK_ITEM_TAG, ItemCrypto.encrypt(this.tag));
-                    this.item.setSparrowTagComponent(DataComponentKeys.CUSTOM_DATA, customData);
-                }
-                return Optional.of(this.item);
-            } else if (this.forceReturn) {
-                return Optional.of(this.item);
-            } else {
-                return Optional.empty();
-            }
-        }
-
-        private CompoundTag getOrCreateTag() {
-            if (this.tag == null) {
-                this.tag = new CompoundTag();
-            }
-            return this.tag;
-        }
-    }
 }

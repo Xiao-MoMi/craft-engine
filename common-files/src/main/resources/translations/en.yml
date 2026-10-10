@@ -366,3 +366,5 @@ resource_pack.packsquash_started: 'Running PackSquash with configuration <arg:0>
 resource_pack.packsquash_finished: 'PackSquash completed in <arg:0>ms'
 resource_pack.zip_loaded: 'Loaded resource pack ZIP <arg:0> in <arg:1>ms'
 resource_pack.export_finished: 'Exported resource pack to <arg:0> in <arg:1>ms'
+
+resource.item.processor.not_network: "Item processor '<arg:0>' contains '<arg:1>', which does not support client-bound data"
