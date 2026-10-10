@@ -25,6 +25,11 @@ public final class PacketIds1_20 implements PacketIds {
     }
 
     @Override
+    public int clientboundAddTransientBlockPacket() {
+        return -1;
+    }
+
+    @Override
     public int clientboundSectionBlocksUpdatePacket() {
         return PacketIdHelper.byClazz(ClientboundSectionBlocksUpdatePacketProxy.CLASS, ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }

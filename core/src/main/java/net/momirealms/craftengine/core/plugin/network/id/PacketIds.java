@@ -4,6 +4,8 @@ public interface PacketIds {
 
     int clientboundBlockUpdatePacket();
 
+    int clientboundAddTransientBlockPacket();
+
     int clientboundSectionBlocksUpdatePacket();
 
     int clientboundLevelParticlesPacket();

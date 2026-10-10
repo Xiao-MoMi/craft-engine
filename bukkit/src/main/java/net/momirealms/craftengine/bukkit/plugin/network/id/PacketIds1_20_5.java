@@ -16,6 +16,11 @@ public final class PacketIds1_20_5 implements PacketIds {
     }
 
     @Override
+    public int clientboundAddTransientBlockPacket() {
+        return PacketIdHelper.byName("minecraft:add_transient_block", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+    }
+
+    @Override
     public int clientboundSectionBlocksUpdatePacket() {
         return PacketIdHelper.byName("minecraft:section_blocks_update", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
     }

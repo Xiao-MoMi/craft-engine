@@ -418,6 +418,12 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 newMappingsMOD,
                 occlusionPredicate
         ), PACKET_IDS.clientboundBlockUpdatePacket(), "ClientboundBlockUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        if (VersionHelper.isOrAbove26_3) {
+            registerByteBufferPacketListener(new AddTransientBlockListener(
+                    newMappings,
+                    newMappingsMOD
+            ), PACKET_IDS.clientboundAddTransientBlockPacket(), "ClientboundAddTransientBlockPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        }
         registerByteBufferPacketListener(new LevelParticleListener(
                 newMappings,
                 newMappingsMOD
