@@ -1273,7 +1273,7 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.optimizeJson()) {
             Path metaPath = path.resolve("pack.mcmeta");
             if (Files.exists(metaPath)) {
-                if (jsonExcluder.test(metaPath)) {
+                if (!jsonExcluder.test(metaPath)) {
                     commonJsonToOptimize.add(metaPath);
                 }
             }
