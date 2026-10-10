@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.block.entity.renderer.constant;
 
 import net.momirealms.craftengine.bukkit.entity.data.item.ItemEntityData;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
 import net.momirealms.craftengine.core.block.entity.render.tint.BlockEntityTintSource;
@@ -32,17 +33,20 @@ public final class ItemBlockEntityElementConfig implements BlockEntityElementCon
     public final BiFunction<Player, BlockEntityTintSource, List<Object>> lazyMetadataPacket;
     public final Key itemId;
     public final Vector3f position;
+    public final BlockEntityRenderOffset offset;
     public final BlockEntityTintSourceConfig<? extends BlockEntityTintSource> tintSource;
     public final Predicate<PlayerContext> predicate;
     public final boolean hasCondition;
 
     public ItemBlockEntityElementConfig(Key itemId,
                                         Vector3f position,
+                                        BlockEntityRenderOffset offset,
                                         BlockEntityTintSourceConfig<? extends BlockEntityTintSource> tintSource,
                                         Predicate<PlayerContext> predicate,
                                         boolean hasCondition) {
         this.itemId = itemId;
         this.position = position;
+        this.offset = offset;
         this.tintSource = tintSource;
         this.hasCondition = hasCondition;
         this.predicate = predicate;
@@ -68,7 +72,8 @@ public final class ItemBlockEntityElementConfig implements BlockEntityElementCon
 
     @Override
     public ItemBlockEntityElement create(CEChunk chunk, BlockPos pos, ItemBlockEntityElement previous) {
-        return new ItemBlockEntityElement(this, pos, createTintSource(chunk, pos), previous.entityId1, previous.entityId2, !previous.config.position.equals(this.position));
+        return new ItemBlockEntityElement(this, pos, createTintSource(chunk, pos), previous.entityId1, previous.entityId2,
+                !previous.config.offset.equals(this.offset) || !previous.config.position.equals(this.position));
     }
 
     @Override
@@ -104,7 +109,7 @@ public final class ItemBlockEntityElementConfig implements BlockEntityElementCon
     }
 
     public boolean isSamePosition(ItemBlockEntityElementConfig that) {
-        return this.position.equals(that.position);
+        return this.offset.equals(that.offset) && this.position.equals(that.position);
     }
 
     private static class Factory implements BlockEntityElementConfigFactory<ItemBlockEntityElement> {
@@ -116,6 +121,7 @@ public final class ItemBlockEntityElementConfig implements BlockEntityElementCon
             return new ItemBlockEntityElementConfig(
                     section.getNonNullIdentifier("item"),
                     section.getVector3f("position", ConfigConstants.CENTER_VECTOR3),
+                    BlockEntityRenderOffset.fromConfig(section.getSection("offset")),
                     section.getValue(TINT_SOURCE, BlockEntityTintSources::fromConfig),
                     MiscUtils.allOf(conditions),
                     !conditions.isEmpty()

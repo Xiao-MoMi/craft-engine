@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
@@ -18,6 +19,7 @@ import java.util.function.Predicate;
 
 public final class BetterModelBlockEntityElementConfig implements BlockEntityElementConfig<BetterModelBlockEntityElement> {
     public final Vector3f position;
+    public final BlockEntityRenderOffset offset;
     public final float yaw;
     public final float pitch;
     public final String model;
@@ -27,6 +29,7 @@ public final class BetterModelBlockEntityElementConfig implements BlockEntityEle
 
     public BetterModelBlockEntityElementConfig(String model,
                                                Vector3f position,
+                                               BlockEntityRenderOffset offset,
                                                float yaw,
                                                float pitch,
                                                boolean sightTrace,
@@ -34,6 +37,7 @@ public final class BetterModelBlockEntityElementConfig implements BlockEntityEle
                                                boolean hasCondition) {
         this.pitch = pitch;
         this.position = position;
+        this.offset = offset;
         this.yaw = yaw;
         this.model = model;
         this.sightTrace = sightTrace;
@@ -81,6 +85,7 @@ public final class BetterModelBlockEntityElementConfig implements BlockEntityEle
             return new BetterModelBlockEntityElementConfig(
                     model,
                     section.getVector3f("position", ConfigConstants.CENTER_VECTOR3),
+                    BlockEntityRenderOffset.fromConfig(section.getSection("offset")),
                     section.getFloat("yaw"),
                     section.getFloat("pitch"),
                     section.getBoolean(SIGHT_TRACE, true),

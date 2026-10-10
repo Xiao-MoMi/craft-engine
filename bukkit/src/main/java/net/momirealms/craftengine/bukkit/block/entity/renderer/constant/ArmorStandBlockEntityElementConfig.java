@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer.constant;
 import com.google.common.base.Objects;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.entity.data.decoration.ArmorStandData;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
 import net.momirealms.craftengine.core.block.entity.render.tint.BlockEntityTintSource;
@@ -34,6 +35,7 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
     public final Key itemId;
     public final float scale;
     public final Vector3f position;
+    public final BlockEntityRenderOffset offset;
     public final float xRot;
     public final float yRot;
     public final boolean small;
@@ -45,6 +47,7 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
     public ArmorStandBlockEntityElementConfig(Key itemId,
                                               float scale,
                                               Vector3f position,
+                                              BlockEntityRenderOffset offset,
                                               float xRot,
                                               float yRot,
                                               boolean small,
@@ -56,6 +59,7 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
         this.glowColor = glowColor;
         this.scale = scale;
         this.position = position;
+        this.offset = offset;
         this.xRot = xRot;
         this.yRot = yRot;
         this.small = small;
@@ -98,6 +102,7 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
         return new ArmorStandBlockEntityElement(this, pos, createTintSource(chunk, pos), previous.entityId,
                 previous.config.yRot != this.yRot ||
                 previous.config.xRot != this.xRot ||
+                !previous.config.offset.equals(this.offset) ||
                 !previous.config.position.equals(this.position)
         );
     }
@@ -155,7 +160,8 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
     }
 
     public boolean isSamePosition(ArmorStandBlockEntityElementConfig that) {
-        return Float.compare(this.xRot, that.xRot) == 0 &&
+        return this.offset.equals(that.offset) &&
+                Float.compare(this.xRot, that.xRot) == 0 &&
                 Float.compare(this.yRot, that.yRot) == 0 &&
                 Objects.equal(this.position, that.position);
     }
@@ -171,6 +177,7 @@ public final class ArmorStandBlockEntityElementConfig implements BlockEntityElem
                     section.getNonNullIdentifier("item"),
                     section.getFloat("scale", 1f),
                     section.getVector3f("position", ConfigConstants.CENTER_VECTOR3),
+                    BlockEntityRenderOffset.fromConfig(section.getSection("offset")),
                     section.getFloat("pitch", 0f),
                     section.getFloat("yaw", 0f),
                     section.getBoolean("small"),

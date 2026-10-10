@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.compatibility.model.modelengine;
 
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
@@ -18,6 +19,7 @@ import java.util.function.Predicate;
 
 public final class ModelEngineBlockEntityElementConfig implements BlockEntityElementConfig<ModelEngineBlockEntityElement> {
     public final Vector3f position;
+    public final BlockEntityRenderOffset offset;
     public final float yaw;
     public final float pitch;
     public final String model;
@@ -26,12 +28,14 @@ public final class ModelEngineBlockEntityElementConfig implements BlockEntityEle
 
     public ModelEngineBlockEntityElementConfig(String model,
                                                Vector3f position,
+                                               BlockEntityRenderOffset offset,
                                                float yaw,
                                                float pitch,
                                                Predicate<PlayerContext> predicate,
                                                boolean hasCondition) {
         this.pitch = pitch;
         this.position = position;
+        this.offset = offset;
         this.yaw = yaw;
         this.model = model;
         this.predicate = predicate;
@@ -73,6 +77,7 @@ public final class ModelEngineBlockEntityElementConfig implements BlockEntityEle
             return new ModelEngineBlockEntityElementConfig(
                     model,
                     section.getVector3f("position", ConfigConstants.CENTER_VECTOR3),
+                    BlockEntityRenderOffset.fromConfig(section.getSection("offset")),
                     section.getFloat("yaw"),
                     section.getFloat("pitch"),
                     MiscUtils.allOf(conditions),
