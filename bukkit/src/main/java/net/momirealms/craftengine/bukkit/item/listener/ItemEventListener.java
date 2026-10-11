@@ -81,6 +81,7 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.inventory.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -170,21 +171,26 @@ public final class ItemEventListener implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onInteractBlock(PlayerInteractEvent event) {
         Action action = event.getAction();
+        if (action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
         Player player = event.getPlayer();
+        BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
+        InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        Item itemInHand = serverPlayer == null ? this.itemManager.wrap(event.getItem()) : serverPlayer.getItemInHand(hand);
+        ItemDefinition handDefinition = itemInHand.isEmpty() ? null : itemInHand.getDefinitionOrNull();
+        this.preventBrokenItemUse(event, itemInHand, handDefinition);
         if (
-                (action != Action.LEFT_CLICK_BLOCK && action != Action.RIGHT_CLICK_BLOCK) ||  /* block is required */
+                event.isCancelled() || serverPlayer == null ||
                         (player.getGameMode() == GameMode.SPECTATOR) ||  /* no spectator interactions */
                         (action == Action.LEFT_CLICK_BLOCK && player.getGameMode() == GameMode.CREATIVE) /* it's breaking the block */
         ) {
             return;
         }
 
-        BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
-        if (serverPlayer == null) return;
-        InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         // 如果本tick内主手已被处理，则不处理副手
         // 这是因为客户端可能会同时发主副手交互包，但实际上只能处理其中一个
         if (serverPlayer.hasInteractionInThisTick()) {
@@ -202,7 +208,6 @@ public final class ItemEventListener implements Listener {
         BlockData blockData = block.getBlockData();
         Object blockState = BlockStateUtils.blockDataToBlockState(blockData);
         ImmutableBlockState immutableBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
-        Item itemInHand = serverPlayer.getItemInHand(hand);
         Location interactionPoint = EventUtils.getInteractionPoint(event);
 
         BlockHitResult hitResult = null;
@@ -323,7 +328,6 @@ public final class ItemEventListener implements Listener {
         }
 
         boolean hasItem = !itemInHand.isEmpty();
-        ItemDefinition handDefinition = hasItem ? itemInHand.getDefinitionOrNull() : null;
         boolean isCustomItem = handDefinition != null && !handDefinition.isVanillaItem();
 
         // interact block with items
@@ -586,25 +590,28 @@ public final class ItemEventListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onInteractAir(PlayerInteractEvent event) {
         Action action = event.getAction();
-        if (action != Action.RIGHT_CLICK_AIR && action != Action.LEFT_CLICK_AIR)
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.LEFT_CLICK_AIR) {
             return;
+        }
         Player player = event.getPlayer();
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
+        InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        Item itemInHand = serverPlayer == null ? this.itemManager.wrap(event.getItem()) : serverPlayer.getItemInHand(hand);
+        ItemDefinition itemDefinition = itemInHand.isEmpty() ? null : itemInHand.getDefinitionOrNull();
+        this.preventBrokenItemUse(event, itemInHand, itemDefinition);
         if (serverPlayer == null || serverPlayer.isSpectatorMode()) {
             return;
         }
-        // Gets the item in hand
-        InteractionHand hand = event.getHand() == EquipmentSlot.HAND ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         // prevents duplicated events
         if (serverPlayer.lastInteractEntityCheck(hand)) {
             return;
         }
 
-        Item itemInHand = serverPlayer.getItemInHand(hand);
         // should never be null
-        if (itemInHand.isEmpty()) return;
+        if (itemInHand.isEmpty()) {
+            return;
+        }
 
-        ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
         if (itemDefinition != null) {
             EventTrigger trigger = action == Action.RIGHT_CLICK_AIR ? EventTrigger.RIGHT_CLICK : EventTrigger.LEFT_CLICK;
             List<Function<Context>> functions = itemDefinition.eventFunctions(trigger);
@@ -637,6 +644,27 @@ public final class ItemEventListener implements Listener {
                 if (useResult != InteractionResult.PASS) {
                 }
             }
+        }
+    }
+
+    private void preventBrokenItemUse(PlayerInteractEvent event, Item itemInHand, @Nullable ItemDefinition definition) {
+        if (!this.itemManager.featureFlag$preventBreak()) {
+            return;
+        }
+        ItemStack eventItem = event.getItem();
+        if (ItemStackUtils.isEmpty(eventItem)) {
+            return;
+        }
+        boolean broken = ItemStackUtils.unwrap(eventItem) == itemInHand.minecraftItem()
+                ? this.itemManager.isBrokenItem(itemInHand, definition)
+                : this.itemManager.isBrokenItem(eventItem);
+        if (!broken) {
+            return;
+        }
+        if (VersionHelper.hasPaperPatch) {
+            event.setUseItemInHand(Event.Result.DENY);
+        } else {
+            event.setCancelled(true);
         }
     }
 

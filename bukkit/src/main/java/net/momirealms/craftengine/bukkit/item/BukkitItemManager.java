@@ -576,16 +576,24 @@ public final class BukkitItemManager extends AbstractItemManager {
     }
 
     public boolean isBrokenItem(@Nullable ItemStack itemStack) {
-        if (ItemStackUtils.isEmpty(itemStack)) return false;
-        return isBrokenItem(wrap(itemStack));
+        if (ItemStackUtils.isEmpty(itemStack)) {
+            return false;
+        }
+        return this.isBrokenItem(this.wrap(itemStack));
     }
 
     public boolean isBrokenItem(Item item) {
-        ItemDefinition customItem = item.getDefinitionOrNull();
-        if (customItem == null) return false;
-        if (!customItem.settings().preventBreak()) return false;
+        return this.isBrokenItem(item, item.getDefinitionOrNull());
+    }
+
+    public boolean isBrokenItem(Item item, @Nullable ItemDefinition definition) {
+        if (definition == null || !definition.settings().preventBreak()) {
+            return false;
+        }
         int maxDamage = item.maxDamage();
-        if (maxDamage <= 0) return false;
+        if (maxDamage <= 0) {
+            return false;
+        }
         return item.damage().orElse(0) >= maxDamage - 1;
     }
 
