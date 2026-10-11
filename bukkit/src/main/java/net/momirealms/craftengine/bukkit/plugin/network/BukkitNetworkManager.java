@@ -575,7 +575,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         BukkitServerPlayer serverPlayer = this.onlineUsers.remove(player.getUniqueId());
