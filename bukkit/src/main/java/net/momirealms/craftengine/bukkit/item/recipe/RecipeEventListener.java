@@ -25,7 +25,6 @@ import net.momirealms.craftengine.core.plugin.context.PlayerOptionalContext;
 import net.momirealms.craftengine.core.plugin.context.function.Function;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
-import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftComplexRecipeProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryAnvilProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryViewProxy;
@@ -724,21 +723,30 @@ public final class RecipeEventListener implements Listener {
     // only handle repair items for the moment
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onSpecialRecipe(PrepareItemCraftEvent event) {
-        org.bukkit.inventory.Recipe recipe = event.getRecipe();
-        if (!(recipe instanceof ComplexRecipe complexRecipe))
-            return;
         CraftingInventory inventory = event.getInventory();
+        Object craftContainer = CraftInventoryProxy.INSTANCE.getInventory(inventory);
+        Object recipeHolderOrRecipe;
+        if (VersionHelper.isOrAbove1_21) {
+            recipeHolderOrRecipe = CraftingContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
+        } else {
+            recipeHolderOrRecipe = ContainerProxy.INSTANCE.getCurrentRecipe(craftContainer);
+        }
+        if (recipeHolderOrRecipe == null) {
+            return;
+        }
+        Object mcRecipe = VersionHelper.isOrAbove1_20_2 ? RecipeHolderProxy.INSTANCE.getValue(recipeHolderOrRecipe) : recipeHolderOrRecipe;
+        if (!CustomRecipeProxy.CLASS.isInstance(mcRecipe)) {
+            return;
+        }
         ItemStack result = inventory.getResult();
-        if (ItemStackUtils.isEmpty(result))
+        if (ItemStackUtils.isEmpty(result)) {
             return;
+        }
         boolean hasCustomItem = ItemStackUtils.hasCustomItem(inventory.getMatrix());
-        if (!hasCustomItem)
-            return;
-        if (!CraftComplexRecipeProxy.CLASS.isInstance(complexRecipe)) {
+        if (!hasCustomItem) {
             return;
         }
         try {
-            Object mcRecipe = CraftComplexRecipeProxy.INSTANCE.getRecipe(complexRecipe);
             if (FireworkStarFadeRecipeProxy.CLASS.isInstance(mcRecipe)) {
                 return;
             }
