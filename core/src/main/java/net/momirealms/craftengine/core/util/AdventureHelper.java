@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Helper class for handling Adventure components and related functionalities.
@@ -398,19 +397,31 @@ public final class AdventureHelper {
 
     public static Component replaceText(Component text, Map<String, ComponentProvider> replacements, Context context) {
         int size = replacements.size();
-        if (size == 0) return text;
-        final Pattern pattern;
-        if (size == 1) {
-            pattern = Pattern.compile(Pattern.quote(replacements.keySet().iterator().next()));
-        } else {
-            String patternString = replacements.keySet().stream()
-                    .map(Pattern::quote)
-                    .collect(Collectors.joining("|"));
-            pattern = Objects.requireNonNull(PATTERN_CACHE.get(patternString, Pattern::compile));
+        if (size == 0) {
+            return text;
         }
-        return replaceText(text, pattern, result ->
-                Optional.ofNullable(replacements.get(result.group())).orElseThrow(() -> new IllegalStateException("Could not find tag '" + result.group() + "'")).apply(context)
-        );
+        final String patternString;
+        if (size == 1) {
+            patternString = Pattern.quote(replacements.keySet().iterator().next());
+        } else {
+            StringBuilder builder = new StringBuilder();
+            for (String key : replacements.keySet()) {
+                if (!builder.isEmpty()) {
+                    builder.append('|');
+                }
+                builder.append(Pattern.quote(key));
+            }
+            patternString = builder.toString();
+        }
+        Pattern pattern = Objects.requireNonNull(PATTERN_CACHE.get(patternString, Pattern::compile));
+        return replaceText(text, pattern, result -> {
+            String tag = result.group();
+            ComponentProvider provider = replacements.get(tag);
+            if (provider == null) {
+                throw new IllegalStateException("Could not find tag '" + tag + "'");
+            }
+            return provider.apply(context);
+        });
     }
 
     private static Component replaceText(Component text, Pattern pattern, Function<MatchResult, Component> replacement) {
