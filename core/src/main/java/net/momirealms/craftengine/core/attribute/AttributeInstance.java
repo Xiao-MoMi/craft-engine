@@ -4,6 +4,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.momirealms.craftengine.core.attribute.base.BaseValueSource;
 import net.momirealms.craftengine.core.attribute.modifier.AttributeModifier;
+import net.momirealms.craftengine.core.attribute.modifier.removal.RemovalCondition;
+import net.momirealms.craftengine.core.attribute.modifier.removal.RemovalContext;
 import net.momirealms.craftengine.core.attribute.sync.SyncTarget;
 import net.momirealms.craftengine.core.attribute.vanilla.LegacyVanillaAttributes;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeInstance;
@@ -31,13 +33,18 @@ public class AttributeInstance {
     private final BaseValueSource baseValueSource;
     private final int baseUpdateInterval;
     private final BoundSyncTarget[] syncTargets;
-    private final Map<Key, Map<Key, AttributeModifier>> byOperation = new HashMap<>();
+    private final Map<Key, Map<Key, AttributeModifier>> byOperation = new Object2ObjectArrayMap<>();
     private final Map<Key, AttributeModifier> byId = new Object2ObjectArrayMap<>();
     private final LivingEntityContext context;
     @Nullable
     private Map<Key, TrackedModifier> trackedById;
     @Nullable
     private SwapList<TrackedModifier> trackedList;
+    @Nullable
+    private Map<Key, RemovalState> removalsById;
+    @Nullable
+    private SwapList<RemovalState> removalList;
+    private long nextRemovalTick = Long.MAX_VALUE;
     private long nextTrackedTick = Long.MAX_VALUE;
     private long nextBaseTick;
     private double cachedValue;
@@ -89,10 +96,26 @@ public class AttributeInstance {
     }
 
     public void removeModifier(Key id) {
+        boolean changed = this.removeModifierData(id);
+        if (this.removalsById != null) {
+            RemovalState removed = this.removalsById.remove(id);
+            if (removed != null) {
+                this.removalList.swapRemove(removed);
+                this.refreshNextRemovalTick();
+                changed = true;
+            }
+        }
+        if (changed) {
+            this.setDirty();
+            this.owner.onScheduleChanged(this);
+        }
+    }
+
+    private boolean removeModifierData(Key id) {
         AttributeModifier removed = this.byId.remove(id);
         boolean changed = removed != null;
         if (removed != null) {
-            Map<Key, AttributeModifier> operations = this.getModifiersByOperation(removed.operation());
+            Map<Key, AttributeModifier> operations = this.byOperation.get(removed.operation());
             if (operations != null) {
                 operations.remove(id);
             }
@@ -107,10 +130,7 @@ public class AttributeInstance {
                 }
             }
         }
-        if (changed) {
-            this.setDirty();
-            this.owner.onScheduleChanged(this);
-        }
+        return changed;
     }
 
     public void removeModifier(AttributeModifier modifier) {
@@ -118,17 +138,24 @@ public class AttributeInstance {
     }
 
     public void addModifier(AttributeModifier modifier) {
-        AttributeModifier previous = this.byId.putIfAbsent(modifier.id(), modifier);
-        if (previous != null) {
+        if (this.byId.containsKey(modifier.id())) {
             throw new IllegalArgumentException("Modifier is already applied on this attribute!");
-        } else {
-            this.getModifiersByOperation(modifier.operation()).put(modifier.id(), modifier);
-            this.trackIfNeeded(modifier);
-            this.setDirty();
         }
+        this.addOrUpdateModifier(modifier);
     }
 
     public void addOrUpdateModifier(AttributeModifier modifier) {
+        RemovalCondition removalCondition = modifier.removalCondition();
+        RemovalState removalState = null;
+        if (removalCondition != null) {
+            long boundTick = this.owner.currentTick();
+            RemovalContext removalContext = new RemovalContext(this.context, boundTick, boundTick, System.currentTimeMillis());
+            if (removalCondition.test(removalContext)) {
+                this.removeModifier(modifier.id());
+                return;
+            }
+            removalState = new RemovalState(modifier.id(), removalCondition, boundTick, removalCondition.nextCheckTick(removalContext));
+        }
         AttributeModifier oldModifier = this.byId.put(modifier.id(), modifier);
         if (modifier != oldModifier) {
             if (oldModifier != null && !oldModifier.operation().equals(modifier.operation())) {
@@ -141,6 +168,80 @@ public class AttributeInstance {
             this.trackIfNeeded(modifier);
             this.setDirty();
         }
+        this.updateRemovalState(modifier.id(), removalState);
+    }
+
+    private void updateRemovalState(Key id, @Nullable RemovalState state) {
+        if (state != null) {
+            if (this.removalsById == null) {
+                this.removalsById = new Object2ObjectOpenHashMap<>();
+                this.removalList = new SwapList<>();
+            }
+            RemovalState previous = this.removalsById.put(id, state);
+            if (previous != null) {
+                this.removalList.set(previous.index(), state);
+            } else {
+                this.removalList.add(state);
+            }
+        } else {
+            if (this.removalsById == null) {
+                return;
+            }
+            RemovalState removed = this.removalsById.remove(id);
+            if (removed == null) {
+                return;
+            }
+            this.removalList.swapRemove(removed);
+        }
+        this.refreshNextRemovalTick();
+        this.owner.onScheduleChanged(this);
+    }
+
+    private void refreshNextRemovalTick() {
+        long nextTick = Long.MAX_VALUE;
+        if (this.removalList != null) {
+            Object[] array = this.removalList.elements();
+            int size = this.removalList.size();
+            for (int i = 0; i < size; i++) {
+                RemovalState state = (RemovalState) array[i];
+                nextTick = Math.min(nextTick, state.nextTick);
+            }
+        }
+        this.nextRemovalTick = nextTick;
+    }
+
+    private void updateRemovalConditions(long tick) {
+        if (tick < this.nextRemovalTick || this.removalList == null) {
+            return;
+        }
+        long currentTimeMillis = System.currentTimeMillis();
+        long nextTick = Long.MAX_VALUE;
+        boolean changed = false;
+        Object[] array = this.removalList.elements();
+        int size = this.removalList.size();
+        for (int i = 0; i < size;) {
+            RemovalState state = (RemovalState) array[i];
+            if (tick >= state.nextTick) {
+                RemovalContext removalContext = new RemovalContext(this.context, state.boundTick, tick, currentTimeMillis);
+                if (state.condition.test(removalContext)) {
+                    this.removalsById.remove(state.id);
+                    this.removalList.swapRemove(state);
+                    this.removeModifierData(state.id);
+                    changed = true;
+                    size--;
+                    // 末尾条目被交换到当前位置，继续检查该位置，避免漏掉同批到期的修饰符。
+                    continue;
+                }
+                state.nextTick = state.condition.nextCheckTick(removalContext);
+            }
+            nextTick = Math.min(nextTick, state.nextTick);
+            i++;
+        }
+        this.nextRemovalTick = nextTick;
+        if (changed) {
+            this.setDirty();
+        }
+        this.owner.onScheduleChanged(this);
     }
 
     private void trackIfNeeded(AttributeModifier modifier) {
@@ -235,6 +336,7 @@ public class AttributeInstance {
     }
 
     public void runDue(long tick) {
+        this.updateRemovalConditions(tick);
         if (tick >= this.nextBaseTick) {
             this.updateBaseValue();
             this.nextBaseTick = tick + this.baseUpdateInterval;
@@ -243,7 +345,7 @@ public class AttributeInstance {
     }
 
     public long nextRequiredTick() {
-        return Math.min(this.nextBaseTick, this.nextTrackedTick);
+        return Math.min(this.nextRemovalTick, Math.min(this.nextBaseTick, this.nextTrackedTick));
     }
 
     public double recalculate() {
@@ -352,6 +454,31 @@ public class AttributeInstance {
             return VanillaAttributes.MAX_HEALTH.equals(id);
         } else {
             return LegacyVanillaAttributes.MAX_HEALTH.equals(id);
+        }
+    }
+
+    private static final class RemovalState implements SwapList.Indexed {
+        private final Key id;
+        private final RemovalCondition condition;
+        private final long boundTick;
+        private long nextTick;
+        private int index = -1;
+
+        private RemovalState(Key id, RemovalCondition condition, long boundTick, long nextTick) {
+            this.id = id;
+            this.condition = condition;
+            this.boundTick = boundTick;
+            this.nextTick = nextTick;
+        }
+
+        @Override
+        public int index() {
+            return this.index;
+        }
+
+        @Override
+        public void index(int index) {
+            this.index = index;
         }
     }
 

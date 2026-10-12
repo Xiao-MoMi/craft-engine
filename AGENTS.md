@@ -12,7 +12,7 @@
 ## Code Style
 
 - Declare types explicitly; do not use `var`. Minimize `Optional` usage.
-- Always use braces for control structures. Keep braces and logic on separate lines, and leave at least one blank line between methods.
+- Always use braces for control structures. Place the opening brace `{` on the same line as the declaration or control statement. Keep the body logic on separate lines, and leave at least one blank line between methods.
 - Qualify instance fields with `this.`; use `super.` when explicitly accessing superclass fields.
 - Do not add comments unless requested, except for core logic in complex methods, which should be explained with `//` comments.
 - Prefer reusing or consolidating general-purpose utilities in `core.util` or `bukkit.util` over private static helper methods in business classes. Class-specific business logic need not be extracted.

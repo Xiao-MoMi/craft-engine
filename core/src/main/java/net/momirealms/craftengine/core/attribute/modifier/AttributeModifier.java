@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.attribute.modifier;
 
+import net.momirealms.craftengine.core.attribute.modifier.removal.RemovalCondition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 public interface AttributeModifier {
 
@@ -12,6 +14,11 @@ public interface AttributeModifier {
     Key operation();
 
     boolean test(Context context);
+
+    @Nullable
+    default RemovalCondition removalCondition() {
+        return null;
+    }
 
     default int updateInterval() {
         return 0;

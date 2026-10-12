@@ -41,6 +41,7 @@ dependencies {
     testRuntimeOnly(libs.h2)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockito.core)
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.sparrow.reflection)
 }

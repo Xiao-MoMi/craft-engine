@@ -65,6 +65,10 @@ public final class EntityAttributes implements AttributeGetter {
         return this.instancesById.get(attribute);
     }
 
+    long currentTick() {
+        return this.holder.currentTick();
+    }
+
     public void clearSyncModifiers() {
         for (AttributeInstance instance : this.syncInstances) {
             instance.clearSyncModifiers();
