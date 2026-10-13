@@ -1728,10 +1728,10 @@ public abstract class AbstractPackManager implements PackManager {
         Atlas blockAtlas;
         Atlas itemAtlas;
         if (v1_21_11) {
-            blockAtlas = new Atlas(ListUtils.newNonNullList(lastBlocksAtlas, this.vanillaBlockAtlas));
-            itemAtlas = new Atlas(ListUtils.newNonNullList(lastItemAtlas, this.vanillaItemAtlas));
+            blockAtlas = new Atlas(ListUtils.newNonNullList(this.vanillaBlockAtlas, lastBlocksAtlas));
+            itemAtlas = new Atlas(ListUtils.newNonNullList(this.vanillaItemAtlas, lastItemAtlas));
         } else {
-            blockAtlas = new Atlas(ListUtils.newNonNullList(lastBlocksAtlas, this.vanillaBlockAtlas, this.vanillaItemAtlas));
+            blockAtlas = new Atlas(ListUtils.newNonNullList(this.vanillaBlockAtlas, this.vanillaItemAtlas, lastBlocksAtlas));
             itemAtlas = null;
         }
 
@@ -2211,6 +2211,14 @@ public abstract class AbstractPackManager implements PackManager {
                     itemAtlasToRemove.remove(MISSING_NO);
                     blockAtlasToAdd.remove(MISSING_NO);
 
+                    Map<Key, Key> sourceTextures = new HashMap<>();
+                    for (Key texture : blockAtlasToAdd) {
+                        Key resource = itemAtlas.getSourceTexturePath(texture);
+                        if (resource != null) {
+                            sourceTextures.put(texture, resource);
+                        }
+                    }
+
                     JsonObject fixedItemAtlas = null;
                     if (!itemAtlasToAdd.isEmpty() || !itemAtlasToRemove.isEmpty()) {
                         fixedItemAtlas = lastItemAtlas == null ? new JsonObject() : lastItemAtlas;
@@ -2247,11 +2255,15 @@ public abstract class AbstractPackManager implements PackManager {
                             fixedBlockAtlas.add("sources", sources);
                         }
                         for (Key texture : blockAtlasToAdd) {
+                            Key resource = sourceTextures.getOrDefault(texture, texture);
                             JsonObject source = new JsonObject();
                             source.addProperty("type", "single");
-                            source.addProperty("resource", texture.asString());
+                            source.addProperty("resource", resource.asString());
+                            if (!texture.equals(resource)) {
+                                source.addProperty("sprite", texture.asString());
+                            }
                             sources.add(source);
-                            blockAtlas.addSingle(texture);
+                            blockAtlas.addSingle(texture, resource);
                         }
                     }
 
