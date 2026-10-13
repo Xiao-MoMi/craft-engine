@@ -9,6 +9,8 @@ import java.util.List;
 public record PackVersion(int major, int minor) implements Comparable<PackVersion> {
     public static final PackVersion MIN_OVERLAY_VERSION = new PackVersion(18, 0); // 1.20.2
     public static final PackVersion PACK_FORMAT_CHANGE_VERSION = new PackVersion(65, 0); // 25w31a
+    public static final PackVersion ITEM_ATLAS_VERSION = new PackVersion(73, 0);
+    public static final PackVersion PALETTE_TEXTURES_VERSION = new PackVersion(89, 0);
     public static final PackVersion MAX_PACK_VERSION = new PackVersion(1000, 0); // future
 
     public PackVersion(int major) {

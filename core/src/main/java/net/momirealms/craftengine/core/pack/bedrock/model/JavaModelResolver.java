@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
@@ -28,8 +29,6 @@ import java.util.Set;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
 
 public final class JavaModelResolver {
-    private static final Key BUILTIN_GENERATED = Key.minecraft("builtin/generated");
-    private static final Key BUILTIN_ENTITY = Key.minecraft("builtin/entity");
     private static final DisplayPosition[] DISPLAY_POSITIONS = DisplayPosition.values();
 
     private final JavaResourcePack pack;
@@ -76,11 +75,11 @@ public final class JavaModelResolver {
             throw new IOException("Cyclic model parents: " + chain + " -> " + id);
         }
         try {
-            if (id.equals(BUILTIN_GENERATED)) {
+            if (id.equals(AbstractPackManager.BUILTIN_GENERATED)) {
                 Map<String, JsonElement> textures = Map.of(ModelJsonKeys.PARTICLE, new JsonPrimitive("#layer0"));
                 return new InheritedModel(GeometryKind.GENERATED, new JsonArray(), textures, Map.of(), true, GuiLight.FRONT);
             }
-            if (id.equals(BUILTIN_ENTITY)) {
+            if (id.equals(AbstractPackManager.BUILTIN_ENTITY)) {
                 return new InheritedModel(GeometryKind.ENTITY, new JsonArray(), Map.of(), Map.of(), true, GuiLight.SIDE);
             }
 

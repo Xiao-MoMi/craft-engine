@@ -111,12 +111,11 @@ public abstract class AbstractPackManager implements PackManager {
     public static final Map<Key, SimplifiedItemModelReader> SIMPLIFIED_MODEL_READERS = new HashMap<>();
 
     public static final String NEW_TRIM_MATERIAL = "custom";
-
+    public static final List<PackVersion> VALIDATION_BOUNDARIES = List.of(PackVersion.ITEM_ATLAS_VERSION);
     public static final Set<String> ALLOWED_VANILLA_EQUIPMENT = Set.of("chainmail", "diamond", "gold", "iron", "netherite");
-    private static final Key MISSING_NO = Key.of("missingno");
-
-    private static final Key BUILTIN_GENERATED = Key.of("builtin/generated");
-    private static final Key BUILTIN_ENTITY = Key.of("builtin/entity");
+    public static final Key MISSING_NO = Key.of("missingno");
+    public static final Key BUILTIN_GENERATED = Key.of("builtin/generated");
+    public static final Key BUILTIN_ENTITY = Key.of("builtin/entity");
 
     public static final Set<Key> DYEABLE_LEATHER_ARMOR = Set.of(
             ItemKeys.LEATHER_HELMET, ItemKeys.LEATHER_CHESTPLATE, ItemKeys.LEATHER_LEGGINGS,
@@ -806,7 +805,8 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
-            this.generateEquipments(generatedPackPath, revisions::add);
+            List<Overlay> equipmentOverlays = new ArrayList<>();
+            this.generateEquipments(generatedPackPath, equipmentOverlays::add);
             this.generateParticle(generatedPackPath);
             this.generateAtlases(generatedPackPath);
 
@@ -831,6 +831,9 @@ public abstract class AbstractPackManager implements PackManager {
             Overlays overlays = new Overlays(packMcMeta);
             for (Revision revision : revisions) {
                 overlays.addOverlay(revision.createOverlay());
+            }
+            for (Overlay overlay : equipmentOverlays) {
+                overlays.addOverlay(overlay);
             }
 
             // 排除shaders
@@ -1543,39 +1546,19 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void validateResourcePack(Path path, Overlays packOverlays, boolean obfuscation) {
+        OverlayCombination combination = new OverlayCombination(
+                packOverlays.overlays(),
+                Config.packMinVersion().packFormat(),
+                Config.packMaxVersion().packFormat(),
+                VALIDATION_BOUNDARIES
+        );
         List<OverlayCombination.Segment> segments = new ArrayList<>();
-        // 完全小于1.21.11或完全大于1.21.11
-        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_11) || Config.packMinVersion().isAtOrAbove(MinecraftVersion.V1_21_11)) {
-            OverlayCombination combination = new OverlayCombination(packOverlays.overlays(), Config.packMinVersion().packFormat(), Config.packMaxVersion().packFormat());
-            while (combination.hasNext()) {
-                OverlayCombination.Segment segment = combination.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
+        while (combination.hasNext()) {
+            OverlayCombination.Segment segment = combination.nextSegment();
+            if (segment == null) {
+                break;
             }
-        }
-        // 混合版本
-        else {
-            OverlayCombination combinationLegacy = new OverlayCombination(packOverlays.overlays(), Config.packMinVersion().packFormat(), new PackVersion(72, Integer.MAX_VALUE) /* 25w44a */);
-            while (combinationLegacy.hasNext()) {
-                OverlayCombination.Segment segment = combinationLegacy.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
-            }
-            OverlayCombination combinationModern = new OverlayCombination(packOverlays.overlays(), new PackVersion(73) /* 25w45a */, Config.packMaxVersion().packFormat());
-            while (combinationModern.hasNext()) {
-                OverlayCombination.Segment segment = combinationModern.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
-            }
+            segments.add(segment);
         }
 
         AtlasFixer itemFixer = new AtlasFixer();
@@ -1610,9 +1593,10 @@ public abstract class AbstractPackManager implements PackManager {
             ));
 
             Set<Path> fixedModels = new HashSet<>();
+            Path[] rootPaths = rootPathList.toArray(new Path[0]);
             ValidationResult result = validateResourcePackWithOverlays(
                     path,
-                    rootPathList.toArray(new Path[0]),
+                    rootPaths,
                     fixedModels,
                     revisions,
                     segment.min() >= MinecraftVersion.V1_21_6.packFormat().major(),
@@ -2848,13 +2832,14 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void generateEquipments(Path generatedPackPath, Consumer<Revision> callback) {
+    private void generateEquipments(Path generatedPackPath, Consumer<Overlay> callback) {
         // asset id + 是否有上身 + 是否有腿
         List<Tuple<Key, Boolean, Boolean>> collectedTrims = new ArrayList<>();
 
         // 为trim类型提供的两个兼容性值
         boolean needLegacyCompatibility = Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2);
         boolean needModernCompatibility = Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2);
+        boolean needModernTrimAtlas = needModernCompatibility && Config.packMinVersion().packFormat().isBelow(PackVersion.PALETTE_TEXTURES_VERSION);
 
         for (Equipment equipment : this.plugin.itemManager().equipments().values()) {
             if (equipment instanceof ComponentBasedEquipment componentBasedEquipment) {
@@ -2892,7 +2877,7 @@ public abstract class AbstractPackManager implements PackManager {
 
             // 准备新版本atlas和覆盖纹理
             JsonObject modernTrimAtlasJson = null;
-            if (needModernCompatibility) {
+            if (needModernTrimAtlas) {
                 modernTrimAtlasJson = new JsonObject();
                 JsonArray sourcesArray = new JsonArray();
                 modernTrimAtlasJson.add("sources", sourcesArray);
@@ -2913,6 +2898,8 @@ public abstract class AbstractPackManager implements PackManager {
                 if (previousAtlasSources != null) {
                     sourcesArray.addAll(previousAtlasSources);
                 }
+            }
+            if (needModernCompatibility) {
                 Path vanillaArmorPath1 = generatedPackPath
                         .resolve("assets")
                         .resolve("minecraft")
@@ -2985,19 +2972,21 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
             // 写入atlas文件, 优先写入旧版
-            writeJsonSafely(needLegacyCompatibility ? legacyTrimAtlasJson : modernTrimAtlasJson, atlasPath);
-            // 既要又要，那么需要overlay
-            if (needLegacyCompatibility && needModernCompatibility) {
-                Revision revision = Revisions.SINCE_1_21_2;
-                Path overlayAtlasPath = generatedPackPath
-                        .resolve(Config.createOverlayFolderName(revision.versionString()))
-                        .resolve("assets")
-                        .resolve("minecraft")
-                        .resolve("atlases")
-                        .resolve("armor_trims.json");
-                // 创建atlas文件夹
-                writeJsonSafely(modernTrimAtlasJson, overlayAtlasPath);
-                callback.accept(revision);
+            if (needLegacyCompatibility || needModernTrimAtlas) {
+                writeJsonSafely(needLegacyCompatibility ? legacyTrimAtlasJson : modernTrimAtlasJson, atlasPath);
+                if (needLegacyCompatibility && needModernTrimAtlas) {
+                    Overlay overlay = Revisions.SINCE_1_21_2.createOverlay();
+                    Path overlayAtlasPath = generatedPackPath.resolve(overlay.directory()).resolve(generatedPackPath.relativize(atlasPath));
+                    writeJsonSafely(modernTrimAtlasJson, overlayAtlasPath);
+                    callback.accept(overlay);
+                }
+                if (Config.packMaxVersion().packFormat().isAtOrAbove(PackVersion.PALETTE_TEXTURES_VERSION)) {
+                    String directory = Config.createOverlayFolderName(PackVersion.PALETTE_TEXTURES_VERSION.asString());
+                    JsonObject emptyAtlas = new JsonObject();
+                    emptyAtlas.add("sources", new JsonArray());
+                    writeJsonSafely(emptyAtlas, generatedPackPath.resolve(directory).resolve(generatedPackPath.relativize(atlasPath)));
+                    callback.accept(new Overlay(PackVersion.PALETTE_TEXTURES_VERSION, PackVersion.MAX_PACK_VERSION, directory));
+                }
             }
         }
     }
@@ -3108,140 +3097,70 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Nullable
-    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment trimBasedEquipment, Path generatedPackPath) {
-        Key assetId = trimBasedEquipment.assetId();
+    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment equipment, Path generatedPackPath) {
+        Map<Path, List<Path>> copies = new LinkedHashMap<>();
+        if (!collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoid(), false, copies) || !collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoidLeggings(), true, copies)) {
+            return null;
+        }
 
-        Key humanoidIdentifier = trimBasedEquipment.humanoid();
-        boolean hasLayer1 = humanoidIdentifier != null;
-        Key humanoidLeggingsIdentifier = trimBasedEquipment.humanoidLeggings();
-        boolean hasLayer2 = humanoidLeggingsIdentifier != null;
-
-        if (hasLayer1) {
-            Path texture = generatedPackPath
-                    .resolve("assets")
-                    .resolve(humanoidIdentifier.namespace())
-                    .resolve("textures")
-                    .resolve(humanoidIdentifier.value() + ".png");
-            if (!Files.exists(texture) || !Files.isRegularFile(texture)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_equipment_texture",
-                        assetId.asString(), texture.toString()
-                ));
-                return null;
-            }
-            boolean shouldPreserve = false;
-            if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
-                Path legacyTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("models")
-                        .resolve("armor")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!legacyTarget.equals(texture)) {
+        Set<Path> targets = new HashSet<>();
+        // 先复制所有版本、所有层的纹理，再清理源文件；源文件也可能是 26.3 的目标。
+        for (Map.Entry<Path, List<Path>> entry : copies.entrySet()) {
+            Path source = entry.getKey();
+            for (Path target : entry.getValue()) {
+                targets.add(target);
+                if (!source.equals(target)) {
                     try {
-                        Files.createDirectories(legacyTarget.getParent());
-                        Files.copy(texture, legacyTarget, StandardCopyOption.REPLACE_EXISTING);
+                        Files.createDirectories(target.getParent());
+                        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + legacyTarget, e);
+                        this.plugin.logger().error("Error writing armor texture file from " + source + " to " + target, e);
+                        return null;
                     }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2)) {
-                Path modernTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("entity")
-                        .resolve("humanoid")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!modernTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(modernTarget.getParent());
-                        Files.copy(texture, modernTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + modernTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (!shouldPreserve) {
-                try {
-                    Files.delete(texture);
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error deleting armor texture file from " + texture, e);
                 }
             }
         }
-        if (hasLayer2) {
-            Path texture = generatedPackPath
-                    .resolve("assets")
-                    .resolve(humanoidLeggingsIdentifier.namespace())
-                    .resolve("textures")
-                    .resolve(humanoidLeggingsIdentifier.value() + ".png");
-            if (!Files.exists(texture) && !Files.isRegularFile(texture)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_equipment_texture",
-                        assetId.asString(), texture.toString()
-                ));
-                return null;
-            }
-            boolean shouldPreserve = false;
-            if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
-                Path legacyTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("models")
-                        .resolve("armor")
-                        .resolve(assetId.value() + "_leggings_" + NEW_TRIM_MATERIAL + ".png");
-                if (!legacyTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(legacyTarget.getParent());
-                        Files.copy(texture, legacyTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + legacyTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2)) {
-                Path modernTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("entity")
-                        .resolve("humanoid_leggings")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!modernTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(modernTarget.getParent());
-                        Files.copy(texture, modernTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + modernTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (!shouldPreserve) {
+        for (Path source : copies.keySet()) {
+            if (!targets.contains(source)) {
                 try {
-                    Files.delete(texture);
+                    Files.delete(source);
                 } catch (IOException e) {
-                    this.plugin.logger().error("Error deleting armor texture file from " + texture, e);
+                    this.plugin.logger().error("Error deleting armor texture file from " + source, e);
                 }
             }
         }
+        return Pair.of(equipment.humanoid() != null, equipment.humanoidLeggings() != null);
+    }
 
-        return Pair.of(hasLayer1, hasLayer2);
+    private boolean collectTrimTextureCopies(Path root,
+                                             Key assetId,
+                                             @Nullable Key textureId,
+                                             boolean leggings,
+                                             Map<Path, List<Path>> copies) {
+        if (textureId == null) {
+            return true;
+        }
+        Path source = root.resolve("assets").resolve(textureId.namespace()).resolve("textures").resolve(textureId.value() + ".png");
+        if (!Files.isRegularFile(source)) {
+            this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+                    "resource_pack.missing_equipment_texture", assetId.asString(), source.toString()
+            ));
+            return false;
+        }
+        Path trims = root.resolve("assets").resolve(assetId.namespace()).resolve("textures").resolve("trims");
+        List<Path> targets = copies.computeIfAbsent(source, ignored -> new ArrayList<>(3));
+        if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
+            String suffix = leggings ? "_leggings_" : "_";
+            targets.add(trims.resolve("models/armor").resolve(assetId.value() + suffix + NEW_TRIM_MATERIAL + ".png"));
+        }
+        Path entityTrims = trims.resolve(leggings ? "entity/humanoid_leggings" : "entity/humanoid");
+        if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2) && Config.packMinVersion().packFormat().isBelow(PackVersion.PALETTE_TEXTURES_VERSION)) {
+            targets.add(entityTrims.resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png"));
+        }
+        if (Config.packMaxVersion().packFormat().isAtOrAbove(PackVersion.PALETTE_TEXTURES_VERSION)) {
+            targets.add(entityTrims.resolve(assetId.value() + ".png"));
+        }
+        return true;
     }
 
     private void generateEmptyBlockModel(Path generatedPackPath) {

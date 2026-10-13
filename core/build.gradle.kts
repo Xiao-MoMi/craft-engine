@@ -34,6 +34,7 @@ dependencies {
     adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     netty(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     compression(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
+    cloud(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     storage(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     testRuntimeOnly(libs.jackson.annotations)
     testRuntimeOnly(libs.jackson.core)
