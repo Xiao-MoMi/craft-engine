@@ -245,8 +245,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private int lastHitFurnitureTick;
     // 控制展示实体可见距离
     private double displayEntityViewDistance;
-    // 玩家使用的游戏版本
-    private GameEdition gameEdition;
+    private volatile GameEdition gameEdition;
     // 客户端协议
     private ProtocolVersion protocolVersion = ProtocolVersion.UNKNOWN;
     // 有概率出现如下情况
@@ -295,6 +294,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.name = player.getName();
         this.entityId = player.getEntityId();
         this.isNameVerified = true;
+        this.gameEdition = this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
         this.initPlayStageFields();
         this.equipmentLod = VersionHelper.isOrAbove1_21_2 && Config.enableEquipmentLod() ? new EquipmentLodTracker(this) : null;
         byte[] bytes = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(CooldownData.COOLDOWN_KEY), PersistentDataType.BYTE_ARRAY);
@@ -1957,10 +1957,11 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public GameEdition gameEdition() {
-        if (this.gameEdition == null) {
-            this.gameEdition = this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
+        GameEdition gameEdition = this.gameEdition;
+        if (gameEdition != null) {
+            return gameEdition;
         }
-        return this.gameEdition;
+        return this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
     }
 
     @Override

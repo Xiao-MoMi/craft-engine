@@ -536,13 +536,13 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     @Override
     public boolean isBedrockPlayer(Player player) {
         UUID uuid = player.uuid();
-        if (this.hasFloodgate) {
-            return FloodgateUtils.isFloodgatePlayer(uuid);
+        if (this.hasFloodgate && FloodgateUtils.isFloodgatePlayer(uuid)) {
+            return true;
         }
         if (this.hasGeyser) {
             return GeyserUtils.isGeyserPlayer(uuid);
         }
-        return uuid.version() == 0;
+        return false;
     }
 
     @Override
