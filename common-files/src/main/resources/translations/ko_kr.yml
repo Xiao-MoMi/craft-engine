@@ -364,3 +364,5 @@ resource_pack.packsquash_started: '설정 <arg:0>(으)로 PackSquash 실행 중.
 resource_pack.packsquash_finished: 'PackSquash 완료, 소요 시간: <arg:0>ms'
 resource_pack.zip_loaded: '리소스 팩 ZIP <arg:0> 로드 완료, 소요 시간: <arg:1>ms'
 resource_pack.export_finished: '리소스 팩을 <arg:0>(으)로 내보냈습니다. 소요 시간: <arg:1>ms'
+resource_pack.missing_texture_reference: "모델 '<arg:0>'의 <arg:1>에서 정의되지 않은 텍스처 슬롯을 참조합니다: <arg:2>"
+resource_pack.cyclic_texture_reference: "모델 '<arg:0>'의 <arg:1>에 순환 텍스처 참조가 있습니다: <arg:2>"

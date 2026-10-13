@@ -103,6 +103,7 @@ public final class Config {
     private boolean resource_pack$validation$fix_model_display_out_of_bounds;
     private boolean resource_pack$validation$fix_atlas;
     private boolean resource_pack$validation$fix_missing_texture;
+    private boolean resource_pack$validation$fix_missing_particle_texture;
     private boolean resource_pack$validation$fallback_models$fix_textures_format;
     private boolean resource_pack$validation$fallback_models$fix_element_rotation_angle;
     private boolean resource_pack$exclude_core_shaders;
@@ -520,6 +521,7 @@ public final class Config {
         this.resource_pack$validation$fix_model_display_out_of_bounds = config.getBoolean("resource-pack.validation.fix-model-display-out-of-bounds", false);
         this.resource_pack$validation$fix_atlas = config.getBoolean("resource-pack.validation.fix-atlas", true);
         this.resource_pack$validation$fix_missing_texture = config.getBoolean("resource-pack.validation.fix-missing-texture", true);
+        this.resource_pack$validation$fix_missing_particle_texture = config.getBoolean("resource-pack.validation.fix-missing-particle-texture", true);
         this.resource_pack$validation$fallback_models$fix_textures_format = config.getBoolean("resource-pack.validation.fallback-models.fix-textures-format", true);
         this.resource_pack$validation$fallback_models$fix_element_rotation_angle = config.getBoolean("resource-pack.validation.fallback-models.fix-element-rotation-angle", true);
         this.resource_pack$exclude_core_shaders = config.getBoolean("resource-pack.exclude-core-shaders", false);
@@ -1510,6 +1512,10 @@ public final class Config {
 
     public static boolean fixMissingTexture() {
         return instance.resource_pack$validation$fix_missing_texture;
+    }
+
+    public static boolean fixMissingParticleTexture() {
+        return instance.resource_pack$validation$fix_missing_particle_texture;
     }
 
     public static boolean fixTexturesFormat() {

@@ -363,3 +363,5 @@ resource_pack.packsquash_started: 'PackSquash wird mit Konfiguration <arg:0> aus
 resource_pack.packsquash_finished: 'PackSquash in <arg:0>ms abgeschlossen'
 resource_pack.zip_loaded: 'Ressourcenpaket-ZIP <arg:0> in <arg:1>ms geladen'
 resource_pack.export_finished: 'Ressourcenpaket in <arg:1>ms nach <arg:0> exportiert'
+resource_pack.missing_texture_reference: "Modell '<arg:0>' verweist bei <arg:1> auf einen undefinierten Texturplatz: <arg:2>"
+resource_pack.cyclic_texture_reference: "Modell '<arg:0>' enthält bei <arg:1> einen zyklischen Texturverweis: <arg:2>"

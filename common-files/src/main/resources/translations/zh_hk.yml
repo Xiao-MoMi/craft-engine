@@ -363,3 +363,5 @@ resource_pack.packsquash_started: '正在使用設定<arg:0>執行PackSquash...'
 resource_pack.packsquash_finished: 'PackSquash處理完成，耗時<arg:0>毫秒'
 resource_pack.zip_loaded: '已載入資源包ZIP <arg:0>，耗時<arg:1>毫秒'
 resource_pack.export_finished: '已匯出資源包至<arg:0>，耗時<arg:1>毫秒'
+resource_pack.missing_texture_reference: "模型「<arg:0>」在 <arg:1> 引用了未定義的紋理欄位：<arg:2>"
+resource_pack.cyclic_texture_reference: "模型「<arg:0>」在 <arg:1> 存在循環紋理引用：<arg:2>"

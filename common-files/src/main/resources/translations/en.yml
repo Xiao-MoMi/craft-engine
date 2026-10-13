@@ -369,3 +369,5 @@ resource_pack.zip_loaded: 'Loaded resource pack ZIP <arg:0> in <arg:1>ms'
 resource_pack.export_finished: 'Exported resource pack to <arg:0> in <arg:1>ms'
 
 resource.item.processor.not_network: "Item processor '<arg:0>' contains '<arg:1>', which does not support client-bound data"
+resource_pack.missing_texture_reference: "Model '<arg:0>' has an undefined texture slot at <arg:1>: <arg:2>"
+resource_pack.cyclic_texture_reference: "Model '<arg:0>' has a cyclic texture reference at <arg:1>: <arg:2>"

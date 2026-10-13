@@ -115,6 +115,9 @@ resource-pack:
     fix-atlas: true
     # Fixing model errors caused by #missing.
     fix-missing-texture: true
+    # Fill missing or unresolvable particle textures using another resolved slot.
+    # Keep warnings when disabled or no usable texture is available.
+    fix-missing-particle-texture: true
     # Automatically creating overlays to fix high-version model formats that need to function on lower client versions
     fallback-models:
       # The format of the textures map has been updated since 26.1

@@ -363,3 +363,5 @@ resource_pack.packsquash_started: 'Ejecutando PackSquash con la configuración <
 resource_pack.packsquash_finished: 'PackSquash ha terminado en <arg:0>ms'
 resource_pack.zip_loaded: 'ZIP del paquete de recursos <arg:0> cargado en <arg:1>ms'
 resource_pack.export_finished: 'Paquete de recursos exportado a <arg:0> en <arg:1>ms'
+resource_pack.missing_texture_reference: "El modelo '<arg:0>' hace referencia a una ranura de textura no definida en <arg:1>: <arg:2>"
+resource_pack.cyclic_texture_reference: "El modelo '<arg:0>' tiene una referencia circular de textura en <arg:1>: <arg:2>"

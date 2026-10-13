@@ -41,6 +41,7 @@ import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
 import net.momirealms.craftengine.core.pack.validation.ModelDisplayBoundsValidator;
+import net.momirealms.craftengine.core.pack.validation.ModelTextureReferenceValidator;
 import net.momirealms.craftengine.core.pack.validation.ModelUvBoundsValidator;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowContext;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
@@ -1924,17 +1925,22 @@ public abstract class AbstractPackManager implements PackManager {
             if (modelJsonPath != null) {
                 JsonObject modelJson = readJsonObjectFromFileOrWarn(modelJsonPath);
                 if (modelJson == null) continue;
-                TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
+                TexturedModel texturedModel = getTexturedModel(modelPath, new SimplifiedModelFile(modelJson), rootPaths, modelsCache);
                 blockModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
                     validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
                 }
                 continue;
             }
-            // 提示方块状态缺少模型
+            // 资源包中没有模型文件时，回退到原版模型；非原版模型则提示缺失
             if (!VANILLA_MODELS.contains(modelPath)) {
                 modelsCache.put(modelPath, TexturedModel.EMPTY);
                 this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_block_model", entry.getValue().toString(), modelStringPath));
+            } else {
+                SimplifiedModelFile preset = PRESET_MODELS.get(modelPath);
+                if (preset != null) {
+                    blockModels.put(modelPath, getTexturedModel(modelPath, preset, rootPaths, modelsCache));
+                }
             }
         }
 
@@ -1956,7 +1962,7 @@ public abstract class AbstractPackManager implements PackManager {
                 }
                 JsonObject modelJson = readJsonObjectFromFileOrWarn(modelJsonPath);
                 if (modelJson == null) continue;
-                TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
+                TexturedModel texturedModel = getTexturedModel(modelPath, new SimplifiedModelFile(modelJson), rootPaths, modelsCache);
                 itemModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
                     validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
@@ -1966,6 +1972,22 @@ public abstract class AbstractPackManager implements PackManager {
             if (!VANILLA_MODELS.contains(modelPath)) {
                 modelsCache.put(modelPath, TexturedModel.EMPTY);
                 this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_item_model", entry.getValue().toString(), modelStringPath));
+            } else {
+                SimplifiedModelFile preset = PRESET_MODELS.get(modelPath);
+                if (preset != null) {
+                    itemModels.put(modelPath, getTexturedModel(modelPath, preset, rootPaths, modelsCache));
+                }
+            }
+        }
+
+        Set<TexturedModel> modelsToValidate = new HashSet<>(blockModels.values());
+        modelsToValidate.addAll(itemModels.values());
+        for (TexturedModel model : modelsToValidate) {
+            for (ModelTextureReferenceValidator.Problem problem : ModelTextureReferenceValidator.validate(model)) {
+                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+                        problem.cycle() ? "resource_pack.cyclic_texture_reference" : "resource_pack.missing_texture_reference",
+                        model.path.asString(), problem.location(), problem.chain()
+                ));
             }
         }
 
@@ -2124,7 +2146,7 @@ public abstract class AbstractPackManager implements PackManager {
                         Key modelPath = entry.getKey();
                         if (!modelsCache.containsKey(modelPath)) continue;
                         SimplifiedModelFile modelFile = entry.getValue();
-                        getTexturedModel(modelPath, modelFile.parent, modelFile.textures, rootPaths, modelsCache);
+                        getTexturedModel(modelPath, modelFile, rootPaths, modelsCache);
                     }
 
                     // 创建所有贴图到模型的索引
@@ -2372,11 +2394,12 @@ public abstract class AbstractPackManager implements PackManager {
                                TexturedModel texturedModel,
                                Set<Revision> revisions,
                                ModelFixFlags flags) {
-        boolean changed = false;
+        boolean changed = Config.fixMissingParticleTexture() && ModelTextureReferenceValidator.fixMissingParticleTexture(modelJson, texturedModel);
         boolean illegalRotation225 = false;
         boolean illegalRotation45 = false;
         boolean illegalNewRotationFormat = false;
         boolean illegalTextures = false;
+        boolean repairedMissingTexture = false;
 
         List<ModelDisplayBoundsValidator.Problem> displayProblems = ModelDisplayBoundsValidator.validate(modelJson);
         if (!displayProblems.isEmpty()) {
@@ -2439,6 +2462,7 @@ public abstract class AbstractPackManager implements PackManager {
                                         Optional<String> first = texturedModel.textures.keySet().stream().findFirst();
                                         if (first.isPresent()) {
                                             face.addProperty(ModelJsonKeys.TEXTURE, "#" + first.get());
+                                            repairedMissingTexture = true;
                                             changed = true;
                                         }
                                     }
@@ -2465,6 +2489,10 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                 }
             }
+        }
+
+        if (repairedMissingTexture) {
+            texturedModel.refreshFaces(modelJson);
         }
 
         if (illegalTextures) {
@@ -2654,7 +2682,19 @@ public abstract class AbstractPackManager implements PackManager {
         if (cachedModel != null) {
             return cachedModel;
         }
-        TexturedModel texturedModel = new TexturedModel(currentRL, textures);
+        return inheritTexturedModel(new TexturedModel(currentRL, textures), parentRL, rootPaths, cached);
+    }
+
+    public TexturedModel getTexturedModel(Key currentRL, SimplifiedModelFile model, Path[] rootPaths, Map<Key, TexturedModel> cached) {
+        TexturedModel cachedModel = cached.get(currentRL);
+        if (cachedModel != null) {
+            return cachedModel;
+        }
+        return inheritTexturedModel(new TexturedModel(currentRL, model), model.parent, rootPaths, cached);
+    }
+
+    private TexturedModel inheritTexturedModel(TexturedModel texturedModel, @Nullable Key parentRL, Path[] rootPaths, Map<Key, TexturedModel> cached) {
+        Key currentRL = texturedModel.path;
         // 放这里防止parent互相引用造成死循环
         cached.put(currentRL, texturedModel);
         if (parentRL != null) {
@@ -2664,16 +2704,16 @@ public abstract class AbstractPackManager implements PackManager {
                 // 找一下有没有自定义的父模型
                 JsonObject parentModelJson = getParentModel(parentModelStringPath, rootPaths);
                 if (parentModelJson != null) {
-                    parentModel = getTexturedModel(parentRL, TexturedModel.getParent(parentModelJson), TexturedModel.getTextures(parentModelJson), rootPaths, cached);
+                    parentModel = getTexturedModel(parentRL, new SimplifiedModelFile(parentModelJson), rootPaths, cached);
                 } else {
                     if (VANILLA_MODELS.contains(parentRL)) {
                         // 可能为空，因为存在built-in模型
                         SimplifiedModelFile simplifiedModelFile = PRESET_MODELS.get(parentRL);
                         if (simplifiedModelFile == null) {
-                            parentModel = TexturedModel.BUILTIN;
+                            parentModel = parentRL.equals(BUILTIN_GENERATED) ? TexturedModel.GENERATED : TexturedModel.BUILTIN;
                             cached.put(parentRL, parentModel);
                         } else {
-                            parentModel = getTexturedModel(parentRL, simplifiedModelFile.parent, simplifiedModelFile.textures, rootPaths, cached);
+                            parentModel = getTexturedModel(parentRL, simplifiedModelFile, rootPaths, cached);
                         }
                     } else {
                         parentModel = TexturedModel.EMPTY;
