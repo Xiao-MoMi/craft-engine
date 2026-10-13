@@ -1,0 +1,6 @@
+id: craftengine
+name: CraftEngine
+main: net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension
+api: '${geyser_api_version}'
+version: '${version}'
+authors: [XiaoMoMi]

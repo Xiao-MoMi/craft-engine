@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":bedrock"))
     nbt(project, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
     netty(project)
     common(project)
