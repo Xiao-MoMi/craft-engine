@@ -299,8 +299,6 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
-    private boolean bedrock_edition_support$enable;
-    private String bedrock_edition_support$player_prefix;
     private String bedrock$additional_identification$name_prefix;
     private boolean bedrock$additional_identification$floodgate_uuid;
     private boolean bedrock$additional_identification$geyser_brand;
@@ -864,8 +862,6 @@ public final class Config {
         this.client_optimization$entity_culling$rate_limiting$restore_per_tick = config.getInt("client-optimization.entity-culling.rate-limiting.restore-per-tick", 5);
 
         // bedrock support
-        this.bedrock_edition_support$enable = config.getBoolean("bedrock-edition-support.enable", true);
-        this.bedrock_edition_support$player_prefix = config.getString("bedrock-edition-support.player-prefix", "!");
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
@@ -1722,14 +1718,6 @@ public final class Config {
 
     public static boolean multiThreadedConfigLoad() {
         return instance.misc$multi_threaded_configuration_load;
-    }
-
-    public static boolean enableBedrockEditionSupport() {
-        return instance.bedrock_edition_support$enable;
-    }
-
-    public static String bedrockEditionPlayerPrefix() {
-        return instance.bedrock_edition_support$player_prefix;
     }
 
     public static String bedrockIdentificationNamePrefix() {
