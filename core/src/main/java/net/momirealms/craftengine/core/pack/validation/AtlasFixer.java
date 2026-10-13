@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack;
+package net.momirealms.craftengine.core.pack.validation;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -39,8 +39,8 @@ final class AtlasFixer {
     }
 
     protected static class Entry {
-        private PackVersion min, max;
         private final JsonObject atlas;
+        private PackVersion min, max;
 
         public Entry(PackVersion min, PackVersion max, JsonObject atlas) {
             this.min = min;
@@ -49,11 +49,11 @@ final class AtlasFixer {
         }
 
         public PackVersion min() {
-            return min;
+            return this.min;
         }
 
         public PackVersion max() {
-            return max;
+            return this.max;
         }
 
         public JsonObject atlas() {

@@ -4,10 +4,17 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.AbstractMap;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 public final class TexturedModel {
     public static final TexturedModel EMPTY = new TexturedModel(Key.of("minecraft:missingno"), Map.of());
@@ -15,12 +22,12 @@ public final class TexturedModel {
     public static final TexturedModel GENERATED = new TexturedModel(Key.of("minecraft:builtin/generated"), Map.of(), Map.of(ModelJsonKeys.PARTICLE, "layer0"), List.of());
     public final Key path;
     public final Map<String, Key> textures;
-    private final Map<String, Key> directTextures;
-    private final Map<String, String> references;
-    private List<SimplifiedModelFile.FaceTexture> faces;
+    private TextureDefinitions definitions;
+    private Map<String, Key> resolvedTextures;
+    private FaceTextures faces;
 
     public TexturedModel(Key path, Map<String, Key> textures) {
-        this(path, textures, Map.of(), null);
+        this(path, Map.copyOf(textures), Map.of(), null);
     }
 
     public TexturedModel(Key path, SimplifiedModelFile model) {
@@ -29,11 +36,9 @@ public final class TexturedModel {
 
     private TexturedModel(Key path, Map<String, Key> textures, Map<String, String> references, List<SimplifiedModelFile.FaceTexture> faces) {
         this.path = path;
-        this.directTextures = new HashMap<>(textures);
-        this.references = new HashMap<>(references);
-        this.faces = faces;
-        this.textures = new HashMap<>(textures);
-        resolveTextures();
+        this.definitions = new TextureDefinitions(textures, references, null);
+        this.faces = faces == null ? null : new FaceTextures(faces);
+        this.textures = new TextureView();
     }
 
     public static Map<String, Key> getTextures(JsonObject json) {
@@ -66,54 +71,123 @@ public final class TexturedModel {
         if (parent == null || parent == EMPTY) {
             return;
         }
-        // Merge definitions, not resolved values: an inherited alias must see child overrides.
-        for (Map.Entry<String, Key> texture : parent.directTextures.entrySet()) {
-            if (!this.references.containsKey(texture.getKey())) {
-                this.directTextures.putIfAbsent(texture.getKey(), texture.getValue());
-            }
-        }
-        for (Map.Entry<String, String> reference : parent.references.entrySet()) {
-            if (!this.directTextures.containsKey(reference.getKey())) {
-                this.references.putIfAbsent(reference.getKey(), reference.getValue());
-            }
-        }
+        // Capture immutable definitions, not resolved values or a mutable parent link.
+        // Aliases see child overrides; even cyclic parent files produce a finite chain.
+        this.definitions = new TextureDefinitions(this.definitions.textures, this.definitions.references, parent.definitions);
         if (this.faces == null) {
             this.faces = parent.faces;
         }
-        resolveTextures();
+        this.resolvedTextures = null;
     }
 
-    private void resolveTextures() {
-        this.textures.clear();
-        this.textures.putAll(this.directTextures);
-        boolean changed;
-        do {
-            changed = false;
-            for (Map.Entry<String, String> entry : this.references.entrySet()) {
-                if (this.textures.containsKey(entry.getKey())) {
-                    continue;
-                }
-                Key texture = this.textures.get(entry.getValue());
-                if (texture != null) {
-                    this.textures.put(entry.getKey(), texture);
-                    changed = true;
+    private Map<String, Key> resolveTextures() {
+        if (this.resolvedTextures != null) {
+            return this.resolvedTextures;
+        }
+        if (this.definitions.parent == null && this.definitions.references.isEmpty()) {
+            this.resolvedTextures = this.definitions.textures;
+            return this.resolvedTextures;
+        }
+        Map<String, Key> resolved = new HashMap<>(this.definitions.textures);
+        for (TextureDefinitions definitions = this.definitions; definitions != null; definitions = definitions.parent) {
+            for (Map.Entry<String, Key> texture : definitions.textures.entrySet()) {
+                if (findDefinition(texture.getKey()) == definitions) {
+                    resolved.putIfAbsent(texture.getKey(), texture.getValue());
                 }
             }
-        } while (changed);
+        }
+        Set<String> unresolved = null;
+        Set<String> chain = null;
+        for (TextureDefinitions definitions = this.definitions; definitions != null; definitions = definitions.parent) {
+            for (String slot : definitions.references.keySet()) {
+                if (resolved.containsKey(slot)) {
+                    continue;
+                }
+                if (unresolved == null) {
+                    unresolved = new HashSet<>();
+                    chain = new LinkedHashSet<>();
+                }
+                resolveTexture(slot, resolved, unresolved, chain);
+            }
+        }
+        this.resolvedTextures = Collections.unmodifiableMap(resolved);
+        return this.resolvedTextures;
+    }
+
+    private void resolveTexture(String slot, Map<String, Key> resolved, Set<String> unresolved, Set<String> chain) {
+        if (resolved.containsKey(slot) || unresolved.contains(slot)) {
+            return;
+        }
+        String current = slot;
+        Key texture;
+        // Memoize the whole path, including missing and cyclic paths, in this child context.
+        while (true) {
+            texture = resolved.get(current);
+            if (texture != null || unresolved.contains(current) || !chain.add(current)) {
+                break;
+            }
+            TextureDefinitions definitions = findDefinition(current);
+            if (definitions == null) {
+                break;
+            }
+            current = definitions.references.get(current);
+        }
+        if (texture == null) {
+            unresolved.addAll(chain);
+        } else {
+            for (String visited : chain) {
+                resolved.put(visited, texture);
+            }
+        }
+        chain.clear();
+    }
+
+    @Nullable
+    private TextureDefinitions findDefinition(String slot) {
+        for (TextureDefinitions definitions = this.definitions; definitions != null; definitions = definitions.parent) {
+            if (definitions.textures.containsKey(slot) || definitions.references.containsKey(slot)) {
+                return definitions;
+            }
+        }
+        return null;
     }
 
     public void setTextureReference(String slot, String target) {
-        this.directTextures.remove(slot);
-        this.references.put(slot, target);
-        resolveTextures();
+        Map<String, Key> textures = this.definitions.textures;
+        if (textures.containsKey(slot)) {
+            textures = new HashMap<>(textures);
+            textures.remove(slot);
+            textures = Collections.unmodifiableMap(textures);
+        }
+        Map<String, String> references = new HashMap<>(this.definitions.references);
+        references.put(slot, target);
+        this.definitions = new TextureDefinitions(textures, Collections.unmodifiableMap(references), this.definitions.parent);
+        this.resolvedTextures = null;
     }
 
     public Map<String, String> references() {
-        return this.references;
+        Map<String, String> references = new HashMap<>();
+        forEachReference(references::put);
+        return Collections.unmodifiableMap(references);
+    }
+
+    public @Nullable String reference(String slot) {
+        TextureDefinitions definitions = findDefinition(slot);
+        return definitions == null ? null : definitions.references.get(slot);
+    }
+
+    public void forEachReference(BiConsumer<String, String> consumer) {
+        for (TextureDefinitions definitions = this.definitions; definitions != null; definitions = definitions.parent) {
+            for (Map.Entry<String, String> reference : definitions.references.entrySet()) {
+                if (findDefinition(reference.getKey()) == definitions) {
+                    consumer.accept(reference.getKey(), reference.getValue());
+                }
+            }
+        }
     }
 
     public List<SimplifiedModelFile.FaceTexture> faces() {
-        return this.faces == null ? List.of() : this.faces;
+        return this.faces == null ? List.of() : this.faces.values;
     }
 
     public void refreshFaces(JsonObject model) {
@@ -122,11 +196,45 @@ public final class TexturedModel {
             return;
         }
         if (this.faces == null) {
-            this.faces = updated;
+            this.faces = new FaceTextures(updated);
         } else {
-            // Children share inherited faces, so persisted repairs must update their view too.
-            this.faces.clear();
-            this.faces.addAll(updated);
+            // Replace the session's face snapshot without modifying the preset's immutable list.
+            this.faces.values = updated;
+        }
+    }
+
+    private record TextureDefinitions(Map<String, Key> textures, Map<String, String> references,
+                                      @Nullable TextureDefinitions parent) {
+    }
+
+    private static final class FaceTextures {
+        private List<SimplifiedModelFile.FaceTexture> values;
+
+        private FaceTextures(List<SimplifiedModelFile.FaceTexture> values) {
+            this.values = values;
+        }
+    }
+
+    private final class TextureView extends AbstractMap<String, Key> {
+
+        @Override
+        public Key get(Object key) {
+            return TexturedModel.this.resolveTextures().get(key);
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            return TexturedModel.this.resolveTextures().containsKey(key);
+        }
+
+        @Override
+        public int size() {
+            return TexturedModel.this.resolveTextures().size();
+        }
+
+        @Override
+        public Set<Entry<String, Key>> entrySet() {
+            return TexturedModel.this.resolveTextures().entrySet();
         }
     }
 

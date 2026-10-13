@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,20 +20,22 @@ public final class SimplifiedModelFile {
     public final @Nullable List<FaceTexture> faces;
 
     public SimplifiedModelFile(JsonObject model) {
-        this.textures = new HashMap<>();
-        this.references = new HashMap<>();
+        Map<String, Key> directTextures = new HashMap<>();
+        Map<String, String> textureReferences = new HashMap<>();
         if (model.has(ModelJsonKeys.TEXTURES)) {
             JsonObject textures = model.get(ModelJsonKeys.TEXTURES).getAsJsonObject();
             for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
                 JsonElement value = entry.getValue();
                 String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get(ModelJsonKeys.SPRITE).getAsString();
                 if (value.isJsonPrimitive() && sprite.startsWith("#")) {
-                    this.references.put(entry.getKey(), sprite.substring(1));
+                    textureReferences.put(entry.getKey(), sprite.substring(1));
                 } else {
-                    this.textures.put(entry.getKey(), Key.of(sprite));
+                    directTextures.put(entry.getKey(), Key.of(sprite));
                 }
             }
         }
+        this.textures = directTextures.isEmpty() ? Map.of() : Collections.unmodifiableMap(directTextures);
+        this.references = textureReferences.isEmpty() ? Map.of() : Collections.unmodifiableMap(textureReferences);
         if (model.has(ModelJsonKeys.PARENT)) {
             this.parent = Key.of(model.get(ModelJsonKeys.PARENT).getAsString());
         } else {
@@ -59,7 +62,7 @@ public final class SimplifiedModelFile {
                 }
             }
         }
-        return references;
+        return List.copyOf(references);
     }
 
     public record FaceTexture(int element, String face, String slot) {

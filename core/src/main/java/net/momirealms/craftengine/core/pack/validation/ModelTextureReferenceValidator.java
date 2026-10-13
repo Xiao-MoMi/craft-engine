@@ -7,11 +7,7 @@ import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class ModelTextureReferenceValidator {
 
@@ -60,35 +56,47 @@ public final class ModelTextureReferenceValidator {
 
     public static List<Problem> validate(TexturedModel model) {
         List<Problem> problems = new ArrayList<>();
-        for (String slot : model.references().keySet()) {
+        Map<String, ReferenceFailure> failures = new HashMap<>();
+        model.forEachReference((slot, target) -> {
             if (!model.textures.containsKey(slot)) {
-                check(model, slot, ModelJsonKeys.TEXTURES + "." + slot, problems);
+                check(model, slot, ModelJsonKeys.TEXTURES + "." + slot, problems, failures);
             }
-        }
+        });
         for (SimplifiedModelFile.FaceTexture face : model.faces()) {
             if (!model.textures.containsKey(face.slot())) {
-                check(model, face.slot(), face.location(), problems);
+                check(model, face.slot(), face.location(), problems, failures);
             }
         }
-        if (!model.textures.containsKey(ModelJsonKeys.PARTICLE) && !model.references().containsKey(ModelJsonKeys.PARTICLE)) {
-            check(model, ModelJsonKeys.PARTICLE, ModelJsonKeys.PARTICLE, problems);
+        if (!model.textures.containsKey(ModelJsonKeys.PARTICLE) && model.reference(ModelJsonKeys.PARTICLE) == null) {
+            check(model, ModelJsonKeys.PARTICLE, ModelJsonKeys.PARTICLE, problems, failures);
         }
         return problems;
     }
 
-    private static void check(TexturedModel model, String slot, String location, List<Problem> problems) {
-        Map<String, String> references = model.references();
+    private static void check(TexturedModel model, String slot, String location, List<Problem> problems,
+                              Map<String, ReferenceFailure> failures) {
+        ReferenceFailure failure = failures.get(slot);
+        if (failure == null) {
+            failure = traceFailure(model, slot);
+            failures.put(slot, failure);
+        }
+        problems.add(new Problem(location, failure.chain, failure.cycle));
+    }
+
+    private static ReferenceFailure traceFailure(TexturedModel model, String slot) {
         Set<String> visited = new LinkedHashSet<>();
         String current = slot;
         while (visited.add(current)) {
-            String target = references.get(current);
+            String target = model.reference(current);
             if (target == null) {
-                problems.add(new Problem(location, "#" + String.join(" -> #", visited), false));
-                return;
+                return new ReferenceFailure("#" + String.join(" -> #", visited), false);
             }
             current = target;
         }
-        problems.add(new Problem(location, "#" + String.join(" -> #", visited) + " -> #" + current, true));
+        return new ReferenceFailure("#" + String.join(" -> #", visited) + " -> #" + current, true);
+    }
+
+    private record ReferenceFailure(String chain, boolean cycle) {
     }
 
     public record Problem(String location, String chain, boolean cycle) {

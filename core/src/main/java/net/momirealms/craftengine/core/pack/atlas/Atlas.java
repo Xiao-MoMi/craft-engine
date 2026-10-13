@@ -9,14 +9,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public final class Atlas {
+    private static final Sprite MISSING_SPRITE = new Sprite(false, null);
+    private static final Sprite GENERATED_SPRITE = new Sprite(true, null);
     private final List<Source> sources = new ArrayList<>();
+    private final Map<Key, SingleSprite> singleSprites = new HashMap<>();
+    private final Map<Key, Sprite> sprites = new HashMap<>();
 
     public Atlas(JsonObject atlasJson) {
         JsonArray sources = atlasJson.getAsJsonArray("sources");
@@ -44,7 +50,8 @@ public final class Atlas {
                     if (resource != null) {
                         Key resourceId = Key.of(resource.getAsString());
                         JsonElement sprite = sourceJson.get("sprite");
-                        this.addSingle(sprite == null ? resourceId : Key.of(sprite.getAsString()), resourceId);
+                        this.singleSprites.put(sprite == null ? resourceId : Key.of(sprite.getAsString()),
+                                new SingleSprite(resourceId, this.sources.size()));
                     }
                 }
                 case "unstitch", "minecraft:unstitch" -> {
@@ -118,8 +125,7 @@ public final class Atlas {
     }
 
     public boolean isDefined(Key texture) {
-        Source source = this.findSource(texture);
-        return source != null && source.providesSprite();
+        return resolveSprite(texture).defined;
     }
 
     public void addSingle(Key key) {
@@ -127,29 +133,44 @@ public final class Atlas {
     }
 
     public void addSingle(Key sprite, Key resource) {
-        this.sources.add(new SingleSource(sprite, resource));
+        this.sprites.put(sprite, new Sprite(true, resource));
     }
 
     public void addDeleted(Key key) {
-        this.sources.add(new FilterSource(key::equals));
+        this.sprites.put(key, MISSING_SPRITE);
     }
 
     @Nullable
     public Key getSourceTexturePath(Key texture) {
-        Source source = this.findSource(texture);
-        return source == null ? null : source.resource(texture);
+        return resolveSprite(texture).resource;
     }
 
-    @Nullable
-    private Source findSource(Key texture) {
-        // The last matching source determines whether a sprite was added, replaced, or removed.
-        for (int i = this.sources.size() - 1; i >= 0; i--) {
+    private Sprite resolveSprite(Key texture) {
+        Sprite cached = this.sprites.get(texture);
+        if (cached != null) {
+            return cached;
+        }
+        Sprite sprite = this.findSprite(texture);
+        this.sprites.put(texture, sprite);
+        return sprite;
+    }
+
+    private Sprite findSprite(Key texture) {
+        SingleSprite single = this.singleSprites.get(texture);
+        // Only sources after the last matching single can override it.
+        // The boundary counts non-single sources, so unrelated singles never need scanning.
+        int firstSource = single == null ? 0 : single.sourceCount;
+        for (int i = this.sources.size() - 1; i >= firstSource; i--) {
             Source source = this.sources.get(i);
             if (source.matches(texture)) {
-                return source;
+                if (!source.providesSprite()) {
+                    return MISSING_SPRITE;
+                }
+                Key resource = source.resource(texture);
+                return resource == null ? GENERATED_SPRITE : new Sprite(true, resource);
             }
         }
-        return null;
+        return single == null ? MISSING_SPRITE : new Sprite(true, single.resource);
     }
 
     private interface Source {
@@ -166,6 +187,9 @@ public final class Atlas {
         }
     }
 
+    private record Sprite(boolean defined, @Nullable Key resource) {
+    }
+
     private record DirectorySource(String prefix, String directory) implements Source {
 
         @Override
@@ -179,17 +203,7 @@ public final class Atlas {
         }
     }
 
-    private record SingleSource(Key sprite, Key path) implements Source {
-
-        @Override
-        public boolean matches(Key texture) {
-            return this.sprite.equals(texture);
-        }
-
-        @Override
-        public Key resource(Key texture) {
-            return this.path;
-        }
+    private record SingleSprite(Key resource, int sourceCount) {
     }
 
     private record GeneratedSource(Set<Key> sprites) implements Source {
