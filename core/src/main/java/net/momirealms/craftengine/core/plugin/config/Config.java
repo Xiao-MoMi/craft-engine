@@ -301,6 +301,9 @@ public final class Config {
 
     private boolean bedrock_edition_support$enable;
     private String bedrock_edition_support$player_prefix;
+    private String bedrock$additional_identification$name_prefix;
+    private boolean bedrock$additional_identification$floodgate_uuid;
+    private boolean bedrock$additional_identification$geyser_brand;
 
     public Config(CraftEngine plugin) {
         this.plugin = plugin;
@@ -863,6 +866,9 @@ public final class Config {
         // bedrock support
         this.bedrock_edition_support$enable = config.getBoolean("bedrock-edition-support.enable", true);
         this.bedrock_edition_support$player_prefix = config.getString("bedrock-edition-support.player-prefix", "!");
+        this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
+        this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
+        this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
 
         this.firstTime = false;
     }
@@ -1724,6 +1730,18 @@ public final class Config {
 
     public static String bedrockEditionPlayerPrefix() {
         return instance.bedrock_edition_support$player_prefix;
+    }
+
+    public static String bedrockIdentificationNamePrefix() {
+        return instance.bedrock$additional_identification$name_prefix;
+    }
+
+    public static boolean identifyBedrockByFloodgateUuid() {
+        return instance.bedrock$additional_identification$floodgate_uuid;
+    }
+
+    public static boolean identifyBedrockByGeyserBrand() {
+        return instance.bedrock$additional_identification$geyser_brand;
     }
 
     public static boolean enableProxy() {

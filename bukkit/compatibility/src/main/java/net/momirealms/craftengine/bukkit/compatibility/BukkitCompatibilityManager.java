@@ -539,10 +539,14 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
         if (this.hasFloodgate && FloodgateUtils.isFloodgatePlayer(uuid)) {
             return true;
         }
-        if (this.hasGeyser) {
-            return GeyserUtils.isGeyserPlayer(uuid);
+        if (this.hasGeyser && GeyserUtils.isGeyserPlayer(uuid)) {
+            return true;
         }
-        return false;
+        String namePrefix = Config.bedrockIdentificationNamePrefix();
+        if (!namePrefix.isEmpty() && player.name().startsWith(namePrefix)) {
+            return true;
+        }
+        return Config.identifyBedrockByFloodgateUuid() && uuid.getMostSignificantBits() == 0;
     }
 
     @Override

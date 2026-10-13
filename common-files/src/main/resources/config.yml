@@ -687,64 +687,6 @@ damage-indicator:
         shrink-delay: 16
         remove-delay: 19
 
-gui:
-  browser:
-    sounds:
-      change-page: "minecraft:ui.loom.take_result"
-      return-page: "minecraft:ui.button.click"
-      pick-item: "minecraft:entity.item.pickup"
-      click-button: "minecraft:ui.hud.bubble_pop"
-    main:
-      title: "<white><shift:-11><image:internal:item_browser>"
-      page-navigation:
-        next:
-          available: "internal:next_page_0"
-          not-available: "internal:next_page_1"
-        previous:
-          available: "internal:previous_page_0"
-          not-available: "internal:previous_page_1"
-    category:
-      title: "<white><shift:-11><image:internal:category>"
-      page-navigation:
-        next:
-          available: "internal:next_page_0"
-          not-available: "internal:next_page_1"
-        previous:
-          available: "internal:previous_page_0"
-          not-available: "internal:previous_page_1"
-        return: "internal:return"
-        exit: "internal:exit"
-    recipe:
-      get-item-icon: internal:get_item
-      cooking-information-icon: internal:cooking_info
-      page-navigation:
-        next:
-          available: "internal:next_recipe_0"
-          not-available: "internal:next_recipe_1"
-        previous:
-          available: "internal:previous_recipe_0"
-          not-available: "internal:previous_recipe_1"
-        return: "internal:return"
-        exit: "internal:exit"
-      none:
-        title: "<white><shift:-11><image:internal:no_recipe>"
-      blasting:
-        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:blasting>"
-      smelting:
-        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:smelting>"
-      smoking:
-        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:smoking>"
-      campfire-cooking:
-        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:campfire>"
-      crafting:
-        title: "<white><shift:-11><image:internal:crafting_recipe>"
-      stonecutting:
-        title: "<white><shift:-11><image:internal:stonecutting_recipe>"
-      smithing-transform:
-        title: "<white><shift:-11><image:internal:smithing_transform_recipe>"
-      brewing:
-        title: "<white><shift:-11><image:internal:brewing_recipe>"
-
 chunk-system:
   # Storage format for chunk data persistence
   #
@@ -859,6 +801,21 @@ client-optimization:
       # Controls how quickly the bucket refills
       restore-per-tick: 25
 
+bedrock:
+  # Extra ways to identify Bedrock players when API detection does not identify them.
+  # Geyser and Floodgate API detection remains active regardless of these options.
+  additional-identification:
+    # Case-sensitive player name prefix. An empty string disables this method.
+    # Set this to the username prefix configured in Floodgate, such as "!".
+    name-prefix: ""
+    # Identify UUIDs whose upper 64 bits are zero, matching Floodgate's UUID format.
+    # Does not require Floodgate on this server and does not identify linked Java UUIDs.
+    floodgate-uuid: false
+    # Identify the exact client brand "Geyser" received during the configuration phase.
+    # Requires Minecraft 1.20.2+ on the backend; older versions use the other methods.
+    # The brand is client-reported and is not proof of authentication.
+    geyser-brand: true
+
 scripting:
   js:
     # Enables the JavaScript scripting system
@@ -890,6 +847,64 @@ misc:
   # There are many plugins that can cause world leaks, eventually leading to a large number of chunks being leaked.
   # Enabling this option can mitigate the world leak issues caused by most plugins.
   fix-world-memory-leak: false
+
+gui:
+  browser:
+    sounds:
+      change-page: "minecraft:ui.loom.take_result"
+      return-page: "minecraft:ui.button.click"
+      pick-item: "minecraft:entity.item.pickup"
+      click-button: "minecraft:ui.hud.bubble_pop"
+    main:
+      title: "<white><shift:-11><image:internal:item_browser>"
+      page-navigation:
+        next:
+          available: "internal:next_page_0"
+          not-available: "internal:next_page_1"
+        previous:
+          available: "internal:previous_page_0"
+          not-available: "internal:previous_page_1"
+    category:
+      title: "<white><shift:-11><image:internal:category>"
+      page-navigation:
+        next:
+          available: "internal:next_page_0"
+          not-available: "internal:next_page_1"
+        previous:
+          available: "internal:previous_page_0"
+          not-available: "internal:previous_page_1"
+        return: "internal:return"
+        exit: "internal:exit"
+    recipe:
+      get-item-icon: internal:get_item
+      cooking-information-icon: internal:cooking_info
+      page-navigation:
+        next:
+          available: "internal:next_recipe_0"
+          not-available: "internal:next_recipe_1"
+        previous:
+          available: "internal:previous_recipe_0"
+          not-available: "internal:previous_recipe_1"
+        return: "internal:return"
+        exit: "internal:exit"
+      none:
+        title: "<white><shift:-11><image:internal:no_recipe>"
+      blasting:
+        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:blasting>"
+      smelting:
+        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:smelting>"
+      smoking:
+        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:smoking>"
+      campfire-cooking:
+        title: "<white><shift:-11><image:internal:cooking_recipe><shift:-136><image:internal:campfire>"
+      crafting:
+        title: "<white><shift:-11><image:internal:crafting_recipe>"
+      stonecutting:
+        title: "<white><shift:-11><image:internal:stonecutting_recipe>"
+      smithing-transform:
+        title: "<white><shift:-11><image:internal:smithing_transform_recipe>"
+      brewing:
+        title: "<white><shift:-11><image:internal:brewing_recipe>"
 
 debug:
   common: false
