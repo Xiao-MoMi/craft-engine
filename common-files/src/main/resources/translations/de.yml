@@ -344,6 +344,7 @@ loot.source.unknown_overwrite_mode: 'Unbekannter Überschreibmodus für Beuteque
 loot.source.target_not_allowed: 'Beutequellentyp ''<arg:0>'' unterstützt ''target'' nicht'
 loot.source.invalid_target: 'Ungültiges Beutequellenziel ''<arg:0>'''
 resource_pack.model_uv_out_of_bounds: 'Modell ''<arg:0>'', Element <arg:1>, Seite ''<arg:2>'' verwendet UV <arg:3> außerhalb des gültigen Bereichs mit Textur ''<arg:4>''. UV-Werte außerhalb von [0, 16] können die Modellverarbeitung auf Clients ab 26.1 verhindern'
+resource_pack.model_display_out_of_bounds: 'Modell <arg:0>, Anzeigeposition <arg:1>, Feld <arg:2> enthält Werte <arg:3> außerhalb des gültigen Bereichs [-<arg:4>, <arg:4>]'
 resource.block.state.invalid_rotation: 'Ungültige Drehung ''<arg:1>'' auf der <arg:0>-Achse; erwartet wird ein Vielfaches von 90 Grad'
 resource.item.unknown_data_component_type: 'Unbekannter Datenkomponententyp ''<arg:0>'''
 resource.item.data_component_predicate.unknown_type: 'Unbekannter Datenkomponenten-Prädikattyp ''<arg:0>'''

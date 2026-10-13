@@ -351,6 +351,7 @@ attribute.damage_effect.unknown_target: 'Objetivo de efecto posterior al daño d
 category.source.unknown_type: 'Tipo de fuente de categoría desconocido ''<arg:0>'''
 category.source.invalid_regex: 'Expresión regular de fuente de categoría no válida ''<arg:0>'''
 resource_pack.model_uv_out_of_bounds: 'El modelo ''<arg:0>'', elemento <arg:1>, cara ''<arg:2>'' usa UV <arg:3> fuera de rango con la textura ''<arg:4>''. Los valores UV fuera de [0, 16] pueden impedir que los clientes 26.1+ procesen el modelo'
+resource_pack.model_display_out_of_bounds: 'El modelo <arg:0>, posición de visualización <arg:1>, campo <arg:2> contiene valores <arg:3> fuera del rango permitido [-<arg:4>, <arg:4>]'
 resource_pack.bad_sprite: 'El bloque ''<arg:0>'' usa el sprite ''<arg:1>'', que debería estar en el atlas ''<arg:2>'' pero solo está definido en el atlas ''<arg:3>'''
 host.upload_started: "Iniciando la carga del paquete de recursos..."
 host.upload_finished: "Paquete de recursos cargado con éxito en <arg:0> ms"

@@ -345,6 +345,7 @@ loot.source.unknown_overwrite_mode: '未知的戰利品來源覆寫模式''<arg:
 loot.source.target_not_allowed: '戰利品來源類型''<arg:0>''不支援''target'''
 loot.source.invalid_target: '無效的戰利品來源目標''<arg:0>'''
 resource_pack.model_uv_out_of_bounds: '模型''<arg:0>''的元素<arg:1>、面''<arg:2>''在紋理''<arg:4>''上使用了越界UV <arg:3>。超出[0, 16]範圍的UV值可能導致26.1及以上用戶端無法烘焙模型'
+resource_pack.model_display_out_of_bounds: '模型「<arg:0>」的顯示位置「<arg:1>」中，欄位「<arg:2>」的數值<arg:3>超出範圍，允許範圍為[-<arg:4>, <arg:4>]'
 resource.item.unknown_data_component_type: '未知的資料元件類型''<arg:0>'''
 resource.item.data_component_predicate.unknown_type: '未知的資料元件述詞類型''<arg:0>'''
 resource.recipe.shaped_transform.ambigious_source: '有序轉換配方中存在兩個或更多標記為來源的材料：''<arg:0>''、''<arg:1>'''

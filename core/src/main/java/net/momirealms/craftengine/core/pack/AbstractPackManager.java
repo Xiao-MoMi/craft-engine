@@ -40,6 +40,7 @@ import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
+import net.momirealms.craftengine.core.pack.validation.ModelDisplayBoundsValidator;
 import net.momirealms.craftengine.core.pack.validation.ModelUvBoundsValidator;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowContext;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
@@ -1617,7 +1618,6 @@ public abstract class AbstractPackManager implements PackManager {
                     segment.min() >= MinecraftVersion.V1_21_6.packFormat().major(),
                     segment.max() >= MinecraftVersion.V1_21_11.packFormat().major(),
                     segment.min() >= MinecraftVersion.V26_1.packFormat().major(),
-                    segment.max() >= MinecraftVersion.V26_1.packFormat().major(),
                     obfuscation
             );
             if (fixAtlasOnValidation) {
@@ -1701,11 +1701,8 @@ public abstract class AbstractPackManager implements PackManager {
             boolean v1_21_6, // no 22.5 angle limit
             boolean v1_21_11, // item atlas + no -45~45 angle limit
             boolean v26_1,  // texture format update
-            boolean checkModelUvOutOfBounds,
             boolean obfuscation
     ) {
-        boolean fixModelUvOutOfBounds = v26_1 && Config.fixModelUvOutOfBounds();
-
         Multimap<Key, Key> glyphToFonts = HashMultimap.create(128, 32); // 图片到字体的映射
         Multimap<Key, Key> modelToItemDefinitions = HashMultimap.create(128, 4); // 模型到物品的映射
         Multimap<Key, String> modelToBlockStates = HashMultimap.create(128, 32); // 模型到方块的映射
@@ -1946,7 +1943,7 @@ public abstract class AbstractPackManager implements PackManager {
                 TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
                 blockModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
+                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
                 }
                 continue;
             }
@@ -1978,7 +1975,7 @@ public abstract class AbstractPackManager implements PackManager {
                 TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
                 itemModels.put(modelPath, texturedModel);
                 if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
+                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags);
                 }
                 continue;
             }
@@ -2378,21 +2375,36 @@ public abstract class AbstractPackManager implements PackManager {
                                String modelStringPath,
                                TexturedModel texturedModel,
                                Set<Revision> revisions,
-                               ModelFixFlags flags,
-                               boolean checkModelUvOutOfBounds,
-                               boolean fixModelUvOutOfBounds) {
+                               ModelFixFlags flags) {
         boolean changed = false;
         boolean illegalRotation225 = false;
         boolean illegalRotation45 = false;
         boolean illegalNewRotationFormat = false;
         boolean illegalTextures = false;
 
-        List<ModelUvBoundsValidator.Problem> uvProblems = List.of();
-        if (checkModelUvOutOfBounds) {
-            uvProblems = ModelUvBoundsValidator.validate(modelJson, texturedModel.textures);
+        List<ModelDisplayBoundsValidator.Problem> displayProblems = ModelDisplayBoundsValidator.validate(modelJson);
+        if (!displayProblems.isEmpty()) {
+            if (Config.fixModelDisplayOutOfBounds()) {
+                if (ModelDisplayBoundsValidator.fix(modelJson, displayProblems) > 0) {
+                    changed = true;
+                }
+            } else {
+                for (ModelDisplayBoundsValidator.Problem problem : displayProblems) {
+                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+                            "resource_pack.model_display_out_of_bounds",
+                            texturedModel.path.asString(),
+                            problem.position(),
+                            problem.field(),
+                            problem.vector(),
+                            String.valueOf(problem.limit())
+                    ));
+                }
+            }
         }
+
+        List<ModelUvBoundsValidator.Problem> uvProblems = ModelUvBoundsValidator.validate(modelJson, texturedModel.textures);
         if (!uvProblems.isEmpty()) {
-            if (fixModelUvOutOfBounds) {
+            if (Config.fixModelUvOutOfBounds()) {
                 if (ModelUvBoundsValidator.fix(modelJson, uvProblems) > 0) {
                     changed = true;
                 }

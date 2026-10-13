@@ -124,7 +124,9 @@ resource-pack:
       fix-element-rotation-angle: true
     # Model UV coordinates use a normalized 16x16 coordinate space, regardless of texture resolution.
     # Enable this to directly clamp out-of-bounds UVs to [0, 16].
-    fix-model-uv-out-of-bounds: false
+    fix-model-uv-out-of-bounds: true
+    # Clamp model display translation to [-80, 80] and scale to [-4, 4] during validation.
+    fix-model-display-out-of-bounds: true
 
   # Optimize your resource pack by reducing its size without any quality loss.
   # Add an optimize step to the workflow to run optimization.

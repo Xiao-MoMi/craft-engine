@@ -100,6 +100,7 @@ public final class Config {
     private boolean resource_pack$protection$crash_tools$method_9;
 
     private boolean resource_pack$validation$fix_model_uv_out_of_bounds;
+    private boolean resource_pack$validation$fix_model_display_out_of_bounds;
     private boolean resource_pack$validation$fix_atlas;
     private boolean resource_pack$validation$fix_missing_texture;
     private boolean resource_pack$validation$fallback_models$fix_textures_format;
@@ -516,6 +517,7 @@ public final class Config {
             return p;
         }).collect(Collectors.toSet());
         this.resource_pack$validation$fix_model_uv_out_of_bounds = config.getBoolean("resource-pack.validation.fix-model-uv-out-of-bounds", false);
+        this.resource_pack$validation$fix_model_display_out_of_bounds = config.getBoolean("resource-pack.validation.fix-model-display-out-of-bounds", false);
         this.resource_pack$validation$fix_atlas = config.getBoolean("resource-pack.validation.fix-atlas", true);
         this.resource_pack$validation$fix_missing_texture = config.getBoolean("resource-pack.validation.fix-missing-texture", true);
         this.resource_pack$validation$fallback_models$fix_textures_format = config.getBoolean("resource-pack.validation.fallback-models.fix-textures-format", true);
@@ -1496,6 +1498,10 @@ public final class Config {
 
     public static boolean fixModelUvOutOfBounds() {
         return instance.resource_pack$validation$fix_model_uv_out_of_bounds;
+    }
+
+    public static boolean fixModelDisplayOutOfBounds() {
+        return instance.resource_pack$validation$fix_model_display_out_of_bounds;
     }
 
     public static boolean fixTextureAtlas() {
