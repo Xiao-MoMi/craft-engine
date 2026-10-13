@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.bbmodel;
 
 import com.google.gson.*;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
@@ -79,7 +80,7 @@ public final class BBModelConverter {
 
         // 贴图
         List<JsonObject> textures = new ArrayList<>();
-        JsonArray texturesArray = root.getAsJsonArray("textures");
+        JsonArray texturesArray = root.getAsJsonArray(ModelJsonKeys.TEXTURES);
         if (texturesArray != null) {
             for (JsonElement element : texturesArray) {
                 textures.add(element.getAsJsonObject());
@@ -92,7 +93,7 @@ public final class BBModelConverter {
         boolean rotationSnap = "1.9.0".equals(getString(root, "java_block_version"));
         JsonArray elementsOut = new JsonArray();
         Set<Integer> usedTextures = new HashSet<>();
-        JsonArray elements = root.getAsJsonArray("elements");
+        JsonArray elements = root.getAsJsonArray(ModelJsonKeys.ELEMENTS);
         if (elements != null) {
             for (JsonElement element : elements) {
                 JsonObject cube = element.getAsJsonObject();
@@ -107,7 +108,7 @@ public final class BBModelConverter {
 
         // 贴图引用。Blockbench 只导出被面引用的贴图（particle 除外）；
         // 无元素但有 parent 的纯贴图模型导出全部贴图
-        boolean texturesOnlyModel = elementsOut.isEmpty() && !getString(root, "parent").isEmpty();
+        boolean texturesOnlyModel = elementsOut.isEmpty() && !getString(root, ModelJsonKeys.PARENT).isEmpty();
         int particleIndex = -1;
         for (int i = 0; i < textures.size(); i++) {
             if (textures.get(i).has("particle") && textures.get(i).get("particle").getAsBoolean()) {
@@ -155,12 +156,12 @@ public final class BBModelConverter {
         if (!credit.isEmpty()) {
             modelJson.addProperty("credit", credit);
         }
-        String parent = getString(root, "parent");
+        String parent = getString(root, ModelJsonKeys.PARENT);
         if (!parent.isEmpty()) {
-            modelJson.addProperty("parent", parent);
+            modelJson.addProperty(ModelJsonKeys.PARENT, parent);
         }
-        if (root.has("ambientocclusion") && !root.get("ambientocclusion").getAsBoolean()) {
-            modelJson.addProperty("ambientocclusion", false);
+        if (root.has(ModelJsonKeys.AMBIENT_OCCLUSION) && !root.get(ModelJsonKeys.AMBIENT_OCCLUSION).getAsBoolean()) {
+            modelJson.addProperty(ModelJsonKeys.AMBIENT_OCCLUSION, false);
         }
         if (resolution != null && (resolutionWidth != 16f || resolutionHeight != 16f)) {
             JsonArray textureSize = new JsonArray();
@@ -175,7 +176,7 @@ public final class BBModelConverter {
                 // particle 无论是否被引用都导出
                 JsonObject texture = textures.get(i);
                 if (texture.has("particle") && texture.get("particle").getAsBoolean()) {
-                    texturesOut.addProperty("particle", link);
+                    texturesOut.addProperty(ModelJsonKeys.PARTICLE, link);
                 }
                 if (!usedTextures.contains(i) && !texturesOnlyModel) continue;
                 // Blockbench 在贴图 id 与 link 相同时不写出该条目
@@ -185,20 +186,20 @@ public final class BBModelConverter {
                 }
             }
             if (!texturesOut.isEmpty()) {
-                modelJson.add("textures", texturesOut);
+                modelJson.add(ModelJsonKeys.TEXTURES, texturesOut);
             }
         }
         if (!elementsOut.isEmpty()) {
-            modelJson.add("elements", elementsOut);
+            modelJson.add(ModelJsonKeys.ELEMENTS, elementsOut);
         }
         if (root.has("front_gui_light") && root.get("front_gui_light").getAsBoolean()) {
-            modelJson.addProperty("gui_light", "front");
+            modelJson.addProperty(ModelJsonKeys.GUI_LIGHT, "front");
         }
         if (root.has("overrides") && root.get("overrides").isJsonArray()) {
             modelJson.add("overrides", root.getAsJsonArray("overrides"));
         }
-        if (root.has("display")) {
-            modelJson.add("display", root.getAsJsonObject("display"));
+        if (root.has(ModelJsonKeys.DISPLAY)) {
+            modelJson.add(ModelJsonKeys.DISPLAY, root.getAsJsonObject(ModelJsonKeys.DISPLAY));
         }
         JsonObject unhandled = root.getAsJsonObject("unhandled_root_fields");
         if (unhandled != null) {
@@ -218,8 +219,8 @@ public final class BBModelConverter {
         if (!name.isEmpty() && !"cube".equals(name)) {
             out.addProperty("name", name);
         }
-        JsonArray from = cube.getAsJsonArray("from").deepCopy();
-        JsonArray to = cube.getAsJsonArray("to").deepCopy();
+        JsonArray from = cube.getAsJsonArray(ModelJsonKeys.FROM).deepCopy();
+        JsonArray to = cube.getAsJsonArray(ModelJsonKeys.TO).deepCopy();
         // Blockbench 将 inflate 烘焙进 from/to，原版元素没有 inflate 字段
         if (cube.has("inflate")) {
             float inflate = cube.get("inflate").getAsFloat();
@@ -228,34 +229,34 @@ public final class BBModelConverter {
                 to.set(i, new JsonPrimitive(to.get(i).getAsFloat() + inflate));
             }
         }
-        out.add("from", from);
-        out.add("to", to);
-        if (cube.has("shade") && !cube.get("shade").getAsBoolean()) {
-            out.addProperty("shade", false);
+        out.add(ModelJsonKeys.FROM, from);
+        out.add(ModelJsonKeys.TO, to);
+        if (cube.has(ModelJsonKeys.SHADE) && !cube.get(ModelJsonKeys.SHADE).getAsBoolean()) {
+            out.addProperty(ModelJsonKeys.SHADE, false);
         }
-        if (cube.has("light_emission")) {
-            int lightEmission = cube.get("light_emission").getAsInt();
+        if (cube.has(ModelJsonKeys.LIGHT_EMISSION)) {
+            int lightEmission = cube.get(ModelJsonKeys.LIGHT_EMISSION).getAsInt();
             if (lightEmission != 0) {
-                out.addProperty("light_emission", lightEmission);
+                out.addProperty(ModelJsonKeys.LIGHT_EMISSION, lightEmission);
             }
         }
-        JsonArray rotation = cube.getAsJsonArray("rotation");
+        JsonArray rotation = cube.getAsJsonArray(ModelJsonKeys.ROTATION);
         float rx = rotation != null ? rotation.get(0).getAsFloat() : 0f;
         float ry = rotation != null ? rotation.get(1).getAsFloat() : 0f;
         float rz = rotation != null ? rotation.get(2).getAsFloat() : 0f;
         int nonZeroAxes = (rx != 0 ? 1 : 0) + (ry != 0 ? 1 : 0) + (rz != 0 ? 1 : 0);
-        JsonArray origin = cube.getAsJsonArray("origin");
+        JsonArray origin = cube.getAsJsonArray(ModelJsonKeys.ORIGIN);
         boolean originNonZero = origin != null && (origin.get(0).getAsFloat() != 0 || origin.get(1).getAsFloat() != 0 || origin.get(2).getAsFloat() != 0);
-        boolean rescale = cube.has("rescale") && cube.get("rescale").getAsBoolean();
+        boolean rescale = cube.has(ModelJsonKeys.RESCALE) && cube.get(ModelJsonKeys.RESCALE).getAsBoolean();
         JsonObject rotationOut = null;
         // Blockbench 默认 java_export_pivots=true：旋转非零，或 origin 非零时都会写出 rotation
         if (nonZeroAxes > 0 || originNonZero) {
             rotationOut = new JsonObject();
             // 1.21.11+ 允许多轴或任意角度，使用 {x,y,z} 新格式；旧版本仅单轴且 [-45,45]
             if (!rotationLimit && (nonZeroAxes > 1 || Math.abs(rx) > 45 || Math.abs(ry) > 45 || Math.abs(rz) > 45)) {
-                rotationOut.addProperty("x", rx);
-                rotationOut.addProperty("y", ry);
-                rotationOut.addProperty("z", rz);
+                rotationOut.addProperty(ModelJsonKeys.X, rx);
+                rotationOut.addProperty(ModelJsonKeys.Y, ry);
+                rotationOut.addProperty(ModelJsonKeys.Z, rz);
             } else {
                 // 受限格式取第一个非零轴；全零时用 cube 记忆的 rotation_axis（默认 y）
                 String axis;
@@ -276,64 +277,64 @@ public final class BBModelConverter {
                 if (rotationSnap) {
                     angle = Math.round(angle / 22.5f) * 22.5f;
                 }
-                rotationOut.addProperty("angle", angle);
-                rotationOut.addProperty("axis", axis);
+                rotationOut.addProperty(ModelJsonKeys.ANGLE, angle);
+                rotationOut.addProperty(ModelJsonKeys.AXIS, axis);
             }
-            rotationOut.add("origin", origin != null ? origin.deepCopy() : zeroVector());
+            rotationOut.add(ModelJsonKeys.ORIGIN, origin != null ? origin.deepCopy() : zeroVector());
         }
         if (rescale) {
             if (rotationOut != null) {
-                rotationOut.addProperty("rescale", true);
+                rotationOut.addProperty(ModelJsonKeys.RESCALE, true);
             } else {
                 rotationOut = new JsonObject();
-                rotationOut.addProperty("angle", 0);
-                rotationOut.addProperty("axis", rotationAxis(cube));
-                rotationOut.add("origin", origin != null ? origin.deepCopy() : zeroVector());
-                rotationOut.addProperty("rescale", true);
+                rotationOut.addProperty(ModelJsonKeys.ANGLE, 0);
+                rotationOut.addProperty(ModelJsonKeys.AXIS, rotationAxis(cube));
+                rotationOut.add(ModelJsonKeys.ORIGIN, origin != null ? origin.deepCopy() : zeroVector());
+                rotationOut.addProperty(ModelJsonKeys.RESCALE, true);
             }
         }
         if (rotationOut != null) {
-            out.add("rotation", rotationOut);
+            out.add(ModelJsonKeys.ROTATION, rotationOut);
         }
         // 旧版本遇上多轴旋转时，Blockbench 不报错，而是把完整三轴存进非标准 rotated 字段以便重新导入
         if (rotationLimit && nonZeroAxes >= 2) {
             out.add("rotated", rotation.deepCopy());
         }
         JsonObject facesOut = new JsonObject();
-        JsonObject faces = cube.getAsJsonObject("faces");
+        JsonObject faces = cube.getAsJsonObject(ModelJsonKeys.FACES);
         if (faces != null) {
             for (Map.Entry<String, JsonElement> entry : faces.entrySet()) {
                 JsonObject face = entry.getValue().getAsJsonObject();
                 // Blockbench 跳过未分配贴图的面
-                if (!face.has("texture") || face.get("texture").isJsonNull()) continue;
-                int textureIndex = face.get("texture").getAsInt();
+                if (!face.has(ModelJsonKeys.TEXTURE) || face.get(ModelJsonKeys.TEXTURE).isJsonNull()) continue;
+                int textureIndex = face.get(ModelJsonKeys.TEXTURE).getAsInt();
                 JsonObject faceOut = new JsonObject();
                 if (!face.has("enabled") || face.get("enabled").getAsBoolean()) {
-                    JsonArray uv = face.getAsJsonArray("uv");
+                    JsonArray uv = face.getAsJsonArray(ModelJsonKeys.UV);
                     if (uv != null) {
                         JsonArray uvOut = new JsonArray();
                         uvOut.add(uv.get(0).getAsFloat() * 16f / resolutionWidth);
                         uvOut.add(uv.get(1).getAsFloat() * 16f / resolutionHeight);
                         uvOut.add(uv.get(2).getAsFloat() * 16f / resolutionWidth);
                         uvOut.add(uv.get(3).getAsFloat() * 16f / resolutionHeight);
-                        faceOut.add("uv", uvOut);
+                        faceOut.add(ModelJsonKeys.UV, uvOut);
                     }
                 }
-                if (face.has("rotation") && face.get("rotation").getAsInt() != 0) {
-                    faceOut.add("rotation", face.get("rotation"));
+                if (face.has(ModelJsonKeys.ROTATION) && face.get(ModelJsonKeys.ROTATION).getAsInt() != 0) {
+                    faceOut.add(ModelJsonKeys.ROTATION, face.get(ModelJsonKeys.ROTATION));
                 }
                 // 贴图引用解析不到时 Blockbench 保留该面并写 #missing
                 if (textureIndex >= 0 && textureIndex < textures.size()) {
                     usedTextures.add(textureIndex);
-                    faceOut.addProperty("texture", "#" + textureId(textures.get(textureIndex), textureIndex));
+                    faceOut.addProperty(ModelJsonKeys.TEXTURE, "#" + textureId(textures.get(textureIndex), textureIndex));
                 } else {
-                    faceOut.addProperty("texture", "#missing");
+                    faceOut.addProperty(ModelJsonKeys.TEXTURE, "#missing");
                 }
-                if (face.has("cullface") && !face.get("cullface").getAsString().isEmpty()) {
-                    faceOut.addProperty("cullface", face.get("cullface").getAsString());
+                if (face.has(ModelJsonKeys.CULL_FACE) && !face.get(ModelJsonKeys.CULL_FACE).getAsString().isEmpty()) {
+                    faceOut.addProperty(ModelJsonKeys.CULL_FACE, face.get(ModelJsonKeys.CULL_FACE).getAsString());
                 }
                 if (face.has("tint") && face.get("tint").getAsInt() >= 0) {
-                    faceOut.addProperty("tintindex", face.get("tint").getAsInt());
+                    faceOut.addProperty(ModelJsonKeys.TINT_INDEX, face.get("tint").getAsInt());
                 }
                 facesOut.add(entry.getKey(), faceOut);
             }
@@ -341,7 +342,7 @@ public final class BBModelConverter {
         if (facesOut.isEmpty()) {
             return null;
         }
-        out.add("faces", facesOut);
+        out.add(ModelJsonKeys.FACES, facesOut);
         return out;
     }
 

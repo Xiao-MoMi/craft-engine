@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 
 final class ModelJsonOptimizer {
     private static final String[] REDUNDANT_MODEL_TAGS = {"credit", "groups", "texture_size", "format_version", "__comment", "__comment__", "_comment"};
@@ -20,7 +21,7 @@ final class ModelJsonOptimizer {
         for (String key : REDUNDANT_MODEL_TAGS) {
             object.remove(key);
         }
-        JsonElement elements = object.get("elements");
+        JsonElement elements = object.get(ModelJsonKeys.ELEMENTS);
         if (elements != null && elements.isJsonArray()) {
             JsonArray elementArray = elements.getAsJsonArray();
             for (int index = 0; index < elementArray.size(); index++) {
@@ -36,32 +37,32 @@ final class ModelJsonOptimizer {
         element.remove("name");
         element.remove("color");
         element.remove("rotated");
-        if (JSON_TRUE.equals(element.get("shade"))) {
-            element.remove("shade");
+        if (JSON_TRUE.equals(element.get(ModelJsonKeys.SHADE))) {
+            element.remove(ModelJsonKeys.SHADE);
         }
-        if (JSON_ZERO.equals(element.get("light_emission"))) {
-            element.remove("light_emission");
+        if (JSON_ZERO.equals(element.get(ModelJsonKeys.LIGHT_EMISSION))) {
+            element.remove(ModelJsonKeys.LIGHT_EMISSION);
         }
-        JsonElement rotation = element.get("rotation");
+        JsonElement rotation = element.get(ModelJsonKeys.ROTATION);
         if (rotation != null && rotation.isJsonObject()) {
             JsonObject rotationObject = rotation.getAsJsonObject();
-            if (JSON_FALSE.equals(rotationObject.get("rescale"))) {
-                rotationObject.remove("rescale");
+            if (JSON_FALSE.equals(rotationObject.get(ModelJsonKeys.RESCALE))) {
+                rotationObject.remove(ModelJsonKeys.RESCALE);
             }
         }
-        JsonElement faces = element.get("faces");
+        JsonElement faces = element.get(ModelJsonKeys.FACES);
         if (faces != null && faces.isJsonObject()) {
             for (JsonElement face : faces.getAsJsonObject().asMap().values()) {
                 if (face.isJsonObject()) {
                     JsonObject faceObject = face.getAsJsonObject();
-                    if (JSON_ZERO.equals(faceObject.get("rotation"))) {
-                        faceObject.remove("rotation");
+                    if (JSON_ZERO.equals(faceObject.get(ModelJsonKeys.ROTATION))) {
+                        faceObject.remove(ModelJsonKeys.ROTATION);
                     }
-                    if (JSON_NEGATIVE_ONE.equals(faceObject.get("tintindex"))) {
-                        faceObject.remove("tintindex");
+                    if (JSON_NEGATIVE_ONE.equals(faceObject.get(ModelJsonKeys.TINT_INDEX))) {
+                        faceObject.remove(ModelJsonKeys.TINT_INDEX);
                     }
-                    if (JSON_EMPTY_STRING.equals(faceObject.get("cullface"))) {
-                        faceObject.remove("cullface");
+                    if (JSON_EMPTY_STRING.equals(faceObject.get(ModelJsonKeys.CULL_FACE))) {
+                        faceObject.remove(ModelJsonKeys.CULL_FACE);
                     }
                 }
             }

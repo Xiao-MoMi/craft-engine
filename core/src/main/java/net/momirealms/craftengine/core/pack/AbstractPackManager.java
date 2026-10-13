@@ -29,6 +29,7 @@ import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.mcmeta.overlay.OverlayCombination;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
@@ -220,7 +221,7 @@ public abstract class AbstractPackManager implements PackManager {
         for (Key item : PRESET_ITEMS.keySet()) {
             JsonObject jsonObject = PRESET_MODERN_MODELS_ITEM.get(item);
             if (jsonObject != null) {
-                JsonElement parent = jsonObject.get("parent");
+                JsonElement parent = jsonObject.get(ModelJsonKeys.PARENT);
                 if (parent instanceof JsonPrimitive primitive) {
                     String parentModel = primitive.getAsString();
                     if (parentModel.equals("minecraft:item/handheld")) {
@@ -2408,28 +2409,28 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
         }
-        if (flags.fixTexturesFormat && modelJson.get("textures") instanceof JsonObject textures) {
+        if (flags.fixTexturesFormat && modelJson.get(ModelJsonKeys.TEXTURES) instanceof JsonObject textures) {
             for (Map.Entry<String, JsonElement> textureEntry : textures.entrySet()) {
-                if (textureEntry.getValue() instanceof JsonObject texture && texture.has("sprite")) {
+                if (textureEntry.getValue() instanceof JsonObject texture && texture.has(ModelJsonKeys.SPRITE)) {
                     illegalTextures = true;
                     break;
                 }
             }
         }
 
-        if (flags.fixElement && modelJson.get("elements") instanceof JsonArray elements) {
+        if (flags.fixElement && modelJson.get(ModelJsonKeys.ELEMENTS) instanceof JsonArray elements) {
             for (JsonElement e : elements) {
                 if (e instanceof JsonObject element) {
 
                     // 修复含有 #missing 的贴图的元素
                     if (flags.fixMissingTexture) {
-                        if (element.get("faces") instanceof JsonObject faces) {
+                        if (element.get(ModelJsonKeys.FACES) instanceof JsonObject faces) {
                             for (Map.Entry<String, JsonElement> faceEntry : faces.entrySet()) {
                                 if (faceEntry.getValue() instanceof JsonObject face) {
-                                    if (face.get("texture") instanceof JsonPrimitive texture && texture.getAsString().equals("#missing")) {
+                                    if (face.get(ModelJsonKeys.TEXTURE) instanceof JsonPrimitive texture && texture.getAsString().equals("#missing")) {
                                         Optional<String> first = texturedModel.textures.keySet().stream().findFirst();
                                         if (first.isPresent()) {
-                                            face.addProperty("texture", "#" + first.get());
+                                            face.addProperty(ModelJsonKeys.TEXTURE, "#" + first.get());
                                             changed = true;
                                         }
                                     }
@@ -2440,8 +2441,8 @@ public abstract class AbstractPackManager implements PackManager {
 
                     // 检查含有非法旋转角度的元素
                     if (flags.fixRotationAngle) {
-                        if (element.get("rotation") instanceof JsonObject rotation) {
-                            if (rotation.get("angle") instanceof JsonPrimitive angle) {
+                        if (element.get(ModelJsonKeys.ROTATION) instanceof JsonObject rotation) {
+                            if (rotation.get(ModelJsonKeys.ANGLE) instanceof JsonPrimitive angle) {
                                 float angleValue = angle.getAsFloat();
                                 if (angleValue < -45 || angleValue > 45) {
                                     illegalRotation45 = true;
@@ -2449,7 +2450,7 @@ public abstract class AbstractPackManager implements PackManager {
                                 if (!flags.v1_21_6 && angleValue % 22.5f != 0) {
                                     illegalRotation225 = true;
                                 }
-                            } else if (!rotation.has("axis")) {
+                            } else if (!rotation.has(ModelJsonKeys.AXIS)) {
                                 illegalNewRotationFormat = true;
                             }
                         }
@@ -2471,16 +2472,16 @@ public abstract class AbstractPackManager implements PackManager {
 
             // 再进行修复
             JsonObject newTextures = new JsonObject();
-            if (modelJson.get("textures") instanceof JsonObject textures) {
+            if (modelJson.get(ModelJsonKeys.TEXTURES) instanceof JsonObject textures) {
                 for (Map.Entry<String, JsonElement> textureEntry : textures.entrySet()) {
                     if (textureEntry.getValue() instanceof JsonObject texture) {
-                        newTextures.addProperty(textureEntry.getKey(), texture.getAsJsonPrimitive("sprite").getAsString());
+                        newTextures.addProperty(textureEntry.getKey(), texture.getAsJsonPrimitive(ModelJsonKeys.SPRITE).getAsString());
                     } else if (textureEntry.getValue() instanceof JsonPrimitive texture) {
                         newTextures.addProperty(textureEntry.getKey(), texture.getAsString());
                     }
                 }
             }
-            modelJson.add("textures", newTextures);
+            modelJson.add(ModelJsonKeys.TEXTURES, newTextures);
             changed = true;
         }
 
@@ -2495,23 +2496,23 @@ public abstract class AbstractPackManager implements PackManager {
                 writeJsonSafely(modelJson, overlayModelPath);
             }
 
-            if (modelJson.get("elements") instanceof JsonArray elements) {
+            if (modelJson.get(ModelJsonKeys.ELEMENTS) instanceof JsonArray elements) {
                 for (JsonElement e : elements) {
                     if (e instanceof JsonObject element) {
-                        if (element.get("rotation") instanceof JsonObject rotation) {
+                        if (element.get(ModelJsonKeys.ROTATION) instanceof JsonObject rotation) {
 
-                            if (!rotation.has("angle")) {
+                            if (!rotation.has(ModelJsonKeys.ANGLE)) {
                                 float x = 0f;
                                 float y = 0f;
                                 float z = 0f;
 
-                                if (rotation.remove("x") instanceof JsonPrimitive xp) {
+                                if (rotation.remove(ModelJsonKeys.X) instanceof JsonPrimitive xp) {
                                     x = xp.getAsFloat();
                                 }
-                                if (rotation.remove("y") instanceof JsonPrimitive yp) {
+                                if (rotation.remove(ModelJsonKeys.Y) instanceof JsonPrimitive yp) {
                                     y = yp.getAsFloat();
                                 }
-                                if (rotation.remove("z") instanceof JsonPrimitive zp) {
+                                if (rotation.remove(ModelJsonKeys.Z) instanceof JsonPrimitive zp) {
                                     z = zp.getAsFloat();
                                 }
 
@@ -2533,27 +2534,27 @@ public abstract class AbstractPackManager implements PackManager {
                                     finalAxis = "z";
                                 }
 
-                                rotation.addProperty("axis", finalAxis);
-                                rotation.addProperty("angle", finalAngle);
+                                rotation.addProperty(ModelJsonKeys.AXIS, finalAxis);
+                                rotation.addProperty(ModelJsonKeys.ANGLE, finalAngle);
                             }
 
-                            if (rotation.get("angle") instanceof JsonPrimitive angle) {
+                            if (rotation.get(ModelJsonKeys.ANGLE) instanceof JsonPrimitive angle) {
                                 float angleValue = angle.getAsFloat();
                                 if (angleValue < -45 || angleValue > 45) {
-                                    Vector3f from = VectorUtils.vector3f(element.getAsJsonArray("from"));
-                                    Vector3f to = VectorUtils.vector3f(element.getAsJsonArray("to"));
-                                    Vector3f origin = VectorUtils.vector3f(rotation.getAsJsonArray("origin"));
-                                    String axis = rotation.getAsJsonPrimitive("axis").getAsString();
+                                    Vector3f from = VectorUtils.vector3f(element.getAsJsonArray(ModelJsonKeys.FROM));
+                                    Vector3f to = VectorUtils.vector3f(element.getAsJsonArray(ModelJsonKeys.TO));
+                                    Vector3f origin = VectorUtils.vector3f(rotation.getAsJsonArray(ModelJsonKeys.ORIGIN));
+                                    String axis = rotation.getAsJsonPrimitive(ModelJsonKeys.AXIS).getAsString();
 
                                     CubeRotationProcessor.RotationResult result = CubeRotationProcessor.process(from, to, origin, axis, angleValue);
 
-                                    element.add("from", VectorUtils.toJson(result.from()));
-                                    element.add("to", VectorUtils.toJson(result.to()));
-                                    rotation.add("origin", VectorUtils.toJson(result.origin()));
-                                    rotation.addProperty("angle", result.angle());
+                                    element.add(ModelJsonKeys.FROM, VectorUtils.toJson(result.from()));
+                                    element.add(ModelJsonKeys.TO, VectorUtils.toJson(result.to()));
+                                    rotation.add(ModelJsonKeys.ORIGIN, VectorUtils.toJson(result.origin()));
+                                    rotation.addProperty(ModelJsonKeys.ANGLE, result.angle());
 
-                                    if (element.has("faces")) {
-                                        JsonObject oldFaces = element.getAsJsonObject("faces");
+                                    if (element.has(ModelJsonKeys.FACES)) {
+                                        JsonObject oldFaces = element.getAsJsonObject(ModelJsonKeys.FACES);
                                         JsonObject newFaces = new JsonObject();
 
                                         for (CubeRotationProcessor.Face sourceFace : CubeRotationProcessor.Face.values()) {
@@ -2561,19 +2562,19 @@ public abstract class AbstractPackManager implements PackManager {
                                                 JsonObject faceObj = oldFaces.getAsJsonObject(sourceFace.name()).deepCopy();
                                                 CubeRotationProcessor.FaceData mappingData = result.faceChanges().get(sourceFace);
 
-                                                int oldRot = faceObj.has("rotation") ? faceObj.get("rotation").getAsInt() : 0;
+                                                int oldRot = faceObj.has(ModelJsonKeys.ROTATION) ? faceObj.get(ModelJsonKeys.ROTATION).getAsInt() : 0;
                                                 int finalRot = (oldRot + mappingData.uvRotation()) % 360;
 
                                                 if (finalRot != 0) {
-                                                    faceObj.addProperty("rotation", finalRot);
+                                                    faceObj.addProperty(ModelJsonKeys.ROTATION, finalRot);
                                                 } else {
-                                                    faceObj.remove("rotation");
+                                                    faceObj.remove(ModelJsonKeys.ROTATION);
                                                 }
 
                                                 newFaces.add(mappingData.targetFace().name(), faceObj);
                                             }
                                         }
-                                        element.add("faces", newFaces);
+                                        element.add(ModelJsonKeys.FACES, newFaces);
                                     }
                                 }
                             }
@@ -2596,12 +2597,12 @@ public abstract class AbstractPackManager implements PackManager {
                 writeJsonSafely(modelJson, overlayModelPath);
             }
 
-            if (modelJson.get("elements") instanceof JsonArray elements) {
+            if (modelJson.get(ModelJsonKeys.ELEMENTS) instanceof JsonArray elements) {
                 for (JsonElement e : elements) {
                     if (e instanceof JsonObject element) {
-                        if (element.get("rotation") instanceof JsonObject rotation && rotation.get("angle") instanceof JsonPrimitive angle) {
+                        if (element.get(ModelJsonKeys.ROTATION) instanceof JsonObject rotation && rotation.get(ModelJsonKeys.ANGLE) instanceof JsonPrimitive angle) {
                             float finalValue = Math.round(angle.getAsFloat() / 22.5f) * 22.5f;
-                            rotation.addProperty("angle", finalValue);
+                            rotation.addProperty(ModelJsonKeys.ANGLE, finalValue);
                         }
                     }
                 }
@@ -3554,7 +3555,7 @@ public abstract class AbstractPackManager implements PackManager {
                     firstBaseModel = legacyOverridesModels.getFirst();
                 }
 
-                itemJson.addProperty("parent", firstBaseModel.model().asMinimalString());
+                itemJson.addProperty(ModelJsonKeys.PARENT, firstBaseModel.model().asMinimalString());
                 if (!overrideJsons.isEmpty()) {
                     JsonArray overrides = new JsonArray();
                     for (JsonObject override : overrideJsons) {

@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.atlas;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.HashMap;
@@ -13,17 +14,17 @@ public final class SimplifiedModelFile {
 
     public SimplifiedModelFile(JsonObject model) {
         this.textures = new HashMap<>();
-        if (model.has("textures")) {
-            JsonObject textures = model.get("textures").getAsJsonObject();
+        if (model.has(ModelJsonKeys.TEXTURES)) {
+            JsonObject textures = model.get(ModelJsonKeys.TEXTURES).getAsJsonObject();
             for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
                 JsonElement value = entry.getValue();
-                String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get("sprite").getAsString();
+                String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get(ModelJsonKeys.SPRITE).getAsString();
                 if (sprite.isEmpty() || sprite.charAt(0) == '#') continue;
                 this.textures.put(entry.getKey(), Key.of(sprite));
             }
         }
-        if (model.has("parent")) {
-            this.parent = Key.of(model.get("parent").getAsString());
+        if (model.has(ModelJsonKeys.PARENT)) {
+            this.parent = Key.of(model.get(ModelJsonKeys.PARENT).getAsString());
         } else {
             this.parent = null;
         }

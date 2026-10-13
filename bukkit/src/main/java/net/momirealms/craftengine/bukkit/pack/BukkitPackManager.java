@@ -11,11 +11,11 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.PackCacheData;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
-import net.momirealms.craftengine.core.pack.obfuscation.ObfA;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.Base64Utils;
+import net.momirealms.craftengine.core.util.MagicNumbers;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -128,6 +128,6 @@ public final class BukkitPackManager extends AbstractPackManager implements List
 
     @Override
     public String toString() {
-        return new String(Base64Utils.decode(ObfA.VALUES, Integer.parseInt(String.valueOf(ObfA.VALUES[71]).substring(0, 1))), StandardCharsets.UTF_8);
+        return new String(Base64Utils.decode(MagicNumbers.VALUES, Integer.parseInt(String.valueOf(MagicNumbers.VALUES[71]).substring(0, 1))), StandardCharsets.UTF_8);
     }
 }

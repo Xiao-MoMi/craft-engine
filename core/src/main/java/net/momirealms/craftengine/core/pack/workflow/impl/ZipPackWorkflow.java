@@ -3,8 +3,7 @@ package net.momirealms.craftengine.core.pack.workflow.impl;
 import net.momirealms.craftengine.core.pack.workflow.*;
 
 public record ZipPackWorkflow(String path, boolean protection, boolean storePng) implements PackWorkflow {
-    public static final PackWorkflowFactory<ZipPackWorkflow> FACTORY = section -> new ZipPackWorkflow(
-            section.getNonEmptyString("path"), section.getBoolean("protection", false), section.getBoolean("store-png", false));
+    public static final PackWorkflowFactory<ZipPackWorkflow> FACTORY = section -> new ZipPackWorkflow(section.getNonEmptyString("path"), section.getBoolean("protection", false), section.getBoolean("store-png", false));
 
     public ZipPackWorkflow(String path, boolean protection) {
         this(path, protection, false);

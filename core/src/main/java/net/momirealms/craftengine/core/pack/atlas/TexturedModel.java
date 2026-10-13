@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.atlas;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.HashMap;
@@ -19,12 +20,12 @@ public final class TexturedModel {
     }
 
     public static Map<String, Key> getTextures(JsonObject json) {
-        if (json.has("textures")) {
-            JsonObject textures = json.get("textures").getAsJsonObject();
+        if (json.has(ModelJsonKeys.TEXTURES)) {
+            JsonObject textures = json.get(ModelJsonKeys.TEXTURES).getAsJsonObject();
             Map<String, Key> map = new HashMap<>(Math.max(textures.size() * 2, 4));
             for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
                 JsonElement value = entry.getValue();
-                String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get("sprite").getAsString();
+                String sprite = value.isJsonPrimitive() ? value.getAsString() : value.getAsJsonObject().get(ModelJsonKeys.SPRITE).getAsString();
                 if (sprite.isEmpty() || sprite.charAt(0) == '#') continue;
                 map.put(entry.getKey(), Key.of(sprite));
             }
@@ -35,8 +36,8 @@ public final class TexturedModel {
     }
 
     public static Key getParent(JsonObject json) {
-        if (json.has("parent")) {
-            return Key.of(json.get("parent").getAsString());
+        if (json.has(ModelJsonKeys.PARENT)) {
+            return Key.of(json.get(ModelJsonKeys.PARENT).getAsString());
         } else {
             return null;
         }

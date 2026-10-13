@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.model.definition;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -49,8 +50,8 @@ public record Transformation(List<Float> matrix) {
         ConfigSection section = value.getAsSection();
         Quaternionf rightRotation = section.getValue(RIGHT_ROTATION, Transformation::parseRotation, ConfigConstants.ZERO_QUATERNION);
         Quaternionf leftRotation = section.getValue(LEFT_ROTATION, Transformation::parseRotation, ConfigConstants.ZERO_QUATERNION);
-        Vector3f scale = section.getVector3f("scale", ConfigConstants.NORMAL_SCALE);
-        Vector3f translation = section.getVector3f("translation", ConfigConstants.ZERO_VECTOR3);
+        Vector3f scale = section.getVector3f(ModelJsonKeys.SCALE, ConfigConstants.NORMAL_SCALE);
+        Vector3f translation = section.getVector3f(ModelJsonKeys.TRANSLATION, ConfigConstants.ZERO_VECTOR3);
         return new Transformation(translation, leftRotation, scale, rightRotation);
     }
 
@@ -80,9 +81,9 @@ public record Transformation(List<Float> matrix) {
         JsonObject jsonObject = json.getAsJsonObject();
         Quaternionf rightRotation = parseRotation(jsonObject.get("right_rotation"));
         Quaternionf leftRotation = parseRotation(jsonObject.get("left_rotation"));
-        JsonArray scaleArray = jsonObject.getAsJsonArray("scale");
+        JsonArray scaleArray = jsonObject.getAsJsonArray(ModelJsonKeys.SCALE);
         Vector3f scale = new Vector3f(scaleArray.get(0).getAsFloat(), scaleArray.get(1).getAsFloat(), scaleArray.get(2).getAsFloat());
-        JsonArray translationArray = jsonObject.getAsJsonArray("translation");
+        JsonArray translationArray = jsonObject.getAsJsonArray(ModelJsonKeys.TRANSLATION);
         Vector3f translation = new Vector3f(translationArray.get(0).getAsFloat(), translationArray.get(1).getAsFloat(), translationArray.get(2).getAsFloat());
         return new Transformation(translation, leftRotation, scale, rightRotation);
     }
@@ -98,8 +99,8 @@ public record Transformation(List<Float> matrix) {
     private static Quaternionf parseRotation(ConfigValue value) {
         if (value.is(Map.class)) {
             ConfigSection section = value.getAsSection();
-            float angle = section.getFloat("angle");
-            Vector3f axis = section.getVector3f("axis", ConfigConstants.ZERO_VECTOR3);
+            float angle = section.getFloat(ModelJsonKeys.ANGLE);
+            Vector3f axis = section.getVector3f(ModelJsonKeys.AXIS, ConfigConstants.ZERO_VECTOR3);
             return new Quaternionf(new AxisAngle4f(angle, axis.x, axis.y, axis.z));
         }
         return value.getAsQuaternion();
@@ -111,8 +112,8 @@ public record Transformation(List<Float> matrix) {
             return new Quaternionf(rotationArray.get(0).getAsFloat(), rotationArray.get(1).getAsFloat(), rotationArray.get(2).getAsFloat(), rotationArray.get(3).getAsFloat());
         }
         JsonObject rotation = json.getAsJsonObject();
-        float angle = rotation.get("angle").getAsFloat();
-        JsonArray axis = rotation.getAsJsonArray("axis");
+        float angle = rotation.get(ModelJsonKeys.ANGLE).getAsFloat();
+        JsonArray axis = rotation.getAsJsonArray(ModelJsonKeys.AXIS);
         return new Quaternionf(new AxisAngle4f(angle, axis.get(0).getAsFloat(), axis.get(1).getAsFloat(), axis.get(2).getAsFloat()));
     }
 
