@@ -34,7 +34,7 @@ public final class CustomBrewingRecipe extends AbstractFixedResultRecipe {
     @SuppressWarnings("unchecked")
     @Override
     public boolean matches(RecipeInput input) {
-        BrewingInput<Object> brewingInput = (BrewingInput<Object>) input;
+        BrewingInput brewingInput = (BrewingInput) input;
         return this.container.test(brewingInput.container()) && this.ingredient.test(brewingInput.ingredient());
     }
 
@@ -49,7 +49,7 @@ public final class CustomBrewingRecipe extends AbstractFixedResultRecipe {
     @SuppressWarnings("unchecked")
     @Override
     public void takeInput(@NotNull RecipeInput input, int ignore) {
-        BrewingInput<Object> brewingInput = (BrewingInput<Object>) input;
+        BrewingInput brewingInput = (BrewingInput) input;
         takeIngredient(this.container, brewingInput.container().item(), ignore);
         takeIngredient(this.ingredient, brewingInput.ingredient().item(), ignore);
     }
