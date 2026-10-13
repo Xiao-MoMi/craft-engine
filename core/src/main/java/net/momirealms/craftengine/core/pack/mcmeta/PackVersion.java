@@ -52,6 +52,13 @@ public record PackVersion(int major, int minor) implements Comparable<PackVersio
         }
     }
 
+    public static String formatRange(PackVersion min, PackVersion max) {
+        if (max.minor == Integer.MAX_VALUE) {
+            return "[" + min.asString() + ", " + ((long) max.major + 1) + ")";
+        }
+        return "[" + min.asString() + ", " + max.asString() + "]";
+    }
+
     public JsonArray getAsJsonArray() {
         JsonArray array = new JsonArray();
         array.add(this.major);

@@ -201,7 +201,7 @@ mod.serverbound.no_permission: El jugador <arg:0> no tiene el permiso <arg:1> pa
 resource_pack.invalid_overlay_format: Formato de superposición no válido '<arg:0>'. El formato debe contener el marcador de posición '{version}'
 resource_pack.generation_started: Generando paquete de recursos...
 resource_pack.generation_finished: Paquete de recursos generado en <arg:0>ms
-resource_pack.validation_started: 'Validando paquete de recursos... (Progreso: <arg:0>/<arg:1> | Formato de Pack: <arg:2>~<arg:3> | Superposiciones: <arg:4>)'
+resource_pack.validation_started_interval: 'Validando paquete de recursos... (Progreso: <arg:0>/<arg:1> | Formato de Pack: <arg:2> | Superposiciones: <arg:3>)'
 resource_pack.json_optimization_started: '> Optimizando archivos json...'
 resource_pack.texture_optimization_started: '> Optimizando archivos de textura...'
 resource_pack.optimization_result: '> □ Antes/Después/Proporción: <arg:0>/<arg:1>/<arg:2>%'

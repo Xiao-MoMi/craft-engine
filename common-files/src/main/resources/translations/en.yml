@@ -217,7 +217,7 @@ mod.serverbound.no_permission: Player <arg:0> does not have permission <arg:1> t
 resource_pack.invalid_overlay_format: Invalid overlay format '<arg:0>'. Overlay format must contain the placeholder '{version}'
 resource_pack.generation_started: Generating resource pack...
 resource_pack.generation_finished: Generated resource pack in <arg:0>ms
-resource_pack.validation_started: 'Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)'
+resource_pack.validation_started_interval: 'Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
 resource_pack.json_optimization_started: '> Optimizing json files...'
 resource_pack.texture_optimization_started: '> Optimizing texture files...'
 resource_pack.optimization_result: '> □ Before/After/Ratio: <arg:0>/<arg:1>/<arg:2>%'

@@ -172,7 +172,7 @@ mod.serverbound.no_permission: 玩家 <arg:0> 沒有 <arg:1> 權限傳送 <arg:2
 resource_pack.invalid_overlay_format: 無效的疊加資源包格式「<arg:0>」。疊加資源包格式必須包含佔位符「{version}」
 resource_pack.generation_started: 正在生成資源包...
 resource_pack.generation_finished: 資源包生成完成，耗時 <arg:0> 毫秒
-resource_pack.validation_started: 正在驗證資源包...（進度：<arg:0>/<arg:1> | 資源包格式：<arg:2>~<arg:3> | 疊加資源包：<arg:4>）
+resource_pack.validation_started_interval: 正在驗證資源包...（進度：<arg:0>/<arg:1> | 資源包格式：<arg:2> | 疊加資源包：<arg:3>）
 resource_pack.json_optimization_started: '> 正在最佳化 json 檔案...'
 resource_pack.texture_optimization_started: '> 正在最佳化紋理檔案...'
 resource_pack.optimization_result: '> □ 最佳化前/最佳化後/比率：<arg:0>/<arg:1>/<arg:2>%'

@@ -178,7 +178,7 @@ mod.serverbound.no_permission: Spieler <arg:0> hat keine Berechtigung <arg:1>, u
 resource_pack.invalid_overlay_format: Ungültiges Overlay-Format '<arg:0>'. Overlay-Format muss den Placeholder '{version}' enthalten
 resource_pack.generation_started: Generiere Resource Pack...
 resource_pack.generation_finished: Resource Pack in <arg:0>ms generiert
-resource_pack.validation_started: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2>~<arg:3> | Overlays: <arg:4>)'
+resource_pack.validation_started_interval: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
 resource_pack.json_optimization_started: '> Optimiere JSON-Dateien...'
 resource_pack.texture_optimization_started: '> Optimiere Textur-Dateien...'
 resource_pack.optimization_result: '> □ Vor/Nach/Verhältnis: <arg:0>/<arg:1>/<arg:2>%'

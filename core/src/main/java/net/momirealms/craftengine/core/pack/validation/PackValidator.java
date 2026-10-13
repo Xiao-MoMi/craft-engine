@@ -95,8 +95,8 @@ public final class PackValidator {
                 }
 
                 this.context.logger().info(TranslationManager.instance().plainTranslation(
-                        "resource_pack.validation_started",
-                        String.valueOf(i + 1), String.valueOf(size), segment.minVersion().asString(), segment.maxVersion().asString(), overlayInOrder.stream().map(Overlay::directory).toList().toString()
+                        "resource_pack.validation_started_interval",
+                        String.valueOf(i + 1), String.valueOf(size), PackVersion.formatRange(segment.minVersion(), segment.maxVersion()), overlayInOrder.stream().map(Overlay::directory).toList().toString()
                 ));
 
                 Path[] rootPaths = rootPathList.toArray(new Path[0]);

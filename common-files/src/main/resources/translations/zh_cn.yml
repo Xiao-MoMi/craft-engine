@@ -204,7 +204,7 @@ mod.serverbound.no_permission: 玩家<arg:0>没有<arg:1>权限发送<arg:2>包�
 resource_pack.invalid_overlay_format: 无效的叠加资源包格式“<arg:0>”。叠加资源包格式必须包含占位符“{version}”
 resource_pack.generation_started: 正在生成资源包…
 resource_pack.generation_finished: 资源包生成完成，耗时<arg:0>毫秒
-resource_pack.validation_started: 正在验证资源包…（进度：<arg:0>/<arg:1> | 资源包格式：<arg:2>~<arg:3> | 叠加资源包：<arg:4>）
+resource_pack.validation_started_interval: 正在验证资源包…（进度：<arg:0>/<arg:1> | 资源包格式：<arg:2> | 叠加资源包：<arg:3>）
 resource_pack.json_optimization_started: '> 正在优化json文件…'
 resource_pack.texture_optimization_started: '> 正在优化纹理文件…'
 resource_pack.optimization_result: '> □ 优化前/优化后/比率：<arg:0>/<arg:1>/<arg:2>%'
