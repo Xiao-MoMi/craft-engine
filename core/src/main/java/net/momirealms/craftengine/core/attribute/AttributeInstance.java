@@ -420,7 +420,8 @@ public class AttributeInstance {
             setVanillaModifier(target, amount);
             double newMaxHealth = target.attribute.getValue();
             if (oldMaxHealth > 0 && newMaxHealth > 0 && newMaxHealth != oldMaxHealth) {
-                living.setHealth(health * newMaxHealth / oldMaxHealth);
+                double newHealth = Math.min(health * newMaxHealth / oldMaxHealth, newMaxHealth);
+                living.setHealth(newHealth);
             }
         } else {
             setVanillaModifier(target, amount);
