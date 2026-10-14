@@ -166,13 +166,19 @@ public final class PngOptimizer {
                 && (!model.hasAlpha() || model.getComponentSize(1) == bits);
     }
 
-    private static int[] readPixels(BufferedImage image) {
+    public static int[] readPixels(BufferedImage image) {
+        int width = image.getWidth();
+        int[] pixels = new int[Math.multiplyExact(width, image.getHeight())];
+        readPixels(image, pixels, 0, width);
+        return pixels;
+    }
+
+    public static void readPixels(BufferedImage image, int[] pixels, int offset, int scanlineStride) {
         int width = image.getWidth();
         int height = image.getHeight();
-        int[] pixels = new int[Math.multiplyExact(width, height)];
         if (!isRawGrayscale(image)) {
-            image.getRGB(0, 0, width, height, pixels, 0, width);
-            return pixels;
+            image.getRGB(0, 0, width, height, pixels, offset, scanlineStride);
+            return;
         }
 
         // ImageIO labels PNG gray samples as linear CS_GRAY. getRGB()/Graphics2D can
@@ -182,18 +188,19 @@ public final class PngOptimizer {
         int shift = image.getColorModel().getComponentSize(0) - 8;
         int[] grayRow = new int[width];
         int[] alphaRow = hasAlpha ? new int[width] : null;
-        int offset = 0;
         for (int y = 0; y < height; y++) {
             raster.getSamples(0, y, width, 1, 0, grayRow);
-            if (hasAlpha) raster.getSamples(0, y, width, 1, 1, alphaRow);
+            if (hasAlpha) {
+                raster.getSamples(0, y, width, 1, 1, alphaRow);
+            }
             for (int x = 0; x < width; x++) {
                 // Match STB's 16-to-8 conversion by retaining the high byte.
                 int gray = grayRow[x] >>> shift;
                 int alpha = hasAlpha ? alphaRow[x] >>> shift : 255;
                 pixels[offset++] = (alpha << 24) | (gray << 16) | (gray << 8) | gray;
             }
+            offset += scanlineStride - width;
         }
-        return pixels;
     }
 
     private ImageData findBestFileStructure(BufferedImage src, ImageColorInfo info) throws IOException {
