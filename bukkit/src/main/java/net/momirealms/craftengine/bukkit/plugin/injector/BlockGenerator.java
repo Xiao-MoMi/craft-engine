@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bind.annotation.This;
@@ -291,10 +292,15 @@ public final class BlockGenerator {
         public static final GetShapeInterceptor INSTANCE = new GetShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+        public Object intercept(@This Object thisBlock,
+                                @Argument(0) Object blockState,
+                                @Argument(1) Object level,
+                                @Argument(2) Object blockPos,
+                                @Argument(3) Object collisionContext,
+                                @SuperCall Callable<Object> superMethod) throws Exception {
             ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getShape(thisBlock, args);
+                return holder.value().getShape(thisBlock, blockState, level, blockPos, collisionContext);
             } catch (Exception e) {
                 CraftEngine.instance().logger().error("Failed to run getShape", e);
                 return superMethod.call();
@@ -306,10 +312,15 @@ public final class BlockGenerator {
         public static final GetCollisionShapeInterceptor INSTANCE = new GetCollisionShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+        public Object intercept(@This Object thisBlock,
+                                @Argument(0) Object blockState,
+                                @Argument(1) Object level,
+                                @Argument(2) Object blockPos,
+                                @Argument(3) Object collisionContext,
+                                @SuperCall Callable<Object> superMethod) throws Exception {
             ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getCollisionShape(thisBlock, args);
+                return holder.value().getCollisionShape(thisBlock, blockState, level, blockPos, collisionContext);
             } catch (Throwable t) {
                 CraftEngine.instance().logger().error("Failed to run getCollisionShape", t);
                 return superMethod.call();
@@ -321,10 +332,14 @@ public final class BlockGenerator {
         public static final GetSupportShapeInterceptor INSTANCE = new GetSupportShapeInterceptor();
 
         @RuntimeType
-        public Object intercept(@This Object thisBlock, @AllArguments Object[] args, @SuperCall Callable<Object> superMethod) throws Exception {
+        public Object intercept(@This Object thisBlock,
+                                @Argument(0) Object blockState,
+                                @Argument(1) Object level,
+                                @Argument(2) Object blockPos,
+                                @SuperCall Callable<Object> superMethod) throws Exception {
             ObjectHolder<BlockShape> holder = ((DelegatingBlock) thisBlock).shapeDelegate();
             try {
-                return holder.value().getSupportShape(thisBlock, args);
+                return holder.value().getSupportShape(thisBlock, blockState, level, blockPos);
             } catch (Throwable t) {
                 CraftEngine.instance().logger().error("Failed to run getSupportShape", t);
                 return superMethod.call();

@@ -2,9 +2,9 @@ package net.momirealms.craftengine.core.block;
 
 public interface BlockShape {
 
-    Object getShape(Object thisObj, Object[] args);
+    Object getShape(Object thisObj, Object blockState, Object level, Object blockPos, Object collisionContext);
 
-    Object getCollisionShape(Object thisObj, Object[] args);
+    Object getCollisionShape(Object thisObj, Object blockState, Object level, Object blockPos, Object collisionContext);
 
-    Object getSupportShape(Object thisObj, Object[] args);
+    Object getSupportShape(Object thisObj, Object blockState, Object level, Object blockPos);
 }

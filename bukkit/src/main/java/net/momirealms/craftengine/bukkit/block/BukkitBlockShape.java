@@ -16,17 +16,17 @@ public final class BukkitBlockShape implements BlockShape {
     }
 
     @Override
-    public Object getShape(Object thisObj, Object[] args) {
-        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(this.rawBlockState, args[1], args[2], args[3]);
+    public Object getShape(Object thisObj, Object blockState, Object level, Object blockPos, Object collisionContext) {
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(this.rawBlockState, level, blockPos, collisionContext);
     }
 
     @Override
-    public Object getCollisionShape(Object thisObj, Object[] args) {
-        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(this.rawBlockState, args[1], args[2], args[3]);
+    public Object getCollisionShape(Object thisObj, Object blockState, Object level, Object blockPos, Object collisionContext) {
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(this.rawBlockState, level, blockPos, collisionContext);
     }
 
     @Override
-    public Object getSupportShape(Object thisObj, Object[] args) {
-        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlockSupportShape(this.supportBlockState, args[1], args[2]);
+    public Object getSupportShape(Object thisObj, Object blockState, Object level, Object blockPos) {
+        return BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlockSupportShape(this.supportBlockState, level, blockPos);
     }
 }
