@@ -9,11 +9,14 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Font;
 import net.momirealms.craftengine.core.item.ItemKeys;
+import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.equipment.ComponentBasedEquipment;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentLayerType;
 import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.pack.atlas.*;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSource;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
@@ -1039,6 +1042,19 @@ public abstract class AbstractPackManager implements PackManager {
         @Override
         public void generate(PackGenerationOptions options) throws IOException {
             this.pack = generatePackAssets(options);
+        }
+
+        @Override
+        public void generateBedrockPack(String input, String output) throws IOException {
+            Timestamp timestamp = new Timestamp();
+            CraftEngine engine = this.plugin();
+            Map<Key, Key> mappings = Config.obfuscateItemModel() ? ItemModelMappings.getMappings() : Map.of();
+            List<BedrockItemSource> items = BedrockItemSource.collect(engine.itemManager().loadedItems().values(), mappings);
+            BedrockPackGenerator.Result result = new BedrockPackGenerator().generate(this.resolvePath(input), this.resolvePath(output),
+                    Config.packMaxVersion(), items, AbstractPackManager.this.vanillaBlockAtlas, AbstractPackManager.this.vanillaItemAtlas,
+                    Config.bedrockItemIconSize(), engine.logger()::warn);
+            engine.logger().info("Generated Bedrock resource pack " + output + ": " + result.items() + " items, "
+                    + result.models() + " models, " + result.skipped() + " skipped (" + timestamp.deltaMillis() + " ms)");
         }
 
         @Override

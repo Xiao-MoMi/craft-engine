@@ -15,6 +15,8 @@ public interface PackWorkflowContext {
 
     void generate(PackGenerationOptions options) throws Exception;
 
+    void generateBedrockPack(String input, String output) throws Exception;
+
     void loadZip(String path) throws Exception;
 
     void export(String path) throws Exception;

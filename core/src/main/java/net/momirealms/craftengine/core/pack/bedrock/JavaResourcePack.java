@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.ResourcePackView;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
@@ -11,17 +12,25 @@ import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
-public final class JavaResourcePack {
-    private final ResourcePackView resources;
+public final class JavaResourcePack implements AutoCloseable {
+    private final ResourceReader resources;
     private final MinecraftVersion version;
+    private final ZipFile archive;
 
     public JavaResourcePack(Path root, Overlays overlays, MinecraftVersion version) {
         this.version = version;
+        this.archive = null;
         List<Path> roots = new ArrayList<>();
         roots.add(root);
         if (version.isAtOrAbove(MinecraftVersion.V1_20_2)) {
@@ -31,7 +40,33 @@ public final class JavaResourcePack {
                 }
             }
         }
-        this.resources = new ResourcePackView(roots.toArray(Path[]::new));
+        ResourcePackView view = new ResourcePackView(roots.toArray(Path[]::new));
+        this.resources = path -> {
+            Path resource = view.getExistingReversed(path);
+            return resource != null && Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;
+        };
+    }
+
+    private JavaResourcePack(ZipFile archive, Overlays overlays, MinecraftVersion version) {
+        this.version = version;
+        this.archive = archive;
+        List<String> roots = new ArrayList<>();
+        roots.add("");
+        for (Overlay overlay : overlays.overlays()) {
+            if (version.isAtOrAbove(MinecraftVersion.V1_20_2) && overlay.test(version)) {
+                roots.add(overlay.directory() + "/");
+            }
+        }
+        this.resources = path -> {
+            for (int index = roots.size() - 1; index >= 0; index--) {
+                // ZipFile resolves the central-directory alias, including protected entries ending in '/'.
+                ZipEntry entry = archive.getEntry(roots.get(index) + path);
+                if (entry != null) {
+                    return archive.getInputStream(entry);
+                }
+            }
+            return null;
+        };
     }
 
     public static JavaResourcePack open(Path root, MinecraftVersion version) throws IOException {
@@ -42,28 +77,56 @@ public final class JavaResourcePack {
         return new JavaResourcePack(root, new Overlays(metadata), version);
     }
 
+    public static JavaResourcePack openZip(Path source, MinecraftVersion version) throws IOException {
+        ZipFile archive = new ZipFile(source.toFile());
+        try {
+            JavaResourcePack pack = new JavaResourcePack(archive, new Overlays(List.of()), version);
+            JsonObject metadata = pack.readJson("pack.mcmeta");
+            if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
+                throw new IOException("Missing pack.mcmeta in " + source);
+            }
+            return new JavaResourcePack(archive, new Overlays(metadata), version);
+        } catch (IOException | RuntimeException | Error exception) {
+            archive.close();
+            throw exception;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (this.archive != null) {
+            this.archive.close();
+        }
+    }
+
+    @Nullable
+    public JsonObject readJson(String path) throws IOException {
+        InputStream resource = this.openResource(path);
+        if (resource == null) {
+            return null;
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
+            return JsonParser.parseReader(reader).getAsJsonObject();
+        }
+    }
+
     public MinecraftVersion version() {
         return this.version;
     }
 
     @Nullable
-    public Path findResource(String path) {
-        Path resource = this.resources.getExistingReversed(path);
-        return resource != null && Files.isRegularFile(resource) ? resource : null;
+    public InputStream openResource(String path) throws IOException {
+        return this.resources.open(path);
     }
 
     public JsonObject readModel(Key model) throws IOException {
-        Path resource = this.findResource("assets/" + model.namespace() + "/models/" + model.value() + ".json");
-        if (resource == null) {
+        JsonObject json = this.readJson("assets/" + model.namespace() + "/models/" + model.value() + ".json");
+        if (json == null) {
             JsonObject internal = this.internalModel(model);
             if (internal != null) {
                 return internal.deepCopy();
             }
             throw new IOException("Missing Java model " + model + " for " + this.version.version());
-        }
-        JsonObject json = GsonHelper.readJsonObjectFromFile(resource);
-        if (json == null) {
-            throw new IOException("Empty Java model " + model + " at " + resource);
         }
         return json;
     }
@@ -83,5 +146,11 @@ public final class JavaResourcePack {
                     : AbstractPackManager.PRESET_LEGACY_MODELS_ITEM.get(item);
         }
         return null;
+    }
+
+    @FunctionalInterface
+    private interface ResourceReader {
+        @Nullable
+        InputStream open(String path) throws IOException;
     }
 }

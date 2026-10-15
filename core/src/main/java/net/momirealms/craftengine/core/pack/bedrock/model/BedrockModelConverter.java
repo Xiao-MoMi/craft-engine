@@ -12,22 +12,32 @@ import java.util.Map;
 public final class BedrockModelConverter {
 
     public Result convert(JavaModel model, String identifier, BedrockTextureAtlas.TextureSource textures) throws IOException {
-        if (model.geometryKind() != JavaModel.GeometryKind.ELEMENTS) {
-            throw new IllegalArgumentException("Static cube conversion requires ELEMENTS, got " + model.geometryKind() + " for " + model.id());
-        }
+        return this.convert(model, identifier, textures, List.of());
+    }
+
+    public Result convert(JavaModel model, String identifier, BedrockTextureAtlas.TextureSource textures, List<Integer> tints) throws IOException {
         if (!identifier.startsWith("geometry.") || identifier.length() == "geometry.".length()) {
             throw new IllegalArgumentException("Expected a geometry identifier: " + identifier);
         }
-        BedrockTextureAtlas atlas = BedrockTextureAtlas.create(model, textures);
+        BedrockTextureAtlas atlas;
+        if (model.geometryKind() == JavaModel.GeometryKind.GENERATED) {
+            GeneratedItemModelBaker.Result generated = GeneratedItemModelBaker.bake(model, textures, tints);
+            model = generated.model();
+            atlas = generated.atlas();
+        } else if (model.geometryKind() == JavaModel.GeometryKind.ELEMENTS) {
+            atlas = BedrockTextureAtlas.create(model, textures, tints);
+        } else {
+            throw new IllegalArgumentException("Unsupported geometry kind: " + model.geometryKind() + " for " + model.id());
+        }
         List<BedrockGeometry.Cube> cubes = new ArrayList<>(model.elements().size());
         for (JavaModel.Element element : model.elements()) {
-            cubes.add(this.convertElement(element, atlas));
+            cubes.add(this.convertElement(element, atlas, tints));
         }
         BedrockGeometry geometry = new BedrockGeometry(identifier, atlas.image().getWidth(), atlas.image().getHeight(), cubes, BedrockModelTransform.bounds(cubes));
         return new Result(model, geometry, atlas);
     }
 
-    private BedrockGeometry.Cube convertElement(JavaModel.Element element, BedrockTextureAtlas atlas) {
+    private BedrockGeometry.Cube convertElement(JavaModel.Element element, BedrockTextureAtlas atlas, List<Integer> tints) {
         Vector3f from = element.from();
         Vector3f to = element.to();
         JavaModel.Rotation rotation = element.rotation();
@@ -50,12 +60,15 @@ public final class BedrockModelConverter {
         Map<Direction, BedrockGeometry.Face> faces = new EnumMap<>(Direction.class);
         for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
             JavaModel.Face face = entry.getValue();
-            faces.put(entry.getKey(), this.convertFace(entry.getKey(), face, atlas.region(face.texture())));
+            BedrockTextureAtlas.AnimatedSprite animation = atlas.animations().isEmpty() ? null
+                    : atlas.animations().get(BedrockTextureAtlas.TextureId.of(face, tints));
+            faces.put(entry.getKey(), this.convertFace(entry.getKey(), face, atlas.region(face, tints),
+                    animation == null ? null : animation.material()));
         }
         return new BedrockGeometry.Cube(origin, size, convertedRotation, faces);
     }
 
-    private BedrockGeometry.Face convertFace(Direction direction, JavaModel.Face face, BedrockTextureAtlas.Region region) {
+    private BedrockGeometry.Face convertFace(Direction direction, JavaModel.Face face, BedrockTextureAtlas.Region region, String material) {
         JavaModel.Uv uv = face.uv();
         float u = uv.u1();
         float v = uv.v1();
@@ -70,7 +83,7 @@ public final class BedrockModelConverter {
         }
         float scaleU = region.width() / 16.0f;
         float scaleV = region.height() / 16.0f;
-        return new BedrockGeometry.Face(region.x() + u * scaleU, region.y() + v * scaleV, width * scaleU, height * scaleV, face.rotation());
+        return new BedrockGeometry.Face(region.x() + u * scaleU, region.y() + v * scaleV, width * scaleU, height * scaleV, face.rotation(), material);
     }
 
     public record Result(JavaModel source, BedrockGeometry geometry, BedrockTextureAtlas atlas) {

@@ -14,6 +14,10 @@ public final class ItemModelProcessor implements NetworkItemProcessor {
         this.data = data;
     }
 
+    public Key data() {
+        return this.data;
+    }
+
     @Override
     public void apply(ItemBuildContext context) {
         context.item().itemModel(this.data.asString());

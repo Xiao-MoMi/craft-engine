@@ -18,13 +18,17 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public final class Atlas {
-    private static final Sprite MISSING_SPRITE = new Sprite(false, null);
-    private static final Sprite GENERATED_SPRITE = new Sprite(true, null);
+    private static final Sprite MISSING_SPRITE = new Sprite(false, null, null);
+    private static final Sprite GENERATED_SPRITE = new Sprite(true, null, null);
     private final List<Source> sources = new ArrayList<>();
     private final Map<Key, SingleSprite> singleSprites = new HashMap<>();
     private final Map<Key, Sprite> sprites = new HashMap<>();
 
     public Atlas(JsonObject atlasJson) {
+        this(atlasJson, false);
+    }
+
+    public Atlas(JsonObject atlasJson, boolean retainTextureRegions) {
         JsonArray sources = atlasJson.getAsJsonArray("sources");
         if (sources == null) {
             return;
@@ -56,6 +60,15 @@ public final class Atlas {
                 }
                 case "unstitch", "minecraft:unstitch" -> {
                     if (!sourceJson.has("resource")) {
+                        continue;
+                    }
+                    if (retainTextureRegions) {
+                        UnstitchSource unstitch = UnstitchSource.fromJson(sourceJson);
+                        Map<Key, TextureRegion> regions = new HashMap<>();
+                        for (UnstitchSource.Region region : unstitch.regions()) {
+                            regions.put(region.sprite(), new TextureRegion(unstitch.resource(), unstitch.divisorX(), unstitch.divisorY(), region));
+                        }
+                        this.sources.add(new RegionSource(regions));
                         continue;
                     }
                     Set<Key> sprites = new HashSet<>();
@@ -102,6 +115,10 @@ public final class Atlas {
         this(mergeAtlas(atlasJsons));
     }
 
+    public Atlas(List<JsonObject> atlasJsons, boolean retainTextureRegions) {
+        this(mergeAtlas(atlasJsons), retainTextureRegions);
+    }
+
     public static JsonObject mergeAtlas(@NotNull List<JsonObject> atlasJsons) {
         if (atlasJsons.isEmpty()) {
             return new JsonObject();
@@ -133,7 +150,7 @@ public final class Atlas {
     }
 
     public void addSingle(Key sprite, Key resource) {
-        this.sprites.put(sprite, new Sprite(true, resource));
+        this.sprites.put(sprite, new Sprite(true, resource, null));
     }
 
     public void addDeleted(Key key) {
@@ -143,6 +160,11 @@ public final class Atlas {
     @Nullable
     public Key getSourceTexturePath(Key texture) {
         return resolveSprite(texture).resource;
+    }
+
+    @Nullable
+    public TextureRegion getTextureRegion(Key texture) {
+        return resolveSprite(texture).region;
     }
 
     private Sprite resolveSprite(Key texture) {
@@ -167,10 +189,11 @@ public final class Atlas {
                     return MISSING_SPRITE;
                 }
                 Key resource = source.resource(texture);
-                return resource == null ? GENERATED_SPRITE : new Sprite(true, resource);
+                TextureRegion region = source.region(texture);
+                return resource == null && region == null ? GENERATED_SPRITE : new Sprite(true, resource, region);
             }
         }
-        return single == null ? MISSING_SPRITE : new Sprite(true, single.resource);
+        return single == null ? MISSING_SPRITE : new Sprite(true, single.resource, null);
     }
 
     private interface Source {
@@ -185,9 +208,30 @@ public final class Atlas {
         default Key resource(Key texture) {
             return null;
         }
+
+        @Nullable
+        default TextureRegion region(Key texture) {
+            return null;
+        }
     }
 
-    private record Sprite(boolean defined, @Nullable Key resource) {
+    private record Sprite(boolean defined, @Nullable Key resource, @Nullable TextureRegion region) {
+    }
+
+    public record TextureRegion(Key resource, double divisorX, double divisorY, UnstitchSource.Region region) {
+    }
+
+    private record RegionSource(Map<Key, TextureRegion> regions) implements Source {
+
+        @Override
+        public boolean matches(Key texture) {
+            return this.regions.containsKey(texture);
+        }
+
+        @Override
+        public TextureRegion region(Key texture) {
+            return this.regions.get(texture);
+        }
     }
 
     private record DirectorySource(String prefix, String directory) implements Source {

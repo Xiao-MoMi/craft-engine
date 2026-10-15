@@ -112,6 +112,9 @@ public final class BedrockGeometryWriter {
             if (face.rotation() != 0) {
                 uv.addProperty("uv_rotation", face.rotation());
             }
+            if (face.material() != null) {
+                uv.addProperty("material_instance", face.material());
+            }
             faces.add(direction.name().toLowerCase(Locale.ROOT), uv);
         }
         result.add("uv", faces);

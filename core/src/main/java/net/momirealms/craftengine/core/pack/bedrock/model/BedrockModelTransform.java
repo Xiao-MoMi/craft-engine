@@ -37,6 +37,22 @@ final class BedrockModelTransform {
     }
 
     static BedrockGeometry.Bounds bounds(List<BedrockGeometry.Cube> cubes) {
+        if (cubes.isEmpty()) {
+            return new BedrockGeometry.Bounds(0, 0, VectorUtils.ZERO);
+        }
+        Extents extents = measure(cubes);
+        float bottom = (float) Math.floor(extents.minY() / 16);
+        float top = (float) Math.ceil(extents.maxY() / 16);
+        return new BedrockGeometry.Bounds((float) Math.ceil(extents.radius() * 2 / 16), top - bottom, new Vector3f(0, (bottom + top) / 2, 0));
+    }
+
+    static float blockItemScale(List<BedrockGeometry.Cube> cubes) {
+        Extents extents = measure(cubes);
+        double radius = Math.max(extents.radius(), Math.max(Math.abs(extents.minY() - 8), Math.abs(extents.maxY() - 8)));
+        return radius <= 8 ? 1 : (float) (8 / radius);
+    }
+
+    private static Extents measure(List<BedrockGeometry.Cube> cubes) {
         double radius = 0;
         double minY = Double.POSITIVE_INFINITY;
         double maxY = Double.NEGATIVE_INFINITY;
@@ -66,11 +82,9 @@ final class BedrockModelTransform {
                 maxY = Math.max(maxY, y);
             }
         }
-        if (cubes.isEmpty()) {
-            return new BedrockGeometry.Bounds(0, 0, VectorUtils.ZERO);
-        }
-        float bottom = (float) Math.floor(minY / 16);
-        float top = (float) Math.ceil(maxY / 16);
-        return new BedrockGeometry.Bounds((float) Math.ceil(radius * 2 / 16), top - bottom, new Vector3f(0, (bottom + top) / 2, 0));
+        return new Extents(radius, minY, maxY);
+    }
+
+    private record Extents(double radius, double minY, double maxY) {
     }
 }

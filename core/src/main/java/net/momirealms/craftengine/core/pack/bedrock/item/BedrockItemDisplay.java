@@ -43,12 +43,20 @@ public final class BedrockItemDisplay {
     }
 
     static List<BedrockGeometry.Bone> rig(BedrockGeometry geometry) {
+        return rig(geometry, "");
+    }
+
+    static List<BedrockGeometry.Bone> rig(BedrockGeometry geometry, String prefix) {
+        String slot = prefix + SLOT_BONE;
+        String x = prefix + X_BONE;
+        String y = prefix + Y_BONE;
+        String z = prefix + Z_BONE;
         // Nested X -> Y -> Z bones retain Java's XYZ rotation order; scale belongs on the final bone.
         return List.of(
-                new BedrockGeometry.Bone(SLOT_BONE, null, PIVOT, BINDING, List.of()),
-                new BedrockGeometry.Bone(X_BONE, SLOT_BONE, PIVOT, null, List.of()),
-                new BedrockGeometry.Bone(Y_BONE, X_BONE, PIVOT, null, List.of()),
-                new BedrockGeometry.Bone(Z_BONE, Y_BONE, PIVOT, null, geometry.cubes())
+                new BedrockGeometry.Bone(slot, null, PIVOT, BINDING, List.of()),
+                new BedrockGeometry.Bone(x, slot, PIVOT, null, List.of()),
+                new BedrockGeometry.Bone(y, x, PIVOT, null, List.of()),
+                new BedrockGeometry.Bone(z, y, PIVOT, null, geometry.cubes())
         );
     }
 

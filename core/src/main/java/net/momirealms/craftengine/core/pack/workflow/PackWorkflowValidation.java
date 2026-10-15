@@ -38,6 +38,12 @@ public final class PackWorkflowValidation {
         this.packed = false;
     }
 
+    public void generateBedrockPack(String input, String output) {
+        if (resolvePath(input).equals(resolvePath(output))) {
+            throw new IllegalArgumentException("Bedrock output must not overwrite the input Java resource pack");
+        }
+    }
+
     public void export(String path) {
         requireGeneratedPack();
         Path output = resolvePath(path);

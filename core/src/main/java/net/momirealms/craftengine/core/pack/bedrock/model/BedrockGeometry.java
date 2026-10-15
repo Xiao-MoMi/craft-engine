@@ -13,7 +13,11 @@ public record BedrockGeometry(String identifier, int textureWidth, int textureHe
         cubes = List.copyOf(cubes);
     }
 
-    public record Face(float u, float v, float width, float height, int rotation) {
+    public record Face(float u, float v, float width, float height, int rotation, @Nullable String material) {
+
+        public Face(float u, float v, float width, float height, int rotation) {
+            this(u, v, width, height, rotation, null);
+        }
     }
 
     public record Rotation(Vector3f pivot, Vector3f angles) {

@@ -11,36 +11,62 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> regions) {
+public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> regions, Map<TextureId, AnimatedSprite> animations) {
     private static final int PADDING = 1;
     private static final Comparator<Key> KEY_ORDER = Comparator.comparing(Key::namespace).thenComparing(Key::value);
     private static final Comparator<TextureId> TEXTURE_ORDER = Comparator.comparing(TextureId::sprite, KEY_ORDER)
-            .thenComparing(TextureId::atlas, Comparator.nullsFirst(KEY_ORDER));
+            .thenComparing(TextureId::atlas, Comparator.nullsFirst(KEY_ORDER)).thenComparingInt(TextureId::color);
     private static final Comparator<Sprite> SPRITE_ORDER = Comparator.comparingInt((Sprite sprite) -> sprite.image().getHeight()).reversed()
             .thenComparing(Comparator.comparingInt((Sprite sprite) -> sprite.image().getWidth()).reversed())
             .thenComparing(Sprite::id, TEXTURE_ORDER);
 
     public BedrockTextureAtlas {
         regions = Map.copyOf(regions);
+        animations = Map.copyOf(animations);
+    }
+
+    public BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> regions) {
+        this(image, regions, Map.of());
     }
 
     public static BedrockTextureAtlas create(JavaModel model, TextureSource source) throws IOException {
+        return create(model, source, List.of());
+    }
+
+    public static BedrockTextureAtlas create(JavaModel model, TextureSource source, List<Integer> tints) throws IOException {
         TreeSet<TextureId> textures = new TreeSet<>(TEXTURE_ORDER);
         for (JavaModel.Element element : model.elements()) {
             for (JavaModel.Face face : element.faces().values()) {
-                textures.add(TextureId.of(face.texture()));
+                textures.add(TextureId.of(face, tints));
             }
         }
         List<Sprite> sprites = new ArrayList<>(textures.size());
         long area = 0;
         int widest = 1;
+        Map<TextureId, TextureData> originals = new HashMap<>();
+        Map<TextureId, AnimatedSprite> animations = new LinkedHashMap<>();
         for (TextureId texture : textures) {
-            BufferedImage image = source.read(texture);
+            TextureId original = new TextureId(texture.sprite(), texture.atlas());
+            TextureData data = originals.get(original);
+            if (data == null) {
+                data = source.load(original);
+                if (data != null) {
+                    originals.put(original, data);
+                }
+            }
+            BufferedImage image = data == null ? null : data.image();
             if (image == null) {
                 throw new IOException("Missing static sprite " + texture + " in model " + model.id());
+            }
+            if (texture.color() != 0xFFFFFF) {
+                image = tint(image, texture.color());
+            }
+            if (data.animation() != null) {
+                animations.put(texture, new AnimatedSprite("ce_anim_" + animations.size(), data.animation(), texture.color()));
             }
             sprites.add(new Sprite(texture, image));
             int width = Math.addExact(image.getWidth(), PADDING * 2);
@@ -54,7 +80,7 @@ public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> re
         if (sprites.size() == 1) {
             Sprite sprite = sprites.getFirst();
             return new BedrockTextureAtlas(sprite.image(), Map.of(sprite.id(),
-                    new Region(0, 0, sprite.image().getWidth(), sprite.image().getHeight())));
+                    new Region(0, 0, sprite.image().getWidth(), sprite.image().getHeight())), animations);
         }
         // Stable shelf packing: texture identifiers break ties independently of map iteration order.
         sprites.sort(SPRITE_ORDER);
@@ -80,21 +106,46 @@ public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> re
         int[] pixels = ((DataBufferInt) atlas.getRaster().getDataBuffer()).getData();
         for (Sprite sprite : sprites) {
             Region region = regions.get(sprite.id());
-            PngOptimizer.readPixels(sprite.image(), pixels, region.y() * width + region.x(), width);
-            extrudeBorder(pixels, width, region);
+            copySprite(sprite.image(), pixels, width, region);
         }
-        return new BedrockTextureAtlas(atlas, regions);
+        return new BedrockTextureAtlas(atlas, regions, animations);
     }
 
     public Region region(JavaModel.Texture texture) {
-        Region region = this.regions.get(TextureId.of(texture));
+        return this.region(TextureId.of(texture));
+    }
+
+    public Region region(JavaModel.Face face, List<Integer> tints) {
+        return this.region(TextureId.of(face, tints));
+    }
+
+    private Region region(TextureId texture) {
+        Region region = this.regions.get(texture);
         if (region == null) {
             throw new IllegalArgumentException("Sprite is not in the model atlas: " + texture);
         }
         return region;
     }
 
-    private static void extrudeBorder(int[] pixels, int stride, Region region) {
+    static BufferedImage tint(BufferedImage source, int color) {
+        BufferedImage result = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int[] pixels = ((DataBufferInt) result.getRaster().getDataBuffer()).getData();
+        PngOptimizer.readPixels(source, pixels, 0, source.getWidth());
+        for (int index = 0; index < pixels.length; index++) {
+            int pixel = pixels[index];
+            int red = ((pixel >>> 16) & 255) * ((color >>> 16) & 255) / 255;
+            int green = ((pixel >>> 8) & 255) * ((color >>> 8) & 255) / 255;
+            int blue = (pixel & 255) * (color & 255) / 255;
+            pixels[index] = (pixel & 0xFF000000) | (red << 16) | (green << 8) | blue;
+        }
+        return result;
+    }
+
+    public static void copySprite(BufferedImage image, int[] pixels, int stride, Region region) {
+        PngOptimizer.readPixels(image, pixels, region.y() * stride + region.x(), stride);
+        if (region.x() == 0 || region.y() == 0) {
+            return;
+        }
         // Duplicate edge pixels, including corners, so filtering does not sample the adjacent sprite.
         for (int y = region.y(); y < region.y() + region.height(); y++) {
             int offset = y * stride + region.x();
@@ -117,9 +168,29 @@ public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> re
     @FunctionalInterface
     public interface TextureSource {
         BufferedImage read(TextureId texture) throws IOException;
+
+        default TextureData load(TextureId texture) throws IOException {
+            return new TextureData(this.read(texture), null);
+        }
     }
 
-    public record TextureId(Key sprite, @Nullable Key atlas) {
+    public record TextureData(BufferedImage image, @Nullable TextureAnimation animation) {
+    }
+
+    public record AnimatedSprite(String material, TextureAnimation animation, int color) {
+    }
+
+    public record TextureId(Key sprite, @Nullable Key atlas, int color) {
+
+        public TextureId(Key sprite, @Nullable Key atlas) {
+            this(sprite, atlas, 0xFFFFFF);
+        }
+
+        public static TextureId of(JavaModel.Face face, List<Integer> tints) {
+            int index = face.tintIndex();
+            int color = index >= 0 && index < tints.size() ? tints.get(index) & 0xFFFFFF : 0xFFFFFF;
+            return new TextureId(face.texture().sprite(), face.texture().atlas(), color);
+        }
 
         public static TextureId of(JavaModel.Texture texture) {
             return new TextureId(texture.sprite(), texture.atlas());
