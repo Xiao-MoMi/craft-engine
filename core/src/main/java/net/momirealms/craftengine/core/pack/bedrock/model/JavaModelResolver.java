@@ -14,6 +14,8 @@ import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.ModelUtils;
+import net.momirealms.craftengine.core.util.VectorUtils;
+import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,6 +32,8 @@ import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
 
 public final class JavaModelResolver {
     private static final DisplayPosition[] DISPLAY_POSITIONS = DisplayPosition.values();
+    private static final InheritedModel GENERATED_MODEL = new InheritedModel(GeometryKind.GENERATED, new JsonArray(), Map.of(ModelJsonKeys.PARTICLE, new JsonPrimitive("#layer0")), Map.of(), true, GuiLight.FRONT);
+    private static final InheritedModel ENTITY_MODEL = new InheritedModel(GeometryKind.ENTITY, new JsonArray(), Map.of(), Map.of(), true, GuiLight.SIDE);
 
     private final JavaResourcePack pack;
     private final Map<Key, InheritedModel> inheritedModels = new HashMap<>();
@@ -50,13 +54,14 @@ public final class JavaModelResolver {
             for (String slot : inherited.textures().keySet()) {
                 textures.put(slot, this.resolveTexture("#" + slot, inherited.textures()));
             }
-            List<Element> elements = new ArrayList<>();
+            List<Element> elements = new ArrayList<>(inherited.elements().size());
             for (JsonElement element : inherited.elements()) {
-                elements.add(this.readElement(element.getAsJsonObject(), inherited.textures()));
+                elements.add(this.readElement(element.getAsJsonObject(), textures));
             }
             Map<DisplayPosition, Transform> display = new EnumMap<>(DisplayPosition.class);
             for (DisplayPosition position : DISPLAY_POSITIONS) {
-                display.put(position, inherited.display().getOrDefault(position, Transform.IDENTITY));
+                Transform transform = inherited.display().get(position);
+                display.put(position, transform == null ? Transform.identity() : transform);
             }
             JavaModel result = new JavaModel(id, inherited.kind(), elements, textures, display, inherited.ambientOcclusion(), inherited.guiLight());
             this.models.put(id, result);
@@ -76,11 +81,10 @@ public final class JavaModelResolver {
         }
         try {
             if (id.equals(AbstractPackManager.BUILTIN_GENERATED)) {
-                Map<String, JsonElement> textures = Map.of(ModelJsonKeys.PARTICLE, new JsonPrimitive("#layer0"));
-                return new InheritedModel(GeometryKind.GENERATED, new JsonArray(), textures, Map.of(), true, GuiLight.FRONT);
+                return GENERATED_MODEL;
             }
             if (id.equals(AbstractPackManager.BUILTIN_ENTITY)) {
-                return new InheritedModel(GeometryKind.ENTITY, new JsonArray(), Map.of(), Map.of(), true, GuiLight.SIDE);
+                return ENTITY_MODEL;
             }
 
             JsonObject json = this.pack.readModel(id);
@@ -117,10 +121,7 @@ public final class JavaModelResolver {
             }
             if (json.has(ModelJsonKeys.ELEMENTS)) {
                 kind = GeometryKind.ELEMENTS;
-                JsonArray ownElements = json.getAsJsonArray(ModelJsonKeys.ELEMENTS);
-                if (ownElements != null) {
-                    elements = ownElements;
-                }
+                elements = json.getAsJsonArray(ModelJsonKeys.ELEMENTS);
             }
             if (json.has(ModelJsonKeys.AMBIENT_OCCLUSION)) {
                 ambientOcclusion = json.get(ModelJsonKeys.AMBIENT_OCCLUSION).getAsBoolean();
@@ -154,16 +155,33 @@ public final class JavaModelResolver {
                 throw new IllegalArgumentException("Missing texture slot #" + slot + " via " + chain);
             }
             if (texture instanceof JsonObject object) {
-                return new Texture(this.readTextureIdentifier(object.get(ModelJsonKeys.SPRITE)),
+                return new Texture(
+                        this.readTextureIdentifier(object.get(ModelJsonKeys.SPRITE)),
                         object.has(ModelJsonKeys.ATLAS) ? this.readTextureIdentifier(object.get(ModelJsonKeys.ATLAS)) : null,
-                        object.has(ModelJsonKeys.FORCE_TRANSLUCENT) && object.get(ModelJsonKeys.FORCE_TRANSLUCENT).getAsBoolean());
+                        object.has(ModelJsonKeys.FORCE_TRANSLUCENT) && object.get(ModelJsonKeys.FORCE_TRANSLUCENT).getAsBoolean()
+                );
             }
             if (!(texture instanceof JsonPrimitive primitive) || !primitive.isString()) {
                 throw new IllegalArgumentException("Expected texture string or object for #" + slot);
             }
             reference = texture.getAsString();
         }
-        if (!Identifier.isValid(reference) || reference.isEmpty()) {
+        return this.readDirectTexture(reference);
+    }
+
+    private Texture readFaceTexture(String reference, Map<String, Texture> textures) {
+        if (!reference.startsWith("#")) {
+            return this.readDirectTexture(reference);
+        }
+        Texture texture = textures.get(reference.substring(1));
+        if (texture == null) {
+            throw new IllegalArgumentException("Missing texture slot " + reference);
+        }
+        return texture;
+    }
+
+    private Texture readDirectTexture(String reference) {
+        if (reference.isEmpty() || !Identifier.isValid(reference)) {
             throw new IllegalArgumentException("Invalid texture identifier: " + reference);
         }
         return new Texture(Key.of(reference), null, false);
@@ -180,24 +198,32 @@ public final class JavaModelResolver {
         return Key.of(identifier);
     }
 
-    private Element readElement(JsonObject json, Map<String, JsonElement> textures) {
-        Vector from = this.readPosition(json, ModelJsonKeys.FROM);
-        Vector to = this.readPosition(json, ModelJsonKeys.TO);
+    private Element readElement(JsonObject json, Map<String, Texture> textures) {
+        Vector3f from = this.readPosition(json, ModelJsonKeys.FROM);
+        Vector3f to = this.readPosition(json, ModelJsonKeys.TO);
         Map<Direction, Face> faces = new EnumMap<>(Direction.class);
         for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject(ModelJsonKeys.FACES).entrySet()) {
             Direction direction = Direction.valueOf(entry.getKey().toUpperCase(Locale.ROOT));
             JsonObject face = entry.getValue().getAsJsonObject();
-            float[] uv = face.has(ModelJsonKeys.UV) ? this.readFloats(face.getAsJsonArray(ModelJsonKeys.UV), 4)
-                    : ModelUtils.defaultUv(entry.getKey(), new float[]{from.x(), from.y(), from.z()}, new float[]{to.x(), to.y(), to.z()});
+            Uv uv;
+            if (face.has(ModelJsonKeys.UV)) {
+                uv = this.readUv(face.getAsJsonArray(ModelJsonKeys.UV));
+            } else {
+                float[] defaultUv = ModelUtils.defaultUv(entry.getKey(), from, to);
+                uv = new Uv(defaultUv[0], defaultUv[1], defaultUv[2], defaultUv[3]);
+            }
             int rotation = face.has(ModelJsonKeys.ROTATION) ? face.get(ModelJsonKeys.ROTATION).getAsInt() : 0;
             if (rotation < 0 || rotation > 270 || rotation % 90 != 0) {
                 throw new IllegalArgumentException("Invalid face rotation " + rotation);
             }
             String cull = face.has(ModelJsonKeys.CULL_FACE) ? face.get(ModelJsonKeys.CULL_FACE).getAsString() : "";
-            faces.put(direction, new Face(this.resolveTexture(face.get(ModelJsonKeys.TEXTURE).getAsString(), textures),
-                    new Uv(uv[0], uv[1], uv[2], uv[3]), rotation,
+            faces.put(direction, new Face(
+                    this.readFaceTexture(face.get(ModelJsonKeys.TEXTURE).getAsString(), textures),
+                    uv,
+                    rotation,
                     cull.isEmpty() ? null : Direction.valueOf(cull.toUpperCase(Locale.ROOT)),
-                    face.has(ModelJsonKeys.TINT_INDEX) ? face.get(ModelJsonKeys.TINT_INDEX).getAsInt() : -1));
+                    face.has(ModelJsonKeys.TINT_INDEX) ? face.get(ModelJsonKeys.TINT_INDEX).getAsInt() : -1
+            ));
         }
         boolean shade = true;
         Direction shadeDirectionOverride = null;
@@ -208,13 +234,19 @@ public final class JavaModelResolver {
         } else if (json.has(ModelJsonKeys.SHADE)) {
             shade = json.get(ModelJsonKeys.SHADE).getAsBoolean();
         }
-        return new Element(from, to, faces,
+        return new Element(
+                from,
+                to,
+                faces,
                 json.has(ModelJsonKeys.ROTATION) ? this.readRotation(json.getAsJsonObject(ModelJsonKeys.ROTATION)) : null,
-                shade, shadeDirectionOverride, this.readLightEmission(json));
+                shade,
+                shadeDirectionOverride,
+                this.readLightEmission(json)
+        );
     }
 
-    private Vector readPosition(JsonObject json, String field) {
-        Vector position = this.readVector(json.getAsJsonArray(field));
+    private Vector3f readPosition(JsonObject json, String field) {
+        Vector3f position = this.readVector(json.getAsJsonArray(field));
         if (position.x() < -16 || position.x() > 32 || position.y() < -16 || position.y() > 32 || position.z() < -16 || position.z() > 32) {
             throw new IllegalArgumentException("Element " + field + " must be within [-16, 32]: " + position);
         }
@@ -237,9 +269,9 @@ public final class JavaModelResolver {
     }
 
     private Rotation readRotation(JsonObject json) {
-        Vector origin = this.readVector(json.getAsJsonArray(ModelJsonKeys.ORIGIN));
+        Vector3f origin = this.readVector(json.getAsJsonArray(ModelJsonKeys.ORIGIN));
         Direction.Axis axis = null;
-        Vector angles;
+        Vector3f angles;
         if (json.has(ModelJsonKeys.AXIS) || json.has(ModelJsonKeys.ANGLE)) {
             axis = Direction.Axis.valueOf(json.get(ModelJsonKeys.AXIS).getAsString().toUpperCase(Locale.ROOT));
             float angle = this.readFloat(json.get(ModelJsonKeys.ANGLE));
@@ -250,9 +282,9 @@ public final class JavaModelResolver {
                 throw new IllegalArgumentException("Element rotation angle must be a multiple of 22.5 before Java 1.21.6: " + angle);
             }
             angles = switch (axis) {
-                case X -> new Vector(angle, 0, 0);
-                case Y -> new Vector(0, angle, 0);
-                case Z -> new Vector(0, 0, angle);
+                case X -> new Vector3f(angle, 0, 0);
+                case Y -> new Vector3f(0, angle, 0);
+                case Z -> new Vector3f(0, 0, angle);
             };
         } else {
             if (this.pack.version().isBelow(MinecraftVersion.V1_21_11)) {
@@ -261,8 +293,11 @@ public final class JavaModelResolver {
             if (!json.has(ModelJsonKeys.X) && !json.has(ModelJsonKeys.Y) && !json.has(ModelJsonKeys.Z)) {
                 throw new IllegalArgumentException("Missing element rotation angles");
             }
-            angles = new Vector(json.has(ModelJsonKeys.X) ? this.readFloat(json.get(ModelJsonKeys.X)) : 0,
-                    json.has(ModelJsonKeys.Y) ? this.readFloat(json.get(ModelJsonKeys.Y)) : 0, json.has(ModelJsonKeys.Z) ? this.readFloat(json.get(ModelJsonKeys.Z)) : 0);
+            angles = new Vector3f(
+                    json.has(ModelJsonKeys.X) ? this.readFloat(json.get(ModelJsonKeys.X)) : 0,
+                    json.has(ModelJsonKeys.Y) ? this.readFloat(json.get(ModelJsonKeys.Y)) : 0,
+                    json.has(ModelJsonKeys.Z) ? this.readFloat(json.get(ModelJsonKeys.Z)) : 0
+            );
         }
         return new Rotation(origin, angles, axis, json.has(ModelJsonKeys.RESCALE) && json.get(ModelJsonKeys.RESCALE).getAsBoolean());
     }
@@ -274,9 +309,10 @@ public final class JavaModelResolver {
             if (json.has(name)) {
                 JsonObject transform = json.getAsJsonObject(name);
                 display.put(position, new Transform(
-                        transform.has(ModelJsonKeys.ROTATION) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.ROTATION)) : Vector.ZERO,
-                        transform.has(ModelJsonKeys.TRANSLATION) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.TRANSLATION), 80) : Vector.ZERO,
-                        transform.has(ModelJsonKeys.SCALE) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.SCALE), 4) : Vector.ONE));
+                        transform.has(ModelJsonKeys.ROTATION) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.ROTATION)) : VectorUtils.ZERO,
+                        transform.has(ModelJsonKeys.TRANSLATION) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.TRANSLATION), 80) : VectorUtils.ZERO,
+                        transform.has(ModelJsonKeys.SCALE) ? this.readVector(transform.getAsJsonArray(ModelJsonKeys.SCALE), 4) : VectorUtils.ONE)
+                );
             }
         }
         // Java applies the right-hand fallback inside each model, before inheriting parent transforms.
@@ -292,28 +328,31 @@ public final class JavaModelResolver {
         }
     }
 
-    private Vector readVector(JsonArray array) {
+    private Vector3f readVector(JsonArray array) {
         return this.readVector(array, Float.POSITIVE_INFINITY);
     }
 
-    private Vector readVector(JsonArray array, float limit) {
+    private Vector3f readVector(JsonArray array, float limit) {
         if (array == null || array.size() != 3) {
             throw new IllegalArgumentException("Expected 3 numeric values: " + array);
         }
-        return new Vector(Math.clamp(this.readFloat(array.get(0)), -limit, limit),
+        return new Vector3f(
+                Math.clamp(this.readFloat(array.get(0)), -limit, limit),
                 Math.clamp(this.readFloat(array.get(1)), -limit, limit),
-                Math.clamp(this.readFloat(array.get(2)), -limit, limit));
+                Math.clamp(this.readFloat(array.get(2)), -limit, limit)
+        );
     }
 
-    private float[] readFloats(JsonArray array, int size) {
-        if (array == null || array.size() != size) {
-            throw new IllegalArgumentException("Expected " + size + " numeric values: " + array);
+    private Uv readUv(JsonArray array) {
+        if (array == null || array.size() != 4) {
+            throw new IllegalArgumentException("Expected 4 numeric values: " + array);
         }
-        float[] values = new float[size];
-        for (int i = 0; i < size; i++) {
-            values[i] = this.readFloat(array.get(i));
-        }
-        return values;
+        return new Uv(
+                this.readFloat(array.get(0)),
+                this.readFloat(array.get(1)),
+                this.readFloat(array.get(2)),
+                this.readFloat(array.get(3))
+        );
     }
 
     private float readFloat(JsonElement value) {

@@ -17,6 +17,7 @@
 - Do not add comments unless requested, except for core logic in complex methods, which should be explained with `//` comments.
 - Prefer reusing or consolidating general-purpose utilities in `core.util` or `bukkit.util` over private static helper methods in business classes. Class-specific business logic need not be extracted.
 - Use parentheses around nested ternary expressions in complex ternary operations to improve readability.
+- Consciously minimize unnecessary allocations when writing code. Avoid excessive defensive checks; prioritize clear, correct code logic.
 
 ## Minecraft APIs
 

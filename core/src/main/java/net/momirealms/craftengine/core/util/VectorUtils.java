@@ -4,6 +4,9 @@ import com.google.gson.JsonArray;
 import org.joml.Vector3f;
 
 public final class VectorUtils {
+    public static final Vector3f ZERO = new Vector3f();
+    public static final Vector3f ONE = new Vector3f(1);
+
     private VectorUtils() {}
 
     public static Vector3f vector3f(JsonArray array) {
