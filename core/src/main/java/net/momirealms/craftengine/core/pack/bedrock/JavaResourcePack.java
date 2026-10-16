@@ -20,17 +20,26 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.Enumeration;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class JavaResourcePack implements AutoCloseable {
+    private static final Pattern LOCALE = Pattern.compile("[a-z]{2,3}_[a-z0-9]{2,3}");
     private final ResourceReader resources;
     private final MinecraftVersion version;
     private final ZipFile archive;
+    private final List<Path> directoryRoots;
+    private final List<String> archiveRoots;
 
     public JavaResourcePack(Path root, Overlays overlays, MinecraftVersion version) {
         this.version = version;
         this.archive = null;
+        this.archiveRoots = List.of();
         List<Path> roots = new ArrayList<>();
         roots.add(root);
         if (version.isAtOrAbove(MinecraftVersion.V1_20_2)) {
@@ -40,6 +49,7 @@ public final class JavaResourcePack implements AutoCloseable {
                 }
             }
         }
+        this.directoryRoots = List.copyOf(roots);
         ResourcePackView view = new ResourcePackView(roots.toArray(Path[]::new));
         this.resources = path -> {
             Path resource = view.getExistingReversed(path);
@@ -50,6 +60,7 @@ public final class JavaResourcePack implements AutoCloseable {
     private JavaResourcePack(ZipFile archive, Overlays overlays, MinecraftVersion version) {
         this.version = version;
         this.archive = archive;
+        this.directoryRoots = List.of();
         List<String> roots = new ArrayList<>();
         roots.add("");
         for (Overlay overlay : overlays.overlays()) {
@@ -57,6 +68,7 @@ public final class JavaResourcePack implements AutoCloseable {
                 roots.add(overlay.directory() + "/");
             }
         }
+        this.archiveRoots = List.copyOf(roots);
         this.resources = path -> {
             for (int index = roots.size() - 1; index >= 0; index--) {
                 // ZipFile resolves the central-directory alias, including protected entries ending in '/'.
@@ -112,6 +124,55 @@ public final class JavaResourcePack implements AutoCloseable {
 
     public MinecraftVersion version() {
         return this.version;
+    }
+
+    public Set<String> languageResources() throws IOException {
+        Set<String> paths = new TreeSet<>();
+        if (this.archive != null) {
+            Enumeration<? extends ZipEntry> entries = this.archive.entries();
+            while (entries.hasMoreElements()) {
+                String entry = entries.nextElement().getName();
+                for (String prefix : this.archiveRoots) {
+                    if (entry.startsWith(prefix)) {
+                        String path = entry.substring(prefix.length());
+                        // Protected ZIP entries may have a trailing slash while still containing JSON data.
+                        if (path.endsWith(".json/")) {
+                            path = path.substring(0, path.length() - 1);
+                        }
+                        if (isLanguageResource(path)) {
+                            paths.add(path);
+                        }
+                    }
+                }
+            }
+        } else {
+            for (Path root : this.directoryRoots) {
+                Path assets = root.resolve("assets");
+                if (!Files.isDirectory(assets)) {
+                    continue;
+                }
+                try (Stream<Path> files = Files.walk(assets, 3)) {
+                    files.filter(Files::isRegularFile).forEach(file -> {
+                        String path = root.relativize(file).toString().replace('\\', '/');
+                        if (isLanguageResource(path)) {
+                            paths.add(path);
+                        }
+                    });
+                }
+            }
+        }
+        return paths;
+    }
+
+    private static boolean isLanguageResource(String path) {
+        if (!path.startsWith("assets/") || !path.endsWith(".json")) {
+            return false;
+        }
+        int namespaceEnd = path.indexOf('/', 7);
+        if (namespaceEnd < 0 || !path.startsWith("/lang/", namespaceEnd)) {
+            return false;
+        }
+        return LOCALE.matcher(path.substring(namespaceEnd + 6, path.length() - 5)).matches();
     }
 
     @Nullable
