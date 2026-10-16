@@ -848,7 +848,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                         legacyOverridesModels = new TreeSet<>();
                         processModelRecursively(modernModel, new LinkedHashMap<>(), legacyOverridesModels, clientBoundMaterial, customModelData);
                         if (legacyOverridesModels.isEmpty()) {
-                            throw new KnownResourceException("resource.item.model_definition.downgrade_failure", section.path());
+                            this.error(new KnownResourceException("resource.item.model_definition.downgrade_failure", section.path()), path);
                         }
                     }
                 } else {
