@@ -120,7 +120,9 @@ final class BedrockItemRegistrar {
         int registered = 0;
         for (BedrockPackMappings.Item item : mappings.items()) {
             try {
-                CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder().allowOffhand(true);
+                CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder()
+                        .allowOffhand(true)
+                        .displayHandheld(item.displayHandheld());
                 if (item.displayBlock() == null) {
                     options.icon(item.icon());
                 }

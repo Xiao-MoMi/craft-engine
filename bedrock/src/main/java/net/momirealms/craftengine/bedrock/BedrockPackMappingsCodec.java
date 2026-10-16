@@ -64,6 +64,7 @@ public final class BedrockPackMappingsCodec {
         String model = null;
         String bedrockIdentifier = null;
         String icon = "stick";
+        boolean displayHandheld = false;
         BedrockPackMappings.DisplayBlock displayBlock = null;
         reader.beginObject();
         while (reader.hasNext()) {
@@ -73,6 +74,7 @@ public final class BedrockPackMappingsCodec {
                 case "java_item_model" -> model = reader.nextString();
                 case "bedrock_identifier" -> bedrockIdentifier = reader.nextString();
                 case "icon" -> icon = reader.nextString();
+                case "display_handheld" -> displayHandheld = reader.nextBoolean();
                 case "display_block" -> displayBlock = readDisplayBlock(reader);
                 default -> reader.skipValue();
             }
@@ -82,7 +84,7 @@ public final class BedrockPackMappingsCodec {
                 || id.isEmpty() || javaItem.isEmpty() || model.isEmpty() || bedrockIdentifier.isEmpty()) {
             throw new IOException("Incomplete Bedrock item mapping at " + reader.getPath());
         }
-        return new BedrockPackMappings.Item(id, javaItem, model, bedrockIdentifier, displayBlock == null ? icon : null, displayBlock);
+        return new BedrockPackMappings.Item(id, javaItem, model, bedrockIdentifier, displayBlock == null ? icon : null, displayBlock, displayHandheld);
     }
 
     private static BedrockPackMappings.DisplayBlock readDisplayBlock(JsonReader reader) throws IOException {
@@ -127,6 +129,9 @@ public final class BedrockPackMappingsCodec {
             writer.name("java_item").value(item.javaItem());
             writer.name("java_item_model").value(item.javaItemModel());
             writer.name("bedrock_identifier").value(item.bedrockIdentifier());
+            if (item.displayHandheld()) {
+                writer.name("display_handheld").value(true);
+            }
             if (item.displayBlock() == null) {
                 writer.name("icon").value(item.icon());
             } else {

@@ -45,6 +45,13 @@ public final class JavaItemIconRenderer {
         this.pixelScale = size / 16f;
     }
 
+    private static Vector3fc[] lights(Matrix4f transform) {
+        return new Vector3fc[]{
+                transform.transformDirection(new Vector3f(0.2f, 1, -0.7f).normalize()),
+                transform.transformDirection(new Vector3f(-0.2f, 1, 0.7f).normalize())
+        };
+    }
+
     public BufferedImage render(JavaModel model, BedrockTextureAtlas atlas, List<Integer> tints) {
         if (model.geometryKind() != JavaModel.GeometryKind.ELEMENTS) {
             throw new IllegalArgumentException("GUI cube rendering requires ELEMENTS: " + model.id());
@@ -118,12 +125,5 @@ public final class JavaItemIconRenderer {
         this.normal.y = -this.normal.y;
         // Java's item light shader combines two directional lights with 0.4 ambient and 0.6 diffuse.
         return Math.min(1, 0.4f + 0.6f * (Math.max(0, this.normal.dot(lights[0])) + Math.max(0, this.normal.dot(lights[1]))));
-    }
-
-    private static Vector3fc[] lights(Matrix4f transform) {
-        return new Vector3fc[]{
-                transform.transformDirection(new Vector3f(0.2f, 1, -0.7f).normalize()),
-                transform.transformDirection(new Vector3f(-0.2f, 1, 0.7f).normalize())
-        };
     }
 }

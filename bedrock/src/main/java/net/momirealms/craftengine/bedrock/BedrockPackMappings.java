@@ -11,7 +11,11 @@ public record BedrockPackMappings(int formatVersion, String javaVersion, String 
         items = List.copyOf(items);
     }
 
-    public record Item(String id, String javaItem, String javaItemModel, String bedrockIdentifier, String icon, DisplayBlock displayBlock) {
+    public record Item(String id, String javaItem, String javaItemModel, String bedrockIdentifier, String icon, DisplayBlock displayBlock, boolean displayHandheld) {
+
+        public Item(String id, String javaItem, String javaItemModel, String bedrockIdentifier, String icon, DisplayBlock displayBlock) {
+            this(id, javaItem, javaItemModel, bedrockIdentifier, icon, displayBlock, false);
+        }
 
         public Item(String id, String javaItem, String javaItemModel, String bedrockIdentifier, String icon) {
             this(id, javaItem, javaItemModel, bedrockIdentifier, icon, null);

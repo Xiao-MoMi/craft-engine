@@ -8,6 +8,8 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSource;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSources;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemRendering;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBlockItems;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemWriter;
@@ -30,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +59,8 @@ public final class BedrockPackGenerator {
             JavaModelResolver resolver = new JavaModelResolver(pack);
             JavaPackTextureSource textures = new JavaPackTextureSource(pack, blockAtlas, itemAtlas);
             BedrockModelConverter converter = new BedrockModelConverter();
-            List<BedrockItemSource> orderedItems = new ArrayList<>(items);
-            orderedItems.sort(Comparator.comparing(item -> item.id().asString()));
-            Map<ModelVariant, List<BedrockItemSource>> models = collectModels(pack, orderedItems, warning);
+            BedrockItemSources sources = new BedrockItemSources(items);
+            Map<ModelVariant, List<BedrockItemSource>> models = collectModels(pack, sources.items(), warning);
             BedrockItemIcons icons = new BedrockItemIcons(iconSize);
             BedrockBlockItems blockItems = new BedrockBlockItems();
             List<BedrockPackMappings.Item> mappings = new ArrayList<>();
@@ -91,7 +91,8 @@ public final class BedrockPackGenerator {
                     if (!item.id().equals(resource)) {
                         BedrockItemWriter.writeAttachable(item.id(), resource, converted.geometry().identifier(), root, animations);
                     }
-                    mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(), item.id().asString(), icon, displayBlock));
+                    mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
+                            item.id().asString(), icon, displayBlock, BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                 }
                 convertedModels++;
             }
