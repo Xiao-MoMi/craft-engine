@@ -3,16 +3,18 @@ package net.momirealms.craftengine.core.pack.bedrock;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
+import net.momirealms.craftengine.core.item.ItemKeys;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaItemModelLeaf;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaBowModel;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBowWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSources;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemRendering;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBlockItems;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockAnimatedTextures;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
@@ -60,13 +62,13 @@ public final class BedrockPackGenerator {
             JavaPackTextureSource textures = new JavaPackTextureSource(pack, blockAtlas, itemAtlas);
             BedrockModelConverter converter = new BedrockModelConverter();
             BedrockItemSources sources = new BedrockItemSources(items);
-            Map<ModelVariant, List<BedrockItemSource>> models = collectModels(pack, sources.items(), warning);
+            CollectedModels models = collectModels(pack, sources, warning);
             BedrockItemIcons icons = new BedrockItemIcons(iconSize);
             BedrockBlockItems blockItems = new BedrockBlockItems();
             List<BedrockPackMappings.Item> mappings = new ArrayList<>();
             int convertedModels = 0;
-            for (Map.Entry<ModelVariant, List<BedrockItemSource>> entry : models.entrySet()) {
-                ModelVariant variant = entry.getKey();
+            for (Map.Entry<JavaItemModelLeaf, List<BedrockItemSource>> entry : models.staticModels().entrySet()) {
+                JavaItemModelLeaf variant = entry.getKey();
                 List<BedrockItemSource> users = entry.getValue();
                 Key resource = users.getFirst().id();
                 BedrockModelConverter.Result converted;
@@ -75,7 +77,7 @@ public final class BedrockPackGenerator {
                 try {
                     JavaModel model = resolver.resolve(variant.model());
                     converted = converter.convert(model, "geometry." + resource.namespace() + "." + resource.value(), textures, variant.tints());
-                    animations = BedrockAnimatedTextures.write(converted, resource, root);
+                    animations = BedrockAnimatedTextures.write(converted, resource, root, false);
                     displayBlock = model.geometryKind() == JavaModel.GeometryKind.GENERATED && animations.isEmpty()
                             ? null : blockItems.write(converted, resource, root, animations);
                 } catch (IOException | IllegalArgumentException exception) {
@@ -84,17 +86,28 @@ public final class BedrockPackGenerator {
                     }
                     continue;
                 }
-                // Convert and write shared geometry/texture/animations once, then release the image before the next model.
-                BedrockItemWriter.write(converted, resource, root, animations);
+                // Native icons and block geometry retain Bedrock's held rendering; attachables are reserved for stateful items.
                 String icon = displayBlock == null ? icons.write(converted, resource, variant.tints(), root) : null;
                 for (BedrockItemSource item : users) {
-                    if (!item.id().equals(resource)) {
-                        BedrockItemWriter.writeAttachable(item.id(), resource, converted.geometry().identifier(), root, animations);
-                    }
                     mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
                             item.id().asString(), icon, displayBlock, BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                 }
                 convertedModels++;
+            }
+            BedrockBowWriter bows = new BedrockBowWriter(resolver, textures, icons, blockItems, root);
+            for (Map.Entry<JavaBowModel, List<BedrockItemSource>> entry : models.bows().entrySet()) {
+                try {
+                    BedrockBowWriter.Result bow = bows.write(entry.getKey(), entry.getValue());
+                    for (BedrockItemSource item : entry.getValue()) {
+                        mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
+                                item.id().asString(), bow.icon(), bow.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
+                    }
+                    convertedModels += bow.models();
+                } catch (IOException | IllegalArgumentException exception) {
+                    for (BedrockItemSource item : entry.getValue()) {
+                        warning.accept("Skipping Bedrock bow " + item.id() + " (" + item.itemModel() + "): " + exception.getMessage());
+                    }
+                }
             }
             icons.writeAtlas(root);
             blockItems.writeAtlas(root);
@@ -119,49 +132,29 @@ public final class BedrockPackGenerator {
         }
     }
 
-    private Map<ModelVariant, List<BedrockItemSource>> collectModels(JavaResourcePack pack, List<BedrockItemSource> items, Consumer<String> warning) {
-        Map<ModelVariant, List<BedrockItemSource>> models = new LinkedHashMap<>();
-        for (BedrockItemSource item : items) {
+    private CollectedModels collectModels(JavaResourcePack pack, BedrockItemSources sources, Consumer<String> warning) {
+        Map<JavaItemModelLeaf, List<BedrockItemSource>> models = new LinkedHashMap<>();
+        Map<JavaBowModel, List<BedrockItemSource>> bows = new LinkedHashMap<>();
+        for (BedrockItemSource item : sources.items()) {
             try {
                 JsonObject definition = pack.readJson("assets/" + item.itemModel().namespace() + "/items/" + item.itemModel().value() + ".json");
                 if (definition == null || !(definition.get("model") instanceof JsonObject model)) {
                     throw new IOException("Missing item definition in input ZIP");
                 }
-                String type = model.has("type") ? model.get("type").getAsString() : "";
-                if (!type.equals("minecraft:model") && !type.equals("model")) {
-                    throw new IOException("Unsupported item definition type: " + type);
+                BedrockItemSource definitionSource = sources.findItemByModel(item.itemModel());
+                if (definitionSource != null && definitionSource.javaItem().equals(ItemKeys.BOW)) {
+                    bows.computeIfAbsent(JavaBowModel.read(model), key -> new ArrayList<>()).add(item);
+                } else {
+                    models.computeIfAbsent(JavaItemModelLeaf.read(model), key -> new ArrayList<>()).add(item);
                 }
-                List<Integer> tints = this.constantTints(model);
-                JsonElement reference = model.get("model");
-                if (reference == null || !reference.isJsonPrimitive()) {
-                    throw new IOException("Missing static model reference");
-                }
-                models.computeIfAbsent(new ModelVariant(Key.of(reference.getAsString()), tints), key -> new ArrayList<>()).add(item);
             } catch (IOException | RuntimeException exception) {
                 warning.accept("Skipping Bedrock item " + item.id() + " (" + item.itemModel() + "): " + exception.getMessage());
             }
         }
-        return models;
+        return new CollectedModels(models, bows);
     }
 
-    private List<Integer> constantTints(JsonObject model) throws IOException {
-        if (!model.has("tints") || model.getAsJsonArray("tints").isEmpty()) {
-            return List.of();
-        }
-        JsonArray definitions = model.getAsJsonArray("tints");
-        List<Integer> tints = new ArrayList<>(definitions.size());
-        for (JsonElement definition : definitions) {
-            JsonObject tint = definition.getAsJsonObject();
-            String type = tint.get("type").getAsString();
-            if (!type.equals("constant") && !type.equals("minecraft:constant")) {
-                throw new IOException("Unsupported dynamic item tint: " + type);
-            }
-            tints.add(tint.get("value").getAsInt() & 0xFFFFFF);
-        }
-        return List.copyOf(tints);
-    }
-
-    private record ModelVariant(Key model, List<Integer> tints) {
+    private record CollectedModels(Map<JavaItemModelLeaf, List<BedrockItemSource>> staticModels, Map<JavaBowModel, List<BedrockItemSource>> bows) {
     }
 
     private JsonObject manifest(Path root, boolean blockItems) throws IOException {

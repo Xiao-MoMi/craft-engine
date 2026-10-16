@@ -38,8 +38,12 @@ final class ExperimentalBlockItemAdapter {
     }
 
     private static MaterialInstance material(String texture) {
-        return MaterialInstance.builder().texture(texture).renderMethod("alpha_test_single_sided")
-                .faceDimming(false).ambientOcclusionExponent(0).build();
+        return MaterialInstance.builder()
+                .texture(texture)
+                .renderMethod("alpha_test_single_sided")
+                .faceDimming(false)
+                .ambientOcclusionExponent(0)
+                .build();
     }
 
     void apply(CustomItemDefinition.Builder builder, String blockIdentifier) throws ReflectiveOperationException {
@@ -48,7 +52,6 @@ final class ExperimentalBlockItemAdapter {
         if (this.geyserComponent == null) {
             this.geyserComponent = builder.getClass().getMethod("geyserComponent", ItemDataComponent.class, Object.class);
         }
-        this.geyserComponent.invoke(builder, GeyserItemDataComponents.BLOCK_PLACER,
-                GeyserBlockPlacer.of(Identifier.of(blockIdentifier), true));
+        this.geyserComponent.invoke(builder, GeyserItemDataComponents.BLOCK_PLACER, GeyserBlockPlacer.of(Identifier.of(blockIdentifier), true));
     }
 }

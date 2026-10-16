@@ -32,12 +32,17 @@ public final class BedrockBlockItems {
 
     public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root,
                                                 List<BedrockAnimatedTextures.Track> animations) throws IOException {
+        return this.write(converted, resource, root, animations, true);
+    }
+
+    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root,
+                                                List<BedrockAnimatedTextures.Track> animations, boolean held) throws IOException {
         String name = "ce_item_" + HashUtils.sha1(resource.asString().getBytes(StandardCharsets.UTF_8));
         String identifier = "geometry." + name;
         BufferedImage image = converted.atlas().image();
         int textureWidth = Math.max(image.getWidth(), image.getHeight());
         int textureHeight = animations.isEmpty() ? image.getHeight() : textureWidth;
-        JsonObject geometry = BedrockBlockItemModel.convert(converted, identifier, textureWidth, textureHeight);
+        JsonObject geometry = BedrockBlockItemModel.convert(converted, identifier, textureWidth, textureHeight, held);
         Path path = root.resolve("models/blocks/" + name + ".geo.json");
         Files.createDirectories(path.getParent());
         GsonHelper.writeJsonFile(geometry, path);
@@ -48,11 +53,12 @@ public final class BedrockBlockItems {
             int[] pixels = ((DataBufferInt) padded.getRaster().getDataBuffer()).getData();
             PngOptimizer.readPixels(image, pixels, 0, textureWidth);
             texturePath = "textures/ce_blocks/" + name;
-            Path textureFile = root.resolve(texturePath + ".png");
-            Files.createDirectories(textureFile.getParent());
-            try (OutputStream output = Files.newOutputStream(textureFile)) {
-                new PngOptimizer(padded, 0).write(output);
-            }
+            image = padded;
+        }
+        Path textureFile = root.resolve(texturePath + ".png");
+        Files.createDirectories(textureFile.getParent());
+        try (OutputStream output = Files.newOutputStream(textureFile)) {
+            new PngOptimizer(image, 0).write(output);
         }
         JsonObject texture = new JsonObject();
         texture.addProperty("textures", texturePath);

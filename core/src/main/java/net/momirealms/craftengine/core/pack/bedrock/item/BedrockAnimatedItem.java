@@ -39,15 +39,16 @@ final class BedrockAnimatedItem {
         return new BedrockGeometry(identifier, width, height, cubes, source.bounds());
     }
 
-    static void write(BedrockGeometry geometry, BedrockGeometry.Bounds bounds, List<BedrockAnimatedTextures.Track> tracks, Path root) throws IOException {
+    static void write(BedrockGeometry geometry, BedrockGeometry.Bounds bounds, List<BedrockAnimatedTextures.Track> tracks,
+                      Path root, String prefix, boolean bow) throws IOException {
         for (BedrockAnimatedTextures.Track track : tracks) {
             BedrockGeometry part = select(geometry, track.material(), geometry.identifier() + '.' + track.material(), track.size(), track.size());
             Path path = root.resolve("models/entity/ce_anim/" + track.resource() + ".geo.json");
             Files.createDirectories(path.getParent());
-            GsonHelper.writeJsonFile(BedrockGeometryWriter.toJson(part, BedrockItemDisplay.rig(part, track.material() + '_'), bounds), path);
+            GsonHelper.writeJsonFile(BedrockGeometryWriter.toJson(part, BedrockItemDisplay.rig(part, prefix + track.material() + '_', bow), bounds), path);
             JsonArray frames = new JsonArray();
             for (int index = 0; index < track.frames().size(); index++) {
-                frames.add("Texture." + track.material() + '_' + index);
+                frames.add("Texture." + prefix + track.material() + '_' + index);
             }
             JsonObject textures = new JsonObject();
             textures.add("Array.frames", frames);
@@ -55,7 +56,7 @@ final class BedrockAnimatedItem {
             arrays.add("textures", textures);
             JsonObject controller = new JsonObject();
             controller.add("arrays", arrays);
-            controller.addProperty("geometry", "Geometry." + track.material());
+            controller.addProperty("geometry", "Geometry." + prefix + track.material());
             JsonObject material = new JsonObject();
             material.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
             JsonArray materials = new JsonArray();
@@ -76,7 +77,7 @@ final class BedrockAnimatedItem {
         }
     }
 
-    static void bind(JsonObject description, String geometry, List<BedrockAnimatedTextures.Track> tracks) {
+    static void bind(JsonObject description, String geometry, List<BedrockAnimatedTextures.Track> tracks, String prefix) {
         if (tracks.isEmpty()) {
             return;
         }
@@ -87,9 +88,9 @@ final class BedrockAnimatedItem {
         JsonArray update = new JsonArray();
         for (BedrockAnimatedTextures.Track track : tracks) {
             for (int index = 0; index < track.frames().size(); index++) {
-                textures.addProperty(track.material() + '_' + index, track.frames().get(index));
+                textures.addProperty(prefix + track.material() + '_' + index, track.frames().get(index));
             }
-            geometries.addProperty(track.material(), geometry + '.' + track.material());
+            geometries.addProperty(prefix + track.material(), geometry + '.' + track.material());
             controllers.add("controller.render.ce_anim_" + track.resource());
             String clock = "variable.ce_anim_" + track.resource();
             initialize.add(clock + " = 0;");

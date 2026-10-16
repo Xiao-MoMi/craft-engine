@@ -16,6 +16,7 @@ public final class BedrockItemDisplay {
     static final String X_BONE = "ce_display_x";
     static final String Y_BONE = "ce_display_y";
     static final String Z_BONE = "ce_display_z";
+    static final String BOW_POSE_BONE = "ce_bow_pose";
     private static final float MODEL_CENTER_Y = 8;
     private static final Vector3f PIVOT = new Vector3f(0, MODEL_CENTER_Y, 0);
     private static final String BINDING = "context.item_slot == 'head' ? 'head' : query.item_slot_to_bone_name(context.item_slot)";
@@ -47,11 +48,25 @@ public final class BedrockItemDisplay {
     }
 
     static List<BedrockGeometry.Bone> rig(BedrockGeometry geometry, String prefix) {
+        return rig(geometry, prefix, false);
+    }
+
+    static List<BedrockGeometry.Bone> rig(BedrockGeometry geometry, String prefix, boolean bow) {
         String slot = prefix + SLOT_BONE;
         String x = prefix + X_BONE;
         String y = prefix + Y_BONE;
         String z = prefix + Z_BONE;
         // Nested X -> Y -> Z bones retain Java's XYZ rotation order; scale belongs on the final bone.
+        if (bow) {
+            String pose = prefix + BOW_POSE_BONE;
+            return List.of(
+                    new BedrockGeometry.Bone(pose, null, PIVOT, BINDING, List.of()),
+                    new BedrockGeometry.Bone(slot, pose, PIVOT, null, List.of()),
+                    new BedrockGeometry.Bone(x, slot, PIVOT, null, List.of()),
+                    new BedrockGeometry.Bone(y, x, PIVOT, null, List.of()),
+                    new BedrockGeometry.Bone(z, y, PIVOT, null, geometry.cubes())
+            );
+        }
         return List.of(
                 new BedrockGeometry.Bone(slot, null, PIVOT, BINDING, List.of()),
                 new BedrockGeometry.Bone(x, slot, PIVOT, null, List.of()),
@@ -61,6 +76,10 @@ public final class BedrockItemDisplay {
     }
 
     static BedrockGeometry.Bounds bounds(BedrockGeometry geometry, Map<View, Transform> transforms) {
+        return bounds(geometry, transforms, false);
+    }
+
+    static BedrockGeometry.Bounds bounds(BedrockGeometry geometry, Map<View, Transform> transforms, boolean bow) {
         if (geometry.cubes().isEmpty()) {
             return geometry.bounds();
         }
@@ -74,13 +93,20 @@ public final class BedrockItemDisplay {
         Vector3f corner = new Vector3f();
         Matrix4f matrix = new Matrix4f();
         for (View view : VIEWS) {
-            previewMatrix(view.pose, transforms.get(view), matrix);
-            for (int index = 0; index < 8; index++) {
-                corner.set((index & 1) == 0 ? -radius : radius, (index & 2) == 0 ? bottom : top, (index & 4) == 0 ? -radius : radius);
-                matrix.transformPosition(corner);
-                maxRadius = Math.max(maxRadius, Math.max(Math.abs(corner.x()), Math.abs(corner.z())));
-                minY = Math.min(minY, corner.y());
-                maxY = Math.max(maxY, corner.y());
+            boolean bowHand = bow && view == View.FIRST_PERSON_RIGHT;
+            for (int pose = 0; pose < (bowHand ? 2 : 1); pose++) {
+                if (bowHand) {
+                    BedrockBowDisplay.previewMatrix(transforms.get(view), pose != 0, matrix);
+                } else {
+                    previewMatrix(view.pose, transforms.get(view), matrix);
+                }
+                for (int index = 0; index < 8; index++) {
+                    corner.set((index & 1) == 0 ? -radius : radius, (index & 2) == 0 ? bottom : top, (index & 4) == 0 ? -radius : radius);
+                    matrix.transformPosition(corner);
+                    maxRadius = Math.max(maxRadius, Math.max(Math.abs(corner.x()), Math.abs(corner.z())));
+                    minY = Math.min(minY, corner.y());
+                    maxY = Math.max(maxY, corner.y());
+                }
             }
         }
         bottom = (float) Math.floor(minY / 16);
@@ -91,13 +117,17 @@ public final class BedrockItemDisplay {
     static void previewMatrix(SlotPose pose, Transform transform, Matrix4f target) {
         Vector3f slotRotation = pose.rotation();
         Vector3f slotPosition = pose.position();
-        Vector3f rotation = transform.rotation();
-        Vector3f translation = transform.translation();
         // Undo Bedrock codec signs, then compose in Blockbench preview coordinates around the shared model center.
         target.translation(-slotPosition.x(), PIVOT.y() + slotPosition.y(), slotPosition.z())
                 .rotateZYX(slotRotation.z() * DEGREES_TO_RADIANS, -slotRotation.y() * DEGREES_TO_RADIANS, -slotRotation.x() * DEGREES_TO_RADIANS)
-                .scale(pose.scale())
-                .translate(-translation.x(), translation.y(), translation.z())
+                .scale(pose.scale());
+        applyDisplay(target, transform);
+    }
+
+    static void applyDisplay(Matrix4f target, Transform transform) {
+        Vector3f rotation = transform.rotation();
+        Vector3f translation = transform.translation();
+        target.translate(-translation.x(), translation.y(), translation.z())
                 .rotateXYZ(-rotation.x() * DEGREES_TO_RADIANS, -rotation.y() * DEGREES_TO_RADIANS, rotation.z() * DEGREES_TO_RADIANS)
                 .scale(transform.scale())
                 .translate(0, -PIVOT.y(), 0);

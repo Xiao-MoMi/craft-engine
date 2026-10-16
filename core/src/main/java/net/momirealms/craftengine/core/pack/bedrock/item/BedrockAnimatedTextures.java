@@ -25,6 +25,10 @@ public final class BedrockAnimatedTextures {
     }
 
     public static List<Track> write(BedrockModelConverter.Result model, Key resource, Path root) throws IOException {
+        return write(model, resource, root, true);
+    }
+
+    public static List<Track> write(BedrockModelConverter.Result model, Key resource, Path root, boolean separateFrames) throws IOException {
         BedrockTextureAtlas atlas = model.atlas();
         if (atlas.animations().isEmpty()) {
             return List.of();
@@ -48,15 +52,17 @@ public final class BedrockAnimatedTextures {
             BufferedImage frame = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
             int[] framePixels = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
             BufferedImage sample = new BufferedImage(animation.width(), animation.height(), BufferedImage.TYPE_INT_ARGB);
-            List<String> frames = new ArrayList<>(count);
+            List<String> frames = separateFrames ? new ArrayList<>(count) : List.of();
             // Independent sprite tracks avoid multiplying frame counts when a model mixes different animation periods.
             for (int sampleIndex = 0; sampleIndex < count; sampleIndex++) {
                 animation.render(sampleIndex * interval, sprite.color(), sample);
                 BedrockTextureAtlas.copySprite(sample, framePixels, size, region);
                 System.arraycopy(framePixels, 0, stripPixels, sampleIndex * framePixels.length, framePixels.length);
-                String framePath = path + '/' + sampleIndex;
-                writePng(frame, root.resolve(framePath + ".png"));
-                frames.add(framePath);
+                if (separateFrames) {
+                    String framePath = path + '/' + sampleIndex;
+                    writePng(frame, root.resolve(framePath + ".png"));
+                    frames.add(framePath);
+                }
             }
             writePng(strip, root.resolve(path + ".png"));
             tracks.add(new Track(sprite.material(), "ce_anim_" + id, path, id, interval, size, List.copyOf(frames)));

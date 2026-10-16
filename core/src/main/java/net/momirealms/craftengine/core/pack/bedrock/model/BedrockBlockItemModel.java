@@ -9,8 +9,11 @@ import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Vector3f;
 
 public final class BedrockBlockItemModel {
-    private static final DisplayPosition[] VIEWS = {DisplayPosition.GUI, DisplayPosition.GROUND, DisplayPosition.FIXED};
-    private static final String[] VIEW_NAMES = {"gui", "ground", "fixed"};
+    private static final DisplayPosition[] VIEWS = {DisplayPosition.GUI, DisplayPosition.GROUND, DisplayPosition.FIXED,
+            DisplayPosition.FIRSTPERSON_RIGHTHAND, DisplayPosition.FIRSTPERSON_LEFTHAND,
+            DisplayPosition.THIRDPERSON_RIGHTHAND, DisplayPosition.THIRDPERSON_LEFTHAND};
+    private static final String[] VIEW_NAMES = {"gui", "ground", "fixed", "firstperson_righthand", "firstperson_lefthand",
+            "thirdperson_righthand", "thirdperson_lefthand"};
 
     private BedrockBlockItemModel() {
     }
@@ -20,6 +23,10 @@ public final class BedrockBlockItemModel {
     }
 
     public static JsonObject convert(BedrockModelConverter.Result converted, String identifier, int textureWidth, int textureHeight) {
+        return convert(converted, identifier, textureWidth, textureHeight, true);
+    }
+
+    public static JsonObject convert(BedrockModelConverter.Result converted, String identifier, int textureWidth, int textureHeight, boolean held) {
         BedrockGeometry geometry = converted.geometry();
         if (geometry.cubes().isEmpty()) {
             throw new IllegalArgumentException("Empty block item geometry: " + converted.source().id());
@@ -27,7 +34,7 @@ public final class BedrockBlockItemModel {
         // Fit rotated cubes inside the base block around the Java model center, then restore their size in display transforms.
         float scale = BedrockModelTransform.blockItemScale(geometry.cubes());
         JsonObject transforms = new JsonObject();
-        for (int index = 0; index < VIEWS.length; index++) {
+        for (int index = 0; index < (held ? VIEWS.length : 3); index++) {
             JavaModel.Transform transform = converted.source().display().getOrDefault(VIEWS[index], JavaModel.Transform.identity());
             Vector3f displayScale = new Vector3f(transform.scale()).div(scale);
             if (Math.min(displayScale.x(), Math.min(displayScale.y(), displayScale.z())) < 0
