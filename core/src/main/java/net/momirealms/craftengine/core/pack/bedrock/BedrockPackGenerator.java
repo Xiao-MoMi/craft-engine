@@ -97,7 +97,7 @@ public final class BedrockPackGenerator {
             }
             icons.writeAtlas(root);
             blockItems.writeAtlas(root);
-            BedrockLanguageWriter.write(pack, root, warning);
+            BedrockLanguageWriter.write(pack, root, mappings, warning);
             BedrockPackMappings metadata = new BedrockPackMappings(BedrockPackMappings.FORMAT_VERSION, version.version(), HashUtils.sha1(input), mappings);
             Path metadataPath = root.resolve(BedrockPackMappings.PATH);
             Files.createDirectories(metadataPath.getParent());

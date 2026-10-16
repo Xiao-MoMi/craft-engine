@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bedrock.geyser;
 
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
+import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
+import net.momirealms.craftengine.bedrock.BedrockPackLanguagesCodec;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.extension.ExtensionLogger;
@@ -28,6 +30,7 @@ final class BedrockItemRegistrar {
     private final ExtensionLogger logger;
     private final List<Pack> packs = new ArrayList<>();
     private final ExperimentalBlockItemAdapter blockItems = new ExperimentalBlockItemAdapter();
+    private final Map<String, Map<String, String>> translations = new HashMap<>();
 
     BedrockItemRegistrar(ExtensionLogger logger) {
         this.logger = logger;
@@ -52,6 +55,7 @@ final class BedrockItemRegistrar {
 
     private void loadPack(Path path, GeyserDefineCustomBlocksEvent event) {
         BedrockPackMappings mappings;
+        BedrockPackLanguages languages = BedrockPackLanguages.EMPTY;
         Map<String, String> displayBlocks = Map.of();
         try (ZipFile zip = new ZipFile(path.toFile())) {
             ZipEntry entry = zip.getEntry(BedrockPackMappings.PATH);
@@ -60,6 +64,12 @@ final class BedrockItemRegistrar {
             }
             try (Reader reader = new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8)) {
                 mappings = BedrockPackMappingsCodec.read(reader);
+            }
+            ZipEntry languageEntry = zip.getEntry(BedrockPackLanguages.PATH);
+            if (languageEntry != null) {
+                try (Reader reader = new InputStreamReader(zip.getInputStream(languageEntry), StandardCharsets.UTF_8)) {
+                    languages = BedrockPackLanguagesCodec.read(reader);
+                }
             }
             if (event != null) {
                 displayBlocks = this.registerBlocks(mappings, event);
@@ -71,7 +81,14 @@ final class BedrockItemRegistrar {
             this.logger.error("Could not read CraftEngine mappings from " + path, exception);
             return;
         }
-        this.packs.add(new Pack(path, mappings, displayBlocks));
+        for (Map.Entry<String, Map<String, String>> locale : languages.locales().entrySet()) {
+            this.translations.computeIfAbsent(locale.getKey(), ignored -> new HashMap<>()).putAll(locale.getValue());
+        }
+        this.packs.add(new Pack(path, mappings, displayBlocks, languages.itemNames()));
+    }
+
+    Map<String, Map<String, String>> translations() {
+        return this.translations;
     }
 
     private Map<String, String> registerBlocks(BedrockPackMappings mappings, GeyserDefineCustomBlocksEvent event) {
@@ -109,7 +126,7 @@ final class BedrockItemRegistrar {
                 }
                 CustomItemDefinition.Builder builder = CustomItemDefinition.builder(
                                 Identifier.of(item.bedrockIdentifier()), Identifier.of(item.javaItemModel()))
-                        .displayName(item.id())
+                        .displayName(pack.itemNames().getOrDefault(item.id(), item.id()))
                         .bedrockOptions(options);
                 if (item.displayBlock() != null) {
                     String displayBlock = pack.displayBlocks().get(item.displayBlock().name());
@@ -129,6 +146,6 @@ final class BedrockItemRegistrar {
         this.logger.info("Registered " + registered + '/' + mappings.items().size() + " CraftEngine items from " + path.getFileName());
     }
 
-    private record Pack(Path path, BedrockPackMappings mappings, Map<String, String> displayBlocks) {
+    private record Pack(Path path, BedrockPackMappings mappings, Map<String, String> displayBlocks, Map<String, String> itemNames) {
     }
 }

@@ -3,6 +3,9 @@ package net.momirealms.craftengine.core.pack.bedrock;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
+import net.momirealms.craftengine.bedrock.BedrockPackLanguagesCodec;
+import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.BufferedWriter;
@@ -11,6 +14,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -26,12 +31,13 @@ final class BedrockLanguageWriter {
     private BedrockLanguageWriter() {
     }
 
-    static void write(JavaResourcePack pack, Path root, Consumer<String> warning) throws IOException {
+    static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items, Consumer<String> warning) throws IOException {
         Map<String, Map<String, String>> locales = new TreeMap<>();
+        Set<String> keys = new HashSet<>();
         for (String path : pack.languageResources()) {
-            String locale = bedrockLocale(path.substring(path.lastIndexOf('/') + 1, path.length() - 5));
-            if (locale == null) {
-                continue;
+            String locale = path.substring(path.lastIndexOf('/') + 1, path.length() - 5);
+            if (locale.equals("nb_no")) {
+                locale = "no_no";
             }
             JsonObject json = pack.readJson(path);
             Map<String, String> strings = locales.computeIfAbsent(locale, ignored -> new TreeMap<>());
@@ -43,20 +49,40 @@ final class BedrockLanguageWriter {
                 // Java language loading turns numeric printf specifiers into string substitutions.
                 String value = NUMERIC_FORMAT.matcher(entry.getValue().getAsString()).replaceAll("%$1s");
                 strings.put(entry.getKey(), value);
+                keys.add(entry.getKey());
             }
+        }
+        Map<String, String> names = new TreeMap<>();
+        for (BedrockPackMappings.Item item : items) {
+            String suffix = item.id().replace(':', '.');
+            String itemKey = "item." + suffix;
+            String blockKey = "block." + suffix;
+            if (keys.contains(itemKey)) {
+                names.put(item.id(), itemKey);
+            } else if (keys.contains(blockKey)) {
+                names.put(item.id(), blockKey);
+            }
+        }
+        Path metadata = root.resolve(BedrockPackLanguages.PATH);
+        Files.createDirectories(metadata.getParent());
+        try (BufferedWriter writer = Files.newBufferedWriter(metadata, StandardCharsets.UTF_8)) {
+            BedrockPackLanguagesCodec.write(new BedrockPackLanguages(locales, names), writer);
         }
         JsonArray languages = new JsonArray();
         Path texts = root.resolve("texts");
         Files.createDirectories(texts);
         for (Map.Entry<String, Map<String, String>> locale : locales.entrySet()) {
-            String language = locale.getKey();
+            String language = bedrockLocale(locale.getKey());
+            if (language == null) {
+                continue;
+            }
             languages.add(language);
             try (BufferedWriter writer = Files.newBufferedWriter(texts.resolve(language + ".lang"), StandardCharsets.UTF_8)) {
                 for (Map.Entry<String, String> entry : locale.getValue().entrySet()) {
                     String key = entry.getKey();
                     String value = entry.getValue();
                     if (key.indexOf('=') >= 0 || key.indexOf('#') >= 0 || key.isBlank() || !singleLine(key) || !singleLine(value) || value.contains("##")) {
-                        warning.accept("Skipping language entry " + key + " (" + language + "): cannot be represented in .lang");
+                        warning.accept("Language entry " + key + " (" + language + ") cannot be represented in .lang; retained for Geyser translation");
                         continue;
                     }
                     writer.write(key);

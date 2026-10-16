@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.ResourcePackView;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
@@ -23,13 +24,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Enumeration;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class JavaResourcePack implements AutoCloseable {
-    private static final Pattern LOCALE = Pattern.compile("[a-z]{2,3}_[a-z0-9]{2,3}");
     private final ResourceReader resources;
     private final MinecraftVersion version;
     private final ZipFile archive;
@@ -172,7 +171,7 @@ public final class JavaResourcePack implements AutoCloseable {
         if (namespaceEnd < 0 || !path.startsWith("/lang/", namespaceEnd)) {
             return false;
         }
-        return LOCALE.matcher(path.substring(namespaceEnd + 6, path.length() - 5)).matches();
+        return BedrockPackLanguages.isLocale(path.substring(namespaceEnd + 6, path.length() - 5));
     }
 
     @Nullable
