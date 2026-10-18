@@ -189,6 +189,12 @@ public final class JavaResourcePack implements AutoCloseable {
     }
 
     @Nullable
+    InputStream openCustomResource(String path) throws IOException {
+        Path resource = this.root.resolve(path);
+        return Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;
+    }
+
+    @Nullable
     public InputStream openResource(String path) throws IOException {
         Path resource = this.resolveResource(path);
         return Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;

@@ -72,6 +72,7 @@ public final class BedrockPackGenerator {
         try (JavaResourcePack pack = JavaResourcePack.openZip(input, vanilla, version); FileSystem generated = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path root = generated.getPath("bedrock").toAbsolutePath();
             Files.createDirectories(root);
+            BedrockVanillaTextures.write(pack, root);
 
             // 专门读 java 模型
             JavaModelResolver resolver = new JavaModelResolver(pack);
