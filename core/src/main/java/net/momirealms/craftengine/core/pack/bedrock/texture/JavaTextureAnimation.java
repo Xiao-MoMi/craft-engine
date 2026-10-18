@@ -1,11 +1,9 @@
-package net.momirealms.craftengine.core.pack.bedrock;
+package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
-import net.momirealms.craftengine.core.pack.bedrock.model.TextureAnimation;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
@@ -13,7 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-final class JavaTextureAnimation {
+public final class JavaTextureAnimation {
 
     private JavaTextureAnimation() {
     }
@@ -22,7 +20,7 @@ final class JavaTextureAnimation {
         return read(image, metadata, false).image();
     }
 
-    static BedrockTextureAtlas.TextureData read(BufferedImage image, @Nullable JsonObject metadata, boolean gpuInterpolation) throws IOException {
+    public static BedrockTextureAtlas.TextureData read(BufferedImage image, @Nullable JsonObject metadata, boolean gpuInterpolation) throws IOException {
         if (metadata == null || !metadata.has("animation")) {
             return new BedrockTextureAtlas.TextureData(image, null);
         }

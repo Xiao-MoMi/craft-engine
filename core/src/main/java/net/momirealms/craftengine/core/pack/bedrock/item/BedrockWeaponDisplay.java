@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;

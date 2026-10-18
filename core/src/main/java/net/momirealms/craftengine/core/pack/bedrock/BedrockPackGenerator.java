@@ -8,20 +8,25 @@ import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.VanillaResourcePackDownloader;
-import net.momirealms.craftengine.core.pack.bedrock.item.JavaBowModel;
-import net.momirealms.craftengine.core.pack.bedrock.item.JavaFishingRodModel;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockNativeItemWriter;
+import net.momirealms.craftengine.core.pack.bedrock.animation.BedrockPlayerAnimations;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBlockItems;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBowWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockCrossbowWriter;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockSpearWriter;
-import net.momirealms.craftengine.core.pack.bedrock.item.JavaCrossbowModel;
-import net.momirealms.craftengine.core.pack.bedrock.item.JavaDisplayContextModel;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemRendering;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSources;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemRendering;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBlockItems;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockNativeItemWriter;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockSpearWriter;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaBowModel;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaCrossbowModel;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaDisplayContextModel;
+import net.momirealms.craftengine.core.pack.bedrock.item.JavaFishingRodModel;
+import net.momirealms.craftengine.core.pack.bedrock.lang.BedrockLanguageWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
+import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ItemModels;
@@ -76,7 +81,8 @@ public final class BedrockPackGenerator {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();
             Files.createDirectories(root);
             // 将原版贴图转写成 bedrock 路径
-            BedrockVanillaTextures.write(pack, root);
+            BedrockTextureRegistry textureRegistry = new BedrockTextureRegistry();
+            BedrockVanillaTextures.write(pack, root, textureRegistry);
 
             // 专门读 java 模型
             JavaModelResolver resolver = new JavaModelResolver(pack);
@@ -87,8 +93,8 @@ public final class BedrockPackGenerator {
 
             CollectedModels models = collectModels(pack, sources);
 
-            BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize());
-            BedrockBlockItems blockItems = new BedrockBlockItems();
+            BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize(), textureRegistry);
+            BedrockBlockItems blockItems = new BedrockBlockItems(textureRegistry);
             BedrockNativeItemWriter nativeItems = new BedrockNativeItemWriter(resolver, textures, icons, blockItems, root);
             List<BedrockPackMappings.Item> mappings = new ArrayList<>();
 
@@ -182,8 +188,8 @@ public final class BedrockPackGenerator {
                     }
                 }
             }
-            icons.writeAtlas(root);
-            blockItems.writeAtlas(root);
+            textureRegistry.write(root);
+            blockItems.writeBlocks(root);
             BedrockPlayerAnimations.write(root, mappings);
             BedrockLanguageWriter.write(pack, root, mappings);
             BedrockPackMappings metadata = new BedrockPackMappings(BedrockPackMappings.FORMAT_VERSION, version.version(), HashUtils.sha1(input), mappings);

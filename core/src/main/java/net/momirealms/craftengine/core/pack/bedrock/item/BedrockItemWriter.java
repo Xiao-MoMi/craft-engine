@@ -2,9 +2,10 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometryWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometryWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VectorUtils;
@@ -12,8 +13,8 @@ import net.momirealms.craftengine.core.util.VectorUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 public final class BedrockItemWriter {
     private static final String HIDE_ANIMATION = "firstperson_head";

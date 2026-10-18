@@ -1,5 +1,6 @@
-package net.momirealms.craftengine.core.pack.bedrock.model;
+package net.momirealms.craftengine.core.pack.bedrock.texture;
 
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;
 import org.jetbrains.annotations.Nullable;
@@ -10,8 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
@@ -127,7 +128,7 @@ public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> re
         return region;
     }
 
-    static BufferedImage tint(BufferedImage source, int color) {
+    public static BufferedImage tint(BufferedImage source, int color) {
         BufferedImage result = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
         int[] pixels = ((DataBufferInt) result.getRaster().getDataBuffer()).getData();
         PngOptimizer.readPixels(source, pixels, 0, source.getWidth());

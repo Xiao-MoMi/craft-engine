@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.PngOptimizer;
 import org.jetbrains.annotations.Nullable;

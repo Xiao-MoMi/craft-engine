@@ -5,12 +5,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
-import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;

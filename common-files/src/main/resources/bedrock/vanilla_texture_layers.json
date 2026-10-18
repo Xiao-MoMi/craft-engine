@@ -1,0 +1,2228 @@
+[
+  {
+    "target": "textures/models/armor/cloth_1.png",
+    "layers": [
+      {
+        "source": "entity/equipment/humanoid/leather.png",
+        "color": 10971459
+      }
+    ]
+  },
+  {
+    "target": "textures/models/armor/cloth_2.png",
+    "layers": [
+      {
+        "source": "entity/equipment/humanoid_leggings/leather.png",
+        "color": 10971459
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/double_plant_fern_carried.png",
+    "layers": [
+      {
+        "source": "block/large_fern_top.png",
+        "color": 5273899
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/double_plant_grass_carried.png",
+    "layers": [
+      {
+        "source": "block/tall_grass_top.png",
+        "color": 5273899
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/fern_carried.png",
+    "layers": [
+      {
+        "source": "block/fern.png",
+        "color": 3297580
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/grass_carried.png",
+    "layers": [
+      {
+        "source": "block/grass_block_top.png",
+        "color": 5142314
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_acacia_carried.png",
+    "layers": [
+      {
+        "source": "block/acacia_leaves.png",
+        "color": 2779657
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_big_oak_carried.png",
+    "layers": [
+      {
+        "source": "block/dark_oak_leaves.png",
+        "color": 2251273
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_birch_carried.png",
+    "layers": [
+      {
+        "source": "block/birch_leaves.png",
+        "color": 4676654
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_jungle_carried.png",
+    "layers": [
+      {
+        "source": "block/jungle_leaves.png",
+        "color": 2779913
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_oak_carried.png",
+    "layers": [
+      {
+        "source": "block/oak_leaves.png",
+        "color": 1523459
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/leaves_spruce_carried.png",
+    "layers": [
+      {
+        "source": "block/spruce_leaves.png",
+        "color": 3824698
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/mangrove_leaves_carried.png",
+    "layers": [
+      {
+        "source": "block/mangrove_leaves.png",
+        "color": 3824698
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/tallgrass_carried.png",
+    "layers": [
+      {
+        "source": "block/short_grass.png",
+        "color": 5339948
+      }
+    ]
+  },
+  {
+    "target": "textures/items/bush.png",
+    "layers": [
+      {
+        "source": "block/bush.png",
+        "color": 3955763
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/carried_waterlily.png",
+    "layers": [
+      {
+        "source": "block/lily_pad.png",
+        "color": 4417060
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/water_flow.png",
+    "layers": [
+      {
+        "source": "block/water_flow.png",
+        "color": 5670142
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/cauldron_water.png",
+    "layers": [
+      {
+        "source": "block/water_still.png",
+        "color": 14145495
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/water_still.png",
+    "layers": [
+      {
+        "source": "block/water_still.png",
+        "color": 5670142
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/vine_carried.png",
+    "layers": [
+      {
+        "source": "block/vine.png",
+        "color": 5273899
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5805311
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_damageBoost.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15219256
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_fireResistance.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16774236
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_harm.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 6950926
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_heal.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16726584
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_invisibility.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 13291752
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_jump.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3604344
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_luck.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15925194
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_moveSlowdown.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9350348
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_moveSpeed.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12910591
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_nightVision.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3289855
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_poison.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 8185934
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_regeneration.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16749311
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_slowFall.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777215
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_turtleMaster.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12226716
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_waterBreathing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 4752114
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_weakness.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7502450
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_wither.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5521982
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_infested.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9214860
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_oozing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 10092451
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_windCharged.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12438015
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_lingering_weaving.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7891290
+      },
+      {
+        "source": "item/lingering_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/ui/cartography_table_glass.png",
+    "layers": [
+      {
+        "source": "ui/cartography_table_map.png"
+      },
+      {
+        "source": "ui/cartography_table_glass.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_absorption.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3834623
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_blindness.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3289656
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_confusion.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 8793718
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_damageBoost.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15219256
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_digSlowdown.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7759908
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_digSpeed.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777066
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_drinkable.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5805311
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_fireResistance.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16774236
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_harm.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 6950926
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_heal.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16726584
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_healthBoost.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16762424
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_hunger.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9222788
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_invisibility.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 13291752
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_jump.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3604344
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_levitation.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3604344
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_moveSlowdown.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9350348
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_moveSpeed.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12910591
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_nightVision.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3289855
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_poison.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 8185934
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_regeneration.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16749311
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_resistance.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15887964
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_saturation.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16726584
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_slowFall.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777215
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_turtleMaster.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12226716
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_waterBreathing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 4752114
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_weakness.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7499890
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_wither.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5521982
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_infested.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9214860
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_oozing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 10092451
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_windCharged.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12438015
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_weaving.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7891290
+      },
+      {
+        "source": "item/potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/redstone_dust_cross.png",
+    "layers": [
+      {
+        "source": "blocks/redstone_dust_cross.png"
+      },
+      {
+        "source": "blocks/redstone_dust_overlay.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/blocks/redstone_dust_line.png",
+    "layers": [
+      {
+        "source": "blocks/redstone_dust_line.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/entity/pig/pig_saddle.png",
+    "layers": [
+      {
+        "source": "entity/pig/pig.png"
+      },
+      {
+        "source": "entity/pig/pig_saddle.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/entity/strider/strider_saddled.png",
+    "layers": [
+      {
+        "source": "entity/strider/strider.png"
+      },
+      {
+        "source": "entity/strider/strider_saddle.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/entity/strider/strider_suffocated_saddled.png",
+    "layers": [
+      {
+        "source": "entity/strider/strider_cold.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5814527
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_absorption.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3834623
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_blindness.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3289656
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_confusion.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 8793718
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_damageBoost.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15219256
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_digSlowdown.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7759908
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_digSpeed.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777066
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_fireResistance.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777144
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_harm.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 13901852
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_heal.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16741488
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_healthBoost.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16762424
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_hunger.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9222788
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_invisibility.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 13291752
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_jump.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3604344
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_levitation.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3604344
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_moveSlowdown.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9350348
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_moveSpeed.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12910591
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_nightVision.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 3289855
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_poison.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 8185934
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_regeneration.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16749311
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_resistance.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 15887964
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_saturation.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16726584
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_slowFall.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 16777215
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_turtleMaster.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12226716
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_waterBreathing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 4752114
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_weakness.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7502450
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_wither.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 5521982
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_infested.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 9214860
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_oozing.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 10092451
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_windCharged.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 12438015
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/potion_bottle_splash_weaving.png",
+    "layers": [
+      {
+        "source": "item/potion_overlay.png",
+        "color": 7891290
+      },
+      {
+        "source": "item/splash_potion.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png"
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_fireres.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 14061622
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_harm.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 4262409
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_healing.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 15213089
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_invisibility.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 8093581
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_leaping.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 2225994
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_luck.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 3249152
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_nightvision.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 1973916
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_poison.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 4885038
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_regen.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 12605089
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_slow.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 5728637
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_slowfalling.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 16246986
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_strength.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 9315106
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_swift.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 7644346
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_turtlemaster.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 7428192
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_waterbreathing.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 2969492
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_weakness.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 4606790
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_wither.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 3286820
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_infested.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 9214860
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_oozing.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 10092451
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_weaving.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 7891290
+      }
+    ]
+  },
+  {
+    "target": "textures/items/tipped_arrow_windCharged.png",
+    "layers": [
+      {
+        "source": "item/tipped_arrow_base.png"
+      },
+      {
+        "source": "item/tipped_arrow_head.png",
+        "color": 12438015
+      }
+    ]
+  },
+  {
+    "target": "textures/entity/cat/allblackcat_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_all_black.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/tuxedo_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_black.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/britishshorthair_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_british_shorthair.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/calico_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_calico.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/jellie_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_jellie.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/persian_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_persian.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/ragdoll_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_ragdoll.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/redtabby_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_red.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/siamesecat_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_siamese.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/tabby_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_tabby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/white_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/cat_white.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/ocelot_tame.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar.png"
+      },
+      {
+        "source": "entity/cat/ocelot.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/allblackcat_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_all_black_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/tuxedo_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_black_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/britishshorthair_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_british_shorthair_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/calico_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_calico_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/jellie_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_jellie_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/persian_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_persian_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/ragdoll_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_ragdoll_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/redtabby_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_red_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/siamesecat_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_siamese_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/tabby_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_tabby_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/white_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/cat_white_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/cat/ocelot_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/cat/cat_collar_baby.png"
+      },
+      {
+        "source": "entity/cat/ocelot_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/enderman/enderman.png",
+    "layers": [
+      {
+        "source": "entity/enderman/enderman.png"
+      },
+      {
+        "source": "entity/enderman/enderman_eyes.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/items/fireworks_charge.png",
+    "layers": [
+      {
+        "source": "item/firework_star_overlay.png"
+      },
+      {
+        "source": "item/firework_star.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/blocks/grass_side.png",
+    "layers": [
+      {
+        "source": "block/grass_block_side_overlay.png"
+      },
+      {
+        "source": "block/grass_block_side.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/items/leather_boots.png",
+    "layers": [
+      {
+        "source": "item/leather_boots.png"
+      },
+      {
+        "source": "item/leather_boots_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/items/leather_chestplate.png",
+    "layers": [
+      {
+        "source": "item/leather_chestplate.png"
+      },
+      {
+        "source": "item/leather_chestplate_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/items/leather_helmet.png",
+    "layers": [
+      {
+        "source": "item/leather_helmet.png"
+      },
+      {
+        "source": "item/leather_helmet_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/items/leather_leggings.png",
+    "layers": [
+      {
+        "source": "item/leather_leggings.png"
+      },
+      {
+        "source": "item/leather_leggings_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/models/armor/leather_1.png",
+    "layers": [
+      {
+        "source": "entity/equipment/humanoid/leather.png"
+      },
+      {
+        "source": "entity/equipment/humanoid/leather_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/models/armor/leather_2.png",
+    "layers": [
+      {
+        "source": "entity/equipment/humanoid_leggings/leather.png"
+      },
+      {
+        "source": "entity/equipment/humanoid_leggings/leather_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/entity/horse2/armor/horse_armor_leather.png",
+    "layers": [
+      {
+        "source": "entity/equipment/horse_body/leather.png"
+      },
+      {
+        "source": "entity/equipment/horse_body/leather_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/entity/phantom.png",
+    "layers": [
+      {
+        "source": "entity/phantom/phantom.png"
+      },
+      {
+        "source": "entity/phantom/phantom_eyes.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/entity/spider/cave_spider.png",
+    "layers": [
+      {
+        "source": "entity/spider/cave_spider.png"
+      },
+      {
+        "source": "entity/spider_eyes.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/entity/spider/spider.png",
+    "layers": [
+      {
+        "source": "entity/spider/spider.png"
+      },
+      {
+        "source": "entity/spider_eyes.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
+    "target": "textures/entity/wolf/wolf_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_ashen_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_ashen_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_black_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_black_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_chestnut_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_chestnut_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_rusty_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_rusty_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_snowy_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_snowy_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_spotted_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_spotted_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_striped_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_striped_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_woods_tame.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar.png"
+      },
+      {
+        "source": "entity/wolf/wolf_woods_tame.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_ashen_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_ashen_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_black_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_black_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_chestnut_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_chestnut_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_rusty_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_rusty_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_snowy_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_snowy_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_spotted_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_spotted_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_striped_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_striped_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  },
+  {
+    "target": "textures/entity/wolf/wolf_woods_tame_baby.png",
+    "layers": [
+      {
+        "source": "entity/wolf/wolf_collar_baby.png"
+      },
+      {
+        "source": "entity/wolf/wolf_woods_tame_baby.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
+  }
+]

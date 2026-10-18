@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.Direction;

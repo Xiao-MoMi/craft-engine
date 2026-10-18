@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;

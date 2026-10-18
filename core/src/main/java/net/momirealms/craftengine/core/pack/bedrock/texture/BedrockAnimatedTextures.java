@@ -1,8 +1,6 @@
-package net.momirealms.craftengine.core.pack.bedrock.item;
+package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
-import net.momirealms.craftengine.core.pack.bedrock.model.TextureAnimation;
 import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;

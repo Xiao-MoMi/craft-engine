@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.util.Direction;
 import org.joml.Vector3f;
 

@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonArray;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 

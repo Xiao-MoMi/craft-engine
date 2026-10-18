@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock;
+package net.momirealms.craftengine.core.pack.bedrock.lang;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguagesCodec;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
@@ -14,15 +15,15 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Locale;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-final class BedrockLanguageWriter {
+public final class BedrockLanguageWriter {
     private static final Pattern NUMERIC_FORMAT = Pattern.compile("%(\\d+\\$)?[\\d.]*[df]");
     private static final Set<String> BEDROCK_LOCALES = Set.of("en_US", "en_GB", "de_DE", "es_ES", "es_MX", "fr_FR", "fr_CA",
             "it_IT", "ja_JP", "ko_KR", "pt_BR", "pt_PT", "ru_RU", "zh_CN", "zh_TW", "nl_NL", "bg_BG", "cs_CZ", "da_DK",
@@ -31,7 +32,7 @@ final class BedrockLanguageWriter {
     private BedrockLanguageWriter() {
     }
 
-    static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items) throws IOException {
+    public static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items) throws IOException {
         Map<String, Map<String, String>> locales = new TreeMap<>();
         Set<String> keys = new HashSet<>();
         for (String path : pack.languageResources()) {

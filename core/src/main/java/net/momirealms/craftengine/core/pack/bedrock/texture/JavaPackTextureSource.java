@@ -1,11 +1,11 @@
-package net.momirealms.craftengine.core.pack.bedrock;
+package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import net.momirealms.craftengine.core.pack.atlas.Atlas;
 import net.momirealms.craftengine.core.pack.atlas.UnstitchSource;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.ClientPngReader;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

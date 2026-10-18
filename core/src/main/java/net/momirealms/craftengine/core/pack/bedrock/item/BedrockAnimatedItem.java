@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeometryWriter;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.GsonHelper;
 

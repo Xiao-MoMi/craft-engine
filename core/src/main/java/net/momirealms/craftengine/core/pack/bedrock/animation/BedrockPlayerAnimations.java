@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock;
+package net.momirealms.craftengine.core.pack.bedrock.animation;
 
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 
@@ -8,11 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-final class BedrockPlayerAnimations {
+public final class BedrockPlayerAnimations {
     private BedrockPlayerAnimations() {
     }
 
-    static void write(Path root, List<BedrockPackMappings.Item> items) throws IOException {
+    public static void write(Path root, List<BedrockPackMappings.Item> items) throws IOException {
         for (BedrockPackMappings.Item item : items) {
             if (item.crossbowCharge() != null) {
                 Path target = root.resolve("animation_controllers/ce_player.json");

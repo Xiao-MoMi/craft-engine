@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.model;
+package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

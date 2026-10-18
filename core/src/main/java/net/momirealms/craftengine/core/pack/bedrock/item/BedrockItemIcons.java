@@ -1,9 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaItemIconRenderer;
-import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;
 
@@ -16,9 +15,10 @@ import java.util.List;
 
 public final class BedrockItemIcons {
     private final JavaItemIconRenderer renderer;
-    private final JsonObject textures = new JsonObject();
+    private final BedrockTextureRegistry textures;
 
-    public BedrockItemIcons(int size) {
+    public BedrockItemIcons(int size, BedrockTextureRegistry textures) {
+        this.textures = textures;
         this.renderer = new JavaItemIconRenderer(size);
     }
 
@@ -31,19 +31,8 @@ public final class BedrockItemIcons {
         try (OutputStream output = Files.newOutputStream(path)) {
             new PngOptimizer(image, 0).write(output);
         }
-        JsonObject entry = new JsonObject();
-        entry.addProperty("textures", texture);
-        this.textures.add(icon, entry);
+        this.textures.item(icon, texture);
         return icon;
     }
 
-    public void writeAtlas(Path root) throws IOException {
-        JsonObject json = new JsonObject();
-        json.addProperty("resource_pack_name", "craftengine");
-        json.addProperty("texture_name", "atlas.items");
-        json.add("texture_data", this.textures);
-        Path path = root.resolve("textures/item_texture.json");
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(json, path);
-    }
 }

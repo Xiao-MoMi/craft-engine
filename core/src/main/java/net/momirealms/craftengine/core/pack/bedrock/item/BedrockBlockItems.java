@@ -6,6 +6,8 @@ import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.item.setting.value.BedrockOptions;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockBlockItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -19,14 +21,17 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
 public final class BedrockBlockItems {
-    private final JsonObject textures = new JsonObject();
+    private final BedrockTextureRegistry textures;
     private final JsonObject blocks = new JsonObject();
-    private final JsonArray flipbooks = new JsonArray();
+
+    public BedrockBlockItems(BedrockTextureRegistry textures) {
+        this.textures = textures;
+    }
 
     public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root) throws IOException {
         return this.write(converted, resource, root, List.of());
@@ -62,25 +67,15 @@ public final class BedrockBlockItems {
         try (OutputStream output = Files.newOutputStream(textureFile)) {
             new PngOptimizer(image, 0).write(output);
         }
-        JsonObject texture = new JsonObject();
-        texture.addProperty("textures", texturePath);
-        this.textures.add(name, texture);
+        this.textures.terrain(name, texturePath);
         JsonObject block = new JsonObject();
         block.addProperty("sound", "wood");
         this.blocks.add("geyser_custom:" + name, block);
         Map<String, String> materials = animations.isEmpty() ? Map.of() : new LinkedHashMap<>();
         for (BedrockAnimatedTextures.Track animation : animations) {
-            JsonObject animatedTexture = new JsonObject();
-            animatedTexture.addProperty("textures", animation.strip());
-            this.textures.add(animation.texture(), animatedTexture);
+            this.textures.terrain(animation.texture(), animation.strip());
             materials.put(animation.material(), animation.texture());
-            JsonObject flipbook = new JsonObject();
-            flipbook.addProperty("atlas_tile", animation.texture());
-            flipbook.addProperty("flipbook_texture", animation.strip());
-            flipbook.addProperty("ticks_per_frame", animation.interval());
-            // Interpolation is baked at Java tick boundaries, including per-frame durations and alpha behavior.
-            flipbook.addProperty("blend_frames", false);
-            this.flipbooks.add(flipbook);
+            this.textures.flipbook(animation.texture(), -1, animation.strip(), animation.interval());
         }
         return new BedrockPackMappings.DisplayBlock(name, identifier, name, materials);
     }
@@ -99,21 +94,9 @@ public final class BedrockBlockItems {
         return new BedrockPackMappings.DisplayBlock(name, display.geometry(), display.texture(), display.materials(), options.renderMethod());
     }
 
-    public void writeAtlas(Path root) throws IOException {
+    public void writeBlocks(Path root) throws IOException {
         if (this.isEmpty()) {
             return;
-        }
-        JsonObject atlas = new JsonObject();
-        atlas.addProperty("resource_pack_name", "craftengine");
-        atlas.addProperty("texture_name", "atlas.terrain");
-        atlas.addProperty("padding", 8);
-        atlas.addProperty("num_mip_levels", 4);
-        atlas.add("texture_data", this.textures);
-        Path path = root.resolve("textures/terrain_texture.json");
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(atlas, path);
-        if (!this.flipbooks.isEmpty()) {
-            GsonHelper.writeJsonFile(this.flipbooks, root.resolve("textures/flipbook_textures.json"));
         }
         JsonArray version = new JsonArray();
         version.add(1);

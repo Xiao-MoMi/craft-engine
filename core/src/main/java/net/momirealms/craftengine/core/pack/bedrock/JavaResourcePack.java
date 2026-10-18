@@ -12,8 +12,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -176,9 +176,13 @@ public final class JavaResourcePack {
     }
 
     @Nullable
-    InputStream openCustomResource(String path) throws IOException {
+    public InputStream openCustomResource(String path) throws IOException {
         Path resource = this.root.resolve(path);
         return Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;
+    }
+
+    public boolean hasCustomResource(String path) {
+        return Files.isRegularFile(this.root.resolve(path));
     }
 
     @Nullable
