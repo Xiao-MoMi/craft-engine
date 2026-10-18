@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.atlas.Atlas;
 import net.momirealms.craftengine.core.pack.atlas.UnstitchSource;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
@@ -11,24 +10,17 @@ import net.momirealms.craftengine.core.util.ClientPngReader;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureSource {
     private static final Key BLOCKS = Key.minecraft("blocks");
     private static final Key ITEMS = Key.minecraft("items");
     private final JavaResourcePack pack;
-    private final Map<Key, JsonObject> defaults;
     private final Map<Key, Atlas> atlases = new HashMap<>();
 
-    public JavaPackTextureSource(JavaResourcePack pack, JsonObject blocks, JsonObject items) {
+    public JavaPackTextureSource(JavaResourcePack pack) {
         this.pack = pack;
-        this.defaults = Map.of(
-                BLOCKS, blocks,
-                ITEMS, items
-        );
     }
 
     @Override
@@ -78,7 +70,7 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
                 }
                 return new BedrockTextureAtlas.TextureData(image.getSubimage(x, y, width, height), null);
             }
-            return JavaTextureAnimation.read(image, this.pack.readJson(path + ".mcmeta"), this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
+            return JavaTextureAnimation.read(image, this.pack.readResourceMetadata(path), this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
         }
     }
 
@@ -88,16 +80,7 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
         if (atlas != null) {
             return atlas;
         }
-        List<JsonObject> sources = new ArrayList<>(2);
-        JsonObject vanilla = this.defaults.get(id);
-        if (vanilla != null) {
-            sources.add(vanilla);
-        }
-        JsonObject custom = this.pack.readJson("assets/" + id.namespace() + "/atlases/" + id.value() + ".json");
-        if (custom != null) {
-            sources.add(custom);
-        }
-        atlas = new Atlas(sources, true);
+        atlas = new Atlas(this.pack.readJsonStack("assets/" + id.namespace() + "/atlases/" + id.value() + ".json"), true);
         this.atlases.put(id, atlas);
         return atlas;
     }

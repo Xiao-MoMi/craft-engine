@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
 import net.momirealms.craftengine.core.item.ItemKeys;
+import net.momirealms.craftengine.core.pack.VanillaResourcePackDownloader;
 import net.momirealms.craftengine.core.pack.bedrock.item.JavaItemModelLeaf;
 import net.momirealms.craftengine.core.pack.bedrock.item.JavaBowModel;
 import net.momirealms.craftengine.core.pack.bedrock.item.JavaFishingRodModel;
@@ -51,9 +52,7 @@ public final class BedrockPackGenerator {
     public Result generate(Path input,
                            Path output,
                            MinecraftVersion version,
-                           Collection<BedrockItemSource> items,
-                           JsonObject blockAtlas,
-                           JsonObject itemAtlas) throws IOException {
+                           Collection<BedrockItemSource> items) throws IOException {
         // TODO 使用本地化语言与1.21.1以下版本分支
         if (!VersionHelper.isOrAbove1_21_2) {
             throw new IOException("Bedrock generation requires a server version of Java 1.21.2 or newer");
@@ -68,13 +67,15 @@ public final class BedrockPackGenerator {
             throw new IOException("Bedrock generation requires a pack target of Java 1.21.4 or newer (items definitions)");
         }
 
-        try (JavaResourcePack pack = JavaResourcePack.openZip(input, version); FileSystem generated = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
-            Path root = generated.getPath("/bedrock");
+        Path cacheDirectory = CraftEngine.instance().dataFolderPath().resolve("cache/vanilla");
+        Path vanilla = new VanillaResourcePackDownloader(cacheDirectory).download(version);
+        try (JavaResourcePack pack = JavaResourcePack.openZip(input, vanilla, version); FileSystem generated = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
+            Path root = generated.getPath("bedrock").toAbsolutePath();
             Files.createDirectories(root);
 
             // 专门读 java 模型
             JavaModelResolver resolver = new JavaModelResolver(pack);
-            JavaPackTextureSource textures = new JavaPackTextureSource(pack, blockAtlas, itemAtlas);
+            JavaPackTextureSource textures = new JavaPackTextureSource(pack);
             BedrockItemSources sources = new BedrockItemSources(items);
             CollectedModels models = collectModels(pack, sources);
             BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize());

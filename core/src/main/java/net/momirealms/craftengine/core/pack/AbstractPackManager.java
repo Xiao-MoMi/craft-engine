@@ -1054,9 +1054,7 @@ public abstract class AbstractPackManager implements PackManager {
                     this.resolvePath(input),
                     this.resolvePath(output),
                     Config.packMaxVersion(),
-                    items,
-                    AbstractPackManager.this.vanillaBlockAtlas,
-                    AbstractPackManager.this.vanillaItemAtlas
+                    items
             );
             engine.logger().info("Generated Bedrock resource pack " + output + ": " + result.items() + " items, " + result.models() + " models, " + result.skipped() + " skipped (" + timestamp.deltaMillis() + " ms)");
         }
