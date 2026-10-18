@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public record UnstitchSource(Key resource, double divisorX, double divisorY,
+public record UnstitchSource(Key resource,
+                             double divisorX,
+                             double divisorY,
                              List<Region> regions) implements SpriteSource {
     private static final String[] DIVISOR_X = ConfigKeys.of("divisor_x");
     private static final String[] DIVISOR_Y = ConfigKeys.of("divisor_y");

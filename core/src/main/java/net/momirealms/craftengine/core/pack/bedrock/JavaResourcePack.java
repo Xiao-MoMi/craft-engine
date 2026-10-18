@@ -4,6 +4,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
@@ -136,8 +137,8 @@ public final class JavaResourcePack implements AutoCloseable {
         return readJson(this.resolveResource(path));
     }
 
-    public List<JsonObject> readJsonStack(String path) throws IOException {
-        List<JsonObject> sources = new ArrayList<>(2);
+    public List<JsonObject> readAtlas(String path) throws IOException {
+        List<JsonObject> sources = new ObjectArrayList<>(2);
         JsonObject vanilla = readJson(this.vanillaRoot.resolve(path));
         if (vanilla != null) {
             sources.add(vanilla);

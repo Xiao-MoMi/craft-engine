@@ -4,8 +4,13 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.List;
 
-public record TextureAnimation(BufferedImage sheet, int width, int height, List<Frame> frames, boolean interpolate,
-                               boolean gpuInterpolation, int duration) {
+public record TextureAnimation(BufferedImage sheet,
+                               int width,
+                               int height,
+                               List<Frame> frames,
+                               boolean interpolate,
+                               boolean gpuInterpolation,
+                               int duration) {
 
     public TextureAnimation {
         frames = List.copyOf(frames);

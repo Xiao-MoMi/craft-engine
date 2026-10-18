@@ -25,10 +25,6 @@ public final class Atlas {
     private final Map<Key, Sprite> sprites = new HashMap<>();
 
     public Atlas(JsonObject atlasJson) {
-        this(atlasJson, false);
-    }
-
-    public Atlas(JsonObject atlasJson, boolean retainTextureRegions) {
         JsonArray sources = atlasJson.getAsJsonArray("sources");
         if (sources == null) {
             return;
@@ -62,25 +58,12 @@ public final class Atlas {
                     if (!sourceJson.has("resource")) {
                         continue;
                     }
-                    if (retainTextureRegions) {
-                        UnstitchSource unstitch = UnstitchSource.fromJson(sourceJson);
-                        Map<Key, TextureRegion> regions = new HashMap<>();
-                        for (UnstitchSource.Region region : unstitch.regions()) {
-                            regions.put(region.sprite(), new TextureRegion(unstitch.resource(), unstitch.divisorX(), unstitch.divisorY(), region));
-                        }
-                        this.sources.add(new RegionSource(regions));
-                        continue;
+                    UnstitchSource unstitch = UnstitchSource.fromJson(sourceJson);
+                    Map<Key, TextureRegion> regions = new HashMap<>();
+                    for (UnstitchSource.Region region : unstitch.regions()) {
+                        regions.put(region.sprite(), new TextureRegion(unstitch.resource(), unstitch.divisorX(), unstitch.divisorY(), region));
                     }
-                    Set<Key> sprites = new HashSet<>();
-                    JsonArray regions = sourceJson.getAsJsonArray("regions");
-                    if (regions != null) {
-                        for (JsonElement region : regions) {
-                            if (region instanceof JsonObject regionJson && regionJson.has("sprite")) {
-                                sprites.add(Key.of(regionJson.get("sprite").getAsString()));
-                            }
-                        }
-                    }
-                    this.sources.add(new GeneratedSource(sprites));
+                    this.sources.add(new RegionSource(regions));
                 }
                 case "paletted_permutations", "minecraft:paletted_permutations" -> {
                     JsonArray textures = sourceJson.getAsJsonArray("textures");
@@ -113,10 +96,6 @@ public final class Atlas {
 
     public Atlas(List<JsonObject> atlasJsons) {
         this(mergeAtlas(atlasJsons));
-    }
-
-    public Atlas(List<JsonObject> atlasJsons, boolean retainTextureRegions) {
-        this(mergeAtlas(atlasJsons), retainTextureRegions);
     }
 
     public static JsonObject mergeAtlas(@NotNull List<JsonObject> atlasJsons) {
