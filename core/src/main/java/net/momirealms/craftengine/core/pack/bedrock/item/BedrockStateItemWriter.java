@@ -119,7 +119,7 @@ final class BedrockStateItemWriter {
     }
 
     void writeAttachable(JsonObject attachable, Key identifier) throws IOException {
-        attachable.getAsJsonObject("minecraft:attachable").getAsJsonObject("description").addProperty("identifier", identifier.asString());
+        attachable.getAsJsonObject("minecraft:attachable").getAsJsonObject("description").addProperty("identifier", BedrockItemSource.bedrockIdentifier(identifier));
         Path path = this.root.resolve("attachables/" + identifier.namespace() + '/' + identifier.value() + ".attachable.json");
         Files.createDirectories(path.getParent());
         GsonHelper.writeJsonFile(attachable, path);

@@ -25,7 +25,7 @@ final class BedrockVanillaTextures {
 
     static void write(JavaResourcePack pack, Path root) throws IOException {
         JsonObject mappings;
-        try (InputStream input = BedrockVanillaTextures.class.getResourceAsStream("/bedrock/vanilla-textures.json")) {
+        try (InputStream input = BedrockVanillaTextures.class.getResourceAsStream("/bedrock/vanilla_textures.json")) {
             if (input == null) {
                 throw new IOException("Missing bundled Bedrock vanilla texture mappings");
             }

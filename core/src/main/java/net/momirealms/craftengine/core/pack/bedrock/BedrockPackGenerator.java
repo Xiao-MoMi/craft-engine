@@ -100,7 +100,7 @@ public final class BedrockPackGenerator {
                 }
                 for (BedrockItemSource item : users) {
                     mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                            item.id().asString(), appearance.icon(), appearance.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
+                            item.bedrockIdentifier(), appearance.icon(), appearance.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                 }
                 convertedModels++;
             }
@@ -115,9 +115,9 @@ public final class BedrockPackGenerator {
                     BedrockNativeItemWriter.Appearance cast = distinct ? nativeItems.writeBlock(rod.cast(), fishingRodCastId(resource)) : null;
                     for (BedrockItemSource item : users) {
                         BedrockPackMappings.ItemVariant variant = cast == null ? null : new BedrockPackMappings.ItemVariant(
-                                fishingRodCastId(item.id()).asString(), cast.icon(), cast.displayBlock());
+                                BedrockItemSource.bedrockIdentifier(fishingRodCastId(item.id())), cast.icon(), cast.displayBlock());
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.id().asString(), idle.icon(), idle.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources), variant));
+                                item.bedrockIdentifier(), idle.icon(), idle.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources), variant));
                     }
                     convertedModels += distinct ? 2 : 1;
                 } catch (IOException | IllegalArgumentException exception) {
@@ -132,7 +132,7 @@ public final class BedrockPackGenerator {
                     BedrockBowWriter.Result bow = bows.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.id().asString(), bow.icon(), bow.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
+                                item.bedrockIdentifier(), bow.icon(), bow.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                     }
                     convertedModels += bow.models();
                 } catch (IOException | IllegalArgumentException exception) {
@@ -147,10 +147,10 @@ public final class BedrockPackGenerator {
                     BedrockCrossbowWriter.Result result = crossbows.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         BedrockPackMappings.CrossbowCharge charge = new BedrockPackMappings.CrossbowCharge(
-                                new BedrockPackMappings.ItemVariant(BedrockCrossbowWriter.chargedId(item.id(), false).asString(), result.arrow().icon(), result.arrow().displayBlock()),
-                                new BedrockPackMappings.ItemVariant(BedrockCrossbowWriter.chargedId(item.id(), true).asString(), result.rocket().icon(), result.rocket().displayBlock()));
+                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), false)), result.arrow().icon(), result.arrow().displayBlock()),
+                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), true)), result.rocket().icon(), result.rocket().displayBlock()));
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.id().asString(), result.icon(), result.displayBlock(), false, null, charge));
+                                item.bedrockIdentifier(), result.icon(), result.displayBlock(), false, null, charge));
                     }
                     convertedModels += result.models();
                 } catch (IOException | IllegalArgumentException exception) {
@@ -165,7 +165,7 @@ public final class BedrockPackGenerator {
                     BedrockSpearWriter.Result result = spears.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.id().asString(), result.icon(), result.displayBlock(), false));
+                                item.bedrockIdentifier(), result.icon(), result.displayBlock(), false));
                     }
                     convertedModels += result.models();
                 } catch (IOException | IllegalArgumentException exception) {

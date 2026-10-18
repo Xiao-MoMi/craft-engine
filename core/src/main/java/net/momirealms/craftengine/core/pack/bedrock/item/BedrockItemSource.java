@@ -18,6 +18,14 @@ public record BedrockItemSource(Key id, Key javaItem, Key itemModel, @Nullable I
         this(id, javaItem, itemModel, null);
     }
 
+    public String bedrockIdentifier() {
+        return bedrockIdentifier(this.id);
+    }
+
+    public static String bedrockIdentifier(Key id) {
+        return "ce:" + id.namespace() + '/' + id.value();
+    }
+
     // 收集基岩版所需的全部物品定义
     public static List<BedrockItemSource> collect(Collection<ItemDefinition> definitions, Map<Key, Key> mappings) {
         List<BedrockItemSource> items = new ArrayList<>();

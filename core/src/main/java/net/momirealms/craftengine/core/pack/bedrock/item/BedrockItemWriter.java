@@ -146,7 +146,7 @@ public final class BedrockItemWriter {
 
     static JsonObject attachable(Key identifier, String geometry, String texture, String prefix) {
         JsonObject description = new JsonObject();
-        description.addProperty("identifier", identifier.toString());
+        description.addProperty("identifier", BedrockItemSource.bedrockIdentifier(identifier));
         JsonObject materials = new JsonObject();
         materials.addProperty("default", "entity_alphatest_one_sided");
         materials.addProperty("enchanted", "entity_alphatest_glint");
