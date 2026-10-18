@@ -18,10 +18,6 @@ public final class BundleSelectedItemModel implements ItemModel {
     private BundleSelectedItemModel() {}
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-    }
-
-    @Override
     public void gatherRevisions(Consumer<Revision> consumer) {
     }
 
@@ -34,7 +30,7 @@ public final class BundleSelectedItemModel implements ItemModel {
 
     private static class Factory implements ItemModelFactory<BundleSelectedItemModel> {
         @Override
-        public BundleSelectedItemModel create(Pack pack, Path path, ConfigSection section) {
+        public BundleSelectedItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             return INSTANCE;
         }
     }

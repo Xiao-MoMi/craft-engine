@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.util.function.Consumer;
+import java.util.Objects;
 
 public final class ChestSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<ChestSpecialModel> FACTORY = new Factory();
@@ -54,6 +55,26 @@ public final class ChestSpecialModel implements SpecialModel {
             json.addProperty("chest_type", this.chestType);
         }
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ChestSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.texture, that.texture)
+                && Float.compare(this.openness, that.openness) == 0
+                && Objects.equals(this.chestType, that.chestType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.texture);
+        result = 31 * result + Float.hashCode(this.openness);
+        return 31 * result + Objects.hashCode(this.chestType);
     }
 
     private static class Factory implements SpecialModelFactory<ChestSpecialModel> {

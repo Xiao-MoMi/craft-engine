@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -22,7 +23,7 @@ public final class BedrockBowWriter {
 
     public Result write(JavaBowModel bow, List<BedrockItemSource> items) throws IOException {
         Key owner = items.getFirst().id();
-        Map<JavaItemModelLeaf, Integer> states = new LinkedHashMap<>();
+        Map<BaseItemModel, Integer> states = new LinkedHashMap<>();
         states.put(bow.idle(), 0);
         states.computeIfAbsent(bow.pulling(), ignored -> states.size());
         for (JavaBowModel.Stage stage : bow.stages()) {
@@ -40,8 +41,8 @@ public final class BedrockBowWriter {
         }
         update.add("variable.ce_bow_state = variable.ce_bow_using ? " + selected + " : 0;");
         update.add("variable.ce_bow_late_stage = " + (bow.stages().isEmpty() ? "0" : "variable.ce_bow_duration >= " + bow.stages().getFirst().threshold()) + ';');
-        Map<JavaItemModelLeaf, String> conditions = new LinkedHashMap<>();
-        for (Map.Entry<JavaItemModelLeaf, Integer> state : states.entrySet()) {
+        Map<BaseItemModel, String> conditions = new LinkedHashMap<>();
+        for (Map.Entry<BaseItemModel, Integer> state : states.entrySet()) {
             conditions.put(state.getKey(), "variable.ce_bow_state == " + state.getValue());
         }
         BedrockStateItemWriter.Result result = this.writer.write(owner, "bow", conditions, bow.idle(), update, true, null);

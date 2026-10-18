@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class BaseItemModel implements ItemModel {
@@ -30,37 +31,23 @@ public final class BaseItemModel implements ItemModel {
     public static final ItemModelReader<BaseItemModel> READER = new Reader();
     private final Key path;
     private final List<Tint> tints;
-    private final ModelGeneration modelGeneration;
     private final Transformation transformation;
 
     public BaseItemModel(@NotNull Key path,
                          @Nullable List<Tint> tints,
-                         @Nullable ModelGeneration modelGeneration,
                          @Nullable Transformation transformation) {
         this.path = path;
         this.tints = tints;
-        this.modelGeneration = modelGeneration;
         this.transformation = transformation;
     }
 
     public BaseItemModel(@NotNull Key path) {
-        this(path, List.of(), null, null);
+        this(path, List.of(), null);
     }
 
     public BaseItemModel(@NotNull Key path,
                          @NotNull List<Tint> tints) {
-        this(path, tints, null, null);
-    }
-
-    public BaseItemModel(@NotNull Key path,
-                         @NotNull List<Tint> tints,
-                         @Nullable ModelGeneration modelGeneration) {
-        this(path, tints, modelGeneration, null);
-    }
-
-    @Nullable
-    public ModelGeneration modelGeneration() {
-        return this.modelGeneration;
+        this(path, tints, null);
     }
 
     @Nullable
@@ -78,12 +65,33 @@ public final class BaseItemModel implements ItemModel {
         return this.transformation;
     }
 
-    public static BaseItemModel ofBBModel(BBModelConverter.Converted converted) {
-        return new BaseItemModel(converted.model(), List.of(), ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata()), null);
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof BaseItemModel that)) {
+            return false;
+        }
+        return this.path.equals(that.path)
+                && Objects.equals(this.tints, that.tints)
+                && Objects.equals(this.transformation, that.transformation);
     }
 
-    public static BaseItemModel ofBBModel(BBModelConverter.Converted converted, @Nullable List<Tint> tints, @Nullable Transformation transformation) {
-        return new BaseItemModel(converted.model(), tints, ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata()), transformation);
+    @Override
+    public int hashCode() {
+        int result = this.path.hashCode();
+        result = 31 * result + Objects.hashCode(this.tints);
+        return 31 * result + Objects.hashCode(this.transformation);
+    }
+
+    public static BaseItemModel ofBBModel(BBModelConverter.Converted converted, Consumer<ModelGenerationHolder> generations) {
+        return ofBBModel(converted, List.of(), null, generations);
+    }
+
+    public static BaseItemModel ofBBModel(BBModelConverter.Converted converted, @Nullable List<Tint> tints, @Nullable Transformation transformation, Consumer<ModelGenerationHolder> generations) {
+        generations.accept(new ModelGenerationHolder(converted.model(), ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata())));
+        return new BaseItemModel(converted.model(), tints, transformation);
     }
 
     @Override
@@ -105,13 +113,6 @@ public final class BaseItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.modelGeneration != null) {
-            consumer.accept(new ModelGenerationHolder(this.path, this.modelGeneration));
-        }
-    }
-
-    @Override
     public void gatherRevisions(Consumer<Revision> consumer) {
         if (this.transformation != null) {
             consumer.accept(Revisions.SINCE_26_1);
@@ -122,23 +123,21 @@ public final class BaseItemModel implements ItemModel {
         private static final String[] PATH = ConfigKeys.of("path|model");
 
         @Override
-        public BaseItemModel create(Pack pack, Path path, ConfigSection section) {
+        public BaseItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             List<Tint> tints = section.getList("tints", Tints::fromConfig);
             Transformation transformation = section.getValue("transformation", Transformation::fromConfig);
             ConfigValue blueprintValue = section.getValue("blueprint");
             if (blueprintValue != null) {
-                return BaseItemModel.ofBBModel(BBModelConverter.convert(pack, path, "item", section.getValue(PATH), blueprintValue), tints, transformation);
+                return BaseItemModel.ofBBModel(BBModelConverter.convert(pack, path, "item", section.getValue(PATH), blueprintValue), tints, transformation, generations);
             }
             Key modelPath = section.getNonNullAssetPath(PATH);
             ConfigSection generation = section.getSection("generation");
-            ModelGeneration modelGeneration = null;
             if (generation != null) {
-                modelGeneration = ModelGeneration.of(generation);
+                generations.accept(new ModelGenerationHolder(modelPath, ModelGeneration.of(generation)));
             }
             return new BaseItemModel(
                     modelPath,
                     tints,
-                    modelGeneration,
                     transformation
             );
         }
@@ -166,7 +165,6 @@ public final class BaseItemModel implements ItemModel {
             return new BaseItemModel(
                     Key.of(model),
                     tints,
-                    null,
                     json.has("transformation") ? Transformation.fromJson(json.get("transformation")) : null
             );
         }

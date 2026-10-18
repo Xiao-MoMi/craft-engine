@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import java.util.Objects;
 
 public final class TimeRangeDispatchProperty implements RangeDispatchProperty {
     public static final RangeDispatchPropertyFactory<TimeRangeDispatchProperty> FACTORY = new Factory();
@@ -29,6 +30,24 @@ public final class TimeRangeDispatchProperty implements RangeDispatchProperty {
         if (!this.wobble) {
             model.addProperty("wobble", false);
         }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof TimeRangeDispatchProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.source, that.source)
+                && this.wobble == that.wobble;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.source);
+        return 31 * result + Boolean.hashCode(this.wobble);
     }
 
     private static class Factory implements RangeDispatchPropertyFactory<TimeRangeDispatchProperty> {

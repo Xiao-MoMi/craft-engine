@@ -1,52 +1,58 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ConditionItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
-public record JavaBowModel(JavaItemModelLeaf idle, JavaItemModelLeaf pulling, List<Stage> stages, float scale, boolean remaining) {
+public record JavaBowModel(BaseItemModel idle, BaseItemModel pulling, List<Stage> stages, float scale, boolean remaining) {
 
-    public static JavaBowModel read(JsonObject json) throws IOException {
-        if (JavaItemModelLeaf.type(json).equals("model")) {
-            JavaItemModelLeaf model = JavaItemModelLeaf.read(json);
-            return new JavaBowModel(model, model, List.of(), 1, false);
+    public static JavaBowModel read(ItemModel model) throws IOException {
+        if (model instanceof BaseItemModel) {
+            BaseItemModel base = BedrockItemRendering.baseModel(model);
+            return new JavaBowModel(base, base, List.of(), 1, false);
         }
-        if (!JavaItemModelLeaf.type(json).equals("condition") || !JavaItemModelLeaf.name(json, "property").equals("using_item")) {
+        if (!(model instanceof ConditionItemModel condition) || !(condition.property() instanceof UsingItemConditionProperty)) {
             throw new IOException("Unsupported bow root: expected model or using_item condition");
         }
-        JavaItemModelLeaf idle = JavaItemModelLeaf.read(json.getAsJsonObject("on_false"));
-        JsonObject using = json.getAsJsonObject("on_true");
-        if (JavaItemModelLeaf.type(using).equals("model")) {
-            return new JavaBowModel(idle, JavaItemModelLeaf.read(using), List.of(), 1, false);
+        BaseItemModel idle = BedrockItemRendering.baseModel(condition.onFalse());
+        ItemModel using = condition.onTrue();
+        if (using instanceof BaseItemModel) {
+            return new JavaBowModel(idle, BedrockItemRendering.baseModel(using), List.of(), 1, false);
         }
-        if (!JavaItemModelLeaf.type(using).equals("range_dispatch") || !JavaItemModelLeaf.name(using, "property").equals("use_duration")) {
+        if (!(using instanceof RangeDispatchItemModel range) || !(range.property() instanceof UseDurationRangeDispatchProperty duration)) {
             throw new IOException("Unsupported pulling model: expected model or use_duration range_dispatch");
         }
-        if (!using.has("fallback")) {
+        if (range.fallBack() == null) {
             throw new IOException("Bow use_duration requires a fallback model");
         }
-        float scale = using.has("scale") ? using.get("scale").getAsFloat() : 1;
-        if (!Float.isFinite(scale)) {
+        if (!Float.isFinite(range.scale())) {
             throw new IOException("Invalid bow use_duration scale");
         }
-        boolean remaining = using.has("remaining") && using.get("remaining").getAsBoolean();
-        List<Stage> stages = new ArrayList<>();
-        for (JsonElement element : using.getAsJsonArray("entries")) {
-            JsonObject entry = element.getAsJsonObject();
-            float threshold = entry.get("threshold").getAsFloat();
-            if (!Float.isFinite(threshold)) {
-                throw new IOException("Invalid bow use_duration threshold");
-            }
-            stages.add(new Stage(threshold, JavaItemModelLeaf.read(entry.getAsJsonObject("model"))));
-        }
-        stages.sort(Comparator.comparingDouble(Stage::threshold));
-        return new JavaBowModel(idle, JavaItemModelLeaf.read(using.getAsJsonObject("fallback")), List.copyOf(stages), scale, remaining);
+        return new JavaBowModel(idle, BedrockItemRendering.baseModel(range.fallBack()), stages(range), range.scale(), duration.remaining());
     }
 
-    public record Stage(float threshold, JavaItemModelLeaf model) {
+    static List<Stage> stages(RangeDispatchItemModel range) throws IOException {
+        List<Stage> stages = new ArrayList<>(range.entries().size());
+        for (Map.Entry<Float, ItemModel> entry : range.entries().entrySet()) {
+            float threshold = entry.getKey();
+            if (!Float.isFinite(threshold)) {
+                throw new IOException("Invalid item model range_dispatch threshold");
+            }
+            stages.add(new Stage(threshold, BedrockItemRendering.baseModel(entry.getValue())));
+        }
+        stages.sort(Comparator.comparingDouble(Stage::threshold));
+        return List.copyOf(stages);
+    }
+
+    public record Stage(float threshold, BaseItemModel model) {
     }
 }

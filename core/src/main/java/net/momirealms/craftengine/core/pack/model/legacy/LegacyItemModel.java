@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.Pair;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,22 +17,11 @@ import java.util.function.Consumer;
 
 public final class LegacyItemModel {
     private final Key path;
-    private final ModelGeneration generation;
     private final List<LegacyOverridesModel> overrides;
 
-    public LegacyItemModel(Key path, List<LegacyOverridesModel> overrides, ModelGeneration generation) {
-        this.generation = generation;
+    public LegacyItemModel(Key path, List<LegacyOverridesModel> overrides) {
         this.path = path;
         this.overrides = overrides;
-    }
-
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.generation != null) {
-            consumer.accept(new ModelGenerationHolder(this.path, this.generation));
-        }
-        for (LegacyOverridesModel override : this.overrides) {
-            override.prepareModelGeneration(consumer);
-        }
     }
 
     public List<LegacyOverridesModel> overrides() {
@@ -46,42 +34,34 @@ public final class LegacyItemModel {
 
     private static final String[] PATH = ConfigKeys.of("path|model");
 
-    public static LegacyItemModel fromConfig(Pack pack, Path path, ConfigSection section, int customModelData) {
-        Pair<Key, ModelGeneration> baseModel = parseModelPath(pack, path, section);
-        Key legacyModelPath = baseModel.left();
-        ModelGeneration baseModelGeneration = baseModel.right();
+    public static LegacyItemModel fromConfig(Pack pack, Path path, ConfigSection section, int customModelData, Consumer<ModelGenerationHolder> generations) {
+        Key legacyModelPath = parseModelPath(pack, path, section, generations);
+        List<LegacyOverridesModel> overrides = new ArrayList<>();
+        overrides.add(new LegacyOverridesModel(null, legacyModelPath, customModelData));
         ConfigValue overridesValue = section.getValue("overrides");
         if (overridesValue != null) {
-            List<LegacyOverridesModel> legacyOverridesModels = new ArrayList<>();
-            legacyOverridesModels.add(new LegacyOverridesModel(null, legacyModelPath, customModelData, baseModelGeneration));
-            overridesValue.forEach(v -> {
-                ConfigSection overrideSection = v.getAsSection();
-                Pair<Key, ModelGeneration> overrideModel = parseModelPath(pack, path, overrideSection);
+            overridesValue.forEach(value -> {
+                ConfigSection overrideSection = value.getAsSection();
+                Key overridePath = parseModelPath(pack, path, overrideSection, generations);
                 ConfigSection predicateSection = overrideSection.getNonNullSection("predicate");
-                legacyOverridesModels.add(new LegacyOverridesModel(predicateSection.values(), overrideModel.left(), customModelData, overrideModel.right()));
+                overrides.add(new LegacyOverridesModel(predicateSection.values(), overridePath, customModelData));
             });
-            return new LegacyItemModel(
-                    legacyModelPath,
-                    legacyOverridesModels,
-                    baseModelGeneration
-            );
-        } else {
-            return new LegacyItemModel(
-                    legacyModelPath,
-                    List.of(new LegacyOverridesModel(null, legacyModelPath, customModelData, baseModelGeneration)),
-                    baseModelGeneration
-            );
         }
+        return new LegacyItemModel(legacyModelPath, overrides);
     }
 
-    private static Pair<Key, ModelGeneration> parseModelPath(Pack pack, Path path, ConfigSection section) {
+    private static Key parseModelPath(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
         ConfigValue blueprintValue = section.getValue("blueprint");
         if (blueprintValue != null) {
             BBModelConverter.Converted converted = BBModelConverter.convert(pack, path, "item", section.getValue(PATH), blueprintValue);
-            return Pair.of(converted.model(), ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata()));
+            generations.accept(new ModelGenerationHolder(converted.model(), ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata())));
+            return converted.model();
         }
-        ConfigValue pathValue = section.getNonNullValue(PATH, ConfigConstants.ARGUMENT_IDENTIFIER);
+        Key modelPath = section.getNonNullValue(PATH, ConfigConstants.ARGUMENT_IDENTIFIER).getAsAssetPath();
         ConfigSection generationSection = section.getSection("generation");
-        return Pair.of(pathValue.getAsAssetPath(), generationSection != null ? ModelGeneration.of(generationSection) : null);
+        if (generationSection != null) {
+            generations.accept(new ModelGenerationHolder(modelPath, ModelGeneration.of(generationSection)));
+        }
+        return modelPath;
     }
 }

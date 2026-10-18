@@ -3,8 +3,6 @@ package net.momirealms.craftengine.core.pack.model.legacy;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
-import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,26 +10,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 public final class LegacyOverridesModel implements Comparable<LegacyOverridesModel> {
     private final Map<String, Object> predicate;
     private final Key model;
     private final int customModelData;
-    private final ModelGeneration generation;
 
-    public LegacyOverridesModel(@Nullable Map<String, Object> predicate, @NotNull Key model, int customModelData, ModelGeneration generation) {
+    public LegacyOverridesModel(@Nullable Map<String, Object> predicate, @NotNull Key model, int customModelData) {
         this.predicate = predicate == null ? new HashMap<>() : predicate;
         this.model = model;
         this.customModelData = customModelData;
         if (customModelData > 0 && !this.predicate.containsKey("custom_model_data")) {
             this.predicate.put("custom_model_data", customModelData);
         }
-        this.generation = generation;
     }
 
     public LegacyOverridesModel(JsonObject json) {
-        this.generation = null;
         this.model = Key.of(json.get("model").getAsString());
         JsonObject predicate = json.getAsJsonObject("predicate");
         if (predicate != null) {
@@ -149,11 +143,5 @@ public final class LegacyOverridesModel implements Comparable<LegacyOverridesMod
             return ((Comparable) c1).compareTo(c2);
         }
         return value1.equals(value2) ? 0 : -1;
-    }
-
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.generation != null) {
-            consumer.accept(new ModelGenerationHolder(this.model, this.generation));
-        }
     }
 }

@@ -50,6 +50,26 @@ public final class BookSpecialModel implements SpecialModel {
         return json;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof BookSpecialModel that)) {
+            return false;
+        }
+        return Float.compare(this.openAngle, that.openAngle) == 0
+                && Float.compare(this.page1, that.page1) == 0
+                && Float.compare(this.page2, that.page2) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Float.hashCode(this.openAngle);
+        result = 31 * result + Float.hashCode(this.page1);
+        return 31 * result + Float.hashCode(this.page2);
+    }
+
     private static class Factory implements SpecialModelFactory<BookSpecialModel> {
         private static final String[] OPEN_ANGLE = ConfigKeys.of("open_angle");
 

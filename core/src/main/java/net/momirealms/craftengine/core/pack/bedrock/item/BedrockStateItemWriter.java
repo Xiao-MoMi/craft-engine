@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -36,7 +37,7 @@ final class BedrockStateItemWriter {
         this.root = root;
     }
 
-    Result write(Key owner, String kind, Map<JavaItemModelLeaf, String> states, JavaItemModelLeaf inventory,
+    Result write(Key owner, String kind, Map<BaseItemModel, String> states, BaseItemModel inventory,
                  JsonArray update, boolean bow, BedrockWeaponDisplay weapon) throws IOException {
         String name = HashUtils.sha1(owner.asString().getBytes(StandardCharsets.UTF_8));
         JsonObject attachable = BedrockItemWriter.attachable(owner, "", "", "");
@@ -56,17 +57,18 @@ final class BedrockStateItemWriter {
         String icon = null;
         BedrockPackMappings.DisplayBlock displayBlock = null;
         int index = 0;
-        for (Map.Entry<JavaItemModelLeaf, String> state : states.entrySet()) {
+        for (Map.Entry<BaseItemModel, String> state : states.entrySet()) {
             String prefix = "ce_" + kind + '_' + index + '_';
             Key resource = Key.of("ce", kind + '_' + name + '_' + index);
-            JavaItemModelLeaf leaf = state.getKey();
-            JavaModel model = this.resolver.resolve(leaf.model());
-            BedrockModelConverter.Result converted = this.converter.convert(model, "geometry.craftengine." + kind + '.' + name + '.' + index, this.textures, leaf.tints());
+            BaseItemModel leaf = state.getKey();
+            JavaModel model = this.resolver.resolve(leaf.path());
+            List<Integer> tints = BedrockItemRendering.tints(leaf);
+            BedrockModelConverter.Result converted = this.converter.convert(model, "geometry.craftengine." + kind + '.' + name + '.' + index, this.textures, tints);
             List<BedrockAnimatedTextures.Track> tracks = BedrockAnimatedTextures.write(converted, resource, this.root);
             BedrockItemWriter.writeResources(converted, resource, this.root, tracks, prefix, bow, weapon);
             if (leaf.equals(inventory)) {
                 if (model.geometryKind() == JavaModel.GeometryKind.GENERATED && tracks.isEmpty()) {
-                    icon = this.icons.write(converted, owner, leaf.tints(), this.root);
+                    icon = this.icons.write(converted, owner, tints, this.root);
                 } else {
                     displayBlock = this.blockItems.write(converted, resource, this.root, tracks, false);
                 }

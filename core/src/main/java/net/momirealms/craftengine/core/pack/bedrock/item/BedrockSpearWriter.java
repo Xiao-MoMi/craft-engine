@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -30,11 +31,11 @@ public final class BedrockSpearWriter {
 
     public Result write(JavaDisplayContextModel spear, List<BedrockItemSource> items) throws IOException {
         Key owner = items.getFirst().id();
-        JavaItemModelLeaf inventory = spear.model(DisplayPosition.GUI);
+        BaseItemModel inventory = spear.model(DisplayPosition.GUI);
         if (!inventory.equals(spear.model(DisplayPosition.GROUND)) || !inventory.equals(spear.model(DisplayPosition.FIXED))) {
             throw new IOException("Spear gui, ground and fixed currently require the same model");
         }
-        Map<JavaItemModelLeaf, String> states = new LinkedHashMap<>();
+        Map<BaseItemModel, String> states = new LinkedHashMap<>();
         for (BedrockItemDisplay.View view : BedrockItemDisplay.VIEWS) {
             states.merge(spear.model(view.position), '(' + view.condition + ')', (first, second) -> first + " || " + second);
         }

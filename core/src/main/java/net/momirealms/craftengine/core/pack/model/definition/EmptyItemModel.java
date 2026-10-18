@@ -25,16 +25,12 @@ public final class EmptyItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-    }
-
-    @Override
     public void gatherRevisions(Consumer<Revision> consumer) {
     }
 
     private static class Factory implements ItemModelFactory<EmptyItemModel> {
         @Override
-        public EmptyItemModel create(Pack pack, Path path, ConfigSection section) {
+        public EmptyItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             return INSTANCE;
         }
     }

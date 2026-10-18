@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
 import java.util.function.Consumer;
+import java.util.Objects;
 
 public final class BannerSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<BannerSpecialModel> FACTORY = new Factory();
@@ -39,6 +40,24 @@ public final class BannerSpecialModel implements SpecialModel {
         }
         json.addProperty("color", this.color);
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof BannerSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.attachment, that.attachment)
+                && Objects.equals(this.color, that.color);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.attachment);
+        return 31 * result + Objects.hashCode(this.color);
     }
 
     private static class Factory implements SpecialModelFactory<BannerSpecialModel> {

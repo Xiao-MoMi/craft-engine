@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class ConditionItemModel implements ItemModel {
@@ -66,12 +67,6 @@ public final class ConditionItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        this.onTrue.prepareModelGeneration(consumer);
-        this.onFalse.prepareModelGeneration(consumer);
-    }
-
-    @Override
     public JsonObject toJson(MinecraftVersion min, MinecraftVersion max) {
         JsonObject json = new JsonObject();
         json.addProperty("type", "condition");
@@ -84,16 +79,38 @@ public final class ConditionItemModel implements ItemModel {
         return json;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ConditionItemModel that)) {
+            return false;
+        }
+        return Objects.equals(this.property, that.property)
+                && Objects.equals(this.onTrue, that.onTrue)
+                && Objects.equals(this.onFalse, that.onFalse)
+                && Objects.equals(this.transformation, that.transformation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.property);
+        result = 31 * result + Objects.hashCode(this.onTrue);
+        result = 31 * result + Objects.hashCode(this.onFalse);
+        return 31 * result + Objects.hashCode(this.transformation);
+    }
+
     private static class Factory implements ItemModelFactory<ConditionItemModel> {
         private static final String[] ON_TRUE = ConfigKeys.of("on_true");
         private static final String[] ON_FALSE = ConfigKeys.of("on_false");
 
         @Override
-        public ConditionItemModel create(Pack pack, Path path, ConfigSection section) {
+        public ConditionItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             return new ConditionItemModel(
                     ConditionProperties.fromConfig(section),
-                    section.getNonNullValue(ON_TRUE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v)),
-                    section.getNonNullValue(ON_FALSE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v)),
+                    section.getNonNullValue(ON_TRUE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v, generations)),
+                    section.getNonNullValue(ON_FALSE, ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v, generations)),
                     section.getValue("transformation", Transformation::fromConfig)
             );
         }

@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.function.Consumer;
 
@@ -114,28 +115,42 @@ public final class RangeDispatchItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.fallBack != null) {
-            this.fallBack.prepareModelGeneration(consumer);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
         }
-        for (ItemModel model : this.entries.values()) {
-            model.prepareModelGeneration(consumer);
+        if (!(object instanceof RangeDispatchItemModel that)) {
+            return false;
         }
+        return Objects.equals(this.property, that.property)
+                && Float.compare(this.scale, that.scale) == 0
+                && Objects.equals(this.fallBack, that.fallBack)
+                && Objects.equals(this.entries, that.entries)
+                && Objects.equals(this.transformation, that.transformation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.property);
+        result = 31 * result + Float.hashCode(this.scale);
+        result = 31 * result + Objects.hashCode(this.fallBack);
+        result = 31 * result + Objects.hashCode(this.entries);
+        return 31 * result + Objects.hashCode(this.transformation);
     }
 
     private static class Factory implements ItemModelFactory<RangeDispatchItemModel> {
 
         @Override
-        public RangeDispatchItemModel create(Pack pack, Path path, ConfigSection section) {
+        public RangeDispatchItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             RangeDispatchProperty property = RangeDispatchProperties.fromConfig(section);
             float scale = section.getFloat("scale", 1.0f);
-            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v));
+            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v, generations));
             Map<Float, ItemModel> entryMap = new TreeMap<>();
             ConfigValue entries = section.getNonNullValue("entries", ConfigConstants.ARGUMENT_LIST);
             entries.forEach(value -> {
                 ConfigSection entry = value.getAsSection();
                 float threshold = entry.getNonNullFloat("threshold");
-                ItemModel model = entry.getValue("model", v -> ItemModels.fromConfig(pack, path, v), fallbackModel);
+                ItemModel model = entry.getValue("model", v -> ItemModels.fromConfig(pack, path, v, generations), fallbackModel);
                 entryMap.put(threshold, model);
             });
             return new RangeDispatchItemModel(

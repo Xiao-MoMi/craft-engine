@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.pack.model.definition.*;
 import net.momirealms.craftengine.core.pack.model.definition.select.ChargeTypeSelectProperty;
 import net.momirealms.craftengine.core.pack.model.definition.select.TrimMaterialSelectProperty;
 import net.momirealms.craftengine.core.pack.model.generation.AbstractModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyItemModel;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
@@ -805,6 +806,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 // 新版格式
                 ItemModel modernModel;
+                List<ModelGenerationHolder> modelGenerations = new ObjectArrayList<>();
                 // 旧版格式
                 TreeSet<LegacyOverridesModel> legacyOverridesModels;
                 // 如果需要支持新版item model 或者用户需要旧版本兼容，但是没配置legacy-model
@@ -812,7 +814,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     if (blueprintValue != null) {
                         Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                         SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
-                        modernModel = simplifiedModelReader.readBlueprints(blueprintValue, modelValue, pack, path);
+                        modernModel = simplifiedModelReader.readBlueprints(blueprintValue, modelValue, pack, path, modelGenerations::add);
                     } else if (textureValue != null) {
                         Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                         SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
@@ -822,27 +824,25 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                                 return modelSection.getValue(ConfigKeys.of("path|model"));
                             }
                             return it;
-                        }), id);
+                        }), id, modelGenerations::add);
                     } else if (modelValue != null) {
                         if (modelValue.is(List.class)) {
                             Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                             SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
                             modernModel = simplifiedModelReader.read(modelValue);
                         } else {
-                            modernModel = ItemModels.fromConfig(pack, path, modelValue);
+                            modernModel = ItemModels.fromConfig(pack, path, modelValue, modelGenerations::add);
                         }
                     } else {
                         throw KnownResourceException.missingArgument("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION);
                     }
-                    modernModel.prepareModelGeneration(AbstractItemManager.this::prepareModelGeneration);
                 } else {
                     modernModel = null;
                 }
                 // 如果需要旧版本兼容
                 if (needsLegacyCompatibility()) {
                     if (legacyModelSection != null) {
-                        LegacyItemModel legacyItemModel = LegacyItemModel.fromConfig(pack, path, legacyModelSection, customModelData);
-                        legacyItemModel.prepareModelGeneration(AbstractItemManager.this::prepareModelGeneration);
+                        LegacyItemModel legacyItemModel = LegacyItemModel.fromConfig(pack, path, legacyModelSection, customModelData, modelGenerations::add);
                         legacyOverridesModels = new TreeSet<>(legacyItemModel.overrides());
                     } else {
                         legacyOverridesModels = new TreeSet<>();
@@ -855,6 +855,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     legacyOverridesModels = null;
                 }
 
+                modelGenerations.forEach(AbstractItemManager.this::prepareModelGeneration);
                 boolean hasLegacyModel = legacyOverridesModels != null && !legacyOverridesModels.isEmpty();
                 boolean hasModernModel = modernModel != null;
 
@@ -950,22 +951,19 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     baseModel.path(),
-                    customModelData,
-                    null
+                    customModelData
             ));
         } else if (currentModel instanceof SpecialItemModel specialModel) {
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     specialModel.base(),
-                    customModelData,
-                    null
+                    customModelData
             ));
         } else if (currentModel instanceof EmptyItemModel) {
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     Key.of("item/air"),
-                    customModelData,
-                    null
+                    customModelData
             ));
         }
     }

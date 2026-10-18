@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.model.definition.condition;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import java.util.Objects;
 
 public final class KeyBindDownConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<KeyBindDownConditionProperty> FACTORY = new Factory();
@@ -20,6 +21,22 @@ public final class KeyBindDownConditionProperty implements ConditionProperty {
     public void writeProperty(JsonObject model) {
         model.addProperty("property", "keybind_down");
         model.addProperty("keybind", this.keybind);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof KeyBindDownConditionProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.keybind, that.keybind);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.keybind);
     }
 
     private static class Factory implements ConditionPropertyFactory<KeyBindDownConditionProperty> {

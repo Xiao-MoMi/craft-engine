@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Map2;
@@ -18,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class GeneratedItemModelReader implements SimplifiedItemModelReader {
     public static final GeneratedItemModelReader GENERATED = new GeneratedItemModelReader(Key.of("item/generated"), List.of());
@@ -37,7 +39,7 @@ public final class GeneratedItemModelReader implements SimplifiedItemModelReader
 
     @SuppressWarnings("DuplicatedCode")
     @Override
-    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id) {
+    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id, Consumer<ModelGenerationHolder> generations) {
         List<Key> textures = textureValue.getAsList(ConfigValue::getAsAssetPath);
         if (textures.isEmpty()) {
             return EmptyItemModel.INSTANCE;
@@ -58,14 +60,12 @@ public final class GeneratedItemModelReader implements SimplifiedItemModelReader
                 }
             }
         }
-        return new BaseItemModel(
-                autoModel ? Key.of(id.namespace(), "item/" + id.value()) : models.getFirst(),
-                this.tints,
-                ModelGeneration.builder()
+        Key modelPath = autoModel ? Key.of(id.namespace(), "item/" + id.value()) : models.getFirst();
+        generations.accept(new ModelGenerationHolder(modelPath, ModelGeneration.builder()
                         .parentModelPath(this.parentModel)
                         .texturesOverride(texturesProperty)
-                        .build()
-        );
+                        .build()));
+        return new BaseItemModel(modelPath, this.tints);
     }
 
     @Override
@@ -86,8 +86,8 @@ public final class GeneratedItemModelReader implements SimplifiedItemModelReader
     }
 
     @Override
-    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints) {
+    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints, Consumer<ModelGenerationHolder> generations) {
         BBModelConverter.Converted converted = blueprints.getFirst();
-        return new BaseItemModel(converted.model(), this.tints, ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata()));
+        return BaseItemModel.ofBBModel(converted, this.tints, null, generations);
     }
 }

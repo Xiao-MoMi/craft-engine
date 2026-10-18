@@ -1,10 +1,47 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.util.Key;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class BedrockItemRendering {
 
     private BedrockItemRendering() {
+    }
+
+    public static BaseItemModel baseModel(ItemModel model) throws IOException {
+        if (!(model instanceof BaseItemModel base)) {
+            throw new IOException("Expected a static item model");
+        }
+        if (base.tints() != null) {
+            for (Tint tint : base.tints()) {
+                if (!(tint instanceof ConstantTint)) {
+                    throw new IOException("Unsupported dynamic item tint: " + tint.get().get("type").getAsString());
+                }
+            }
+        }
+        return base;
+    }
+
+    public static List<Integer> tints(BaseItemModel model) throws IOException {
+        baseModel(model);
+        if (model.tints() == null || model.tints().isEmpty()) {
+            return List.of();
+        }
+        List<Integer> colors = new ArrayList<>(model.tints().size());
+        for (Tint tint : model.tints()) {
+            ConstantTint constant = (ConstantTint) tint;
+            colors.add(constant.value() == null ? 0xFFFFFF : constant.value().map(
+                    value -> value & 0xFFFFFF,
+                    value -> ((int) (value.get(0) * 255) << 16) | ((int) (value.get(1) * 255) << 8) | (int) (value.get(2) * 255)));
+        }
+        return colors;
     }
 
     public static boolean displayHandheld(Key itemModel, BedrockItemSources sources) {

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import java.util.Objects;
 
 public final class SimpleSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<SimpleSpecialModel> FACTORY = new Factory();
@@ -23,6 +24,22 @@ public final class SimpleSpecialModel implements SpecialModel {
         JsonObject json = new JsonObject();
         json.addProperty("type", this.type.asMinimalString());
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof SimpleSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.type);
     }
 
     private static class Factory implements SpecialModelFactory<SimpleSpecialModel> {

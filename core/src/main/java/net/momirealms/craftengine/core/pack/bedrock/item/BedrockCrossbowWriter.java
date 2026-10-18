@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.HashUtils;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public final class BedrockCrossbowWriter {
 
     public Result write(JavaCrossbowModel crossbow, List<BedrockItemSource> items) throws IOException {
         Key owner = items.getFirst().id();
-        Map<JavaItemModelLeaf, Integer> states = new LinkedHashMap<>();
+        Map<BaseItemModel, Integer> states = new LinkedHashMap<>();
         states.put(crossbow.idle(), 0);
         states.computeIfAbsent(crossbow.pulling(), ignored -> states.size());
         for (JavaBowModel.Stage stage : crossbow.stages()) {
@@ -49,8 +50,8 @@ public final class BedrockCrossbowWriter {
         update.add("variable.ce_crossbow_state = variable.ce_crossbow_charge == 1 ? " + states.get(crossbow.arrow())
                 + " : (variable.ce_crossbow_charge == 2 ? " + states.get(crossbow.rocket())
                 + " : (variable.ce_crossbow_using ? " + selected + " : 0));");
-        Map<JavaItemModelLeaf, String> conditions = new LinkedHashMap<>();
-        for (Map.Entry<JavaItemModelLeaf, Integer> state : states.entrySet()) {
+        Map<BaseItemModel, String> conditions = new LinkedHashMap<>();
+        for (Map.Entry<BaseItemModel, Integer> state : states.entrySet()) {
             conditions.put(state.getKey(), "variable.ce_crossbow_state == " + state.getValue());
         }
         BedrockStateItemWriter.Result result = this.writer.write(owner, "xbow", conditions, crossbow.idle(), update, false, BedrockWeaponDisplay.CROSSBOW);

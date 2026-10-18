@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class ConstantTint implements Tint {
     public static final TintFactory<ConstantTint> FACTORY = new Factory();
@@ -18,6 +19,16 @@ public final class ConstantTint implements Tint {
 
     public Either<Integer, List<Float>> value() {
         return this.value;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        return this == object || (object instanceof ConstantTint that && Objects.equals(this.value, that.value));
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.value);
     }
 
     @Override

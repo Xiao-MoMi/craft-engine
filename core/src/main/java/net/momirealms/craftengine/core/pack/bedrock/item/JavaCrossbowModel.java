@@ -1,73 +1,71 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Either;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ConditionItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.SelectItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CrossBowPullingRangeDispatchProperty;
+import net.momirealms.craftengine.core.pack.model.definition.select.ChargeTypeSelectProperty;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
-public record JavaCrossbowModel(JavaItemModelLeaf idle, JavaItemModelLeaf pulling, List<JavaBowModel.Stage> stages,
-                               float scale, JavaItemModelLeaf arrow, JavaItemModelLeaf rocket) {
+public record JavaCrossbowModel(BaseItemModel idle, BaseItemModel pulling, List<JavaBowModel.Stage> stages,
+                               float scale, BaseItemModel arrow, BaseItemModel rocket) {
 
-    public static JavaCrossbowModel read(JsonObject json) throws IOException {
-        if (JavaItemModelLeaf.type(json).equals("model")) {
-            JavaItemModelLeaf leaf = JavaItemModelLeaf.read(json);
-            return new JavaCrossbowModel(leaf, leaf, List.of(), 1, leaf, leaf);
+    public static JavaCrossbowModel read(ItemModel model) throws IOException {
+        if (model instanceof BaseItemModel) {
+            BaseItemModel base = BedrockItemRendering.baseModel(model);
+            return new JavaCrossbowModel(base, base, List.of(), 1, base, base);
         }
-        if (!JavaItemModelLeaf.type(json).equals("select") || !JavaItemModelLeaf.name(json, "property").equals("charge_type")) {
+        if (!(model instanceof SelectItemModel select) || !(select.property() instanceof ChargeTypeSelectProperty)) {
             throw new IOException("Unsupported crossbow root: expected model or charge_type select");
         }
-        JavaItemModelLeaf arrow = null;
-        JavaItemModelLeaf rocket = null;
-        for (JsonElement element : json.getAsJsonArray("cases")) {
-            JsonObject entry = element.getAsJsonObject();
-            JavaItemModelLeaf leaf = JavaItemModelLeaf.read(entry.getAsJsonObject("model"));
-            for (String value : JavaDisplayContextModel.values(entry.get("when"))) {
-                switch (value) {
-                    case "arrow" -> arrow = leaf;
-                    case "rocket" -> rocket = leaf;
+        BaseItemModel arrow = null;
+        BaseItemModel rocket = null;
+        for (Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel> entry : select.whenMap().entrySet()) {
+            BaseItemModel base = BedrockItemRendering.baseModel(entry.getValue());
+            for (JsonElement value : entry.getKey().map(List::of, values -> values)) {
+                switch (value.getAsString()) {
+                    case "arrow" -> arrow = base;
+                    case "rocket" -> rocket = base;
                     default -> throw new IOException("Unsupported crossbow charge_type: " + value);
                 }
             }
         }
-        JsonObject fallback = json.getAsJsonObject("fallback");
-        JavaItemModelLeaf idle;
-        JavaItemModelLeaf pulling;
-        List<JavaBowModel.Stage> stages = new ArrayList<>();
+        ItemModel fallback = select.fallBack();
+        BaseItemModel idle;
+        BaseItemModel pulling;
+        List<JavaBowModel.Stage> stages = List.of();
         float scale = 1;
-        if (JavaItemModelLeaf.type(fallback).equals("model")) {
-            idle = JavaItemModelLeaf.read(fallback);
+        if (fallback instanceof BaseItemModel) {
+            idle = BedrockItemRendering.baseModel(fallback);
             pulling = idle;
         } else {
-            if (!JavaItemModelLeaf.type(fallback).equals("condition") || !JavaItemModelLeaf.name(fallback, "property").equals("using_item")) {
+            if (!(fallback instanceof ConditionItemModel condition) || !(condition.property() instanceof UsingItemConditionProperty)) {
                 throw new IOException("Unsupported crossbow fallback: expected model or using_item condition");
             }
-            idle = JavaItemModelLeaf.read(fallback.getAsJsonObject("on_false"));
-            JsonObject using = fallback.getAsJsonObject("on_true");
-            if (JavaItemModelLeaf.type(using).equals("model")) {
-                pulling = JavaItemModelLeaf.read(using);
+            idle = BedrockItemRendering.baseModel(condition.onFalse());
+            ItemModel using = condition.onTrue();
+            if (using instanceof BaseItemModel) {
+                pulling = BedrockItemRendering.baseModel(using);
             } else {
-                if (!JavaItemModelLeaf.type(using).equals("range_dispatch") || !JavaItemModelLeaf.name(using, "property").equals("crossbow/pull")) {
+                if (!(using instanceof RangeDispatchItemModel range) || !(range.property() instanceof CrossBowPullingRangeDispatchProperty)) {
                     throw new IOException("Unsupported crossbow pulling model: expected crossbow/pull range_dispatch");
                 }
-                pulling = JavaItemModelLeaf.read(using.getAsJsonObject("fallback"));
-                scale = using.has("scale") ? using.get("scale").getAsFloat() : 1;
+                pulling = BedrockItemRendering.baseModel(range.fallBack());
+                scale = range.scale();
                 if (!Float.isFinite(scale)) {
                     throw new IOException("Invalid crossbow pull scale");
                 }
-                for (JsonElement element : using.getAsJsonArray("entries")) {
-                    JsonObject entry = element.getAsJsonObject();
-                    float threshold = entry.get("threshold").getAsFloat();
-                    if (!Float.isFinite(threshold)) {
-                        throw new IOException("Invalid crossbow pull threshold");
-                    }
-                    stages.add(new JavaBowModel.Stage(threshold, JavaItemModelLeaf.read(entry.getAsJsonObject("model"))));
-                }
-                stages.sort(Comparator.comparingDouble(JavaBowModel.Stage::threshold));
+                stages = JavaBowModel.stages(range);
             }
         }
-        return new JavaCrossbowModel(idle, pulling, List.copyOf(stages), scale, arrow == null ? idle : arrow, rocket == null ? idle : rocket);
+        return new JavaCrossbowModel(idle, pulling, stages, scale, arrow == null ? idle : arrow, rocket == null ? idle : rocket);
     }
 }

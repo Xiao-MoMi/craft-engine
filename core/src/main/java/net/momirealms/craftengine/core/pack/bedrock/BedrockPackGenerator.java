@@ -8,7 +8,6 @@ import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.bedrock.BedrockPackMappingsCodec;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.pack.VanillaResourcePackDownloader;
-import net.momirealms.craftengine.core.pack.bedrock.item.JavaItemModelLeaf;
 import net.momirealms.craftengine.core.pack.bedrock.item.JavaBowModel;
 import net.momirealms.craftengine.core.pack.bedrock.item.JavaFishingRodModel;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockNativeItemWriter;
@@ -23,6 +22,9 @@ import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemRendering;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockBlockItems;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModels;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -89,8 +91,8 @@ public final class BedrockPackGenerator {
             List<BedrockPackMappings.Item> mappings = new ArrayList<>();
 
             int convertedModels = 0;
-            for (Map.Entry<JavaItemModelLeaf, List<BedrockItemSource>> entry : models.staticModels().entrySet()) {
-                JavaItemModelLeaf variant = entry.getKey();
+            for (Map.Entry<BaseItemModel, List<BedrockItemSource>> entry : models.staticModels().entrySet()) {
+                BaseItemModel variant = entry.getKey();
                 List<BedrockItemSource> users = entry.getValue();
                 Key resource = users.getFirst().id();
                 BedrockNativeItemWriter.Appearance appearance;
@@ -203,7 +205,7 @@ public final class BedrockPackGenerator {
     }
 
     private CollectedModels collectModels(JavaResourcePack pack, BedrockItemSources sources) {
-        Map<JavaItemModelLeaf, List<BedrockItemSource>> models = new LinkedHashMap<>();
+        Map<BaseItemModel, List<BedrockItemSource>> models = new LinkedHashMap<>();
         Map<JavaBowModel, List<BedrockItemSource>> bows = new LinkedHashMap<>();
         Map<JavaFishingRodModel, List<BedrockItemSource>> fishingRods = new LinkedHashMap<>();
         Map<JavaCrossbowModel, List<BedrockItemSource>> crossbows = new LinkedHashMap<>();
@@ -216,16 +218,17 @@ public final class BedrockPackGenerator {
                     continue;
                 }
                 BedrockItemSource definitionSource = sources.findItemByModel(item.itemModel());
+                ItemModel itemModel = ItemModels.fromJson(model);
                 if (definitionSource != null && definitionSource.javaItem().equals(ItemKeys.BOW)) {
-                    bows.computeIfAbsent(JavaBowModel.read(model), key -> new ArrayList<>()).add(item);
+                    bows.computeIfAbsent(JavaBowModel.read(itemModel), key -> new ArrayList<>()).add(item);
                 } else if (definitionSource != null && definitionSource.javaItem().equals(ItemKeys.FISHING_ROD)) {
-                    fishingRods.computeIfAbsent(JavaFishingRodModel.read(model), key -> new ArrayList<>()).add(item);
+                    fishingRods.computeIfAbsent(JavaFishingRodModel.read(itemModel), key -> new ArrayList<>()).add(item);
                 } else if (definitionSource != null && definitionSource.javaItem().equals(ItemKeys.CROSSBOW)) {
-                    crossbows.computeIfAbsent(JavaCrossbowModel.read(model), key -> new ArrayList<>()).add(item);
+                    crossbows.computeIfAbsent(JavaCrossbowModel.read(itemModel), key -> new ArrayList<>()).add(item);
                 } else if (definitionSource != null && BedrockItemRendering.isSpear(definitionSource.javaItem())) {
-                    spears.computeIfAbsent(JavaDisplayContextModel.read(model), key -> new ArrayList<>()).add(item);
+                    spears.computeIfAbsent(JavaDisplayContextModel.read(itemModel), key -> new ArrayList<>()).add(item);
                 } else {
-                    models.computeIfAbsent(JavaItemModelLeaf.read(model), key -> new ArrayList<>()).add(item);
+                    models.computeIfAbsent(BedrockItemRendering.baseModel(itemModel), key -> new ArrayList<>()).add(item);
                 }
             } catch (IOException | RuntimeException exception) {
                 CraftEngine.instance().logger().warn("Skipping Bedrock item " + item.id() + " (" + item.itemModel() + "): " + exception.getMessage());
@@ -238,7 +241,7 @@ public final class BedrockPackGenerator {
         return Key.of("ce", "rod_cast_" + HashUtils.sha1(item.asString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private record CollectedModels(Map<JavaItemModelLeaf, List<BedrockItemSource>> staticModels,
+    private record CollectedModels(Map<BaseItemModel, List<BedrockItemSource>> staticModels,
                                    Map<JavaBowModel, List<BedrockItemSource>> bows,
                                    Map<JavaFishingRodModel, List<BedrockItemSource>> fishingRods,
                                    Map<JavaCrossbowModel, List<BedrockItemSource>> crossbows,

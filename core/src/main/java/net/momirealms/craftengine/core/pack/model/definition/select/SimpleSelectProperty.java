@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.model.definition.select;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
+import java.util.Objects;
 
 public final class SimpleSelectProperty implements SelectProperty {
     public static final SelectPropertyFactory<SimpleSelectProperty> FACTORY = new Factory();
@@ -20,6 +21,22 @@ public final class SimpleSelectProperty implements SelectProperty {
     @Override
     public void writeProperty(JsonObject model) {
         model.addProperty("property", this.type.asMinimalString());
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof SimpleSelectProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.type);
     }
 
     private static class Factory implements SelectPropertyFactory<SimpleSelectProperty> {

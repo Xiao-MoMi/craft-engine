@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -28,20 +29,21 @@ public final class BedrockNativeItemWriter {
         this.root = root;
     }
 
-    public Appearance write(JavaItemModelLeaf leaf, Key resource) throws IOException {
+    public Appearance write(BaseItemModel leaf, Key resource) throws IOException {
         return this.write(leaf, resource, false);
     }
 
-    public Appearance writeBlock(JavaItemModelLeaf leaf, Key resource) throws IOException {
+    public Appearance writeBlock(BaseItemModel leaf, Key resource) throws IOException {
         return this.write(leaf, resource, true);
     }
 
-    private Appearance write(JavaItemModelLeaf leaf, Key resource, boolean blockModel) throws IOException {
-        JavaModel model = this.resolver.resolve(leaf.model());
-        BedrockModelConverter.Result converted = this.converter.convert(model, "geometry." + resource.namespace() + '.' + resource.value(), this.textures, leaf.tints());
+    private Appearance write(BaseItemModel leaf, Key resource, boolean blockModel) throws IOException {
+        JavaModel model = this.resolver.resolve(leaf.path());
+        List<Integer> tints = BedrockItemRendering.tints(leaf);
+        BedrockModelConverter.Result converted = this.converter.convert(model, "geometry." + resource.namespace() + '.' + resource.value(), this.textures, tints);
         List<BedrockAnimatedTextures.Track> tracks = BedrockAnimatedTextures.write(converted, resource, this.root, false);
         if (!blockModel && model.geometryKind() == JavaModel.GeometryKind.GENERATED && tracks.isEmpty()) {
-            return new Appearance(this.icons.write(converted, resource, leaf.tints(), this.root), null);
+            return new Appearance(this.icons.write(converted, resource, tints, this.root), null);
         }
         return new Appearance(null, this.blocks.write(converted, resource, this.root, tracks));
     }

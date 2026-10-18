@@ -21,8 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class SelectItemModel implements ItemModel {
@@ -133,21 +136,45 @@ public final class SelectItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.fallBack != null) {
-            this.fallBack.prepareModelGeneration(consumer);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
         }
-        for (ItemModel itemModel : this.whenMap.values()) {
-            itemModel.prepareModelGeneration(consumer);
+        if (!(object instanceof SelectItemModel that)) {
+            return false;
         }
+        if (!Objects.equals(this.property, that.property)
+                || !Objects.equals(this.fallBack, that.fallBack)
+                || !Objects.equals(this.transformation, that.transformation)
+                || this.whenMap.size() != that.whenMap.size()) {
+            return false;
+        }
+        Iterator<Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel>> first = this.whenMap.entrySet().iterator();
+        Iterator<Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel>> second = that.whenMap.entrySet().iterator();
+        while (first.hasNext()) {
+            if (!first.next().equals(second.next())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.property);
+        for (Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel> entry : this.whenMap.entrySet()) {
+            result = 31 * result + entry.hashCode();
+        }
+        result = 31 * result + Objects.hashCode(this.fallBack);
+        return 31 * result + Objects.hashCode(this.transformation);
     }
 
     private static class Factory implements ItemModelFactory<SelectItemModel> {
 
         @Override
-        public SelectItemModel create(Pack pack, Path path, ConfigSection section) {
+        public SelectItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             SelectProperty property = SelectProperties.fromConfig(section);
-            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v));
+            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v, generations));
             Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>();
             ConfigValue cases = section.getNonNullValue("cases", ConfigConstants.ARGUMENT_LIST);
             cases.forEach(value -> {
@@ -159,7 +186,7 @@ public final class SelectItemModel implements ItemModel {
                 } else {
                     either = Either.right(when);
                 }
-                ItemModel model = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v));
+                ItemModel model = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v, generations));
                 whenMap.put(either, model);
             });
             return new SelectItemModel(
@@ -179,7 +206,7 @@ public final class SelectItemModel implements ItemModel {
             if (cases == null) {
                 throw new IllegalArgumentException("cases is expected to be a JsonArray");
             }
-            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>(cases.size());
+            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new LinkedHashMap<>(cases.size());
             for (JsonElement caseElement : cases) {
                 if (!(caseElement instanceof JsonObject caseObj)) {
                     throw new IllegalArgumentException("case is expected to be a JsonObject");

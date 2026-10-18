@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class ModernItemModel {
     private final ItemModel model;
@@ -76,4 +77,26 @@ public final class ModernItemModel {
     public float swapAnimationScale() {
         return this.swapAnimationScale;
     }
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ModernItemModel that)) {
+            return false;
+        }
+        return Objects.equals(this.model, that.model)
+                && this.oversizedInGui == that.oversizedInGui
+                && this.handAnimationOnSwap == that.handAnimationOnSwap
+                && Float.compare(this.swapAnimationScale, that.swapAnimationScale) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.model);
+        result = 31 * result + Boolean.hashCode(this.oversizedInGui);
+        result = 31 * result + Boolean.hashCode(this.handAnimationOnSwap);
+        return 31 * result + Float.hashCode(this.swapAnimationScale);
+    }
+
 }

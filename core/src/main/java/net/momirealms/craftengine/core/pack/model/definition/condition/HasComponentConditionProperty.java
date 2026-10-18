@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import org.jetbrains.annotations.NotNull;
+import java.util.Objects;
 
 public final class HasComponentConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<HasComponentConditionProperty> FACTORY = new Factory();
@@ -32,6 +33,24 @@ public final class HasComponentConditionProperty implements ConditionProperty {
         if (this.ignoreDefault) {
             model.addProperty("ignore_default", true);
         }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof HasComponentConditionProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.component, that.component)
+                && this.ignoreDefault == that.ignoreDefault;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.component);
+        return 31 * result + Boolean.hashCode(this.ignoreDefault);
     }
 
     private static class Factory implements ConditionPropertyFactory<HasComponentConditionProperty> {

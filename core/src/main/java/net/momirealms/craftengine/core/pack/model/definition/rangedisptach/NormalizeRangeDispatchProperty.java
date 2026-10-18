@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.model.definition.rangedisptach;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
+import java.util.Objects;
 
 public final class NormalizeRangeDispatchProperty implements RangeDispatchProperty {
     public static final RangeDispatchPropertyFactory<NormalizeRangeDispatchProperty> FACTORY = new Factory();
@@ -29,6 +30,23 @@ public final class NormalizeRangeDispatchProperty implements RangeDispatchProper
         if (!this.normalize) {
             model.addProperty("normalize", false);
         }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof NormalizeRangeDispatchProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.type, that.type) && this.normalize == that.normalize;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.type);
+        return 31 * result + Boolean.hashCode(this.normalize);
     }
 
     private static class Factory implements RangeDispatchPropertyFactory<NormalizeRangeDispatchProperty> {
