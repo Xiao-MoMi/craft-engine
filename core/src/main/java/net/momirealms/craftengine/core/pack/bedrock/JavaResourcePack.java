@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -31,7 +29,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.zip.ZipEntry;
 
-public final class JavaResourcePack implements AutoCloseable {
+public final class JavaResourcePack {
     private static final int MAX_PATH = 260;
     private final MinecraftVersion version;
     private final Path root;
@@ -97,38 +95,27 @@ public final class JavaResourcePack implements AutoCloseable {
         }
     }
 
-    public static JavaResourcePack openZip(Path source, Path vanilla, MinecraftVersion version) throws IOException {
-        FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
-        try {
-            Path root = fileSystem.getPath("resource_pack").toAbsolutePath();
-            Path vanillaRoot = fileSystem.getPath("vanilla").toAbsolutePath();
-            try (IndexedZipFile archive = new IndexedZipFile(source)) {
-                ZipEntry entry = archive.getEntry("pack.mcmeta");
-                if (entry == null) {
-                    throw new IOException("Missing pack.mcmeta in " + source);
-                }
-                JsonObject metadata;
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(archive.getInputStream(entry), StandardCharsets.UTF_8))) {
-                    metadata = JsonParser.parseReader(reader).getAsJsonObject();
-                }
-                if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
-                    throw new IOException("Missing pack.mcmeta in " + source);
-                }
-                extractResources(archive, new PackMeta(metadata).overlays().overlays(), version, root);
+    public static JavaResourcePack openZip(Path source, Path vanilla, MinecraftVersion version, FileSystem fileSystem) throws IOException {
+        Path root = fileSystem.getPath("resource_pack").toAbsolutePath();
+        Path vanillaRoot = fileSystem.getPath("vanilla").toAbsolutePath();
+        try (IndexedZipFile archive = new IndexedZipFile(source)) {
+            ZipEntry entry = archive.getEntry("pack.mcmeta");
+            if (entry == null) {
+                throw new IOException("Missing pack.mcmeta in " + source);
             }
-            try (IndexedZipFile archive = new IndexedZipFile(vanilla)) {
-                extractResources(archive, List.of(), version, vanillaRoot);
+            JsonObject metadata;
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(archive.getInputStream(entry), StandardCharsets.UTF_8))) {
+                metadata = JsonParser.parseReader(reader).getAsJsonObject();
             }
-            return new JavaResourcePack(root, vanillaRoot, version);
-        } catch (IOException | RuntimeException | Error exception) {
-            fileSystem.close();
-            throw exception;
+            if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
+                throw new IOException("Missing pack.mcmeta in " + source);
+            }
+            extractResources(archive, new PackMeta(metadata).overlays().overlays(), version, root);
         }
-    }
-
-    @Override
-    public void close() throws IOException {
-        this.root.getFileSystem().close();
+        try (IndexedZipFile archive = new IndexedZipFile(vanilla)) {
+            extractResources(archive, List.of(), version, vanillaRoot);
+        }
+        return new JavaResourcePack(root, vanillaRoot, version);
     }
 
     @Nullable

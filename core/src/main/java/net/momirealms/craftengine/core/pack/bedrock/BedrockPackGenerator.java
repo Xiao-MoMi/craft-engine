@@ -71,9 +71,11 @@ public final class BedrockPackGenerator {
 
         Path cacheDirectory = CraftEngine.instance().dataFolderPath().resolve("cache/vanilla");
         Path vanilla = new VanillaResourcePackDownloader(cacheDirectory).download(version);
-        try (JavaResourcePack pack = JavaResourcePack.openZip(input, vanilla, version); FileSystem generated = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
-            Path root = generated.getPath("bedrock").toAbsolutePath();
+        try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
+            JavaResourcePack pack = JavaResourcePack.openZip(input, vanilla, version, fileSystem);
+            Path root = fileSystem.getPath("bedrock").toAbsolutePath();
             Files.createDirectories(root);
+            // 将原版贴图转写成 bedrock 路径
             BedrockVanillaTextures.write(pack, root);
 
             // 专门读 java 模型
