@@ -745,7 +745,7 @@ public final class Config {
                 }
             }
             this.block$inject_bukkit_material = config.getBoolean("block.inject-bukkit-material", false);
-            this.block$serverside_blocks = Math.min(config.getInt("block.serverside-blocks", 2000), 10_0000);
+            this.block$serverside_blocks = Math.min(config.getInt("block.serverside-blocks", 2000), 1_000_000);
             if (this.block$serverside_blocks < 0) this.block$serverside_blocks = 0;
         }
 
