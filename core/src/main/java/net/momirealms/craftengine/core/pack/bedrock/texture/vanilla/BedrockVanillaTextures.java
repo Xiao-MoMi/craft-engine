@@ -151,7 +151,11 @@ public final class BedrockVanillaTextures {
 
     static void transform(JavaResourcePack pack, Path root, BedrockTextureRegistry textures, String output,
                           List<String> sources, Function<List<BufferedImage>, BufferedImage> transform) {
-        boolean changed = false;
+        transform(pack, root, textures, output, sources, false, transform);
+    }
+
+    static void transform(JavaResourcePack pack, Path root, BedrockTextureRegistry textures, String output,
+                          List<String> sources, boolean changed, Function<List<BufferedImage>, BufferedImage> transform) {
         for (String source : sources) {
             if (pack.hasCustomResource(resource(source))) {
                 changed = true;

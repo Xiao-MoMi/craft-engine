@@ -22,7 +22,7 @@
     "layers": [
       {
         "source": "block/large_fern_top.png",
-        "color": 5273899
+        "item_tint": "minecraft:large_fern"
       }
     ]
   },
@@ -31,7 +31,7 @@
     "layers": [
       {
         "source": "block/tall_grass_top.png",
-        "color": 5273899
+        "item_tint": "minecraft:tall_grass"
       }
     ]
   },
@@ -40,7 +40,7 @@
     "layers": [
       {
         "source": "block/fern.png",
-        "color": 3297580
+        "item_tint": "minecraft:fern"
       }
     ]
   },
@@ -49,7 +49,7 @@
     "layers": [
       {
         "source": "block/grass_block_top.png",
-        "color": 5142314
+        "item_tint": "minecraft:grass_block"
       }
     ]
   },
@@ -58,7 +58,7 @@
     "layers": [
       {
         "source": "block/acacia_leaves.png",
-        "color": 2779657
+        "item_tint": "minecraft:acacia_leaves"
       }
     ]
   },
@@ -67,7 +67,7 @@
     "layers": [
       {
         "source": "block/dark_oak_leaves.png",
-        "color": 2251273
+        "item_tint": "minecraft:dark_oak_leaves"
       }
     ]
   },
@@ -76,7 +76,7 @@
     "layers": [
       {
         "source": "block/birch_leaves.png",
-        "color": 4676654
+        "item_tint": "minecraft:birch_leaves"
       }
     ]
   },
@@ -85,7 +85,7 @@
     "layers": [
       {
         "source": "block/jungle_leaves.png",
-        "color": 2779913
+        "item_tint": "minecraft:jungle_leaves"
       }
     ]
   },
@@ -94,7 +94,7 @@
     "layers": [
       {
         "source": "block/oak_leaves.png",
-        "color": 1523459
+        "item_tint": "minecraft:oak_leaves"
       }
     ]
   },
@@ -103,7 +103,7 @@
     "layers": [
       {
         "source": "block/spruce_leaves.png",
-        "color": 3824698
+        "item_tint": "minecraft:spruce_leaves"
       }
     ]
   },
@@ -112,7 +112,7 @@
     "layers": [
       {
         "source": "block/mangrove_leaves.png",
-        "color": 3824698
+        "item_tint": "minecraft:mangrove_leaves"
       }
     ]
   },
@@ -121,7 +121,7 @@
     "layers": [
       {
         "source": "block/short_grass.png",
-        "color": 5339948
+        "item_tint": "minecraft:short_grass"
       }
     ]
   },
@@ -130,7 +130,7 @@
     "layers": [
       {
         "source": "block/bush.png",
-        "color": 3955763
+        "item_tint": "minecraft:bush"
       }
     ]
   },
@@ -139,7 +139,7 @@
     "layers": [
       {
         "source": "block/lily_pad.png",
-        "color": 4417060
+        "item_tint": "minecraft:lily_pad"
       }
     ]
   },
