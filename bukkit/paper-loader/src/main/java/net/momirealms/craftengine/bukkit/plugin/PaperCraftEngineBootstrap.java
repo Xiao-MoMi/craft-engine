@@ -8,6 +8,7 @@ import io.papermc.paper.plugin.bootstrap.PluginProviderContext;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.momirealms.craftengine.bukkit.plugin.agent.RuntimePatcher;
 import net.momirealms.craftengine.bukkit.plugin.classpath.PaperPluginClassPathAppender;
+import net.momirealms.craftengine.core.plugin.classpath.ClassPathAppender;
 import net.momirealms.craftengine.core.plugin.classpath.URLClassPathAppender;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
@@ -53,10 +54,17 @@ public final class PaperCraftEngineBootstrap implements PluginBootstrap {
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Failed to getLogger", e);
         }
+        ClassPathAppender sharedClassPathAppender;
+        try {
+            sharedClassPathAppender = new URLClassPathAppender(Bukkit.class.getClassLoader());
+        } catch (UnsupportedOperationException e) {
+            // 混合端(如Mohist/Youer)上Bukkit位于TransformingClassLoader而非URLClassLoader，共享追加不可用时回退到插件私有类加载器
+            sharedClassPathAppender = new PaperPluginClassPathAppender(this.getClass().getClassLoader());
+        }
         this.plugin = new BukkitCraftEngine(
                 logger,
                 context.getDataDirectory(),
-                new URLClassPathAppender(Bukkit.class.getClassLoader()),
+                sharedClassPathAppender,
                 new PaperPluginClassPathAppender(this.getClass().getClassLoader())
         );
         this.plugin.applyDependencies();
