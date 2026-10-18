@@ -444,17 +444,6 @@
     ]
   },
   {
-    "target": "textures/ui/cartography_table_glass.png",
-    "layers": [
-      {
-        "source": "ui/cartography_table_map.png"
-      },
-      {
-        "source": "ui/cartography_table_glass.png"
-      }
-    ]
-  },
-  {
     "target": "textures/items/potion_bottle_absorption.png",
     "layers": [
       {
@@ -827,43 +816,13 @@
     ]
   },
   {
-    "target": "textures/blocks/redstone_dust_cross.png",
-    "layers": [
-      {
-        "source": "blocks/redstone_dust_cross.png"
-      },
-      {
-        "source": "blocks/redstone_dust_overlay.png"
-      }
-    ]
-  },
-  {
-    "target": "textures/blocks/redstone_dust_line.png",
-    "layers": [
-      {
-        "source": "blocks/redstone_dust_line.png"
-      }
-    ]
-  },
-  {
-    "target": "textures/entity/pig/pig_saddle.png",
-    "layers": [
-      {
-        "source": "entity/pig/pig.png"
-      },
-      {
-        "source": "entity/pig/pig_saddle.png"
-      }
-    ]
-  },
-  {
     "target": "textures/entity/strider/strider_saddled.png",
     "layers": [
       {
         "source": "entity/strider/strider.png"
       },
       {
-        "source": "entity/strider/strider_saddle.png"
+        "source": "entity/equipment/strider_saddle/saddle.png"
       }
     ]
   },
@@ -872,6 +831,9 @@
     "layers": [
       {
         "source": "entity/strider/strider_cold.png"
+      },
+      {
+        "source": "entity/equipment/strider_saddle/saddle.png"
       }
     ]
   },
@@ -1771,7 +1733,7 @@
     "empty_only": true
   },
   {
-    "target": "textures/entity/cat/siamesecat_tame_baby.png",
+    "target": "textures/entity/cat/siamese_tame_baby.png",
     "layers": [
       {
         "source": "entity/cat/cat_collar_baby.png"
@@ -1985,7 +1947,7 @@
         "source": "entity/spider/cave_spider.png"
       },
       {
-        "source": "entity/spider_eyes.png"
+        "source": "entity/spider/spider_eyes.png"
       }
     ],
     "mask": true,
@@ -1998,7 +1960,7 @@
         "source": "entity/spider/spider.png"
       },
       {
-        "source": "entity/spider_eyes.png"
+        "source": "entity/spider/spider_eyes.png"
       }
     ],
     "mask": true,

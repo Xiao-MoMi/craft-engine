@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 final class BedrockLayoutTextures implements BedrockTextureConverter {
-    private static final List<String> CHESTS = List.of("normal", "trapped", "christmas", "ender", "copper", "copper_exposed", "copper_weathered", "copper_oxidized");
+    private static final List<String> CHESTS = List.of("normal", "trapped", "ender", "copper", "copper_exposed", "copper_weathered", "copper_oxidized");
     private static final List<String> COLORS = List.of("black", "blue", "brown", "cyan", "gray", "green", "light_blue", "light_gray", "lime", "magenta", "orange", "pink", "purple", "red", "white", "yellow");
 
     @Override
@@ -32,9 +32,10 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
             }
         }
         for (String name : List.of("chain", "copper_chain", "exposed_copper_chain", "weathered_copper_chain", "oxidized_copper_chain")) {
+            String source = name.equals("chain") ? "iron_chain" : name;
             for (int index = 1; index <= 2; index++) {
                 int side = index;
-                BedrockVanillaTextures.transform(pack, output, textures, "textures/blocks/" + name + index + ".png", List.of("block/" + name + ".png"), images -> this.chain(images.getFirst(), side));
+                BedrockVanillaTextures.transform(pack, output, textures, "textures/blocks/" + name + index + ".png", List.of("block/" + source + ".png"), images -> this.chain(images.getFirst(), side));
             }
         }
         BedrockVanillaTextures.transform(pack, output, textures, "textures/blocks/dried_kelp_side_b.png", List.of("block/dried_kelp_side.png"), images -> ImageUtils.flip(images.getFirst(), true, false));
