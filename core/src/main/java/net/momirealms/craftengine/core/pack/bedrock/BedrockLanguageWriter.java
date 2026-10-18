@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguagesCodec;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.BufferedWriter;
@@ -19,7 +20,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 final class BedrockLanguageWriter {
@@ -31,7 +31,7 @@ final class BedrockLanguageWriter {
     private BedrockLanguageWriter() {
     }
 
-    static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items, Consumer<String> warning) throws IOException {
+    static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items) throws IOException {
         Map<String, Map<String, String>> locales = new TreeMap<>();
         Set<String> keys = new HashSet<>();
         for (String path : pack.languageResources()) {
@@ -43,7 +43,7 @@ final class BedrockLanguageWriter {
             Map<String, String> strings = locales.computeIfAbsent(locale, ignored -> new TreeMap<>());
             for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                 if (!entry.getValue().isJsonPrimitive()) {
-                    warning.accept("Skipping non-primitive language entry " + entry.getKey() + " in " + path);
+                    CraftEngine.instance().logger().warn("Skipping non-primitive language entry " + entry.getKey() + " in " + path);
                     continue;
                 }
                 // Java language loading turns numeric printf specifiers into string substitutions.
@@ -82,7 +82,7 @@ final class BedrockLanguageWriter {
                     String key = entry.getKey();
                     String value = entry.getValue();
                     if (key.indexOf('=') >= 0 || key.indexOf('#') >= 0 || key.isBlank() || !singleLine(key) || !singleLine(value) || value.contains("##")) {
-                        warning.accept("Language entry " + key + " (" + language + ") cannot be represented in .lang; retained for Geyser translation");
+                        CraftEngine.instance().logger().warn("Language entry " + key + " (" + language + ") cannot be represented in .lang; retained for Geyser translation");
                         continue;
                     }
                     writer.write(key);

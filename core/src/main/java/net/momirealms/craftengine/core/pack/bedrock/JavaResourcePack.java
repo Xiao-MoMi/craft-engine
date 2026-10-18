@@ -1,13 +1,14 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
-import net.momirealms.craftengine.core.pack.ResourcePackView;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
-import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
-import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
+import net.momirealms.craftengine.core.util.IndexedZipFile;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.Nullable;
@@ -17,97 +18,109 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Enumeration;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public final class JavaResourcePack implements AutoCloseable {
-    private final ResourceReader resources;
+    private static final int MAX_PATH = 260;
     private final MinecraftVersion version;
-    private final ZipFile archive;
-    private final List<Path> directoryRoots;
-    private final List<String> archiveRoots;
+    private final Path root;
 
-    public JavaResourcePack(Path root, Overlays overlays, MinecraftVersion version) {
+    private JavaResourcePack(Path root, MinecraftVersion version) {
         this.version = version;
-        this.archive = null;
-        this.archiveRoots = List.of();
-        List<Path> roots = new ArrayList<>();
-        roots.add(root);
-        if (version.isAtOrAbove(MinecraftVersion.V1_20_2)) {
-            for (Overlay overlay : overlays.overlays()) {
-                if (overlay.test(version)) {
-                    roots.add(root.resolve(overlay.directory()));
-                }
-            }
-        }
-        this.directoryRoots = List.copyOf(roots);
-        ResourcePackView view = new ResourcePackView(roots.toArray(Path[]::new));
-        this.resources = path -> {
-            Path resource = view.getExistingReversed(path);
-            return resource != null && Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;
-        };
+        this.root = root;
     }
 
-    private JavaResourcePack(ZipFile archive, Overlays overlays, MinecraftVersion version) {
-        this.version = version;
-        this.archive = archive;
-        this.directoryRoots = List.of();
-        List<String> roots = new ArrayList<>();
-        roots.add("");
-        for (Overlay overlay : overlays.overlays()) {
+    private static void extractResources(IndexedZipFile archive, PackMeta metadata, MinecraftVersion version, Path root) throws IOException {
+        Map<String, Integer> overlayPriorities = new HashMap<>();
+        int priority = 0;
+        for (Overlay overlay : metadata.overlays().overlays()) {
             if (version.isAtOrAbove(MinecraftVersion.V1_20_2) && overlay.test(version)) {
-                roots.add(overlay.directory() + "/");
+                overlayPriorities.put(overlay.directory(), ++priority);
             }
         }
-        this.archiveRoots = List.copyOf(roots);
-        this.resources = path -> {
-            for (int index = roots.size() - 1; index >= 0; index--) {
-                // ZipFile resolves the central-directory alias, including protected entries ending in '/'.
-                ZipEntry entry = archive.getEntry(roots.get(index) + path);
-                if (entry != null) {
-                    return archive.getInputStream(entry);
-                }
+        Map<String, ResourceEntry> resources = new HashMap<>();
+        // Entries are unordered; compare declared overlay priorities while building the final index in one pass.
+        for (ZipEntry entry : archive.entries()) {
+            if (entry.isDirectory() && entry.getSize() == 0) {
+                continue;
             }
-            return null;
-        };
+            String name = entry.getName();
+            if (name.length() >= MAX_PATH) {
+                continue;
+            }
+            if (name.startsWith("assets/")) {
+                indexResource(name, entry, 0, resources);
+            }
+            int separator = name.indexOf('/');
+            if (separator < 0 || !name.startsWith("assets/", separator + 1)) {
+                continue;
+            }
+            Integer overlayPriority = overlayPriorities.get(name.substring(0, separator));
+            if (overlayPriority != null) {
+                indexResource(name.substring(separator + 1), entry, overlayPriority, resources);
+            }
+        }
+        Path assets = Files.createDirectories(root.resolve("assets"));
+        for (Map.Entry<String, ResourceEntry> resource : resources.entrySet()) {
+            Path target = root.resolve(resource.getKey()).normalize();
+            if (!target.startsWith(assets)) {
+                throw new IOException("Resource path outside assets: " + resource.getKey());
+            }
+            Files.createDirectories(target.getParent());
+            try (InputStream input = archive.getInputStream(resource.getValue().entry())) {
+                Files.copy(input, target);
+            }
+        }
     }
 
-    public static JavaResourcePack open(Path root, MinecraftVersion version) throws IOException {
-        JsonObject metadata = GsonHelper.readJsonObjectFromFile(root.resolve("pack.mcmeta"));
-        if (metadata == null) {
-            throw new IOException("Missing pack.mcmeta in " + root);
+    private static void indexResource(String path, ZipEntry entry, int priority, Map<String, ResourceEntry> resources) {
+        if (entry.isDirectory()) {
+            path = path.substring(0, path.length() - 1);
         }
-        return new JavaResourcePack(root, new Overlays(metadata), version);
+        ResourceEntry previous = resources.get(path);
+        // Protected entries become files; an exact entry wins within the same overlay.
+        if (previous == null || priority > previous.priority()
+                || (priority == previous.priority() && previous.entry().isDirectory() && !entry.isDirectory())) {
+            resources.put(path, new ResourceEntry(entry, priority));
+        }
     }
 
     public static JavaResourcePack openZip(Path source, MinecraftVersion version) throws IOException {
-        ZipFile archive = new ZipFile(source.toFile());
+        FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
         try {
-            JavaResourcePack pack = new JavaResourcePack(archive, new Overlays(List.of()), version);
-            JsonObject metadata = pack.readJson("pack.mcmeta");
-            if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
-                throw new IOException("Missing pack.mcmeta in " + source);
+            Path root = fileSystem.getPath("resource_pack").toAbsolutePath();
+            try (IndexedZipFile archive = new IndexedZipFile(source)) {
+                ZipEntry entry = archive.getEntry("pack.mcmeta");
+                if (entry == null) {
+                    throw new IOException("Missing pack.mcmeta in " + source);
+                }
+                JsonObject metadata;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(archive.getInputStream(entry), StandardCharsets.UTF_8))) {
+                    metadata = JsonParser.parseReader(reader).getAsJsonObject();
+                }
+                if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
+                    throw new IOException("Missing pack.mcmeta in " + source);
+                }
+                extractResources(archive, new PackMeta(metadata), version, root);
             }
-            return new JavaResourcePack(archive, new Overlays(metadata), version);
+            return new JavaResourcePack(root, version);
         } catch (IOException | RuntimeException | Error exception) {
-            archive.close();
+            fileSystem.close();
             throw exception;
         }
     }
 
     @Override
     public void close() throws IOException {
-        if (this.archive != null) {
-            this.archive.close();
-        }
+        this.root.getFileSystem().close();
     }
 
     @Nullable
@@ -127,56 +140,29 @@ public final class JavaResourcePack implements AutoCloseable {
 
     public Set<String> languageResources() throws IOException {
         Set<String> paths = new TreeSet<>();
-        if (this.archive != null) {
-            Enumeration<? extends ZipEntry> entries = this.archive.entries();
-            while (entries.hasMoreElements()) {
-                String entry = entries.nextElement().getName();
-                for (String prefix : this.archiveRoots) {
-                    if (entry.startsWith(prefix)) {
-                        String path = entry.substring(prefix.length());
-                        // Protected ZIP entries may have a trailing slash while still containing JSON data.
-                        if (path.endsWith(".json/")) {
-                            path = path.substring(0, path.length() - 1);
-                        }
-                        if (isLanguageResource(path)) {
-                            paths.add(path);
-                        }
-                    }
-                }
-            }
-        } else {
-            for (Path root : this.directoryRoots) {
-                Path assets = root.resolve("assets");
-                if (!Files.isDirectory(assets)) {
+        try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(this.root.resolve("assets"))) {
+            for (Path namespace : namespaces) {
+                Path languages = namespace.resolve("lang");
+                if (!Files.isDirectory(languages)) {
                     continue;
                 }
-                try (Stream<Path> files = Files.walk(assets, 3)) {
-                    files.filter(Files::isRegularFile).forEach(file -> {
-                        String path = root.relativize(file).toString().replace('\\', '/');
-                        if (isLanguageResource(path)) {
-                            paths.add(path);
+                try (DirectoryStream<Path> files = Files.newDirectoryStream(languages, "*.json")) {
+                    for (Path file : files) {
+                        String name = file.getFileName().toString();
+                        if (Files.isRegularFile(file) && BedrockPackLanguages.isLocale(name.substring(0, name.length() - 5))) {
+                            paths.add("assets/" + namespace.getFileName() + "/lang/" + name);
                         }
-                    });
+                    }
                 }
             }
         }
         return paths;
     }
 
-    private static boolean isLanguageResource(String path) {
-        if (!path.startsWith("assets/") || !path.endsWith(".json")) {
-            return false;
-        }
-        int namespaceEnd = path.indexOf('/', 7);
-        if (namespaceEnd < 0 || !path.startsWith("/lang/", namespaceEnd)) {
-            return false;
-        }
-        return BedrockPackLanguages.isLocale(path.substring(namespaceEnd + 6, path.length() - 5));
-    }
-
     @Nullable
     public InputStream openResource(String path) throws IOException {
-        return this.resources.open(path);
+        Path resource = this.root.resolve(path);
+        return Files.isRegularFile(resource) ? Files.newInputStream(resource) : null;
     }
 
     public JsonObject readModel(Key model) throws IOException {
@@ -208,9 +194,6 @@ public final class JavaResourcePack implements AutoCloseable {
         return null;
     }
 
-    @FunctionalInterface
-    private interface ResourceReader {
-        @Nullable
-        InputStream open(String path) throws IOException;
+    private record ResourceEntry(ZipEntry entry, int priority) {
     }
 }

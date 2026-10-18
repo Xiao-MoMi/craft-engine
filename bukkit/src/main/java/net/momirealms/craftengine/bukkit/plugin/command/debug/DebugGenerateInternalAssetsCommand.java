@@ -57,16 +57,17 @@ public final class DebugGenerateInternalAssetsCommand extends BukkitCommandFeatu
 
                     // 复制atlas
                     {
-                        for (String fileName : List.of("blocks.json", "items.json")) {
-                            Path atlasPath = minecraftNamespacePath.resolve("atlases").resolve(fileName);
-                            Path assetsAtlasPath = internalPath.resolve("atlases").resolve(fileName);
+                        Path atlasesPath = minecraftNamespacePath.resolve("atlases");
+                        this.collectListJson(atlasesPath, "", name -> {
+                            Path atlasPath = atlasesPath.resolve(name + ".json");
+                            Path assetsAtlasPath = internalPath.resolve("atlases").resolve(name + ".json");
                             try {
                                 Files.createDirectories(assetsAtlasPath.getParent());
                                 Files.copy(atlasPath, assetsAtlasPath, StandardCopyOption.REPLACE_EXISTING);
                             } catch (IOException e) {
-                                plugin().logger().warn("Failed to copy atlas file", e);
+                                this.plugin().logger().warn("Failed to copy atlas file " + atlasPath, e);
                             }
-                        }
+                        });
                     }
 
                     // 复制sounds

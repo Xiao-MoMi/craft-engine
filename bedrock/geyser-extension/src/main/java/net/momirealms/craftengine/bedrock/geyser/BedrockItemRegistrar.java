@@ -11,6 +11,9 @@ import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinitionRegisterException;
 import org.geysermc.geyser.api.util.Identifier;
+import org.geysermc.geyser.api.predicate.item.ItemConditionPredicate;
+import org.geysermc.geyser.api.predicate.item.ItemMatchPredicate;
+import org.geysermc.geyser.api.predicate.context.item.ChargedProjectile;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,6 +34,7 @@ final class BedrockItemRegistrar {
     private final List<Pack> packs = new ArrayList<>();
     private final ExperimentalBlockItemAdapter blockItems = new ExperimentalBlockItemAdapter();
     private final Map<String, Map<String, String>> translations = new HashMap<>();
+    private final Map<String, String> spears = new HashMap<>();
 
     BedrockItemRegistrar(ExtensionLogger logger) {
         this.logger = logger;
@@ -91,20 +95,34 @@ final class BedrockItemRegistrar {
         return this.translations;
     }
 
+    Map<String, String> spears() {
+        return Map.copyOf(this.spears);
+    }
+
     private Map<String, String> registerBlocks(BedrockPackMappings mappings, GeyserDefineCustomBlocksEvent event) {
         Map<String, String> blocks = new HashMap<>();
         for (BedrockPackMappings.Item item : mappings.items()) {
-            BedrockPackMappings.DisplayBlock display = item.displayBlock();
-            if (display == null || blocks.containsKey(display.name())) {
-                continue;
+            this.registerBlock(item.displayBlock(), event, blocks);
+            if (item.fishingRodCast() != null) {
+                this.registerBlock(item.fishingRodCast().displayBlock(), event, blocks);
             }
-            try {
-                blocks.put(display.name(), this.blockItems.registerBlock(display, event));
-            } catch (RuntimeException exception) {
-                this.logger.error("Could not register CraftEngine display block " + display.name(), exception);
+            if (item.crossbowCharge() != null) {
+                this.registerBlock(item.crossbowCharge().arrow().displayBlock(), event, blocks);
+                this.registerBlock(item.crossbowCharge().rocket().displayBlock(), event, blocks);
             }
         }
         return blocks;
+    }
+
+    private void registerBlock(BedrockPackMappings.DisplayBlock display, GeyserDefineCustomBlocksEvent event, Map<String, String> blocks) {
+        if (display == null || blocks.containsKey(display.name())) {
+            return;
+        }
+        try {
+            blocks.put(display.name(), this.blockItems.registerBlock(display, event));
+        } catch (RuntimeException exception) {
+            this.logger.error("Could not register CraftEngine display block " + display.name(), exception);
+        }
     }
 
     void register(GeyserDefineCustomItemsEvent event) {
@@ -120,25 +138,24 @@ final class BedrockItemRegistrar {
         int registered = 0;
         for (BedrockPackMappings.Item item : mappings.items()) {
             try {
-                CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder()
-                        .allowOffhand(true)
-                        .displayHandheld(item.displayHandheld());
-                if (item.displayBlock() == null) {
-                    options.icon(item.icon());
+                CustomItemDefinition idle = this.definition(pack, item, item.bedrockIdentifier(), item.icon(), item.displayBlock()).build();
+                BedrockPackMappings.ItemVariant cast = item.fishingRodCast();
+                CustomItemDefinition castDefinition = null;
+                if (cast != null) {
+                    castDefinition = this.definition(pack, item, cast.bedrockIdentifier(), cast.icon(), cast.displayBlock())
+                            .predicate(ItemConditionPredicate.FISHING_ROD_CAST).priority(1).build();
                 }
-                CustomItemDefinition.Builder builder = CustomItemDefinition.builder(
-                                Identifier.of(item.bedrockIdentifier()), Identifier.of(item.javaItemModel()))
-                        .displayName(pack.itemNames().getOrDefault(item.id(), item.id()))
-                        .bedrockOptions(options);
-                if (item.displayBlock() != null) {
-                    String displayBlock = pack.displayBlocks().get(item.displayBlock().name());
-                    if (displayBlock == null) {
-                        this.logger.warning("Skipping CraftEngine item " + item.id() + ": display block was not registered");
-                        continue;
-                    }
-                    this.blockItems.apply(builder, displayBlock);
+                BedrockPackMappings.CrossbowCharge crossbow = item.crossbowCharge();
+                CustomItemDefinition arrow = crossbow == null ? null : this.chargedCrossbow(pack, item, crossbow.arrow(), ChargedProjectile.ChargeType.ARROW);
+                CustomItemDefinition rocket = crossbow == null ? null : this.chargedCrossbow(pack, item, crossbow.rocket(), ChargedProjectile.ChargeType.ROCKET);
+                event.register(Identifier.of(item.javaItem()), idle);
+                if (castDefinition != null) {
+                    event.register(Identifier.of(item.javaItem()), castDefinition);
                 }
-                event.register(Identifier.of(item.javaItem()), builder.build());
+                if (crossbow != null) {
+                    event.register(Identifier.of(item.javaItem()), arrow);
+                    event.register(Identifier.of(item.javaItem()), rocket);
+                }
                 registered++;
             } catch (CustomItemDefinitionRegisterException | IllegalArgumentException | ReflectiveOperationException exception) {
                 this.logger.warning("Could not register CraftEngine item " + item.id() + " from " + path.getFileName()
@@ -146,6 +163,48 @@ final class BedrockItemRegistrar {
             }
         }
         this.logger.info("Registered " + registered + '/' + mappings.items().size() + " CraftEngine items from " + path.getFileName());
+    }
+
+    private CustomItemDefinition.Builder definition(Pack pack, BedrockPackMappings.Item item, String identifier, String icon,
+                                                    BedrockPackMappings.DisplayBlock block) throws ReflectiveOperationException {
+        CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder()
+                .allowOffhand(true)
+                .displayHandheld(item.displayHandheld());
+        switch (item.javaItem()) {
+            case "minecraft:crossbow" -> {
+                if (item.crossbowCharge() != null) {
+                    options.tag(Identifier.of(BedrockPackMappings.CROSSBOW_TAG));
+                }
+            }
+            case "minecraft:wooden_spear", "minecraft:stone_spear", "minecraft:copper_spear", "minecraft:iron_spear",
+                 "minecraft:golden_spear", "minecraft:diamond_spear", "minecraft:netherite_spear" -> {
+                options.displayHandheld(true);
+                options.tag(Identifier.of("minecraft:is_spear"));
+                this.spears.put(identifier, item.javaItem());
+            }
+            default -> {
+            }
+        }
+        if (block == null) {
+            options.icon(icon);
+        }
+        CustomItemDefinition.Builder builder = CustomItemDefinition.builder(Identifier.of(identifier), Identifier.of(item.javaItemModel()))
+                .displayName(pack.itemNames().getOrDefault(item.id(), item.id()))
+                .bedrockOptions(options);
+        if (block != null) {
+            String displayBlock = pack.displayBlocks().get(block.name());
+            if (displayBlock == null) {
+                throw new IllegalArgumentException("Display block was not registered: " + block.name());
+            }
+            this.blockItems.apply(builder, displayBlock);
+        }
+        return builder;
+    }
+
+    private CustomItemDefinition chargedCrossbow(Pack pack, BedrockPackMappings.Item item, BedrockPackMappings.ItemVariant variant,
+                                                ChargedProjectile.ChargeType type) throws ReflectiveOperationException {
+        return this.definition(pack, item, variant.bedrockIdentifier(), variant.icon(), variant.displayBlock())
+                .predicate(ItemMatchPredicate.chargeType(type)).priority(1).build();
     }
 
     private record Pack(Path path, BedrockPackMappings mappings, Map<String, String> displayBlocks, Map<String, String> itemNames) {

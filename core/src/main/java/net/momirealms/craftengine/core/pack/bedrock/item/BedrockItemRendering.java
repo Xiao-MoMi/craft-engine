@@ -18,7 +18,17 @@ public final class BedrockItemRendering {
                  "wooden_shovel", "stone_shovel", "copper_shovel", "iron_shovel", "golden_shovel", "diamond_shovel", "netherite_shovel",
                  "wooden_hoe", "stone_hoe", "copper_hoe", "iron_hoe", "golden_hoe", "diamond_hoe", "netherite_hoe",
                  "wooden_sword", "stone_sword", "copper_sword", "iron_sword", "golden_sword", "diamond_sword", "netherite_sword",
-                 "mace" -> true;
+                 "mace", "fishing_rod" -> true;
+            default -> false;
+        };
+    }
+
+    public static boolean isSpear(Key material) {
+        if (!material.namespace().equals("minecraft")) {
+            return false;
+        }
+        return switch (material.value()) {
+            case "wooden_spear", "stone_spear", "copper_spear", "iron_spear", "golden_spear", "diamond_spear", "netherite_spear" -> true;
             default -> false;
         };
     }

@@ -9,11 +9,24 @@ import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Vector3f;
 
 public final class BedrockBlockItemModel {
-    private static final DisplayPosition[] VIEWS = {DisplayPosition.GUI, DisplayPosition.GROUND, DisplayPosition.FIXED,
-            DisplayPosition.FIRSTPERSON_RIGHTHAND, DisplayPosition.FIRSTPERSON_LEFTHAND,
-            DisplayPosition.THIRDPERSON_RIGHTHAND, DisplayPosition.THIRDPERSON_LEFTHAND};
-    private static final String[] VIEW_NAMES = {"gui", "ground", "fixed", "firstperson_righthand", "firstperson_lefthand",
-            "thirdperson_righthand", "thirdperson_lefthand"};
+    private static final DisplayPosition[] VIEWS = {
+            DisplayPosition.GUI,
+            DisplayPosition.GROUND,
+            DisplayPosition.FIXED,
+            DisplayPosition.FIRSTPERSON_RIGHTHAND,
+            DisplayPosition.FIRSTPERSON_LEFTHAND,
+            DisplayPosition.THIRDPERSON_RIGHTHAND,
+            DisplayPosition.THIRDPERSON_LEFTHAND
+    };
+    private static final String[] VIEW_NAMES = {
+            "gui",
+            "ground",
+            "fixed",
+            "firstperson_righthand",
+            "firstperson_lefthand",
+            "thirdperson_righthand",
+            "thirdperson_lefthand"
+    };
 
     private BedrockBlockItemModel() {
     }

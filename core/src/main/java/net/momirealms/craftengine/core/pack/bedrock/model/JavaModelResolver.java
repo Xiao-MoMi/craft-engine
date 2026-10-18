@@ -10,25 +10,14 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.ModelUtils;
-import net.momirealms.craftengine.core.util.VectorUtils;
+import net.momirealms.craftengine.core.util.*;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
+import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Rotation;
 
 public final class JavaModelResolver {
     private static final DisplayPosition[] DISPLAY_POSITIONS = DisplayPosition.values();

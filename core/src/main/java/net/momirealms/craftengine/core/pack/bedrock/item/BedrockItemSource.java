@@ -18,6 +18,7 @@ public record BedrockItemSource(Key id, Key javaItem, Key itemModel, @Nullable I
         this(id, javaItem, itemModel, null);
     }
 
+    // 收集基岩版所需的全部物品定义
     public static List<BedrockItemSource> collect(Collection<ItemDefinition> definitions, Map<Key, Key> mappings) {
         List<BedrockItemSource> items = new ArrayList<>();
         for (ItemDefinition definition : definitions) {
@@ -33,6 +34,8 @@ public record BedrockItemSource(Key id, Key javaItem, Key itemModel, @Nullable I
         return items;
     }
 
+    // 有些物品可能使用 data 或者 client_bound_data 直接设置 item_model
+    // 所以不能仅靠根节点下的 item_model 作为唯一依据
     private static Key findItemModel(ItemProcessor[] processors, Key model) {
         for (ItemProcessor processor : processors) {
             if (processor instanceof ItemModelProcessor itemModel) {

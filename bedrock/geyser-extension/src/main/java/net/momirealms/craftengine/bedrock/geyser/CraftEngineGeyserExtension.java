@@ -9,10 +9,12 @@ import org.geysermc.geyser.api.event.lifecycle.GeyserPostReloadEvent;
 
 import java.io.IOException;
 import java.util.Set;
+import java.util.Map;
 
 public final class CraftEngineGeyserExtension implements Extension {
     private BedrockItemRegistrar itemRegistrar;
     private Set<String> locales = Set.of();
+    private Map<String, String> spears = Map.of();
 
     @Subscribe
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {
@@ -29,6 +31,7 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.syncLanguages();
         }
         this.itemRegistrar.register(event);
+        this.spears = this.itemRegistrar.spears();
         this.itemRegistrar = null;
     }
 
@@ -46,11 +49,24 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onInitialized(GeyserPostInitializeEvent event) {
         this.refreshLanguages();
+        this.patchSpears();
     }
 
     @Subscribe
     public void onReloaded(GeyserPostReloadEvent event) {
         this.refreshLanguages();
+        this.patchSpears();
+    }
+
+    private void patchSpears() {
+        try {
+            int patched = ExperimentalSpearItemAdapter.apply(this.spears);
+            if (patched != 0) {
+                this.logger().info("Patched " + patched + " CraftEngine spear definitions across Bedrock protocol versions");
+            }
+        } catch (ReflectiveOperationException exception) {
+            this.logger().error("Could not apply the experimental Geyser spear component adapter", exception);
+        }
     }
 
     private void refreshLanguages() {

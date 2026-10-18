@@ -182,7 +182,7 @@ public final class BedrockItemDisplay {
         FIRST_PERSON_LEFT(DisplayPosition.FIRSTPERSON_LEFTHAND, true, SlotPose.FIRST_LEFT, "firstperson_lefthand", "context.is_first_person && context.item_slot == 'off_hand'"),
         HEAD(DisplayPosition.HEAD, false, SlotPose.HEAD, "head", "!context.is_first_person && context.item_slot == 'head'");
 
-        private final DisplayPosition position;
+        final DisplayPosition position;
         private final boolean leftHand;
         final SlotPose pose;
         final String animation;

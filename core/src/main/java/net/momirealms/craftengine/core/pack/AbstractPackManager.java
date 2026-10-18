@@ -1050,11 +1050,15 @@ public abstract class AbstractPackManager implements PackManager {
             CraftEngine engine = this.plugin();
             Map<Key, Key> mappings = Config.obfuscateItemModel() ? ItemModelMappings.getMappings() : Map.of();
             List<BedrockItemSource> items = BedrockItemSource.collect(engine.itemManager().loadedItems().values(), mappings);
-            BedrockPackGenerator.Result result = new BedrockPackGenerator().generate(this.resolvePath(input), this.resolvePath(output),
-                    Config.packMaxVersion(), items, AbstractPackManager.this.vanillaBlockAtlas, AbstractPackManager.this.vanillaItemAtlas,
-                    Config.bedrockItemIconSize(), engine.logger()::warn);
-            engine.logger().info("Generated Bedrock resource pack " + output + ": " + result.items() + " items, "
-                    + result.models() + " models, " + result.skipped() + " skipped (" + timestamp.deltaMillis() + " ms)");
+            BedrockPackGenerator.Result result = new BedrockPackGenerator().generate(
+                    this.resolvePath(input),
+                    this.resolvePath(output),
+                    Config.packMaxVersion(),
+                    items,
+                    AbstractPackManager.this.vanillaBlockAtlas,
+                    AbstractPackManager.this.vanillaItemAtlas
+            );
+            engine.logger().info("Generated Bedrock resource pack " + output + ": " + result.items() + " items, " + result.models() + " models, " + result.skipped() + " skipped (" + timestamp.deltaMillis() + " ms)");
         }
 
         @Override

@@ -25,7 +25,10 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
 
     public JavaPackTextureSource(JavaResourcePack pack, JsonObject blocks, JsonObject items) {
         this.pack = pack;
-        this.defaults = Map.of(BLOCKS, blocks, ITEMS, items);
+        this.defaults = Map.of(
+                BLOCKS, blocks,
+                ITEMS, items
+        );
     }
 
     @Override
@@ -79,6 +82,7 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
         }
     }
 
+    // 按需加载 atlas
     private Atlas atlas(Key id) throws IOException {
         Atlas atlas = this.atlases.get(id);
         if (atlas != null) {

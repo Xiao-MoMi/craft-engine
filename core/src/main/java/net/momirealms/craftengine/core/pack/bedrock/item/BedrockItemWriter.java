@@ -35,6 +35,11 @@ public final class BedrockItemWriter {
 
     static Resources writeResources(BedrockModelConverter.Result model, Key identifier, Path packRoot,
                                     List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow) throws IOException {
+        return writeResources(model, identifier, packRoot, tracks, bonePrefix, bow, null);
+    }
+
+    static Resources writeResources(BedrockModelConverter.Result model, Key identifier, Path packRoot,
+                                    List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow, BedrockWeaponDisplay weapon) throws IOException {
         String resource = identifier.namespace() + '/' + identifier.value();
         String texture = "textures/" + resource;
         String animationPrefix = "animation." + identifier.namespace() + "." + identifier.value() + ".";
@@ -44,11 +49,11 @@ public final class BedrockItemWriter {
         Path animationsPath = packRoot.resolve("animations/" + resource + ".animation.json");
         BedrockGeometry geometry = model.geometry();
         BedrockGeometry held = tracks.isEmpty() ? geometry : BedrockAnimatedItem.select(geometry, null, geometry.identifier(), geometry.textureWidth(), geometry.textureHeight());
-        BedrockGeometry.Bounds bounds = BedrockItemDisplay.bounds(geometry, transforms, bow);
-        BedrockGeometryWriter.write(model, geometryPath, texturePath, BedrockItemDisplay.rig(held, bonePrefix, bow), bounds);
-        BedrockAnimatedItem.write(geometry, bounds, tracks, packRoot, bonePrefix, bow);
+        BedrockGeometry.Bounds bounds = weapon == null ? BedrockItemDisplay.bounds(geometry, transforms, bow) : weapon.bounds(geometry, transforms);
+        BedrockGeometryWriter.write(model, geometryPath, texturePath, weapon == null ? BedrockItemDisplay.rig(held, bonePrefix, bow) : weapon.rig(held, bonePrefix), bounds);
+        BedrockAnimatedItem.write(geometry, bounds, tracks, packRoot, bonePrefix, bow, weapon);
         Files.createDirectories(animationsPath.getParent());
-        GsonHelper.writeJsonFile(animations(transforms, animationPrefix, tracks, bonePrefix, bow), animationsPath);
+        GsonHelper.writeJsonFile(animations(transforms, animationPrefix, tracks, bonePrefix, bow, weapon), animationsPath);
         return new Resources(geometryPath, texturePath, animationsPath);
     }
 
@@ -69,7 +74,7 @@ public final class BedrockItemWriter {
     }
 
     private static JsonObject animations(Map<BedrockItemDisplay.View, BedrockItemDisplay.Transform> transforms, String prefix,
-                                         List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow) {
+                                         List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow, BedrockWeaponDisplay weapon) {
         JsonObject animations = new JsonObject();
         for (BedrockItemDisplay.View view : BedrockItemDisplay.VIEWS) {
             BedrockItemDisplay.Transform transform = transforms.get(view);
@@ -95,7 +100,11 @@ public final class BedrockItemWriter {
             if (bowHand) {
                 addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.BOW_POSE_BONE, BedrockBowDisplay.pose(), tracks);
             }
-            addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.SLOT_BONE, slot, tracks);
+            if (weapon == null) {
+                addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.SLOT_BONE, slot, tracks);
+            } else {
+                weapon.animate(bones, view, bonePrefix, tracks);
+            }
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.X_BONE, x, tracks);
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.Y_BONE, y, tracks);
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.Z_BONE, z, tracks);
