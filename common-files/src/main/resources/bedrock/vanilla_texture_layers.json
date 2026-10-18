@@ -1901,6 +1901,19 @@
     "empty_only": false
   },
   {
+    "target": "textures/items/leather_horse_armor.png",
+    "layers": [
+      {
+        "source": "item/leather_horse_armor.png"
+      },
+      {
+        "source": "item/leather_horse_armor_overlay.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": false
+  },
+  {
     "target": "textures/items/leather_leggings.png",
     "layers": [
       {
