@@ -102,7 +102,9 @@ public final class BedrockVanillaTextures {
                             data = JavaTextureAnimation.read(readImage(new ByteArrayInputStream(bytes), source), metadata,
                                     pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
                         }
-                        writeFrames(root, textures, source, target, List.of(data), images -> images.getFirst());
+                        if (!writeKeyFrames(root, textures, source, target, data.animation())) {
+                            writeFrames(root, textures, source, target, List.of(data), images -> images.getFirst());
+                        }
                     }
                 }
             } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
@@ -168,6 +170,53 @@ public final class BedrockVanillaTextures {
         } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
             warn(output, exception);
         }
+    }
+
+    private static boolean writeKeyFrames(Path root, BedrockTextureRegistry textures, String owner,
+                                          BedrockTextureRule.Target target, TextureAnimation animation) throws IOException {
+        if (animation == null || target.tiles().isEmpty() || animation.width() != animation.height()) {
+            return false;
+        }
+        int interval = animation.frames().getFirst().time();
+        for (TextureAnimation.Frame frame : animation.frames()) {
+            if (animation.interpolate() && frame.time() != interval) {
+                return false;
+            }
+            interval = gcd(interval, frame.time());
+        }
+        // Keep timed key frames instead of expanding long interpolations into oversized textures.
+        BufferedImage strip = animation.sheet();
+        int columns = strip.getWidth() / animation.width();
+        if (columns != 1) {
+            int count = columns * (strip.getHeight() / animation.height());
+            strip = new BufferedImage(animation.width(), Math.multiplyExact(animation.height(), count), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D graphics = strip.createGraphics();
+            graphics.setComposite(AlphaComposite.Src);
+            try {
+                for (int index = 0; index < count; index++) {
+                    int x = index % columns * animation.width();
+                    int y = index / columns * animation.height();
+                    graphics.drawImage(animation.sheet(), 0, index * animation.height(), animation.width(), (index + 1) * animation.height(),
+                            x, y, x + animation.width(), y + animation.height(), null);
+                }
+            } finally {
+                graphics.dispose();
+            }
+        }
+        if (writeImage(root, textures, owner, target.path(), strip)) {
+            List<Integer> sequence = new ArrayList<>(animation.duration() / interval);
+            for (TextureAnimation.Frame frame : animation.frames()) {
+                int repeats = frame.time() / interval;
+                for (int repeat = 0; repeat < repeats; repeat++) {
+                    sequence.add(frame.index());
+                }
+            }
+            String path = target.path().substring(0, target.path().lastIndexOf('.'));
+            for (BedrockTextureRule.Tile tile : target.tiles()) {
+                textures.flipbook(tile.name(), tile.index(), path, interval, tile.replicate(), sequence, animation.interpolate());
+            }
+        }
+        return true;
     }
 
     private static void writeFrames(Path root, BedrockTextureRegistry textures, String owner, BedrockTextureRule.Target target,

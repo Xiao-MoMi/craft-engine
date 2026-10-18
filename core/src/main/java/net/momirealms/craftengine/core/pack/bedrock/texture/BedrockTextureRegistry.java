@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class BedrockTextureRegistry {
@@ -55,6 +56,10 @@ public final class BedrockTextureRegistry {
     }
 
     public void flipbook(String tile, int index, String path, int interval, int replicate) {
+        this.flipbook(tile, index, path, interval, replicate, List.of(), false);
+    }
+
+    public void flipbook(String tile, int index, String path, int interval, int replicate, List<Integer> frames, boolean blend) {
         JsonObject entry = new JsonObject();
         entry.addProperty("atlas_tile", tile);
         if (index >= 0) {
@@ -63,7 +68,14 @@ public final class BedrockTextureRegistry {
         }
         entry.addProperty("flipbook_texture", path);
         entry.addProperty("ticks_per_frame", interval);
-        entry.addProperty("blend_frames", false);
+        entry.addProperty("blend_frames", blend);
+        if (!frames.isEmpty()) {
+            JsonArray sequence = new JsonArray(frames.size());
+            for (int frame : frames) {
+                sequence.add(frame);
+            }
+            entry.add("frames", sequence);
+        }
         if (replicate != 1) {
             entry.addProperty("replicate", replicate);
         }
