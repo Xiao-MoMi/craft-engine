@@ -21,12 +21,12 @@ final class ExperimentalBlockItemAdapter {
     String registerBlock(BedrockPackMappings.DisplayBlock display, GeyserDefineCustomBlocksEvent event) {
         CustomBlockComponents.Builder components = CustomBlockComponents.builder()
                 .geometry(GeometryComponent.builder().identifier(display.geometry()).build())
-                .materialInstance("*", material(display.texture()))
+                .materialInstance("*", material(display.texture(), display.renderMethod()))
                 .selectionBox(null)
                 .collisionBoxes()
                 .placeAir(true);
         for (Map.Entry<String, String> material : display.materials().entrySet()) {
-            components.materialInstance(material.getKey(), material(material.getValue()));
+            components.materialInstance(material.getKey(), material(material.getValue(), display.renderMethod()));
         }
         CustomBlockData block = CustomBlockData.builder()
                 .name(display.name())
@@ -37,10 +37,10 @@ final class ExperimentalBlockItemAdapter {
         return block.identifier();
     }
 
-    private static MaterialInstance material(String texture) {
+    private static MaterialInstance material(String texture, String renderMethod) {
         return MaterialInstance.builder()
                 .texture(texture)
-                .renderMethod("alpha_test_single_sided")
+                .renderMethod(renderMethod)
                 .faceDimming(false)
                 .ambientOcclusionExponent(0)
                 .build();

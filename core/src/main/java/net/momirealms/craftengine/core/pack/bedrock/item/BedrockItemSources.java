@@ -17,7 +17,7 @@ public final class BedrockItemSources {
     public BedrockItemSources(Collection<BedrockItemSource> items) {
         List<BedrockItemSource> ordered = new ArrayList<>(items);
         ordered.sort(Comparator.comparing(item -> item.id().asString()));
-        this.items = List.copyOf(ordered);
+        this.items = ordered;
         this.byModel = new HashMap<>();
         for (BedrockItemSource item : ordered) {
             this.byModel.putIfAbsent(item.itemModel(), item);

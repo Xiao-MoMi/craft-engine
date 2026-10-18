@@ -92,8 +92,7 @@ public final class JavaResourcePack implements AutoCloseable {
         }
         ResourceEntry previous = resources.get(path);
         // Protected entries become files; an exact entry wins within the same overlay.
-        if (previous == null || priority > previous.priority()
-                || (priority == previous.priority() && previous.entry().isDirectory() && !entry.isDirectory())) {
+        if (previous == null || priority > previous.priority() || (priority == previous.priority() && previous.entry().isDirectory() && !entry.isDirectory())) {
             resources.put(path, new ResourceEntry(entry, priority));
         }
     }

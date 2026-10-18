@@ -3,12 +3,14 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
+import net.momirealms.craftengine.core.item.setting.value.BedrockOptions;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockBlockItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -85,6 +87,16 @@ public final class BedrockBlockItems {
 
     public boolean isEmpty() {
         return this.blocks.isEmpty();
+    }
+
+    @Nullable
+    public BedrockPackMappings.DisplayBlock applyOptions(@Nullable BedrockPackMappings.DisplayBlock display, BedrockOptions options) {
+        if (display == null || display.renderMethod().equals(options.renderMethod())) {
+            return display;
+        }
+        String name = display.name() + '_' + options.renderMethod();
+        this.blocks.add("geyser_custom:" + name, this.blocks.get("geyser_custom:" + display.name()));
+        return new BedrockPackMappings.DisplayBlock(name, display.geometry(), display.texture(), display.materials(), options.renderMethod());
     }
 
     public void writeAtlas(Path root) throws IOException {

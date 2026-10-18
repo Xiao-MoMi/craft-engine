@@ -76,9 +76,13 @@ public final class BedrockPackGenerator {
 
             // 专门读 java 模型
             JavaModelResolver resolver = new JavaModelResolver(pack);
+            // 解析 sprite 到实际的 image
             JavaPackTextureSource textures = new JavaPackTextureSource(pack);
+            // 基岩版自定义物品
             BedrockItemSources sources = new BedrockItemSources(items);
+
             CollectedModels models = collectModels(pack, sources);
+
             BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize());
             BedrockBlockItems blockItems = new BedrockBlockItems();
             BedrockNativeItemWriter nativeItems = new BedrockNativeItemWriter(resolver, textures, icons, blockItems, root);
@@ -100,7 +104,7 @@ public final class BedrockPackGenerator {
                 }
                 for (BedrockItemSource item : users) {
                     mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                            item.bedrockIdentifier(), appearance.icon(), appearance.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
+                            item.bedrockIdentifier(), appearance.icon(), blockItems.applyOptions(appearance.displayBlock(), item.bedrockOptions()), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                 }
                 convertedModels++;
             }
@@ -115,9 +119,9 @@ public final class BedrockPackGenerator {
                     BedrockNativeItemWriter.Appearance cast = distinct ? nativeItems.writeBlock(rod.cast(), fishingRodCastId(resource)) : null;
                     for (BedrockItemSource item : users) {
                         BedrockPackMappings.ItemVariant variant = cast == null ? null : new BedrockPackMappings.ItemVariant(
-                                BedrockItemSource.bedrockIdentifier(fishingRodCastId(item.id())), cast.icon(), cast.displayBlock());
+                                BedrockItemSource.bedrockIdentifier(fishingRodCastId(item.id())), cast.icon(), blockItems.applyOptions(cast.displayBlock(), item.bedrockOptions()));
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.bedrockIdentifier(), idle.icon(), idle.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources), variant));
+                                item.bedrockIdentifier(), idle.icon(), blockItems.applyOptions(idle.displayBlock(), item.bedrockOptions()), BedrockItemRendering.displayHandheld(item.itemModel(), sources), variant));
                     }
                     convertedModels += distinct ? 2 : 1;
                 } catch (IOException | IllegalArgumentException exception) {
@@ -132,7 +136,7 @@ public final class BedrockPackGenerator {
                     BedrockBowWriter.Result bow = bows.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.bedrockIdentifier(), bow.icon(), bow.displayBlock(), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
+                                item.bedrockIdentifier(), bow.icon(), blockItems.applyOptions(bow.displayBlock(), item.bedrockOptions()), BedrockItemRendering.displayHandheld(item.itemModel(), sources)));
                     }
                     convertedModels += bow.models();
                 } catch (IOException | IllegalArgumentException exception) {
@@ -147,10 +151,10 @@ public final class BedrockPackGenerator {
                     BedrockCrossbowWriter.Result result = crossbows.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         BedrockPackMappings.CrossbowCharge charge = new BedrockPackMappings.CrossbowCharge(
-                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), false)), result.arrow().icon(), result.arrow().displayBlock()),
-                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), true)), result.rocket().icon(), result.rocket().displayBlock()));
+                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), false)), result.arrow().icon(), blockItems.applyOptions(result.arrow().displayBlock(), item.bedrockOptions())),
+                                new BedrockPackMappings.ItemVariant(BedrockItemSource.bedrockIdentifier(BedrockCrossbowWriter.chargedId(item.id(), true)), result.rocket().icon(), blockItems.applyOptions(result.rocket().displayBlock(), item.bedrockOptions())));
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.bedrockIdentifier(), result.icon(), result.displayBlock(), false, null, charge));
+                                item.bedrockIdentifier(), result.icon(), blockItems.applyOptions(result.displayBlock(), item.bedrockOptions()), false, null, charge));
                     }
                     convertedModels += result.models();
                 } catch (IOException | IllegalArgumentException exception) {
@@ -165,7 +169,7 @@ public final class BedrockPackGenerator {
                     BedrockSpearWriter.Result result = spears.write(entry.getKey(), entry.getValue());
                     for (BedrockItemSource item : entry.getValue()) {
                         mappings.add(new BedrockPackMappings.Item(item.id().asString(), item.javaItem().asString(), item.itemModel().asString(),
-                                item.bedrockIdentifier(), result.icon(), result.displayBlock(), false));
+                                item.bedrockIdentifier(), result.icon(), blockItems.applyOptions(result.displayBlock(), item.bedrockOptions()), false));
                     }
                     convertedModels += result.models();
                 } catch (IOException | IllegalArgumentException exception) {
@@ -207,8 +211,9 @@ public final class BedrockPackGenerator {
         for (BedrockItemSource item : sources.items()) {
             try {
                 JsonObject definition = pack.readJson("assets/" + item.itemModel().namespace() + "/items/" + item.itemModel().value() + ".json");
+                // 可能是第三方包，如果没有 item model 则跳过
                 if (definition == null || !(definition.get("model") instanceof JsonObject model)) {
-                    throw new IOException("Missing item definition in input ZIP");
+                    continue;
                 }
                 BedrockItemSource definitionSource = sources.findItemByModel(item.itemModel());
                 if (definitionSource != null && definitionSource.javaItem().equals(ItemKeys.BOW)) {
@@ -233,9 +238,11 @@ public final class BedrockPackGenerator {
         return Key.of("ce", "rod_cast_" + HashUtils.sha1(item.asString().getBytes(StandardCharsets.UTF_8)));
     }
 
-    private record CollectedModels(Map<JavaItemModelLeaf, List<BedrockItemSource>> staticModels, Map<JavaBowModel, List<BedrockItemSource>> bows,
+    private record CollectedModels(Map<JavaItemModelLeaf, List<BedrockItemSource>> staticModels,
+                                   Map<JavaBowModel, List<BedrockItemSource>> bows,
                                    Map<JavaFishingRodModel, List<BedrockItemSource>> fishingRods,
-                                   Map<JavaCrossbowModel, List<BedrockItemSource>> crossbows, Map<JavaDisplayContextModel, List<BedrockItemSource>> spears) {
+                                   Map<JavaCrossbowModel, List<BedrockItemSource>> crossbows,
+                                   Map<JavaDisplayContextModel, List<BedrockItemSource>> spears) {
     }
 
     private JsonObject manifest(Path root, boolean blockItems) throws IOException {

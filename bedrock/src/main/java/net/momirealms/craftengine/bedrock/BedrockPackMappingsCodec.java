@@ -133,6 +133,7 @@ public final class BedrockPackMappingsCodec {
         String name = null;
         String geometry = null;
         String texture = null;
+        String renderMethod = BedrockPackMappings.DEFAULT_RENDER_METHOD;
         Map<String, String> materials = Map.of();
         reader.beginObject();
         while (reader.hasNext()) {
@@ -140,6 +141,7 @@ public final class BedrockPackMappingsCodec {
                 case "name" -> name = reader.nextString();
                 case "geometry" -> geometry = reader.nextString();
                 case "texture" -> texture = reader.nextString();
+                case "render_method" -> renderMethod = reader.nextString();
                 case "materials" -> {
                     materials = new LinkedHashMap<>();
                     reader.beginObject();
@@ -155,7 +157,7 @@ public final class BedrockPackMappingsCodec {
         if (name == null || name.isEmpty() || geometry == null || geometry.isEmpty() || texture == null || texture.isEmpty()) {
             throw new IOException("Incomplete display block at " + reader.getPath());
         }
-        return new BedrockPackMappings.DisplayBlock(name, geometry, texture, materials);
+        return new BedrockPackMappings.DisplayBlock(name, geometry, texture, materials, renderMethod);
     }
 
     public static void write(BedrockPackMappings mappings, Writer output) throws IOException {
@@ -205,6 +207,7 @@ public final class BedrockPackMappingsCodec {
         writer.name("name").value(block.name());
         writer.name("geometry").value(block.geometry());
         writer.name("texture").value(block.texture());
+        writer.name("render_method").value(block.renderMethod());
         if (!block.materials().isEmpty()) {
             writer.name("materials").beginObject();
             for (Map.Entry<String, String> material : new TreeMap<>(block.materials()).entrySet()) {

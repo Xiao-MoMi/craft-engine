@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.setting.value.BedrockOptions;
 import net.momirealms.craftengine.core.item.processor.ItemModelProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.OverwritableItemModelProcessor;
@@ -12,7 +13,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public record BedrockItemSource(Key id, Key javaItem, Key itemModel, @Nullable ItemDefinition definition) {
+public record BedrockItemSource(Key id,
+                                Key javaItem,
+                                Key itemModel,
+                                @Nullable ItemDefinition definition) {
 
     public BedrockItemSource(Key id, Key javaItem, Key itemModel) {
         this(id, javaItem, itemModel, null);
@@ -20,6 +24,10 @@ public record BedrockItemSource(Key id, Key javaItem, Key itemModel, @Nullable I
 
     public String bedrockIdentifier() {
         return bedrockIdentifier(this.id);
+    }
+
+    public BedrockOptions bedrockOptions() {
+        return this.definition == null ? BedrockOptions.DEFAULT : this.definition.settings().bedrock();
     }
 
     public static String bedrockIdentifier(Key id) {

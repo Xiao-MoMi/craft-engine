@@ -4,7 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 public record BedrockPackMappings(int formatVersion, String javaVersion, String sourceSha1, List<Item> items) {
-    public static final int FORMAT_VERSION = 5;
+    public static final int FORMAT_VERSION = 6;
+    public static final String DEFAULT_RENDER_METHOD = "alpha_test_single_sided";
     public static final String PATH = "craftengine/bedrock-mappings.json";
     public static final String CROSSBOW_TAG = "craftengine:crossbow";
 
@@ -43,10 +44,14 @@ public record BedrockPackMappings(int formatVersion, String javaVersion, String 
     public record CrossbowCharge(ItemVariant arrow, ItemVariant rocket) {
     }
 
-    public record DisplayBlock(String name, String geometry, String texture, Map<String, String> materials) {
+    public record DisplayBlock(String name, String geometry, String texture, Map<String, String> materials, String renderMethod) {
 
         public DisplayBlock {
             materials = Map.copyOf(materials);
+        }
+
+        public DisplayBlock(String name, String geometry, String texture, Map<String, String> materials) {
+            this(name, geometry, texture, materials, DEFAULT_RENDER_METHOD);
         }
 
         public DisplayBlock(String name, String geometry, String texture) {
