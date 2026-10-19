@@ -55,6 +55,12 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 List.of("entity/banner/banner_base.png", "entity/banner/base.png"),
                 this::banner
         );
+        BedrockVanillaTextures.transform(
+                context,
+                "textures/blocks/conduit_base.png",
+                List.of("entity/conduit/base.png"),
+                images -> ImageUtils.crop(images.getFirst(), 0, 0, images.getFirst().getWidth() * 3 / 4f, images.getFirst().getHeight() * 3 / 4f)
+        );
         for (String name : List.of(
                 "normal",
                 "trapped",
