@@ -9,6 +9,10 @@ public final class ResourcePackUtils {
         return "assets/minecraft/textures/" + texture;
     }
 
+    public static String texturePath(Key texture) {
+        return "assets/" + texture.namespace() + "/textures/" + texture.value() + ".png";
+    }
+
     public static String itemDefinitionPath(Key key) {
         return "assets/" + key.namespace() + "/items/" + key.value() + ".json";
     }

@@ -9,4 +9,7 @@ public record BedrockTextureRule(String source, List<Target> targets) {
 
     public record Tile(String name, int index, int replicate) {
     }
+
+    public record Tga(String path, boolean keep) {
+    }
 }

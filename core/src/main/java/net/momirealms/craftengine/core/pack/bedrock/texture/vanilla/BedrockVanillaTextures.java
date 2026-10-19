@@ -14,27 +14,28 @@ import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 public final class BedrockVanillaTextures {
-    private static final JsonObject RULES = GsonHelper.readJsonFromResource("/bedrock/vanilla_textures.json").getAsJsonObject();
+    private static final Rules RULES = readRules();
     private static final List<BedrockTextureConverter> CONVERTERS = List.of(
             new BedrockLayerTextures(),
             new BedrockLayoutTextures(),
             new BedrockAtlasTextures(),
-            new BedrockUiTextures()
+            new BedrockParticleTextures(),
+            new BedrockUiTextures(),
+            new BedrockMappedTextures(RULES.mappings())
     );
 
     private BedrockVanillaTextures() {
@@ -44,80 +45,55 @@ public final class BedrockVanillaTextures {
         for (BedrockTextureConverter converter : CONVERTERS) {
             converter.convert(context);
         }
-        for (Map.Entry<String, JsonElement> mapping : RULES.getAsJsonObject("textures").entrySet()) {
-            String source = mapping.getKey() + ".png";
-            if (!context.pack().hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
-                continue;
+    }
+
+    private static Rules readRules() {
+        JsonObject json = GsonHelper.readJsonFromResource("/bedrock/vanilla_textures.json").getAsJsonObject();
+        Map<String, List<BedrockTextureRule.Tile>> tiles = new HashMap<>();
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("tiles").entrySet()) {
+            List<BedrockTextureRule.Tile> entries = new ArrayList<>(entry.getValue().getAsJsonArray().size());
+            for (JsonElement element : entry.getValue().getAsJsonArray()) {
+                JsonObject tile = element.getAsJsonObject();
+                entries.add(new BedrockTextureRule.Tile(tile.get("name").getAsString(), tile.get("index").getAsInt(), tile.has("replicate") ? tile.get("replicate").getAsInt() : 1));
             }
-            List<BedrockTextureRule.Target> targets = new ArrayList<>();
-            for (JsonElement destination : mapping.getValue().getAsJsonArray()) {
-                String path = destination.getAsString();
-                if (!context.textures().contains(path)) {
-                    targets.add(target(path));
-                }
-            }
-            if (targets.isEmpty()) {
-                continue;
-            }
-            BedrockTextureRule rule = new BedrockTextureRule(source, targets);
-            try (InputStream input = context.pack().openCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
-                JsonObject metadata = context.pack().readResourceMetadata(ResourcePackUtils.vanillaTexturePath(source));
-                boolean animated = metadata != null && metadata.has("animation");
-                byte[] bytes = input.readAllBytes();
-                TextureData data = null;
-                BufferedImage image = null;
-                for (BedrockTextureRule.Target target : rule.targets()) {
-                    if (!animated) {
-                        if (context.textures().claim(target.path(), source)) {
-                            JsonObject tga = RULES.getAsJsonObject("tga").getAsJsonObject(target.path());
-                            if (tga != null) {
-                                if (image == null) {
-                                    image = ClientPngReader.read(new ByteArrayInputStream(bytes));
-                                }
-                                ImageUtils.writeTga(image, context.root().resolve(tga.get("path").getAsString()));
-                                if (!tga.get("keep").getAsBoolean()) {
-                                    continue;
-                                }
-                            }
-                            Path file = context.root().resolve(target.path());
-                            Files.createDirectories(file.getParent());
-                            Files.write(file, bytes);
-                        }
-                    } else {
-                        if (data == null) {
-                            data = JavaTextureAnimation.read(ClientPngReader.read(new ByteArrayInputStream(bytes)), metadata,
-                                    context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
-                        }
-                        if (!writeKeyFrames(context, source, target, data.animation())) {
-                            writeFrames(context, source, target, List.of(data), List::getFirst);
-                        }
-                    }
-                }
-            } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
-                CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + source + ": " + exception.getMessage());
-            }
+            tiles.put(entry.getKey(), List.copyOf(entries));
         }
+        Map<String, BedrockTextureRule.Tga> tga = new HashMap<>();
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("tga").entrySet()) {
+            JsonObject target = entry.getValue().getAsJsonObject();
+            tga.put(entry.getKey(), new BedrockTextureRule.Tga(target.get("path").getAsString(), target.get("keep").getAsBoolean()));
+        }
+        List<BedrockTextureRule> mappings = new ArrayList<>(json.getAsJsonObject("textures").size());
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("textures").entrySet()) {
+            List<BedrockTextureRule.Target> targets = new ArrayList<>(entry.getValue().getAsJsonArray().size());
+            for (JsonElement destination : entry.getValue().getAsJsonArray()) {
+                String path = destination.getAsString();
+                String name = path.substring(0, path.lastIndexOf('.'));
+                targets.add(new BedrockTextureRule.Target(path, tiles.getOrDefault(name, List.of())));
+            }
+            mappings.add(new BedrockTextureRule(entry.getKey() + ".png", List.copyOf(targets)));
+        }
+        return new Rules(List.copyOf(mappings), Map.copyOf(tiles), Map.copyOf(tga));
     }
 
     static BedrockTextureRule.Target target(String path) {
         String name = path.substring(0, path.lastIndexOf('.'));
-        JsonElement entries = RULES.getAsJsonObject("tiles").get(name);
-        List<BedrockTextureRule.Tile> tiles = new ArrayList<>();
-        if (entries != null) {
-            for (JsonElement entry : entries.getAsJsonArray()) {
-                JsonObject tile = entry.getAsJsonObject();
-                tiles.add(new BedrockTextureRule.Tile(tile.get("name").getAsString(), tile.get("index").getAsInt(),
-                        tile.has("replicate") ? tile.get("replicate").getAsInt() : 1));
-            }
-        }
-        return new BedrockTextureRule.Target(path, tiles);
+        return new BedrockTextureRule.Target(path, RULES.tiles().getOrDefault(name, List.of()));
+    }
+
+    @Nullable
+    static BedrockTextureRule.Tga tga(String path) {
+        return RULES.tga().get(path);
     }
 
     static TextureData load(BedrockConversionContext context, String source) throws IOException {
-        String path = ResourcePackUtils.vanillaTexturePath(source);
+        return loadResource(context, ResourcePackUtils.vanillaTexturePath(source));
+    }
+
+    static TextureData loadResource(BedrockConversionContext context, String path) throws IOException {
         try (InputStream input = context.pack().openResource(path)) {
             if (input == null) {
-                throw new IOException("Missing texture " + source);
+                throw new IOException("Missing texture " + path);
             }
             return JavaTextureAnimation.read(
                     ClientPngReader.read(input),
@@ -161,7 +137,7 @@ public final class BedrockVanillaTextures {
         }
     }
 
-    private static boolean writeKeyFrames(BedrockConversionContext context,
+    static boolean writeKeyFrames(BedrockConversionContext context,
                                           String owner,
                                           BedrockTextureRule.Target target,
                                           TextureAnimation animation) throws IOException {
@@ -210,7 +186,7 @@ public final class BedrockVanillaTextures {
         return true;
     }
 
-    private static void writeFrames(BedrockConversionContext context,
+    static void writeFrames(BedrockConversionContext context,
                                     String owner,
                                     BedrockTextureRule.Target target,
                                     List<TextureData> inputs,
@@ -283,10 +259,10 @@ public final class BedrockVanillaTextures {
         if (!context.textures().claim(output, owner)) {
             return false;
         }
-        JsonObject tga = RULES.getAsJsonObject("tga").getAsJsonObject(output);
+        BedrockTextureRule.Tga tga = tga(output);
         if (tga != null) {
-            ImageUtils.writeTga(image, context.root().resolve(tga.get("path").getAsString()));
-            if (!tga.get("keep").getAsBoolean()) {
+            ImageUtils.writeTga(image, context.root().resolve(tga.path()));
+            if (!tga.keep()) {
                 return true;
             }
         }
@@ -294,4 +270,8 @@ public final class BedrockVanillaTextures {
         return true;
     }
 
+    private record Rules(List<BedrockTextureRule> mappings,
+                         Map<String, List<BedrockTextureRule.Tile>> tiles,
+                         Map<String, BedrockTextureRule.Tga> tga) {
+    }
 }
