@@ -29,11 +29,13 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
     @Override
     public void convert(BedrockConversionContext context) {
         Map<BedrockParticleDefinition, List<Source>> targets = new LinkedHashMap<>();
+        Map<String, Source> definitions = new HashMap<>();
         for (BedrockParticleRule rule : BedrockParticleRules.ALL) {
             Source source = this.read(context, rule);
             if (source == null) {
                 continue;
             }
+            definitions.put(rule.source(), source);
             if (rule.unsupportedReason() != null) {
                 if (source.changed()) {
                     CraftEngine.instance().logger().warn("Keeping original Bedrock particle for " + rule.source() + ": " + rule.unsupportedReason());
@@ -44,26 +46,51 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 targets.computeIfAbsent(target, ignored -> new ArrayList<>()).add(source);
             }
         }
+        for (BedrockParticleDefinition target : BedrockParticleRules.DRIPPING.keySet()) {
+            targets.computeIfAbsent(target, ignored -> new ArrayList<>());
+        }
         Map<String, TextureData> loaded = new HashMap<>();
         for (Map.Entry<BedrockParticleDefinition, List<Source>> entry : targets.entrySet()) {
+            BedrockParticleDefinition target = entry.getKey();
             List<Source> sources = entry.getValue();
+            BedrockParticleRules.Drip drip = BedrockParticleRules.DRIPPING.get(target);
+            if (drip != null) {
+                Source hanging = definitions.get(drip.hanging());
+                Source falling = definitions.get(drip.falling());
+                if (hanging == null || falling == null) {
+                    CraftEngine.instance().logger().warn("Keeping original Bedrock particle " + target.identifier() + ": missing hanging or falling Java definition");
+                    continue;
+                }
+                // 水滴的 falling_water 还有独立的网络目标；这里只复用其纹理，不改变那条映射。
+                sources = List.of(hanging, falling);
+            }
             if (sources.stream().noneMatch(Source::changed)) {
                 continue;
             }
-            BedrockParticleDefinition target = entry.getKey();
             Source first = sources.getFirst();
             // 同一网络效果无法区分多个 Java 来源。即使只改了其中一个，也不能覆盖另一个的材质。
-            if (sources.stream().anyMatch(source -> !first.compatible(source))) {
+            if (drip == null && sources.stream().anyMatch(source -> !first.compatible(source))) {
                 CraftEngine.instance().logger().warn("Keeping original Bedrock particle " + target.identifier()
                         + ": incompatible Java sources " + sources.stream().map(source -> source.rule().source()).toList());
                 continue;
             }
-            if (first.paths().isEmpty()) {
+            if (sources.stream().anyMatch(source -> source.paths().isEmpty())) {
                 continue;
             }
+            List<String> paths = first.paths();
+            String frame = first.rule().selection().frame(paths.size());
+            if (drip != null) {
+                Source falling = sources.get(1);
+                int hangingCount = paths.size();
+                paths = new ArrayList<>(paths);
+                paths.addAll(falling.paths());
+                // 与原有效果的运动阶段使用同一个时钟，每个阶段只在自己的纹理范围内随机选帧。
+                frame = "variable.particle_age < variable.stuck_time ? (" + frame + ") : ("
+                        + hangingCount + " + " + falling.rule().selection().frame(falling.paths().size()) + ")";
+            }
             try {
-                List<BufferedImage> frames = new ArrayList<>(first.paths().size());
-                for (String path : first.paths()) {
+                List<BufferedImage> frames = new ArrayList<>(paths.size());
+                for (String path : paths) {
                     TextureData data = loaded.get(path);
                     if (data == null) {
                         data = BedrockVanillaTextures.loadResource(context, path);
@@ -77,7 +104,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 }
                 BufferedImage image = this.stitch(frames, first.rule());
                 String texture = "textures/particle/craftengine/" + target.file();
-                JsonObject definition = target.create(texture, first.rule().selection(), frames.size());
+                JsonObject definition = target.create(texture, first.rule().selection(), frames.size(), frame);
                 if (!BedrockVanillaTextures.writeImage(context, first.rule().source(), texture + ".png", image)) {
                     continue;
                 }

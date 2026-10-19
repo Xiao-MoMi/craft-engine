@@ -1,12 +1,23 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 
 import java.util.List;
+import java.util.Map;
 
 import static net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockParticleDefinitions.*;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockParticleRule.Selection.*;
 
 // Java 26.3 的全部 115 个纹理粒子定义。共用基岩版目标的规则在转换前一起检查。
 final class BedrockParticleRules {
+    // 这些基岩版效果自身包含悬挂和下落阶段，两个 Java 来源分别提供各阶段的纹理。
+    static final Map<BedrockParticleDefinition, Drip> DRIPPING = Map.of(
+            DRIPSTONE_LAVA_DRIP, new Drip("dripping_dripstone_lava", "falling_dripstone_lava"),
+            DRIPSTONE_WATER_DRIP, new Drip("dripping_dripstone_water", "falling_dripstone_water"),
+            HONEY_DRIP, new Drip("dripping_honey", "falling_honey"),
+            LAVA_DRIP, new Drip("dripping_lava", "falling_lava"),
+            OBSIDIAN_TEAR, new Drip("dripping_obsidian_tear", "falling_obsidian_tear"),
+            WATER_DRIP, new Drip("dripping_water", "falling_water")
+    );
+
     static final List<BedrockParticleRule> ALL = List.of(
             new BedrockParticleRule("ambient_entity_effect", AGE, 0, List.of(), "Geyser has no distinct network mapping for ambient_entity_effect"),
             new BedrockParticleRule("angry_villager", RANDOM, 0, List.of(VILLAGER_ANGRY), null),
@@ -126,5 +137,8 @@ final class BedrockParticleRules {
     );
 
     private BedrockParticleRules() {
+    }
+
+    record Drip(String hanging, String falling) {
     }
 }

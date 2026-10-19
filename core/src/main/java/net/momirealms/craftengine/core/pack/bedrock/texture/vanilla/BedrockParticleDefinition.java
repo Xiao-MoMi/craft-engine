@@ -14,7 +14,7 @@ record BedrockParticleDefinition(String file,
                                  Map<String, Object> events,
                                  Map<String, Object> curves) {
 
-    JsonObject create(String texture, BedrockParticleRule.Selection selection, int count) {
+    JsonObject create(String texture, BedrockParticleRule.Selection selection, int count, String frame) {
         JsonObject output = new JsonObject();
         output.addProperty("format_version", this.formatVersion);
         JsonObject effect = new JsonObject();
@@ -32,7 +32,6 @@ record BedrockParticleDefinition(String file,
         if (!this.curves.isEmpty()) {
             effect.add("curves", GsonHelper.get().toJsonTree(this.curves));
         }
-        String frame = selection.frame(count);
         JsonObject uv = new JsonObject();
         uv.addProperty("texture_width", 1);
         uv.addProperty("texture_height", count);
