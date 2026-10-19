@@ -33,7 +33,11 @@ public interface LegacyRecipeHolder {
         public static LegacyRecipeHolder read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
             Key type = buf.readKey();
             Key id = buf.readKey();
-            return new LegacyRecipeHolderImpl(id, type, BuiltInRegistries.LEGACY_RECIPE_TYPE.getValue(type).read(buf, (FriendlyByteBuf.Reader) reader));
+            LegacyRecipe.Type<? extends LegacyRecipe> recipeType = BuiltInRegistries.LEGACY_RECIPE_TYPE.getValue(type);
+            if (recipeType == null) {
+                throw new UnknownRecipeTypeException("Unknown recipe type " + type + " of recipe " + id);
+            }
+            return new LegacyRecipeHolderImpl(id, type, recipeType.read(buf, (FriendlyByteBuf.Reader) reader));
         }
     }
 
@@ -50,7 +54,11 @@ public interface LegacyRecipeHolder {
         public static LegacyRecipeHolder read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
             Key id = buf.readKey();
             int type = buf.readVarInt();
-            return new ModernRecipeHolderImpl(id, type, BuiltInRegistries.LEGACY_RECIPE_TYPE.getValue(type).read(buf, (FriendlyByteBuf.Reader) reader));
+            LegacyRecipe.Type<? extends LegacyRecipe> recipeType = BuiltInRegistries.LEGACY_RECIPE_TYPE.getValue(type);
+            if (recipeType == null) {
+                throw new UnknownRecipeTypeException("Unknown recipe type " + type + " of recipe " + id);
+            }
+            return new ModernRecipeHolderImpl(id, type, recipeType.read(buf, (FriendlyByteBuf.Reader) reader));
         }
     }
 }

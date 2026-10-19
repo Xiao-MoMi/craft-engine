@@ -329,6 +329,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Set<Key> disabledRecipes = Config.disabledVanillaRecipes();
         boolean hasDisabledAny = !disabledRecipes.isEmpty();
 
+        Map<String, List<Key>> skippedRecipes = new LinkedHashMap<>();
         for (Map.Entry<Key, JsonObject> entry : this.lastDatapackRecipes.entrySet()) {
             Key id = entry.getKey();
             if (hasDisabledAny && disabledRecipes.contains(entry.getKey())) {
@@ -346,9 +347,43 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 markAsDataPackRecipe(id);
                 registerRecipeInternal(recipe, false, false);
             } catch (Throwable e) {
-                this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                if (Config.debugCommon()) {
+                    this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                } else {
+                    skippedRecipes.computeIfAbsent(reason(e), k -> new ArrayList<>()).add(id);
+                }
             }
         }
+
+        if (!Config.debugCommon() && !skippedRecipes.isEmpty()) {
+            this.plugin.logger().info("Skipped " + skippedRecipes.values().stream().mapToInt(List::size).sum() + " data pack recipes that CraftEngine can not read, they keep their vanilla behaviour. Reasons (set debug.common to true for the full stack traces): " + summarize(skippedRecipes));
+        }
+    }
+
+    private static String reason(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message == null || message.isEmpty()) {
+            return throwable.getClass().getSimpleName();
+        }
+        // 冒号后面是具体失败的物品/标签/类型，同类失败要能合并成一条
+        int separator = message.indexOf(": ");
+        return separator > 0 ? message.substring(0, separator) : message;
+    }
+
+    // 加了大量 mod 后这里可能上百条，逐条打日志会把启动输出淹掉
+    private static String summarize(Map<String, List<Key>> skippedRecipes) {
+        StringBuilder builder = new StringBuilder();
+        skippedRecipes.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<String, List<Key>> it) -> -it.getValue().size()).thenComparing(Map.Entry::getKey))
+                .limit(6)
+                .forEach(it -> builder.append(it.getKey()).append(" x").append(it.getValue().size())
+                        .append(" [").append(it.getValue().get(0)).append(it.getValue().size() > 1 ? ", ..." : "").append("], "));
+        if (skippedRecipes.size() > 6) {
+            builder.append("and ").append(skippedRecipes.size() - 6).append(" more reasons");
+        } else {
+            builder.setLength(builder.length() - 2);
+        }
+        return builder.toString();
     }
 
     public boolean shouldUnlockRecipesOnJoin() {

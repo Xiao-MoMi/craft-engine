@@ -41,6 +41,11 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
 
     protected CustomRecipeResult parseResult(DatapackRecipeResult recipeResult) {
         Item result = CraftEngine.instance().itemManager().build(recipeResult);
+        // 产出物品不存在时（例如 mod 用条件过滤掉的联动配方），冶炼类配方在同步给客户端时
+        // 会在 ItemStack.STREAM_CODEC 抛 "Empty ItemStack not allowed"，直接打断玩家进服
+        if (result.isEmpty()) {
+            throw new IllegalArgumentException("Non-existent recipe result: " + recipeResult.id());
+        }
         return new CustomRecipeResult(CloneableItem.of(result), recipeResult.count(), null);
     }
 
