@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.recipe.predicate.AllOfDataComponentPredicate;
 import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
@@ -13,6 +15,7 @@ import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -209,5 +212,83 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
             return null;
         }
         return Ingredient.of(elements, itemIds, minecraftItemIds, hasCustomItem);
+    }
+
+    // 原生读取器只认得字符串和数组，NeoForge 的扩展原料类型会被直接丢弃
+    @NotNull
+    protected Ingredient parseNeoForgeIngredient(JsonObject json) {
+        List<String> items = new ArrayList<>(resolveIngredientItems(json));
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Empty NeoForge ingredient: " + json);
+        }
+        Ingredient ingredient = parseVanillaIngredient(items);
+        if (ingredient == null) {
+            throw new IllegalArgumentException("Empty NeoForge ingredient: " + json);
+        }
+        return ingredient;
+    }
+
+    private Set<String> resolveIngredientItems(JsonElement element) {
+        if (element == null) {
+            throw new IllegalArgumentException("Missing NeoForge ingredient element");
+        }
+        if (element.isJsonPrimitive()) {
+            String value = element.getAsString();
+            return value.startsWith("#") ? expandItemTag(value.substring(1)) : new LinkedHashSet<>(List.of(value));
+        }
+        if (element.isJsonArray()) {
+            Set<String> items = new LinkedHashSet<>();
+            for (JsonElement child : element.getAsJsonArray()) {
+                items.addAll(resolveIngredientItems(child));
+            }
+            return items;
+        }
+        JsonObject json = element.getAsJsonObject();
+        if (json.has("item")) {
+            return new LinkedHashSet<>(List.of(json.get("item").getAsString()));
+        }
+        if (json.has("tag")) {
+            return expandItemTag(json.get("tag").getAsString());
+        }
+        if (!json.has("type")) {
+            throw new IllegalArgumentException("Unsupported ingredient: " + json);
+        }
+        String type = json.get("type").getAsString();
+        switch (type) {
+            case "neoforge:difference" -> {
+                Set<String> base = resolveIngredientItems(json.get("base"));
+                base.removeAll(resolveIngredientItems(json.get("subtracted")));
+                return base;
+            }
+            case "neoforge:compound" -> {
+                return resolveIngredientItems(json.has("children") ? json.get("children") : json.get("ingredients"));
+            }
+            case "neoforge:intersection" -> {
+                Set<String> items = null;
+                for (JsonElement child : json.getAsJsonArray("children")) {
+                    Set<String> childItems = resolveIngredientItems(child);
+                    if (items == null) {
+                        items = childItems;
+                    } else {
+                        items.retainAll(childItems);
+                    }
+                }
+                return items == null ? Collections.emptySet() : items;
+            }
+            default -> throw new IllegalArgumentException("Unsupported ingredient type: " + type);
+        }
+    }
+
+    private Set<String> expandItemTag(String tag) {
+        Key key = Key.of(tag);
+        List<UniqueKey> items = CraftEngine.instance().itemManager().itemIdsByTag(key);
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Unknown or empty item tag: " + key);
+        }
+        Set<String> result = new LinkedHashSet<>(items.size());
+        for (UniqueKey item : items) {
+            result.add(item.toString());
+        }
+        return result;
     }
 }
