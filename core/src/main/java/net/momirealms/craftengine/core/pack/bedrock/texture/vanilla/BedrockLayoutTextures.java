@@ -49,6 +49,12 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 List.of("block/bamboo_fence_gate.png"),
                 images -> this.bambooFenceGate(images.getFirst())
         );
+        BedrockVanillaTextures.transform(
+                context,
+                "textures/entity/banner/banner_base.png",
+                List.of("entity/banner/banner_base.png", "entity/banner/base.png"),
+                this::banner
+        );
         for (String name : List.of(
                 "normal",
                 "trapped",
@@ -214,6 +220,36 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     images -> this.sign(images.getFirst(), true)
             );
         }
+    }
+
+    private BufferedImage banner(List<BufferedImage> images) {
+        BufferedImage base = images.getFirst();
+        BufferedImage cloth = images.get(1);
+        int width = Math.max(base.getWidth(), cloth.getWidth());
+        int height = Math.max(base.getHeight(), cloth.getHeight());
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // Java 将可染色旗面和支架分开保存；基岩版底图需要同时包含两者，颜色仍由客户端决定。
+        // 额外长支柱使用右侧 52..60 的 UV，重复 Java 杆身延长，保留纹理密度与端盖。
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pixel;
+                if (x < width * 42 / 64 && y < height * 41 / 64) {
+                    pixel = cloth.getRGB(x * cloth.getWidth() / width, y * cloth.getHeight() / height);
+                } else if (x >= width * 52 / 64 && x < width * 60 / 64) {
+                    int sourceX = (x - width * 8 / 64) * base.getWidth() / width;
+                    int sourceY = y * base.getHeight() / height;
+                    int cap = base.getHeight() * 2 / 64;
+                    if (sourceY >= cap) {
+                        sourceY = cap + (sourceY - cap) % (base.getHeight() * 42 / 64);
+                    }
+                    pixel = base.getRGB(sourceX, sourceY);
+                } else {
+                    pixel = base.getRGB(x * base.getWidth() / width, y * base.getHeight() / height);
+                }
+                result.setRGB(x, y, pixel);
+            }
+        }
+        return result;
     }
 
     private BufferedImage bambooFenceGate(BufferedImage source) {

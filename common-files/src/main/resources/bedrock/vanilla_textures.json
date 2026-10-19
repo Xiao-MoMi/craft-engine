@@ -2664,6 +2664,7 @@
     "textures/blocks/stonecutter2_saw.png": {"path": "textures/blocks/stonecutter2_saw.tga", "keep": false},
     "textures/blocks/tallgrass.png": {"path": "textures/blocks/tallgrass.tga", "keep": true},
     "textures/blocks/tallgrass_carried.png": {"path": "textures/blocks/tallgrass_carried.tga", "keep": false},
+    "textures/entity/banner/banner_base.png": {"path": "textures/entity/banner/banner_base.tga", "keep": false},
     "textures/entity/banner/banner_border.png": {"path": "textures/entity/banner/banner_border.tga", "keep": false},
     "textures/entity/banner/banner_bricks.png": {"path": "textures/entity/banner/banner_bricks.tga", "keep": false},
     "textures/entity/banner/banner_circle.png": {"path": "textures/entity/banner/banner_circle.tga", "keep": false},
