@@ -9,6 +9,37 @@ import java.awt.image.BufferedImage;
 import java.util.List;
 
 final class BedrockLayoutTextures implements BedrockTextureConverter {
+    // 坐标以 Java 的 32×32、基岩版的 64×32 原版贴图为基准。
+    private static final List<SignRegion> SIGN_REGIONS = List.of(
+            new SignRegion(0, 2, 2, 2, 24, 12, false, false),
+            new SignRegion(0, 16, 28, 2, 24, 12, false, false),
+            new SignRegion(24, 2, 26, 2, 2, 12, false, false),
+            new SignRegion(24, 16, 0, 2, 2, 12, false, false),
+            new SignRegion(0, 0, 2, 0, 24, 2, false, false),
+            new SignRegion(0, 28, 26, 0, 24, 2, false, true),
+            new SignRegion(28, 0, 2, 16, 2, 14, false, false),
+            new SignRegion(30, 0, 4, 16, 2, 14, false, false),
+            new SignRegion(28, 16, 6, 16, 2, 14, false, false),
+            new SignRegion(30, 16, 0, 16, 2, 14, false, false),
+            new SignRegion(28, 30, 4, 14, 2, 2, false, true)
+    );
+    private static final List<SignRegion> HANGING_SIGN_REGIONS = List.of(
+            new SignRegion(2, 16, 2, 14, 14, 10, false, false),
+            new SignRegion(18, 16, 18, 14, 14, 10, false, false),
+            new SignRegion(0, 16, 0, 14, 2, 10, false, false),
+            new SignRegion(16, 16, 16, 14, 2, 10, false, false),
+            new SignRegion(2, 14, 2, 12, 14, 2, false, false),
+            new SignRegion(2, 26, 16, 12, 14, 2, false, true),
+            new SignRegion(0, 4, 4, 4, 16, 2, false, false),
+            new SignRegion(0, 7, 24, 4, 16, 2, false, false),
+            new SignRegion(16, 7, 0, 4, 4, 2, false, false),
+            new SignRegion(16, 4, 20, 4, 4, 2, false, false),
+            new SignRegion(0, 0, 4, 0, 16, 4, false, false),
+            new SignRegion(0, 9, 20, 0, 16, 4, true, true),
+            new SignRegion(22, 7, 0, 6, 3, 6, false, false),
+            new SignRegion(28, 8, 6, 7, 3, 4, false, false),
+            new SignRegion(20, 0, 14, 6, 12, 6, false, false)
+    );
 
     @Override
     public void convert(BedrockConversionContext context) {
@@ -143,6 +174,49 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     this::bed
             );
         }
+        for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove",
+                "cherry", "bamboo", "crimson", "warped", "pale_oak", "poplar")) {
+            String target = switch (wood) {
+                case "oak" -> "sign";
+                case "dark_oak" -> "sign_darkoak";
+                case "spruce", "birch", "jungle", "acacia", "crimson", "warped" -> "sign_" + wood;
+                default -> wood + "_sign";
+            };
+            BedrockVanillaTextures.transform(
+                    context,
+                    "textures/entity/" + target + ".png",
+                    List.of("block/" + wood + "_sign.png"),
+                    images -> this.sign(images.getFirst(), false)
+            );
+            BedrockVanillaTextures.transform(
+                    context,
+                    "textures/entity/" + wood + "_hanging_sign.png",
+                    List.of("block/" + wood + "_hanging_sign.png"),
+                    images -> this.sign(images.getFirst(), true)
+            );
+        }
+    }
+
+    private BufferedImage sign(BufferedImage source, boolean hanging) {
+        BufferedImage result = new BufferedImage(source.getWidth() * 2, source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        // 普通与墙上告示牌共用牌面；悬挂牌还需保留横梁、交叉链条和贴顶链条各自的区域。
+        // 逐像素搬运并翻转底面，保留高清像素及链条的透明度，不进行 alpha 混合。
+        for (SignRegion region : hanging ? HANGING_SIGN_REGIONS : SIGN_REGIONS) {
+            int sourceX = region.sourceX() * source.getWidth() / 32;
+            int sourceY = region.sourceY() * source.getHeight() / 32;
+            int targetX = region.targetX() * source.getWidth() / 32;
+            int targetY = region.targetY() * source.getHeight() / 32;
+            int width = region.width() * source.getWidth() / 32;
+            int height = region.height() * source.getHeight() / 32;
+            for (int y = 0; y < height; y++) {
+                int sy = sourceY + (region.flipY() ? height - 1 - y : y);
+                for (int x = 0; x < width; x++) {
+                    int sx = sourceX + (region.flipX() ? width - 1 - x : x);
+                    result.setRGB(targetX + x, targetY + y, source.getRGB(sx, sy));
+                }
+            }
+        }
+        return result;
     }
 
     private BufferedImage chain(BufferedImage image, int side) {
@@ -362,5 +436,9 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
 
     private BufferedImage legFace(BufferedImage side, float scale, int sourceX) {
         return ImageUtils.crop(side, sourceX * scale, 13 * scale, 3 * scale, 3 * scale);
+    }
+
+    private record SignRegion(int sourceX, int sourceY, int targetX, int targetY,
+                              int width, int height, boolean flipX, boolean flipY) {
     }
 }
