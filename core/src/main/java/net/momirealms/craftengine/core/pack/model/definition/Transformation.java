@@ -9,7 +9,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import org.joml.AxisAngle4f;
-import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
@@ -23,6 +23,21 @@ import java.util.Map;
 public record Transformation(List<Float> matrix) {
     private static final String[] RIGHT_ROTATION = ConfigKeys.of("right_rotation");
     private static final String[] LEFT_ROTATION = ConfigKeys.of("left_rotation");
+
+    public Transformation {
+        matrix = List.copyOf(matrix);
+        if (matrix.size() != 16) {
+            throw new IllegalArgumentException("Transformation requires 16 matrix values");
+        }
+    }
+
+    public Matrix4f toMatrix() {
+        return new Matrix4f(
+                this.matrix.get(0), this.matrix.get(4), this.matrix.get(8), this.matrix.get(12),
+                this.matrix.get(1), this.matrix.get(5), this.matrix.get(9), this.matrix.get(13),
+                this.matrix.get(2), this.matrix.get(6), this.matrix.get(10), this.matrix.get(14),
+                this.matrix.get(3), this.matrix.get(7), this.matrix.get(11), this.matrix.get(15));
+    }
 
     public Transformation(Vector3f translation, Quaternionf leftRotation, Vector3f scale, Quaternionf rightRotation) {
         this(toMatrix(translation, leftRotation, scale, rightRotation));
@@ -75,16 +90,18 @@ public record Transformation(List<Float> matrix) {
                 return new Transformation(matrix);
             }
             List<Float> list = jsonArray.asList().stream().map(JsonElement::getAsFloat).toList();
-            if (list.size() != 16) throw new IllegalArgumentException("Invalid transformation matrix");
+            if (list.size() != 16) {
+                throw new IllegalArgumentException("Invalid transformation matrix");
+            }
             return new Transformation(list);
         }
         JsonObject jsonObject = json.getAsJsonObject();
-        Quaternionf rightRotation = parseRotation(jsonObject.get("right_rotation"));
-        Quaternionf leftRotation = parseRotation(jsonObject.get("left_rotation"));
+        Quaternionf rightRotation = jsonObject.has("right_rotation") ? parseRotation(jsonObject.get("right_rotation")) : new Quaternionf();
+        Quaternionf leftRotation = jsonObject.has("left_rotation") ? parseRotation(jsonObject.get("left_rotation")) : new Quaternionf();
         JsonArray scaleArray = jsonObject.getAsJsonArray(ModelJsonKeys.SCALE);
-        Vector3f scale = new Vector3f(scaleArray.get(0).getAsFloat(), scaleArray.get(1).getAsFloat(), scaleArray.get(2).getAsFloat());
+        Vector3f scale = scaleArray == null ? new Vector3f(1) : new Vector3f(scaleArray.get(0).getAsFloat(), scaleArray.get(1).getAsFloat(), scaleArray.get(2).getAsFloat());
         JsonArray translationArray = jsonObject.getAsJsonArray(ModelJsonKeys.TRANSLATION);
-        Vector3f translation = new Vector3f(translationArray.get(0).getAsFloat(), translationArray.get(1).getAsFloat(), translationArray.get(2).getAsFloat());
+        Vector3f translation = translationArray == null ? new Vector3f() : new Vector3f(translationArray.get(0).getAsFloat(), translationArray.get(1).getAsFloat(), translationArray.get(2).getAsFloat());
         return new Transformation(translation, leftRotation, scale, rightRotation);
     }
 
@@ -118,24 +135,12 @@ public record Transformation(List<Float> matrix) {
     }
 
     private static List<Float> toMatrix(Vector3f translation, Quaternionf leftRotation, Vector3f scale, Quaternionf rightRotation) {
-        Matrix3f V = new Matrix3f().set(rightRotation); // 初始旋转矩阵 V
-        Matrix3f S = new Matrix3f().scaling(scale);     // 缩放对角矩阵 S
-        Matrix3f U = new Matrix3f().set(leftRotation);  // 再次旋转矩阵 U
-
-        // M = U * S * V^T（SVD重建）
-        Matrix3f VT = new Matrix3f(V).transpose();
-        Matrix3f M = new Matrix3f(U).mul(S).mul(VT);
-
-        // 构建行主序16个元素的列表
+        // Java composes T * leftRotation * scale * rightRotation; rightRotation is not transposed.
+        Matrix4f matrix = new Matrix4f().translation(translation).rotate(leftRotation).scale(scale).rotate(rightRotation);
         return List.of(
-                // row 0
-                M.m00(), M.m10(), M.m20(), translation.x,
-                // row 1
-                M.m01(), M.m11(), M.m21(), translation.y,
-                // row 2
-                M.m02(), M.m12(), M.m22(), translation.z,
-                // row 3（第13/14/15无效，第16为scale因子=1）
-                0f, 0f, 0f, 1f
-        );
+                matrix.m00(), matrix.m10(), matrix.m20(), matrix.m30(),
+                matrix.m01(), matrix.m11(), matrix.m21(), matrix.m31(),
+                matrix.m02(), matrix.m12(), matrix.m22(), matrix.m32(),
+                matrix.m03(), matrix.m13(), matrix.m23(), matrix.m33());
     }
 }

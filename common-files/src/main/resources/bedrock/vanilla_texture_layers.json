@@ -1808,7 +1808,20 @@
       }
     ],
     "mask": true,
-    "empty_only": false
+    "empty_only": true
+  },
+  {
+    "target": "textures/items/wolf_armor_dyed.png",
+    "layers": [
+      {
+        "source": "item/wolf_armor_overlay.png"
+      },
+      {
+        "source": "item/wolf_armor.png"
+      }
+    ],
+    "mask": true,
+    "empty_only": true
   },
   {
     "target": "textures/blocks/grass_side.png",

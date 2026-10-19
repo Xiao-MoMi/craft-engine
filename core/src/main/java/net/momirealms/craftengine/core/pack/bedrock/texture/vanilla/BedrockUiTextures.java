@@ -4,8 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -73,7 +75,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
 
     private void experience(JavaResourcePack pack, Path output, BedrockTextureRegistry textures, String source, String target) {
         String path = "gui/sprites/hud/experience_bar_" + source + ".png";
-        if (!pack.hasCustomResource(BedrockVanillaTextures.resource(path))) {
+        if (!pack.hasCustomResource(ResourcePackUtils.vanillaTexturePath(path))) {
             return;
         }
         try {
@@ -95,7 +97,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
                 BedrockVanillaTextures.writeImage(output, textures, path, "textures/ui/experiencenub.png", new BufferedImage(11, 5, BufferedImage.TYPE_INT_ARGB));
             }
         } catch (IOException | IllegalArgumentException exception) {
-            BedrockVanillaTextures.warn(path, exception);
+            CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + path + ": " + exception.getMessage());
         }
     }
 }

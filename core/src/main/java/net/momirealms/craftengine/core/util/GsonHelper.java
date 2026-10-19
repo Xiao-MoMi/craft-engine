@@ -6,7 +6,10 @@ import com.google.gson.reflect.TypeToken;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -35,6 +38,19 @@ public final class GsonHelper {
     public static JsonElement readJsonFromFile(Path path) throws IOException, JsonParseException {
         try (BufferedReader reader = Files.newBufferedReader(path)) {
             return JsonParser.parseReader(reader);
+        }
+    }
+
+    public static JsonElement readJsonFromResource(String path) {
+        try (InputStream input = GsonHelper.class.getResourceAsStream(path)) {
+            if (input == null) {
+                throw new IOException("Missing bundled JSON resource " + path);
+            }
+            try (InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                return JsonParser.parseReader(reader);
+            }
+        } catch (IOException exception) {
+            throw new IllegalStateException(exception);
         }
     }
 

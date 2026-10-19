@@ -17,9 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.TreeMap;
 import java.util.function.Consumer;
 
 public final class RangeDispatchItemModel implements ItemModel {
@@ -28,7 +30,7 @@ public final class RangeDispatchItemModel implements ItemModel {
     private final RangeDispatchProperty property;
     private final float scale;
     private final ItemModel fallBack;
-    private final Map<Float, ItemModel> entries;
+    private final List<Entry> entries;
     private final Transformation transformation;
 
     public RangeDispatchItemModel(@NotNull RangeDispatchProperty property,
@@ -36,10 +38,15 @@ public final class RangeDispatchItemModel implements ItemModel {
                                   @NotNull Map<Float, ItemModel> entries,
                                   @Nullable ItemModel fallBack,
                                   @Nullable Transformation transformation) {
+        this(property, scale, entries.entrySet().stream().map(entry -> new Entry(entry.getKey(), entry.getValue())).toList(), fallBack, transformation);
+    }
+
+    public RangeDispatchItemModel(RangeDispatchProperty property, float scale, List<Entry> entries,
+                                  @Nullable ItemModel fallBack, @Nullable Transformation transformation) {
         this.property = property;
         this.scale = scale;
         this.fallBack = fallBack;
-        this.entries = entries;
+        this.entries = List.copyOf(entries);
         this.transformation = transformation;
     }
 
@@ -70,7 +77,7 @@ public final class RangeDispatchItemModel implements ItemModel {
     }
 
     @NotNull
-    public Map<Float, ItemModel> entries() {
+    public List<Entry> entries() {
         return this.entries;
     }
 
@@ -80,9 +87,9 @@ public final class RangeDispatchItemModel implements ItemModel {
         json.addProperty("type", "range_dispatch");
         this.property.writeProperty(json);
         JsonArray array = new JsonArray();
-        for (Map.Entry<Float, ItemModel> entry : this.entries.entrySet()) {
-            float threshold = entry.getKey();
-            ItemModel model = entry.getValue();
+        for (Entry entry : this.entries) {
+            float threshold = entry.threshold();
+            ItemModel model = entry.model();
             JsonObject jo = new JsonObject();
             jo.addProperty("threshold", threshold);
             jo.add("model", model.toJson(min, max));
@@ -109,8 +116,8 @@ public final class RangeDispatchItemModel implements ItemModel {
         if (this.transformation != null) {
             consumer.accept(Revisions.SINCE_26_1);
         }
-        for (ItemModel model : this.entries.values()) {
-            model.gatherRevisions(consumer);
+        for (Entry entry : this.entries) {
+            entry.model().gatherRevisions(consumer);
         }
     }
 
@@ -138,6 +145,9 @@ public final class RangeDispatchItemModel implements ItemModel {
         return 31 * result + Objects.hashCode(this.transformation);
     }
 
+    public record Entry(float threshold, ItemModel model) {
+    }
+
     private static class Factory implements ItemModelFactory<RangeDispatchItemModel> {
 
         @Override
@@ -145,18 +155,19 @@ public final class RangeDispatchItemModel implements ItemModel {
             RangeDispatchProperty property = RangeDispatchProperties.fromConfig(section);
             float scale = section.getFloat("scale", 1.0f);
             ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v, generations));
-            Map<Float, ItemModel> entryMap = new TreeMap<>();
+            List<Entry> entryList = new ArrayList<>();
             ConfigValue entries = section.getNonNullValue("entries", ConfigConstants.ARGUMENT_LIST);
             entries.forEach(value -> {
                 ConfigSection entry = value.getAsSection();
                 float threshold = entry.getNonNullFloat("threshold");
                 ItemModel model = entry.getValue("model", v -> ItemModels.fromConfig(pack, path, v, generations), fallbackModel);
-                entryMap.put(threshold, model);
+                entryList.add(new Entry(threshold, model));
             });
+            entryList.sort(Comparator.comparingDouble(Entry::threshold));
             return new RangeDispatchItemModel(
                     property,
                     scale,
-                    entryMap,
+                    entryList,
                     fallbackModel,
                     section.getValue("transformation", Transformation::fromConfig)
             );
@@ -171,12 +182,14 @@ public final class RangeDispatchItemModel implements ItemModel {
             if (entriesArray == null) {
                 throw new IllegalArgumentException("entries is expected to be a JsonArray");
             }
-            Map<Float, ItemModel> entries = new TreeMap<>();
+            List<Entry> entries = new ArrayList<>(entriesArray.size());
             for (JsonElement entry : entriesArray) {
                 if (entry instanceof JsonObject entryObj) {
                     float threshold = entryObj.getAsJsonPrimitive("threshold").getAsFloat();
                     ItemModel model = ItemModels.fromJson(entryObj.getAsJsonObject("model"));
-                    entries.put(threshold, model);
+                    entries.add(new Entry(threshold, model));
+                } else {
+                    throw new IllegalArgumentException("range entry must be an object");
                 }
             }
             return new RangeDispatchItemModel(RangeDispatchProperties.fromJson(json),

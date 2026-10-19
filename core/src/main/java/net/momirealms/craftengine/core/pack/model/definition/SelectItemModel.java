@@ -20,12 +20,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public final class SelectItemModel implements ItemModel {
@@ -175,7 +176,7 @@ public final class SelectItemModel implements ItemModel {
         public SelectItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             SelectProperty property = SelectProperties.fromConfig(section);
             ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v, generations));
-            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>();
+            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new LinkedHashMap<>();
             ConfigValue cases = section.getNonNullValue("cases", ConfigConstants.ARGUMENT_LIST);
             cases.forEach(value -> {
                 ConfigSection entry = value.getAsSection();
@@ -203,10 +204,11 @@ public final class SelectItemModel implements ItemModel {
         @Override
         public SelectItemModel read(JsonObject json) {
             JsonArray cases = json.getAsJsonArray("cases");
-            if (cases == null) {
-                throw new IllegalArgumentException("cases is expected to be a JsonArray");
+            if (cases == null || cases.isEmpty()) {
+                throw new IllegalArgumentException("cases must be a non-empty JsonArray");
             }
             Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new LinkedHashMap<>(cases.size());
+            Set<JsonElement> values = new HashSet<>();
             for (JsonElement caseElement : cases) {
                 if (!(caseElement instanceof JsonObject caseObj)) {
                     throw new IllegalArgumentException("case is expected to be a JsonObject");
@@ -219,6 +221,9 @@ public final class SelectItemModel implements ItemModel {
                 JsonElement whenObj = caseObj.get("when");
                 Either<JsonElement, List<JsonElement>> either;
                 if (whenObj instanceof JsonArray array) {
+                    if (array.isEmpty()) {
+                        throw new IllegalArgumentException("'when' must not be empty");
+                    }
                     List<JsonElement> whens = new ArrayList<>(array.size());
                     for (JsonElement o : array) {
                         whens.add(o);
@@ -228,6 +233,11 @@ public final class SelectItemModel implements ItemModel {
                     either = Either.left(whenObj);
                 } else {
                     throw new IllegalArgumentException("'when' should not be null");
+                }
+                for (JsonElement value : either.map(List::of, list -> list)) {
+                    if (!values.add(value)) {
+                        throw new IllegalArgumentException("Duplicate select case value: " + value);
+                    }
                 }
                 whenMap.put(either, model);
             }

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.util;
 
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -20,14 +21,23 @@ public final class ClientPngReader {
 
     public static BufferedImage read(InputStream input) throws IOException {
         byte[] png = input.readAllBytes();
+        BufferedImage image;
         try {
-            return PngOptimizer.readPng(new ByteArrayInputStream(png));
+            image = PngOptimizer.readPng(new ByteArrayInputStream(png));
         } catch (IOException exception) {
             // The client's PNG decoder tolerates the CRC/Adler corruption used by pack protection.
             // Restore only checksums in our private copy, leaving pixel data and the source ZIP untouched.
             restoreChecksums(png);
-            return PngOptimizer.readPng(new ByteArrayInputStream(png));
+            image = PngOptimizer.readPng(new ByteArrayInputStream(png));
         }
+        if (image != null && PngOptimizer.isRawGrayscale(image)) {
+            // Preserve PNG gray samples before getRGB()/Graphics2D applies linear-gray conversion.
+            BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            int[] pixels = ((DataBufferInt) result.getRaster().getDataBuffer()).getData();
+            PngOptimizer.readPixels(image, pixels, 0, image.getWidth());
+            return result;
+        }
+        return image;
     }
 
     private static void restoreChecksums(byte[] png) throws IOException {

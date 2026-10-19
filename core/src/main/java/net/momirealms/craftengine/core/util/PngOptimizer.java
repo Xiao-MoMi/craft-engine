@@ -154,10 +154,9 @@ public final class PngOptimizer {
         return image.getType() != BufferedImage.TYPE_CUSTOM || isRawGrayscale(image);
     }
 
-    private static boolean isRawGrayscale(BufferedImage image) {
+    static boolean isRawGrayscale(BufferedImage image) {
         ColorModel model = image.getColorModel();
-        if (!(model instanceof ComponentColorModel) || model.getColorSpace().getType() != ColorSpace.TYPE_GRAY
-                || model.isAlphaPremultiplied()) {
+        if (!(model instanceof ComponentColorModel) || model.getColorSpace().getType() != ColorSpace.TYPE_GRAY || model.isAlphaPremultiplied()) {
             return false;
         }
         int bits = model.getComponentSize(0);

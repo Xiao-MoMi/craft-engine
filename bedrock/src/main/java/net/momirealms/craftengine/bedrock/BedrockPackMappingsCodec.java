@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.LinkedHashMap;
 import java.util.TreeMap;
 
 public final class BedrockPackMappingsCodec {
@@ -49,7 +49,7 @@ public final class BedrockPackMappingsCodec {
         } catch (IllegalStateException | NumberFormatException exception) {
             throw new IOException("Invalid Bedrock mappings at " + reader.getPath(), exception);
         }
-        if (version < 1 || version > BedrockPackMappings.FORMAT_VERSION) {
+        if (version != BedrockPackMappings.FORMAT_VERSION) {
             throw new IOException("Unsupported Bedrock mappings format_version: " + version);
         }
         if (javaVersion == null || sha1 == null || items == null) {
@@ -66,8 +66,6 @@ public final class BedrockPackMappingsCodec {
         String icon = "stick";
         boolean displayHandheld = false;
         BedrockPackMappings.DisplayBlock displayBlock = null;
-        BedrockPackMappings.ItemVariant fishingRodCast = null;
-        BedrockPackMappings.CrossbowCharge crossbowCharge = null;
         reader.beginObject();
         while (reader.hasNext()) {
             switch (reader.nextName()) {
@@ -78,8 +76,6 @@ public final class BedrockPackMappingsCodec {
                 case "icon" -> icon = reader.nextString();
                 case "display_handheld" -> displayHandheld = reader.nextBoolean();
                 case "display_block" -> displayBlock = readDisplayBlock(reader);
-                case "fishing_rod_cast" -> fishingRodCast = readItemVariant(reader);
-                case "crossbow_charge" -> crossbowCharge = readCrossbowCharge(reader);
                 default -> reader.skipValue();
             }
         }
@@ -88,45 +84,7 @@ public final class BedrockPackMappingsCodec {
                 || id.isEmpty() || javaItem.isEmpty() || model.isEmpty() || bedrockIdentifier.isEmpty()) {
             throw new IOException("Incomplete Bedrock item mapping at " + reader.getPath());
         }
-        return new BedrockPackMappings.Item(id, javaItem, model, bedrockIdentifier, displayBlock == null ? icon : null, displayBlock, displayHandheld, fishingRodCast, crossbowCharge);
-    }
-
-    private static BedrockPackMappings.CrossbowCharge readCrossbowCharge(JsonReader reader) throws IOException {
-        BedrockPackMappings.ItemVariant arrow = null;
-        BedrockPackMappings.ItemVariant rocket = null;
-        reader.beginObject();
-        while (reader.hasNext()) {
-            switch (reader.nextName()) {
-                case "arrow" -> arrow = readItemVariant(reader);
-                case "rocket" -> rocket = readItemVariant(reader);
-                default -> reader.skipValue();
-            }
-        }
-        reader.endObject();
-        if (arrow == null || rocket == null) {
-            throw new IOException("Incomplete crossbow charge mapping at " + reader.getPath());
-        }
-        return new BedrockPackMappings.CrossbowCharge(arrow, rocket);
-    }
-
-    private static BedrockPackMappings.ItemVariant readItemVariant(JsonReader reader) throws IOException {
-        String identifier = null;
-        String icon = null;
-        BedrockPackMappings.DisplayBlock block = null;
-        reader.beginObject();
-        while (reader.hasNext()) {
-            switch (reader.nextName()) {
-                case "bedrock_identifier" -> identifier = reader.nextString();
-                case "icon" -> icon = reader.nextString();
-                case "display_block" -> block = readDisplayBlock(reader);
-                default -> reader.skipValue();
-            }
-        }
-        reader.endObject();
-        if (identifier == null || identifier.isEmpty() || (block == null && (icon == null || icon.isEmpty()))) {
-            throw new IOException("Incomplete item variant mapping at " + reader.getPath());
-        }
-        return new BedrockPackMappings.ItemVariant(identifier, block == null ? icon : null, block);
+        return new BedrockPackMappings.Item(id, javaItem, model, bedrockIdentifier, displayBlock == null ? icon : null, displayBlock, displayHandheld);
     }
 
     private static BedrockPackMappings.DisplayBlock readDisplayBlock(JsonReader reader) throws IOException {
@@ -177,20 +135,6 @@ public final class BedrockPackMappingsCodec {
                 writer.name("display_handheld").value(true);
             }
             writeAppearance(writer, item.icon(), item.displayBlock());
-            BedrockPackMappings.ItemVariant cast = item.fishingRodCast();
-            if (cast != null) {
-                writer.name("fishing_rod_cast");
-                writeItemVariant(writer, cast);
-            }
-            BedrockPackMappings.CrossbowCharge crossbow = item.crossbowCharge();
-            if (crossbow != null) {
-                writer.name("crossbow_charge").beginObject();
-                writer.name("arrow");
-                writeItemVariant(writer, crossbow.arrow());
-                writer.name("rocket");
-                writeItemVariant(writer, crossbow.rocket());
-                writer.endObject();
-            }
             writer.endObject();
         }
         writer.endArray();
@@ -218,10 +162,4 @@ public final class BedrockPackMappingsCodec {
         writer.endObject();
     }
 
-    private static void writeItemVariant(JsonWriter writer, BedrockPackMappings.ItemVariant variant) throws IOException {
-        writer.beginObject();
-        writer.name("bedrock_identifier").value(variant.bedrockIdentifier());
-        writeAppearance(writer, variant.icon(), variant.displayBlock());
-        writer.endObject();
-    }
 }

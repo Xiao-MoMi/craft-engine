@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
@@ -10,8 +10,10 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.JavaTextureAnimation
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.ClientPngReader;
+import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
@@ -19,8 +21,6 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class BedrockVanillaTextures {
-    private static final JsonObject RULES = readRules("vanilla_textures.json").getAsJsonObject();
+    private static final JsonObject RULES = GsonHelper.readJsonFromResource("/bedrock/vanilla_textures.json").getAsJsonObject();
     private static final List<BedrockTextureConverter> CONVERTERS = List.of(
             new BedrockLayerTextures(),
             new BedrockLayoutTextures(),
@@ -41,26 +41,13 @@ public final class BedrockVanillaTextures {
     private BedrockVanillaTextures() {
     }
 
-    static JsonElement readRules(String name) {
-        try (InputStream input = BedrockVanillaTextures.class.getResourceAsStream("/bedrock/" + name)) {
-            if (input == null) {
-                throw new IOException("Missing bundled Bedrock texture rules " + name);
-            }
-            try (InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
-                return JsonParser.parseReader(reader);
-            }
-        } catch (IOException exception) {
-            throw new IllegalStateException(exception);
-        }
-    }
-
     public static void write(JavaResourcePack pack, Path root, BedrockTextureRegistry textures) throws IOException {
         for (BedrockTextureConverter converter : CONVERTERS) {
             converter.convert(pack, root, textures);
         }
         for (Map.Entry<String, JsonElement> mapping : RULES.getAsJsonObject("textures").entrySet()) {
             String source = mapping.getKey() + ".png";
-            if (!pack.hasCustomResource(resource(source))) {
+            if (!pack.hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
                 continue;
             }
             List<BedrockTextureRule.Target> targets = new ArrayList<>();
@@ -74,8 +61,8 @@ public final class BedrockVanillaTextures {
                 continue;
             }
             BedrockTextureRule rule = new BedrockTextureRule(source, targets);
-            try (InputStream input = pack.openCustomResource(resource(source))) {
-                JsonObject metadata = pack.readResourceMetadata(resource(source));
+            try (InputStream input = pack.openCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
+                JsonObject metadata = pack.readResourceMetadata(ResourcePackUtils.vanillaTexturePath(source));
                 boolean animated = metadata != null && metadata.has("animation");
                 byte[] bytes = input.readAllBytes();
                 BedrockTextureAtlas.TextureData data = null;
@@ -108,13 +95,9 @@ public final class BedrockVanillaTextures {
                     }
                 }
             } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
-                warn(source, exception);
+                CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + source + ": " + exception.getMessage());
             }
         }
-    }
-
-    static String resource(String texture) {
-        return "assets/minecraft/textures/" + texture;
     }
 
     static BedrockTextureRule.Target target(String path) {
@@ -132,7 +115,7 @@ public final class BedrockVanillaTextures {
     }
 
     static BedrockTextureAtlas.TextureData load(JavaResourcePack pack, String source) throws IOException {
-        String path = resource(source);
+        String path = ResourcePackUtils.vanillaTexturePath(source);
         try (InputStream input = pack.openResource(path)) {
             if (input == null) {
                 throw new IOException("Missing texture " + source);
@@ -154,25 +137,32 @@ public final class BedrockVanillaTextures {
         transform(pack, root, textures, output, sources, false, transform);
     }
 
-    static void transform(JavaResourcePack pack, Path root, BedrockTextureRegistry textures, String output,
-                          List<String> sources, boolean changed, Function<List<BufferedImage>, BufferedImage> transform) {
-        for (String source : sources) {
-            if (pack.hasCustomResource(resource(source))) {
-                changed = true;
-                break;
+    static void transform(JavaResourcePack pack,
+                          Path root,
+                          BedrockTextureRegistry textures,
+                          String output,
+                          List<String> sources,
+                          boolean changed,
+                          Function<List<BufferedImage>, BufferedImage> transform) {
+        if (!changed) {
+            for (String source : sources) {
+                if (pack.hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
+                    changed = true;
+                    break;
+                }
+            }
+            if (!changed) {
+                return;
             }
         }
-        if (!changed) {
-            return;
-        }
         try {
-            List<BedrockTextureAtlas.TextureData> inputs = new ArrayList<>(sources.size());
+            List<BedrockTextureAtlas.TextureData> inputs = new ObjectArrayList<>(sources.size());
             for (String source : sources) {
                 inputs.add(load(pack, source));
             }
             writeFrames(root, textures, String.join(", ", sources), target(output), inputs, transform);
         } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
-            warn(output, exception);
+            CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + output + ": " + exception.getMessage());
         }
     }
 
@@ -301,7 +291,4 @@ public final class BedrockVanillaTextures {
         return first;
     }
 
-    static void warn(String source, Exception exception) {
-        CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + source + ": " + exception.getMessage());
-    }
 }

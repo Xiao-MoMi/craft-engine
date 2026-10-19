@@ -34,7 +34,7 @@ public final class BaseItemModel implements ItemModel {
     private final Transformation transformation;
 
     public BaseItemModel(@NotNull Key path,
-                         @Nullable List<Tint> tints,
+                         @NotNull List<Tint> tints,
                          @Nullable Transformation transformation) {
         this.path = path;
         this.tints = tints;
@@ -50,7 +50,7 @@ public final class BaseItemModel implements ItemModel {
         this(path, tints, null);
     }
 
-    @Nullable
+    @NotNull
     public List<Tint> tints() {
         return this.tints;
     }

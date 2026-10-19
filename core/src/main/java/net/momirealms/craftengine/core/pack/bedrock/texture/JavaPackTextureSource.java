@@ -80,7 +80,7 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
         if (atlas != null) {
             return atlas;
         }
-        atlas = new Atlas(this.pack.readAtlas("assets/" + id.namespace() + "/atlases/" + id.value() + ".json"));
+        atlas = new Atlas(this.pack.readAtlas(id));
         this.atlases.put(id, atlas);
         return atlas;
     }

@@ -44,9 +44,8 @@ public final class BedrockItemRendering {
         return colors;
     }
 
-    public static boolean displayHandheld(Key itemModel, BedrockItemSources sources) {
-        BedrockItemSource item = sources.findItemByModel(itemModel);
-        if (item == null || !item.javaItem().namespace().equals("minecraft")) {
+    public static boolean displayHandheld(BedrockItemSource item) {
+        if (!item.javaItem().namespace().equals("minecraft")) {
             return false;
         }
         return switch (item.javaItem().value()) {

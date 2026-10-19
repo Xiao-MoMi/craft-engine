@@ -29,18 +29,13 @@ public final class BedrockItemWriter {
 
     public static Output write(BedrockModelConverter.Result model, Key identifier, Path packRoot,
                                List<BedrockAnimatedTextures.Track> tracks) throws IOException {
-        Resources resources = writeResources(model, identifier, packRoot, tracks, "", false);
+        Resources resources = writeResources(model, identifier, packRoot, tracks, "");
         Path attachablePath = writeAttachable(identifier, identifier, model.geometry().identifier(), packRoot, tracks);
         return new Output(resources.geometry(), resources.texture(), resources.animations(), attachablePath);
     }
 
     static Resources writeResources(BedrockModelConverter.Result model, Key identifier, Path packRoot,
-                                    List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow) throws IOException {
-        return writeResources(model, identifier, packRoot, tracks, bonePrefix, bow, null);
-    }
-
-    static Resources writeResources(BedrockModelConverter.Result model, Key identifier, Path packRoot,
-                                    List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow, BedrockWeaponDisplay weapon) throws IOException {
+                                    List<BedrockAnimatedTextures.Track> tracks, String bonePrefix) throws IOException {
         String resource = identifier.namespace() + '/' + identifier.value();
         String texture = "textures/" + resource;
         String animationPrefix = "animation." + identifier.namespace() + "." + identifier.value() + ".";
@@ -50,11 +45,11 @@ public final class BedrockItemWriter {
         Path animationsPath = packRoot.resolve("animations/" + resource + ".animation.json");
         BedrockGeometry geometry = model.geometry();
         BedrockGeometry held = tracks.isEmpty() ? geometry : BedrockAnimatedItem.select(geometry, null, geometry.identifier(), geometry.textureWidth(), geometry.textureHeight());
-        BedrockGeometry.Bounds bounds = weapon == null ? BedrockItemDisplay.bounds(geometry, transforms, bow) : weapon.bounds(geometry, transforms);
-        BedrockGeometryWriter.write(model, geometryPath, texturePath, weapon == null ? BedrockItemDisplay.rig(held, bonePrefix, bow) : weapon.rig(held, bonePrefix), bounds);
-        BedrockAnimatedItem.write(geometry, bounds, tracks, packRoot, bonePrefix, bow, weapon);
+        BedrockGeometry.Bounds bounds = BedrockItemDisplay.bounds(geometry, transforms);
+        BedrockGeometryWriter.write(model, geometryPath, texturePath, BedrockItemDisplay.rig(held, bonePrefix), bounds);
+        BedrockAnimatedItem.write(geometry, bounds, tracks, packRoot, bonePrefix);
         Files.createDirectories(animationsPath.getParent());
-        GsonHelper.writeJsonFile(animations(transforms, animationPrefix, tracks, bonePrefix, bow, weapon), animationsPath);
+        GsonHelper.writeJsonFile(animations(transforms, animationPrefix, tracks, bonePrefix), animationsPath);
         return new Resources(geometryPath, texturePath, animationsPath);
     }
 
@@ -75,20 +70,14 @@ public final class BedrockItemWriter {
     }
 
     private static JsonObject animations(Map<BedrockItemDisplay.View, BedrockItemDisplay.Transform> transforms, String prefix,
-                                         List<BedrockAnimatedTextures.Track> tracks, String bonePrefix, boolean bow, BedrockWeaponDisplay weapon) {
+                                         List<BedrockAnimatedTextures.Track> tracks, String bonePrefix) {
         JsonObject animations = new JsonObject();
         for (BedrockItemDisplay.View view : BedrockItemDisplay.VIEWS) {
             BedrockItemDisplay.Transform transform = transforms.get(view);
-            boolean bowHand = bow && view == BedrockItemDisplay.View.FIRST_PERSON_RIGHT;
-            JsonObject slot;
-            if (bowHand) {
-                slot = BedrockBowDisplay.model();
-            } else {
-                slot = new JsonObject();
-                slot.add("rotation", VectorUtils.toJson(view.pose.rotation()));
-                slot.add("position", VectorUtils.toJson(view.pose.position()));
-                slot.add("scale", VectorUtils.toJson(view.pose.scale()));
-            }
+            JsonObject slot = new JsonObject();
+            slot.add("rotation", VectorUtils.toJson(view.pose.rotation()));
+            slot.add("position", VectorUtils.toJson(view.pose.position()));
+            slot.add("scale", VectorUtils.toJson(view.pose.scale()));
             JsonObject x = new JsonObject();
             x.add("position", VectorUtils.toJson(transform.translation()));
             x.add("rotation", axisRotation(0, transform.rotation().x()));
@@ -98,14 +87,7 @@ public final class BedrockItemWriter {
             z.add("rotation", axisRotation(2, transform.rotation().z()));
             z.add("scale", VectorUtils.toJson(transform.scale()));
             JsonObject bones = new JsonObject();
-            if (bowHand) {
-                addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.BOW_POSE_BONE, BedrockBowDisplay.pose(), tracks);
-            }
-            if (weapon == null) {
-                addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.SLOT_BONE, slot, tracks);
-            } else {
-                weapon.animate(bones, view, bonePrefix, tracks);
-            }
+            addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.SLOT_BONE, slot, tracks);
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.X_BONE, x, tracks);
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.Y_BONE, y, tracks);
             addBoneAnimation(bones, bonePrefix, BedrockItemDisplay.Z_BONE, z, tracks);

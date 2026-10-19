@@ -38,11 +38,11 @@ public record BedrockItemSource(Key id,
     public static List<BedrockItemSource> collect(Collection<ItemDefinition> definitions, Map<Key, Key> mappings) {
         List<BedrockItemSource> items = new ArrayList<>();
         for (ItemDefinition definition : definitions) {
-            if (definition.isVanillaItem()) {
-                continue;
-            }
             Key model = findItemModel(definition.processors(), null);
             model = findItemModel(definition.clientBoundProcessors(), model);
+            if (model == null && definition.isVanillaItem()) {
+                model = definition.id();
+            }
             if (model != null) {
                 items.add(new BedrockItemSource(definition.id(), definition.clientBoundMaterial(), mappings.getOrDefault(model, model), definition));
             }

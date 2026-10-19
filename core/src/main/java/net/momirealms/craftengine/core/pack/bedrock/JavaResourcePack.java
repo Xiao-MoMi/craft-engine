@@ -6,10 +6,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
-import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.IndexedZipFile;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModels;
+import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -22,13 +22,16 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
+// 单版本、去除overlay后的资源包视图
 public final class JavaResourcePack {
     private static final int MAX_PATH = 260;
     private final MinecraftVersion version;
@@ -123,7 +126,28 @@ public final class JavaResourcePack {
         return readJson(this.resolveResource(path));
     }
 
-    public List<JsonObject> readAtlas(String path) throws IOException {
+    @Nullable
+    public JsonObject readItemDefinitionJson(Key key) throws IOException {
+        return this.readJson(ResourcePackUtils.itemDefinitionPath(key));
+    }
+
+    @Nullable
+    public ItemModel readItemDefinition(Key key) throws IOException {
+        JsonObject definition = this.readItemDefinitionJson(key);
+        if (definition == null || !(definition.get("model") instanceof JsonObject model)) {
+            return null;
+        }
+        return ItemModels.fromJson(model);
+    }
+
+    @Nullable
+    public ModernItemModel readModernItemModel(Key key) throws IOException {
+        JsonObject definition = this.readItemDefinitionJson(key);
+        return definition == null ? null : ModernItemModel.fromJson(definition);
+    }
+
+    public List<JsonObject> readAtlas(Key atlas) throws IOException {
+        String path = "assets/" + atlas.namespace() + "/atlases/" + atlas.value() + ".json";
         List<JsonObject> sources = new ObjectArrayList<>(2);
         JsonObject vanilla = readJson(this.vanillaRoot.resolve(path));
         if (vanilla != null) {
@@ -152,6 +176,30 @@ public final class JavaResourcePack {
 
     public MinecraftVersion version() {
         return this.version;
+    }
+
+    public List<Key> itemDefinitions() throws IOException {
+        List<Key> definitions = new ArrayList<>();
+        Path assets = this.root.resolve("assets");
+        if (!Files.isDirectory(assets)) {
+            return definitions;
+        }
+        try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(assets)) {
+            for (Path namespace : namespaces) {
+                Path items = namespace.resolve("items");
+                if (!Files.isDirectory(items)) {
+                    continue;
+                }
+                try (Stream<Path> files = Files.walk(items)) {
+                    for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
+                        String path = CharacterUtils.replaceBackslashWithSlash(items.relativize(file).toString());
+                        definitions.add(Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5)));
+                    }
+                }
+            }
+        }
+        definitions.sort(Comparator.comparing(Key::asString));
+        return definitions;
     }
 
     public Set<String> languageResources() throws IOException {

@@ -1,15 +1,12 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
-import net.momirealms.craftengine.core.pack.model.definition.ItemModels;
+import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.GrassTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
-import net.momirealms.craftengine.core.util.ClientPngReader;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.PngOptimizer;
+import net.momirealms.craftengine.core.util.*;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -24,25 +21,24 @@ final class JavaItemTintSource {
         this.pack = pack;
     }
 
-    Color read(String item) throws IOException {
-        Key key = Key.of(item);
-        String path = "assets/" + key.namespace() + "/items/" + key.value() + ".json";
-        JsonObject definition = this.pack.readJson(path);
+    TintResult read(Key key, int tintIndex) throws IOException {
+        ItemModel definition = this.pack.readItemDefinition(key);
         if (definition == null) {
             return null;
         }
-        if (!(ItemModels.fromJson(definition.getAsJsonObject("model")) instanceof BaseItemModel model)) {
-            throw new IOException("Expected a static item model for " + item);
+        if (!(definition instanceof BaseItemModel model)) {
+            throw new IOException("Expected a static item model for " + key);
         }
-        boolean changed = this.pack.hasCustomResource(path);
-        if (model.tints().isEmpty()) {
-            return new Color(0xffffff, changed);
+        // 是否覆写过了
+        boolean changed = this.pack.hasCustomResource(ResourcePackUtils.itemDefinitionPath(key));
+        // 没有对应的着色源时，不改变贴图颜色
+        if (tintIndex < 0 || tintIndex >= model.tints().size()) {
+            return new TintResult(new Color(0xffffff), changed);
         }
-        Tint tint = model.tints().getFirst();
+        Tint tint = model.tints().get(tintIndex);
         if (tint instanceof ConstantTint constant) {
-            int color = constant.value().map(value -> value & 0xffffff,
-                    value -> ((int) (value.get(0) * 255) << 16) | ((int) (value.get(1) * 255) << 8) | (int) (value.get(2) * 255));
-            return new Color(color, changed);
+            int color = constant.value().map(value -> value & 0xffffff, value -> ((int) (value.get(0) * 255) << 16) | ((int) (value.get(1) * 255) << 8) | (int) (value.get(2) * 255));
+            return new TintResult(new Color(color), changed);
         }
         if (tint instanceof GrassTint grass) {
             double temperature = grass.temperature();
@@ -63,12 +59,11 @@ final class JavaItemTintSource {
             downfall *= temperature;
             int x = (int) ((1 - temperature) * 255);
             int y = (int) ((1 - downfall) * 255);
-            return new Color(this.grassColormap[(y << 8) | x] & 0xffffff,
-                    changed || this.pack.hasCustomResource(GRASS_COLORMAP));
+            return new TintResult(new Color(this.grassColormap[(y << 8) | x] & 0xffffff), changed || this.pack.hasCustomResource(GRASS_COLORMAP));
         }
-        throw new IOException("Unsupported item tint for " + item + ": " + tint.get().get("type").getAsString());
+        throw new IOException("Unsupported item tint for " + key + " at index " + tintIndex + ": " + tint.get().get("type").getAsString());
     }
 
-    record Color(int value, boolean changed) {
+    record TintResult(Color color, boolean changed) {
     }
 }

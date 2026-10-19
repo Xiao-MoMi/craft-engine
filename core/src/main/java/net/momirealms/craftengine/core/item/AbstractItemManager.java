@@ -1015,14 +1015,14 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     ) {
         if (model.property() instanceof LegacyModelPredicate predicate) {
             String predicateId = predicate.legacyPredicateId(materialId);
-            for (Map.Entry<Float, ItemModel> entry : model.entries().entrySet()) {
+            for (RangeDispatchItemModel.Entry entry : model.entries()) {
                 Map<String, Object> merged = mergePredicates(
                         parentPredicates,
                         predicateId,
-                        predicate.toLegacyValue(entry.getKey())
+                        predicate.toLegacyValue(entry.threshold())
                 );
                 processModelRecursively(
-                        entry.getValue(),
+                        entry.model(),
                         merged,
                         resultList,
                         materialId,

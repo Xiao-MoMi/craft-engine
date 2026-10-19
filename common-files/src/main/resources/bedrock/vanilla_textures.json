@@ -2457,7 +2457,6 @@
     "item/wither_skeleton_spawn_egg": ["textures/items/spawn_eggs/spawn_egg_wither_skeleton.png"],
     "item/wither_spawn_egg": ["textures/items/spawn_eggs/spawn_egg_wither.png"],
     "item/wolf_armor": ["textures/items/wolf_armor.png"],
-    "item/wolf_armor_overlay": ["textures/items/wolf_armor_dyed.png"],
     "item/wolf_spawn_egg": ["textures/items/spawn_eggs/spawn_egg_wolf.png"],
     "item/wooden_axe": ["textures/items/wood_axe.png"],
     "item/wooden_hoe": ["textures/items/wood_hoe.png"],

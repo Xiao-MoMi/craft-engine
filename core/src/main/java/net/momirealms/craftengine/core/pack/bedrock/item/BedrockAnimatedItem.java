@@ -41,13 +41,13 @@ final class BedrockAnimatedItem {
     }
 
     static void write(BedrockGeometry geometry, BedrockGeometry.Bounds bounds, List<BedrockAnimatedTextures.Track> tracks,
-                      Path root, String prefix, boolean bow, BedrockWeaponDisplay weapon) throws IOException {
+                      Path root, String prefix) throws IOException {
         for (BedrockAnimatedTextures.Track track : tracks) {
             BedrockGeometry part = select(geometry, track.material(), geometry.identifier() + '.' + track.material(), track.size(), track.size());
             Path path = root.resolve("models/entity/ce_anim/" + track.resource() + ".geo.json");
             Files.createDirectories(path.getParent());
             String bonePrefix = prefix + track.material() + '_';
-            GsonHelper.writeJsonFile(BedrockGeometryWriter.toJson(part, weapon == null ? BedrockItemDisplay.rig(part, bonePrefix, bow) : weapon.rig(part, bonePrefix), bounds), path);
+            GsonHelper.writeJsonFile(BedrockGeometryWriter.toJson(part, BedrockItemDisplay.rig(part, bonePrefix), bounds), path);
             JsonArray frames = new JsonArray();
             for (int index = 0; index < track.frames().size(); index++) {
                 frames.add("Texture." + prefix + track.material() + '_' + index);
