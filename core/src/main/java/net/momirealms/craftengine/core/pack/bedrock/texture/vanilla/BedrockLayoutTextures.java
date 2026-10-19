@@ -43,6 +43,12 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
 
     @Override
     public void convert(BedrockConversionContext context) {
+        BedrockVanillaTextures.transform(
+                context,
+                "textures/blocks/bamboo_fence_gate.png",
+                List.of("block/bamboo_fence_gate.png"),
+                images -> this.bambooFenceGate(images.getFirst())
+        );
         for (String name : List.of(
                 "normal",
                 "trapped",
@@ -174,8 +180,21 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     this::bed
             );
         }
-        for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove",
-                "cherry", "bamboo", "crimson", "warped", "pale_oak", "poplar")) {
+        for (String wood : List.of(
+                "oak",
+                "spruce",
+                "birch",
+                "jungle",
+                "acacia",
+                "dark_oak",
+                "mangrove",
+                "cherry",
+                "bamboo",
+                "crimson",
+                "warped",
+                "pale_oak",
+                "poplar"
+        )) {
             String target = switch (wood) {
                 case "oak" -> "sign";
                 case "dark_oak" -> "sign_darkoak";
@@ -195,6 +214,35 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     images -> this.sign(images.getFirst(), true)
             );
         }
+    }
+
+    private BufferedImage bambooFenceGate(BufferedImage source) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        // 基岩版将外侧立柱、横梁和两根内侧立柱分开采样，不能直接使用 Java 的整张门面布局。
+        // 按原版 16×16 坐标搬运像素，保留高清细节和 alpha，未使用的区域保持透明。
+        for (int y = 0; y < height * 13 / 16; y++) {
+            for (int x = 0; x < width * 13 / 16; x++) {
+                int sourceX;
+                if (x < width * 2 / 16) {
+                    sourceX = x;
+                } else if (x >= width * 3 / 16 && x < width * 7 / 16
+                        && ((y >= height / 16 && y < height * 6 / 16)
+                        || (y >= height * 9 / 16 && y < height * 12 / 16))) {
+                    sourceX = x - width / 16;
+                } else if (x >= width * 8 / 16 && x < width * 10 / 16
+                        && y >= height / 16 && y < height * 12 / 16) {
+                    sourceX = x - width * 2 / 16;
+                } else if (x >= width * 11 / 16 && y >= height / 16 && y < height * 12 / 16) {
+                    sourceX = x - width * 3 / 16;
+                } else {
+                    continue;
+                }
+                result.setRGB(x, y, source.getRGB(sourceX, y));
+            }
+        }
+        return result;
     }
 
     private BufferedImage sign(BufferedImage source, boolean hanging) {

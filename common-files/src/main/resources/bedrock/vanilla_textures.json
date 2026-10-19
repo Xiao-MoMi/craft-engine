@@ -31,7 +31,6 @@
     "block/bamboo_door_bottom": ["textures/blocks/bamboo_door_bottom.png"],
     "block/bamboo_door_top": ["textures/blocks/bamboo_door_top.png"],
     "block/bamboo_fence": ["textures/blocks/bamboo_fence.png"],
-    "block/bamboo_fence_gate": ["textures/blocks/bamboo_fence_gate.png"],
     "block/bamboo_large_leaves": ["textures/blocks/bamboo_leaf.png"],
     "block/bamboo_mosaic": ["textures/blocks/bamboo_mosaic.png"],
     "block/bamboo_planks": ["textures/blocks/bamboo_planks.png"],
