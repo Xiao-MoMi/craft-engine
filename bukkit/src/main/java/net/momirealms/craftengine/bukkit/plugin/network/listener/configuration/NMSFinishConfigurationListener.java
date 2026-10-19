@@ -4,6 +4,7 @@ import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
@@ -84,6 +85,7 @@ public final class NMSFinishConfigurationListener implements NMSPacketListener {
                 return;
             }
             user.addResourcePackTasks(dataList);
+            Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText() + " PACK_TASKS_QUEUED count=" + dataList.size());
             // 最后再加入一个 JoinWorldTask 并开始资源包任务
             returnToWorld(tasks, packetListener);
         }));
