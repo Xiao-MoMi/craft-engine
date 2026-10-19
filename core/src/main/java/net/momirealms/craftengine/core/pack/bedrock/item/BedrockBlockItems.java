@@ -4,10 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
 import net.momirealms.craftengine.core.item.setting.value.BedrockOptions;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockBlockItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockAnimatedTextures;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -26,23 +26,23 @@ import java.util.List;
 import java.util.Map;
 
 public final class BedrockBlockItems {
-    private final BedrockTextureRegistry textures;
+    private final BedrockConversionContext context;
     private final JsonObject blocks = new JsonObject();
 
-    public BedrockBlockItems(BedrockTextureRegistry textures) {
-        this.textures = textures;
+    public BedrockBlockItems(BedrockConversionContext context) {
+        this.context = context;
     }
 
-    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root) throws IOException {
-        return this.write(converted, resource, root, List.of());
+    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource) throws IOException {
+        return this.write(converted, resource, List.of());
     }
 
-    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root,
+    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource,
                                                 List<BedrockAnimatedTextures.Track> animations) throws IOException {
-        return this.write(converted, resource, root, animations, true);
+        return this.write(converted, resource, animations, true);
     }
 
-    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource, Path root,
+    public BedrockPackMappings.DisplayBlock write(BedrockModelConverter.Result converted, Key resource,
                                                 List<BedrockAnimatedTextures.Track> animations, boolean held) throws IOException {
         String name = "ce_item_" + HashUtils.sha1(resource.asString().getBytes(StandardCharsets.UTF_8));
         String identifier = "geometry." + name;
@@ -50,7 +50,7 @@ public final class BedrockBlockItems {
         int textureWidth = Math.max(image.getWidth(), image.getHeight());
         int textureHeight = animations.isEmpty() ? image.getHeight() : textureWidth;
         JsonObject geometry = BedrockBlockItemModel.convert(converted, identifier, textureWidth, textureHeight, held);
-        Path path = root.resolve("models/blocks/" + name + ".geo.json");
+        Path path = this.context.root().resolve("models/blocks/" + name + ".geo.json");
         Files.createDirectories(path.getParent());
         GsonHelper.writeJsonFile(geometry, path);
         String texturePath = "textures/" + resource.namespace() + '/' + resource.value();
@@ -62,20 +62,20 @@ public final class BedrockBlockItems {
             texturePath = "textures/ce_blocks/" + name;
             image = padded;
         }
-        Path textureFile = root.resolve(texturePath + ".png");
+        Path textureFile = this.context.root().resolve(texturePath + ".png");
         Files.createDirectories(textureFile.getParent());
         try (OutputStream output = Files.newOutputStream(textureFile)) {
             new PngOptimizer(image, 0).write(output);
         }
-        this.textures.terrain(name, texturePath);
+        this.context.textures().terrain(name, texturePath);
         JsonObject block = new JsonObject();
         block.addProperty("sound", "wood");
         this.blocks.add("geyser_custom:" + name, block);
         Map<String, String> materials = animations.isEmpty() ? Map.of() : new LinkedHashMap<>();
         for (BedrockAnimatedTextures.Track animation : animations) {
-            this.textures.terrain(animation.texture(), animation.strip());
+            this.context.textures().terrain(animation.texture(), animation.strip());
             materials.put(animation.material(), animation.texture());
-            this.textures.flipbook(animation.texture(), -1, animation.strip(), animation.interval());
+            this.context.textures().flipbook(animation.texture(), -1, animation.strip(), animation.interval());
         }
         return new BedrockPackMappings.DisplayBlock(name, identifier, name, materials);
     }
@@ -94,7 +94,7 @@ public final class BedrockBlockItems {
         return new BedrockPackMappings.DisplayBlock(name, display.geometry(), display.texture(), display.materials(), options.renderMethod());
     }
 
-    public void writeBlocks(Path root) throws IOException {
+    public void writeBlocks() throws IOException {
         if (this.isEmpty()) {
             return;
         }
@@ -103,6 +103,6 @@ public final class BedrockBlockItems {
         version.add(1);
         version.add(0);
         this.blocks.add("format_version", version);
-        GsonHelper.writeJsonFile(this.blocks, root.resolve("blocks.json"));
+        GsonHelper.writeJsonFile(this.blocks, this.context.root().resolve("blocks.json"));
     }
 }

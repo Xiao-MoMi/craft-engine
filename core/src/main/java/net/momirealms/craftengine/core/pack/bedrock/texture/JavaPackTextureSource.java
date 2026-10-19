@@ -13,7 +13,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureSource {
+public final class JavaPackTextureSource implements TextureSource {
     private static final Key BLOCKS = Key.minecraft("blocks");
     private static final Key ITEMS = Key.minecraft("items");
     private final JavaResourcePack pack;
@@ -24,12 +24,12 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
     }
 
     @Override
-    public BufferedImage read(BedrockTextureAtlas.TextureId texture) throws IOException {
+    public BufferedImage read(TextureId texture) throws IOException {
         return this.load(texture).image();
     }
 
     @Override
-    public BedrockTextureAtlas.TextureData load(BedrockTextureAtlas.TextureId texture) throws IOException {
+    public TextureData load(TextureId texture) throws IOException {
         Key atlasId = texture.atlas();
         if (atlasId == null) {
             atlasId = this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11) ? ITEMS : BLOCKS;
@@ -68,7 +68,7 @@ public final class JavaPackTextureSource implements BedrockTextureAtlas.TextureS
                 if (width <= 0 || height <= 0 || x < 0 || y < 0 || x > image.getWidth() - width || y > image.getHeight() - height) {
                     throw new IOException("Invalid unstitch region for sprite " + texture.sprite());
                 }
-                return new BedrockTextureAtlas.TextureData(image.getSubimage(x, y, width, height), null);
+                return new TextureData(image.getSubimage(x, y, width, height), null);
             }
             return JavaTextureAnimation.read(image, this.pack.readResourceMetadata(path), this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
         }

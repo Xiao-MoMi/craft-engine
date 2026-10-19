@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
+import net.momirealms.craftengine.core.pack.bedrock.texture.Region;
 
 final class ItemIconRasterizer {
     private final int size;
@@ -23,7 +23,7 @@ final class ItemIconRasterizer {
         return image;
     }
 
-    void triangle(Vertex a, Vertex b, Vertex c, BufferedImage texture, BedrockTextureAtlas.Region region, float light) {
+    void triangle(Vertex a, Vertex b, Vertex c, BufferedImage texture, Region region, float light) {
         float area = edge(a, b, c.x, c.y);
         // GUI projection flips Y: front-facing triangles have clockwise screen winding.
         if (area >= 0) {

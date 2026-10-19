@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelConverter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaItemIconRenderer;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;
 
@@ -15,23 +15,23 @@ import java.util.List;
 
 public final class BedrockItemIcons {
     private final JavaItemIconRenderer renderer;
-    private final BedrockTextureRegistry textures;
+    private final BedrockConversionContext context;
 
-    public BedrockItemIcons(int size, BedrockTextureRegistry textures) {
-        this.textures = textures;
+    public BedrockItemIcons(int size, BedrockConversionContext context) {
+        this.context = context;
         this.renderer = new JavaItemIconRenderer(size);
     }
 
-    public String write(BedrockModelConverter.Result model, Key resource, List<Integer> tints, Path root) throws IOException {
+    public String write(BedrockModelConverter.Result model, Key resource, List<Integer> tints) throws IOException {
         String icon = resource.asString();
         String texture = "textures/craftengine_icons/" + resource.namespace() + '/' + resource.value();
-        Path path = root.resolve(texture + ".png");
+        Path path = this.context.root().resolve(texture + ".png");
         Files.createDirectories(path.getParent());
         BufferedImage image = this.renderer.render(model.source(), model.atlas(), tints);
         try (OutputStream output = Files.newOutputStream(path)) {
             new PngOptimizer(image, 0).write(output);
         }
-        this.textures.item(icon, texture);
+        this.context.textures().item(icon, texture);
         return icon;
     }
 

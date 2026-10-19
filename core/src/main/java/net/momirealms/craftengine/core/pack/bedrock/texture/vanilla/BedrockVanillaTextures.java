@@ -3,16 +3,16 @@ package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaTextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.awt.AlphaComposite;
@@ -33,7 +33,6 @@ public final class BedrockVanillaTextures {
     private static final List<BedrockTextureConverter> CONVERTERS = List.of(
             new BedrockLayerTextures(),
             new BedrockLayoutTextures(),
-            new BedrockBedTextures(),
             new BedrockAtlasTextures(),
             new BedrockUiTextures()
     );
@@ -41,19 +40,19 @@ public final class BedrockVanillaTextures {
     private BedrockVanillaTextures() {
     }
 
-    public static void write(JavaResourcePack pack, Path root, BedrockTextureRegistry textures) throws IOException {
+    public static void write(BedrockConversionContext context) throws IOException {
         for (BedrockTextureConverter converter : CONVERTERS) {
-            converter.convert(pack, root, textures);
+            converter.convert(context);
         }
         for (Map.Entry<String, JsonElement> mapping : RULES.getAsJsonObject("textures").entrySet()) {
             String source = mapping.getKey() + ".png";
-            if (!pack.hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
+            if (!context.pack().hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
                 continue;
             }
             List<BedrockTextureRule.Target> targets = new ArrayList<>();
             for (JsonElement destination : mapping.getValue().getAsJsonArray()) {
                 String path = destination.getAsString();
-                if (!textures.contains(path)) {
+                if (!context.textures().contains(path)) {
                     targets.add(target(path));
                 }
             }
@@ -61,36 +60,36 @@ public final class BedrockVanillaTextures {
                 continue;
             }
             BedrockTextureRule rule = new BedrockTextureRule(source, targets);
-            try (InputStream input = pack.openCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
-                JsonObject metadata = pack.readResourceMetadata(ResourcePackUtils.vanillaTexturePath(source));
+            try (InputStream input = context.pack().openCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
+                JsonObject metadata = context.pack().readResourceMetadata(ResourcePackUtils.vanillaTexturePath(source));
                 boolean animated = metadata != null && metadata.has("animation");
                 byte[] bytes = input.readAllBytes();
-                BedrockTextureAtlas.TextureData data = null;
+                TextureData data = null;
                 BufferedImage image = null;
                 for (BedrockTextureRule.Target target : rule.targets()) {
                     if (!animated) {
-                        if (textures.claim(target.path(), source)) {
+                        if (context.textures().claim(target.path(), source)) {
                             JsonObject tga = RULES.getAsJsonObject("tga").getAsJsonObject(target.path());
                             if (tga != null) {
                                 if (image == null) {
-                                    image = readImage(new ByteArrayInputStream(bytes), source);
+                                    image = ClientPngReader.read(new ByteArrayInputStream(bytes));
                                 }
-                                ImageUtils.writeTga(image, root.resolve(tga.get("path").getAsString()));
+                                ImageUtils.writeTga(image, context.root().resolve(tga.get("path").getAsString()));
                                 if (!tga.get("keep").getAsBoolean()) {
                                     continue;
                                 }
                             }
-                            Path file = root.resolve(target.path());
+                            Path file = context.root().resolve(target.path());
                             Files.createDirectories(file.getParent());
                             Files.write(file, bytes);
                         }
                     } else {
                         if (data == null) {
-                            data = JavaTextureAnimation.read(readImage(new ByteArrayInputStream(bytes), source), metadata,
-                                    pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
+                            data = JavaTextureAnimation.read(ClientPngReader.read(new ByteArrayInputStream(bytes)), metadata,
+                                    context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
                         }
-                        if (!writeKeyFrames(root, textures, source, target, data.animation())) {
-                            writeFrames(root, textures, source, target, List.of(data), images -> images.getFirst());
+                        if (!writeKeyFrames(context, source, target, data.animation())) {
+                            writeFrames(context, source, target, List.of(data), List::getFirst);
                         }
                     }
                 }
@@ -114,39 +113,35 @@ public final class BedrockVanillaTextures {
         return new BedrockTextureRule.Target(path, tiles);
     }
 
-    static BedrockTextureAtlas.TextureData load(JavaResourcePack pack, String source) throws IOException {
+    static TextureData load(BedrockConversionContext context, String source) throws IOException {
         String path = ResourcePackUtils.vanillaTexturePath(source);
-        try (InputStream input = pack.openResource(path)) {
+        try (InputStream input = context.pack().openResource(path)) {
             if (input == null) {
                 throw new IOException("Missing texture " + source);
             }
-            return JavaTextureAnimation.read(readImage(input, source), pack.readResourceMetadata(path), pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
+            return JavaTextureAnimation.read(
+                    ClientPngReader.read(input),
+                    context.pack().readResourceMetadata(path),
+                    context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11)
+            );
         }
     }
 
-    private static BufferedImage readImage(InputStream input, String source) throws IOException {
-        BufferedImage image = ClientPngReader.read(input);
-        if (image == null) {
-            throw new IOException("Invalid PNG " + source);
-        }
-        return image;
+    static void transform(BedrockConversionContext context,
+                          String output,
+                          List<String> sources,
+                          Function<List<BufferedImage>, BufferedImage> transform) {
+        transform(context, output, sources, false, transform);
     }
 
-    static void transform(JavaResourcePack pack, Path root, BedrockTextureRegistry textures, String output,
-                          List<String> sources, Function<List<BufferedImage>, BufferedImage> transform) {
-        transform(pack, root, textures, output, sources, false, transform);
-    }
-
-    static void transform(JavaResourcePack pack,
-                          Path root,
-                          BedrockTextureRegistry textures,
+    static void transform(BedrockConversionContext context,
                           String output,
                           List<String> sources,
                           boolean changed,
                           Function<List<BufferedImage>, BufferedImage> transform) {
         if (!changed) {
             for (String source : sources) {
-                if (pack.hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
+                if (context.pack().hasCustomResource(ResourcePackUtils.vanillaTexturePath(source))) {
                     changed = true;
                     break;
                 }
@@ -156,18 +151,20 @@ public final class BedrockVanillaTextures {
             }
         }
         try {
-            List<BedrockTextureAtlas.TextureData> inputs = new ObjectArrayList<>(sources.size());
+            List<TextureData> inputs = new ObjectArrayList<>(sources.size());
             for (String source : sources) {
-                inputs.add(load(pack, source));
+                inputs.add(load(context, source));
             }
-            writeFrames(root, textures, String.join(", ", sources), target(output), inputs, transform);
+            writeFrames(context, String.join(", ", sources), target(output), inputs, transform);
         } catch (IOException | IllegalArgumentException | ArithmeticException exception) {
             CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + output + ": " + exception.getMessage());
         }
     }
 
-    private static boolean writeKeyFrames(Path root, BedrockTextureRegistry textures, String owner,
-                                          BedrockTextureRule.Target target, TextureAnimation animation) throws IOException {
+    private static boolean writeKeyFrames(BedrockConversionContext context,
+                                          String owner,
+                                          BedrockTextureRule.Target target,
+                                          TextureAnimation animation) throws IOException {
         if (animation == null || target.tiles().isEmpty() || animation.width() != animation.height()) {
             return false;
         }
@@ -176,9 +173,9 @@ public final class BedrockVanillaTextures {
             if (animation.interpolate() && frame.time() != interval) {
                 return false;
             }
-            interval = gcd(interval, frame.time());
+            interval = MiscUtils.gcd(interval, frame.time());
         }
-        // Keep timed key frames instead of expanding long interpolations into oversized textures.
+        // Keep timed key frames instead of expanding long interpolations into oversized context.textures().
         BufferedImage strip = animation.sheet();
         int columns = strip.getWidth() / animation.width();
         if (columns != 1) {
@@ -197,7 +194,7 @@ public final class BedrockVanillaTextures {
                 graphics.dispose();
             }
         }
-        if (writeImage(root, textures, owner, target.path(), strip)) {
+        if (writeImage(context, owner, target.path(), strip)) {
             List<Integer> sequence = new ArrayList<>(animation.duration() / interval);
             for (TextureAnimation.Frame frame : animation.frames()) {
                 int repeats = frame.time() / interval;
@@ -207,37 +204,47 @@ public final class BedrockVanillaTextures {
             }
             String path = target.path().substring(0, target.path().lastIndexOf('.'));
             for (BedrockTextureRule.Tile tile : target.tiles()) {
-                textures.flipbook(tile.name(), tile.index(), path, interval, tile.replicate(), sequence, animation.interpolate());
+                context.textures().flipbook(tile.name(), tile.index(), path, interval, tile.replicate(), sequence, animation.interpolate());
             }
         }
         return true;
     }
 
-    private static void writeFrames(Path root, BedrockTextureRegistry textures, String owner, BedrockTextureRule.Target target,
-                                    List<BedrockTextureAtlas.TextureData> inputs, Function<List<BufferedImage>, BufferedImage> transform) throws IOException {
-        List<BufferedImage> frames = new ArrayList<>(inputs.size());
+    private static void writeFrames(BedrockConversionContext context,
+                                    String owner,
+                                    BedrockTextureRule.Target target,
+                                    List<TextureData> inputs,
+                                    Function<List<BufferedImage>, BufferedImage> transform) throws IOException {
+        // 先用各输入的静态图片或动画首帧合成，供静态输出和动画尺寸计算使用。
+        List<BufferedImage> frames = new ObjectArrayList<>(inputs.size());
         int duration = 1;
         int interval = 0;
-        for (BedrockTextureAtlas.TextureData input : inputs) {
+        for (TextureData input : inputs) {
             frames.add(input.image());
             TextureAnimation animation = input.animation();
             if (animation != null) {
-                duration = Math.multiplyExact(duration / gcd(duration, animation.duration()), animation.duration());
-                interval = gcd(interval, animation.sampleInterval());
+                // 总周期取最小公倍数，确保循环结束时所有输入动画同时回到起点。
+                duration = Math.multiplyExact(duration / MiscUtils.gcd(duration, animation.duration()), animation.duration());
+                // 采样间隔取最大公约数，覆盖每个输入的采样时刻；单位均为 tick。
+                interval = MiscUtils.gcd(interval, animation.sampleInterval());
             }
         }
         BufferedImage first = transform.apply(frames);
+        // interval 仍为 0 表示没有动画输入，只需写出一次合成结果。
         if (interval == 0) {
-            writeImage(root, textures, owner, target.path(), first);
+            writeImage(context, owner, target.path(), first);
             return;
         }
+        // 当前动画输出需要 terrain flipbook 映射和正方形单帧，否则只导出首帧并提示。
         if (target.tiles().isEmpty() || first.getWidth() != first.getHeight()) {
             CraftEngine.instance().logger().warn("Exporting first frame of Bedrock texture " + target.path() + ": no compatible terrain flipbook target");
-            writeImage(root, textures, owner, target.path(), first);
+            writeImage(context, owner, target.path(), first);
             return;
         }
+        // 将一个完整周期按固定间隔采样，每张合成帧从上到下排成竖直条带。
         int count = duration / interval;
         BufferedImage strip = new BufferedImage(first.getWidth(), Math.multiplyExact(first.getHeight(), count), BufferedImage.TYPE_INT_ARGB);
+        // 动画输入分配可重复写入的帧缓冲区；静态输入始终复用原图。
         for (int index = 0; index < inputs.size(); index++) {
             TextureAnimation animation = inputs.get(index).animation();
             if (animation != null) {
@@ -245,12 +252,15 @@ public final class BedrockVanillaTextures {
             }
         }
         Graphics2D graphics = strip.createGraphics();
+        // 直接复制合成帧的 RGBA，保留透明像素。
         graphics.setComposite(AlphaComposite.Src);
         try {
             for (int frame = 0; frame < count; frame++) {
+                // 所有输入按同一个 tick 取样，各动画内部按自己的周期循环并处理插值。
                 for (int index = 0; index < inputs.size(); index++) {
                     TextureAnimation animation = inputs.get(index).animation();
                     if (animation != null) {
+                        // 白色乘色不改变原色；具体染色、叠图或裁剪由 transform 完成。
                         animation.render(frame * interval, 0xffffff, frames.get(index));
                     }
                 }
@@ -259,36 +269,29 @@ public final class BedrockVanillaTextures {
         } finally {
             graphics.dispose();
         }
-        if (writeImage(root, textures, owner, target.path(), strip)) {
+        // 写出成功后才注册播放规则；目标已被其他规则占用时，不覆盖其动画配置。
+        if (writeImage(context, owner, target.path(), strip)) {
+            // flipbook 引用不带扩展名的贴图路径，同一条带可供多个 terrain 条目使用。
             String path = target.path().substring(0, target.path().lastIndexOf('.'));
             for (BedrockTextureRule.Tile tile : target.tiles()) {
-                textures.flipbook(tile.name(), tile.index(), path, interval, tile.replicate());
+                context.textures().flipbook(tile.name(), tile.index(), path, interval, tile.replicate());
             }
         }
     }
 
-    static boolean writeImage(Path root, BedrockTextureRegistry textures, String owner, String output, BufferedImage image) throws IOException {
-        if (!textures.claim(output, owner)) {
+    static boolean writeImage(BedrockConversionContext context, String owner, String output, BufferedImage image) throws IOException {
+        if (!context.textures().claim(output, owner)) {
             return false;
         }
         JsonObject tga = RULES.getAsJsonObject("tga").getAsJsonObject(output);
         if (tga != null) {
-            ImageUtils.writeTga(image, root.resolve(tga.get("path").getAsString()));
+            ImageUtils.writeTga(image, context.root().resolve(tga.get("path").getAsString()));
             if (!tga.get("keep").getAsBoolean()) {
                 return true;
             }
         }
-        ImageUtils.writePng(image, root.resolve(output));
+        ImageUtils.writePng(image, context.root().resolve(output));
         return true;
-    }
-
-    private static int gcd(int first, int second) {
-        while (second != 0) {
-            int remainder = first % second;
-            first = second;
-            second = remainder;
-        }
-        return first;
     }
 
 }

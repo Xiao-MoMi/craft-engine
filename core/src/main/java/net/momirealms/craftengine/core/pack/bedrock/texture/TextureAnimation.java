@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture;
 
+import net.momirealms.craftengine.core.util.MiscUtils;
+
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.List;
@@ -28,12 +30,7 @@ public record TextureAnimation(BufferedImage sheet,
         }
         int interval = this.frames.getFirst().time();
         for (Frame frame : this.frames) {
-            int time = frame.time();
-            while (time != 0) {
-                int remainder = interval % time;
-                interval = time;
-                time = remainder;
-            }
+            interval = MiscUtils.gcd(interval, frame.time());
         }
         return interval;
     }

@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.bedrock.BedrockPackLanguagesCodec;
 import net.momirealms.craftengine.bedrock.BedrockPackMappings;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
@@ -32,15 +32,15 @@ public final class BedrockLanguageWriter {
     private BedrockLanguageWriter() {
     }
 
-    public static void write(JavaResourcePack pack, Path root, List<BedrockPackMappings.Item> items) throws IOException {
+    public static void write(BedrockConversionContext context, List<BedrockPackMappings.Item> items) throws IOException {
         Map<String, Map<String, String>> locales = new TreeMap<>();
         Set<String> keys = new HashSet<>();
-        for (String path : pack.languageResources()) {
+        for (String path : context.pack().languageResources()) {
             String locale = path.substring(path.lastIndexOf('/') + 1, path.length() - 5);
             if (locale.equals("nb_no")) {
                 locale = "no_no";
             }
-            JsonObject json = pack.readJson(path);
+            JsonObject json = context.pack().readJson(path);
             Map<String, String> strings = locales.computeIfAbsent(locale, ignored -> new TreeMap<>());
             for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                 if (!entry.getValue().isJsonPrimitive()) {
@@ -64,13 +64,13 @@ public final class BedrockLanguageWriter {
                 names.put(item.id(), blockKey);
             }
         }
-        Path metadata = root.resolve(BedrockPackLanguages.PATH);
+        Path metadata = context.root().resolve(BedrockPackLanguages.PATH);
         Files.createDirectories(metadata.getParent());
         try (BufferedWriter writer = Files.newBufferedWriter(metadata, StandardCharsets.UTF_8)) {
             BedrockPackLanguagesCodec.write(new BedrockPackLanguages(locales, names), writer);
         }
         JsonArray languages = new JsonArray();
-        Path texts = root.resolve("texts");
+        Path texts = context.root().resolve("texts");
         Files.createDirectories(texts);
         for (Map.Entry<String, Map<String, String>> locale : locales.entrySet()) {
             String language = bedrockLocale(locale.getKey());

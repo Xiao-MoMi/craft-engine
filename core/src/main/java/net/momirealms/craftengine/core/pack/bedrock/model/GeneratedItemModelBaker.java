@@ -1,7 +1,11 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.texture.Region;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureId;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureSource;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.PngOptimizer;
 import org.jetbrains.annotations.Nullable;
@@ -30,9 +34,9 @@ final class GeneratedItemModelBaker {
     private GeneratedItemModelBaker() {
     }
 
-    static Result bake(JavaModel model, BedrockTextureAtlas.TextureSource source, List<Integer> tints) throws IOException {
+    static Result bake(JavaModel model, TextureSource source, List<Integer> tints) throws IOException {
         List<BufferedImage> layers = new ArrayList<>(LAYERS.length);
-        Map<BedrockTextureAtlas.TextureId, BedrockTextureAtlas.TextureData> originals = new HashMap<>();
+        Map<TextureId, TextureData> originals = new HashMap<>();
         boolean animated = false;
         int width = 1;
         int height = 1;
@@ -41,8 +45,8 @@ final class GeneratedItemModelBaker {
             if (texture == null) {
                 break;
             }
-            BedrockTextureAtlas.TextureId id = BedrockTextureAtlas.TextureId.of(texture);
-            BedrockTextureAtlas.TextureData data = originals.get(id);
+            TextureId id = TextureId.of(texture);
+            TextureData data = originals.get(id);
             if (data == null) {
                 data = source.load(id);
                 if (data == null || data.image() == null) {
@@ -76,12 +80,12 @@ final class GeneratedItemModelBaker {
         }
         JavaModel baked = new JavaModel(model.id(), JavaModel.GeometryKind.ELEMENTS, elements, model.textures(),
                 model.display(), model.ambientOcclusion(), model.guiLight());
-        BedrockTextureAtlas atlas = new BedrockTextureAtlas(image, Map.of(BedrockTextureAtlas.TextureId.of(texture),
-                new BedrockTextureAtlas.Region(0, 0, width, height)));
+        BedrockTextureAtlas atlas = new BedrockTextureAtlas(image, Map.of(TextureId.of(texture),
+                new Region(0, 0, width, height)));
         return new Result(baked, atlas);
     }
 
-    private static Result bakeAnimated(JavaModel model, Map<BedrockTextureAtlas.TextureId, BedrockTextureAtlas.TextureData> textures,
+    private static Result bakeAnimated(JavaModel model, Map<TextureId, TextureData> textures,
                                        List<Integer> tints) throws IOException {
         List<JavaModel.Element> elements = new ArrayList<>();
         for (int index = 0; index < LAYERS.length; index++) {
@@ -89,7 +93,7 @@ final class GeneratedItemModelBaker {
             if (texture == null) {
                 break;
             }
-            BedrockTextureAtlas.TextureData data = textures.get(BedrockTextureAtlas.TextureId.of(texture));
+            TextureData data = textures.get(TextureId.of(texture));
             // Keep layer timelines independent. A small depth separation preserves layer order without coplanar faces.
             float minZ = MIN_Z - index * LAYER_OFFSET;
             float maxZ = MAX_Z + index * LAYER_OFFSET;
@@ -99,14 +103,14 @@ final class GeneratedItemModelBaker {
         }
         JavaModel baked = new JavaModel(model.id(), JavaModel.GeometryKind.ELEMENTS, elements, model.textures(),
                 model.display(), model.ambientOcclusion(), model.guiLight());
-        BedrockTextureAtlas atlas = BedrockTextureAtlas.create(baked, new BedrockTextureAtlas.TextureSource() {
+        BedrockTextureAtlas atlas = BedrockTextureAtlas.create(baked, new TextureSource() {
             @Override
-            public BufferedImage read(BedrockTextureAtlas.TextureId texture) {
+            public BufferedImage read(TextureId texture) {
                 return textures.get(texture).image();
             }
 
             @Override
-            public BedrockTextureAtlas.TextureData load(BedrockTextureAtlas.TextureId texture) {
+            public TextureData load(TextureId texture) {
                 return textures.get(texture);
             }
         }, tints);

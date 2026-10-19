@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.texture.Region;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.Direction;
@@ -84,7 +85,7 @@ public final class JavaItemIconRenderer {
                 }
                 this.project(element, face, direction);
                 float light = this.light(lights);
-                BedrockTextureAtlas.Region region = atlas.region(face, tints);
+                Region region = atlas.region(face, tints);
                 this.rasterizer.triangle(this.vertices[0], this.vertices[1], this.vertices[2], atlas.image(), region, light);
                 this.rasterizer.triangle(this.vertices[0], this.vertices[2], this.vertices[3], atlas.image(), region, light);
             }

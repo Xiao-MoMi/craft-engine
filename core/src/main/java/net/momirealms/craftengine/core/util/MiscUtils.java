@@ -22,6 +22,15 @@ public final class MiscUtils {
         }
     });
 
+    public static int gcd(int first, int second) {
+        while (second != 0) {
+            int remainder = first % second;
+            first = second;
+            second = remainder;
+        }
+        return first;
+    }
+
     public static int floor(double value) {
         int truncated = (int) value;
         return value < (double) truncated ? truncated - 1 : truncated;

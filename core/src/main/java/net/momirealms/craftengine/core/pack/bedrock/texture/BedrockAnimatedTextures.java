@@ -33,14 +33,14 @@ public final class BedrockAnimatedTextures {
         }
         String name = HashUtils.sha1(resource.asString().getBytes(StandardCharsets.UTF_8));
         int size = Math.max(atlas.image().getWidth(), atlas.image().getHeight());
-        List<Map.Entry<BedrockTextureAtlas.TextureId, BedrockTextureAtlas.AnimatedSprite>> sprites = new ArrayList<>(atlas.animations().entrySet());
+        List<Map.Entry<TextureId, AnimatedSprite>> sprites = new ArrayList<>(atlas.animations().entrySet());
         sprites.sort(Comparator.comparing(entry -> entry.getValue().material()));
         List<Track> tracks = new ArrayList<>(sprites.size());
         for (int index = 0; index < sprites.size(); index++) {
-            Map.Entry<BedrockTextureAtlas.TextureId, BedrockTextureAtlas.AnimatedSprite> entry = sprites.get(index);
-            BedrockTextureAtlas.AnimatedSprite sprite = entry.getValue();
+            Map.Entry<TextureId, AnimatedSprite> entry = sprites.get(index);
+            AnimatedSprite sprite = entry.getValue();
             TextureAnimation animation = sprite.animation();
-            BedrockTextureAtlas.Region region = atlas.regions().get(entry.getKey());
+            Region region = atlas.regions().get(entry.getKey());
             int interval = animation.sampleInterval();
             int count = animation.duration() / interval;
             String id = name + '_' + index;

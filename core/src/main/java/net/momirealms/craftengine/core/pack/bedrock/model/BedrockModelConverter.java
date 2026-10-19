@@ -1,6 +1,10 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
+import net.momirealms.craftengine.core.pack.bedrock.texture.AnimatedSprite;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.texture.Region;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureId;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureSource;
 import net.momirealms.craftengine.core.util.Direction;
 import org.joml.Vector3f;
 
@@ -12,11 +16,11 @@ import java.util.Map;
 
 public final class BedrockModelConverter {
 
-    public Result convert(JavaModel model, String identifier, BedrockTextureAtlas.TextureSource textures) throws IOException {
+    public Result convert(JavaModel model, String identifier, TextureSource textures) throws IOException {
         return this.convert(model, identifier, textures, List.of());
     }
 
-    public Result convert(JavaModel model, String identifier, BedrockTextureAtlas.TextureSource textures, List<Integer> tints) throws IOException {
+    public Result convert(JavaModel model, String identifier, TextureSource textures, List<Integer> tints) throws IOException {
         if (!identifier.startsWith("geometry.") || identifier.length() == "geometry.".length()) {
             throw new IllegalArgumentException("Expected a geometry identifier: " + identifier);
         }
@@ -61,15 +65,15 @@ public final class BedrockModelConverter {
         Map<Direction, BedrockGeometry.Face> faces = new EnumMap<>(Direction.class);
         for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
             JavaModel.Face face = entry.getValue();
-            BedrockTextureAtlas.AnimatedSprite animation = atlas.animations().isEmpty() ? null
-                    : atlas.animations().get(BedrockTextureAtlas.TextureId.of(face, tints));
+            AnimatedSprite animation = atlas.animations().isEmpty() ? null
+                    : atlas.animations().get(TextureId.of(face, tints));
             faces.put(entry.getKey(), this.convertFace(entry.getKey(), face, atlas.region(face, tints),
                     animation == null ? null : animation.material()));
         }
         return new BedrockGeometry.Cube(origin, size, convertedRotation, faces);
     }
 
-    private BedrockGeometry.Face convertFace(Direction direction, JavaModel.Face face, BedrockTextureAtlas.Region region, String material) {
+    private BedrockGeometry.Face convertFace(Direction direction, JavaModel.Face face, Region region, String material) {
         JavaModel.Uv uv = face.uv();
         float u = uv.u1();
         float v = uv.v1();

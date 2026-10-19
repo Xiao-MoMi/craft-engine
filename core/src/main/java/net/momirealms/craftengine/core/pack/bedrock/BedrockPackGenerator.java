@@ -72,8 +72,8 @@ public final class BedrockPackGenerator {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();
             Files.createDirectories(root);
             // 将原版贴图转写成 bedrock 路径
-            BedrockTextureRegistry textureRegistry = new BedrockTextureRegistry();
-            BedrockVanillaTextures.write(pack, root, textureRegistry);
+            BedrockConversionContext context = new BedrockConversionContext(pack, root, new BedrockTextureRegistry());
+            BedrockVanillaTextures.write(context);
 
             // 专门读 java 模型
             JavaModelResolver resolver = new JavaModelResolver(pack);
@@ -83,9 +83,9 @@ public final class BedrockPackGenerator {
 
             Map<BaseItemModel, ModelUsers> models = this.collectModels(sources);
 
-            BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize(), textureRegistry);
-            BedrockBlockItems blockItems = new BedrockBlockItems(textureRegistry);
-            BedrockNativeItemWriter nativeItems = new BedrockNativeItemWriter(resolver, textures, icons, blockItems, root);
+            BedrockItemIcons icons = new BedrockItemIcons(Config.bedrockItemIconSize(), context);
+            BedrockBlockItems blockItems = new BedrockBlockItems(context);
+            BedrockNativeItemWriter nativeItems = new BedrockNativeItemWriter(resolver, textures, icons, blockItems, context);
             List<BedrockPackMappings.Item> mappings = new ArrayList<>();
 
             int convertedModels = 0;
@@ -106,9 +106,9 @@ public final class BedrockPackGenerator {
                 }
                 convertedModels++;
             }
-            textureRegistry.write(root);
-            blockItems.writeBlocks(root);
-            BedrockLanguageWriter.write(pack, root, mappings);
+            context.textures().write(context.root());
+            blockItems.writeBlocks();
+            BedrockLanguageWriter.write(context, mappings);
             BedrockPackMappings metadata = new BedrockPackMappings(BedrockPackMappings.FORMAT_VERSION, version.version(), HashUtils.sha1(input), mappings);
             Path metadataPath = root.resolve(BedrockPackMappings.PATH);
             Files.createDirectories(metadataPath.getParent());
@@ -135,8 +135,7 @@ public final class BedrockPackGenerator {
             Key id = definition.getKey();
             try {
                 BaseItemModel model = BedrockItemModelSupport.requireStaticModel(definition.getValue());
-                ModelUsers users = models.computeIfAbsent(model, key -> new ModelUsers(id,
-                        Key.of("ce", "static_" + HashUtils.sha1(id.asString().getBytes(StandardCharsets.UTF_8))), new ArrayList<>()));
+                ModelUsers users = models.computeIfAbsent(model, key -> new ModelUsers(id, Key.of("ce", "static_" + HashUtils.sha1(id.asString().getBytes(StandardCharsets.UTF_8))), new ArrayList<>()));
                 users.items().addAll(sources.items(id));
             } catch (IOException exception) {
                 CraftEngine.instance().logger().warn("Skipping Bedrock item definition " + id + ": " + exception.getMessage());

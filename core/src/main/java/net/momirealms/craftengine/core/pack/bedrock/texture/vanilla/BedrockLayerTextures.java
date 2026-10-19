@@ -4,9 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureAtlas;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextureRegistry;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 final class BedrockLayerTextures implements BedrockTextureConverter {
@@ -47,8 +45,8 @@ final class BedrockLayerTextures implements BedrockTextureConverter {
     }
 
     @Override
-    public void convert(JavaResourcePack pack, Path output, BedrockTextureRegistry textures) {
-        JavaItemTintSource itemTints = new JavaItemTintSource(pack);
+    public void convert(BedrockConversionContext context) {
+        JavaItemTintSource itemTints = new JavaItemTintSource(context.pack());
         for (LayerRule rule : RULES) {
             List<Layer> layers = rule.layers();
             try {
@@ -73,7 +71,7 @@ final class BedrockLayerTextures implements BedrockTextureConverter {
                 }
                 if (available) {
                     BedrockVanillaTextures.transform(
-                            pack, output, textures,
+                            context,
                             rule.target(), rule.sources(),
                             changed, images -> this.combine(rule, images, colors)
                     );

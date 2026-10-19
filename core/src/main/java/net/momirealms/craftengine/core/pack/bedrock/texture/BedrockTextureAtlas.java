@@ -3,7 +3,6 @@ package net.momirealms.craftengine.core.pack.bedrock.texture;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.PngOptimizer;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -164,41 +163,6 @@ public record BedrockTextureAtlas(BufferedImage image, Map<TextureId, Region> re
             throw new IllegalArgumentException("Model atlas dimension is too large: " + value);
         }
         return value == 1 ? 1 : Integer.highestOneBit(value - 1) << 1;
-    }
-
-    @FunctionalInterface
-    public interface TextureSource {
-        BufferedImage read(TextureId texture) throws IOException;
-
-        default TextureData load(TextureId texture) throws IOException {
-            return new TextureData(this.read(texture), null);
-        }
-    }
-
-    public record TextureData(BufferedImage image, @Nullable TextureAnimation animation) {
-    }
-
-    public record AnimatedSprite(String material, TextureAnimation animation, int color) {
-    }
-
-    public record TextureId(Key sprite, @Nullable Key atlas, int color) {
-
-        public TextureId(Key sprite, @Nullable Key atlas) {
-            this(sprite, atlas, 0xFFFFFF);
-        }
-
-        public static TextureId of(JavaModel.Face face, List<Integer> tints) {
-            int index = face.tintIndex();
-            int color = index >= 0 && index < tints.size() ? tints.get(index) & 0xFFFFFF : 0xFFFFFF;
-            return new TextureId(face.texture().sprite(), face.texture().atlas(), color);
-        }
-
-        public static TextureId of(JavaModel.Texture texture) {
-            return new TextureId(texture.sprite(), texture.atlas());
-        }
-    }
-
-    public record Region(int x, int y, int width, int height) {
     }
 
     private record Sprite(TextureId id, BufferedImage image) {
