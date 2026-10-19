@@ -61,6 +61,18 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 List.of("entity/conduit/base.png"),
                 images -> ImageUtils.crop(images.getFirst(), 0, 0, images.getFirst().getWidth() * 3 / 4f, images.getFirst().getHeight() * 3 / 4f)
         );
+        BedrockVanillaTextures.transform(
+                context,
+                "textures/blocks/redstone_dust_line.png",
+                List.of("block/redstone_dust_line0.png"),
+                images -> ImageUtils.rotate(images.getFirst(), 90)
+        );
+        BedrockVanillaTextures.transform(
+                context,
+                "textures/blocks/redstone_dust_cross.png",
+                List.of("block/redstone_dust_dot.png", "block/redstone_dust_line0.png", "block/redstone_dust_line1.png"),
+                this::redstoneCross
+        );
         for (String name : List.of(
                 "normal",
                 "trapped",
@@ -226,6 +238,21 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     images -> this.sign(images.getFirst(), true)
             );
         }
+    }
+
+    private BufferedImage redstoneCross(List<BufferedImage> images) {
+        int size = images.stream().mapToInt(BufferedImage::getWidth).max().orElseThrow();
+        BufferedImage result = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = result.createGraphics();
+        try {
+            // 基岩版交叉贴图将点、横线和纵线放在同一张图中；保留灰度与透明度，由客户端按信号强度染色。
+            graphics.drawImage(images.get(0), 0, 0, size, size, null);
+            graphics.drawImage(ImageUtils.rotate(images.get(1), 90), 0, 0, size, size, null);
+            graphics.drawImage(images.get(2), 0, 0, size, size, null);
+        } finally {
+            graphics.dispose();
+        }
+        return result;
     }
 
     private BufferedImage banner(List<BufferedImage> images) {
