@@ -53,7 +53,7 @@ final class BedrockParticleRules {
             new BedrockParticleRule("enchanted_hit", RANDOM, 0, List.of(ENCHANTED_HIT_SINGLE_PARTICLE), null),
             new BedrockParticleRule("end_rod", AGE, 0, List.of(ENDROD), null),
             new BedrockParticleRule("entity_effect", AGE, 0, List.of(EVOKER_SPELL), null),
-            new BedrockParticleRule("explosion", AGE, 0, List.of(LARGE_EXPLOSION_LEVEL), null),
+            new BedrockParticleRule("explosion", AGE, 0, List.of(LARGE_EXPLOSION_LEVEL, HUGE_EXPLOSION_LEVEL, DRAGON_DEATH_EXPLOSION), null),
             new BedrockParticleRule("falling_dripstone_lava", RANDOM, 0, List.of(DRIPSTONE_LAVA_DRIP), null),
             new BedrockParticleRule("falling_dripstone_water", RANDOM, 0, List.of(DRIPSTONE_WATER_DRIP), null),
             new BedrockParticleRule("falling_dust", AGE, 0, List.of(FALLING_DUST), null),

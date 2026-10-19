@@ -28,6 +28,7 @@ final class BedrockParticleDefinitions {
     static final BedrockParticleDefinition DAMAGE_INDICATOR_PARTICLE = createDamageIndicatorParticle();
     static final BedrockParticleDefinition DOLPHIN_MOVE_PARTICLE = createDolphinMoveParticle();
     static final BedrockParticleDefinition DRAGON_BREATH_LINGERING = createDragonBreathLingering();
+    static final BedrockParticleDefinition DRAGON_DEATH_EXPLOSION = createDragonDeathExplosion();
     static final BedrockParticleDefinition DRIPSTONE_LAVA_DRIP = createDripstoneLavaDrip();
     static final BedrockParticleDefinition DRIPSTONE_WATER_DRIP = createDripstoneWaterDrip();
     static final BedrockParticleDefinition DUST_PLUME = createDustPlume();
@@ -47,6 +48,7 @@ final class BedrockParticleDefinitions {
     static final BedrockParticleDefinition GREEN_FLAME = createGreenFlame();
     static final BedrockParticleDefinition HEART = createHeart();
     static final BedrockParticleDefinition HONEY_DRIP = createHoneyDrip();
+    static final BedrockParticleDefinition HUGE_EXPLOSION_LEVEL = createHugeExplosionLevel();
     static final BedrockParticleDefinition INFESTED_EMITTER = createInfestedEmitter();
     static final BedrockParticleDefinition INK = createInk();
     static final BedrockParticleDefinition LANDING_HONEY_PARTICLE = createLandingHoneyParticle();
@@ -915,6 +917,50 @@ final class BedrockParticleDefinitions {
                         )),
                         entry("minecraft:particle_motion_dynamic", Map.ofEntries(
                                 entry("linear_acceleration", List.of(0, 0.75, 0))
+                        ))
+                ),
+                Map.of(),
+                Map.of()
+        );
+    }
+
+    private static BedrockParticleDefinition createDragonDeathExplosion() {
+        return new BedrockParticleDefinition(
+                "dragon_death_explosion",
+                "1.26.10",
+                "minecraft:dragon_death_explosion_emitter",
+                "particles_alpha",
+                Map.ofEntries(
+                        entry("minecraft:emitter_lifetime_once", Map.ofEntries(
+                                entry("active_time", 0.4)
+                        )),
+                        entry("minecraft:emitter_rate_steady", Map.ofEntries(
+                                entry("spawn_rate", 120),
+                                entry("max_particles", 50)
+                        )),
+                        entry("minecraft:emitter_shape_custom", Map.ofEntries(
+                                entry("offset", List.of("Math.random(-4, 4)", "Math.random(-4, 4)", "Math.random(-4, 4)"))
+                        )),
+                        entry("minecraft:particle_appearance_billboard", Map.ofEntries(
+                                entry("size", List.of(1, 1)),
+                                entry("facing_camera_mode", "lookat_xyz"),
+                                entry("direction", Map.ofEntries(
+                                        entry("mode", "derive_from_velocity"),
+                                        entry("custom_direction", List.of(0, 0, 0)),
+                                        entry("min_speed_threshold", 0.1)
+                                ))
+                        )),
+                        entry("minecraft:particle_appearance_tinting", Map.ofEntries(
+                                entry("color", Map.ofEntries(
+                                        entry("gradient", Map.ofEntries(
+                                                entry("0.000000", List.of("variable.particle_random_1 * 0.6 + 0.4", "variable.particle_random_1 * 0.6 + 0.4", "variable.particle_random_1 * 0.6 + 0.4", 1))
+                                        )),
+                                        entry("interpolant", 0)
+                                ))
+                        )),
+                        entry("minecraft:particle_initial_speed", 0),
+                        entry("minecraft:particle_lifetime_expression", Map.ofEntries(
+                                entry("max_lifetime", "Math.random(0.3, 0.5)")
                         ))
                 ),
                 Map.of(),
@@ -2040,6 +2086,50 @@ final class BedrockParticleDefinitions {
                         entry("minecraft:particle_appearance_lighting", Map.of()),
                         entry("minecraft:particle_appearance_tinting", Map.ofEntries(
                                 entry("color", List.of(0.50588, 0, 0.7098, 1))
+                        ))
+                ),
+                Map.of(),
+                Map.of()
+        );
+    }
+
+    private static BedrockParticleDefinition createHugeExplosionLevel() {
+        return new BedrockParticleDefinition(
+                "huge_explosion_level",
+                "1.26.10",
+                "minecraft:huge_explosion_emitter",
+                "particles_alpha",
+                Map.ofEntries(
+                        entry("minecraft:emitter_lifetime_looping", Map.ofEntries(
+                                entry("active_time", 0.4)
+                        )),
+                        entry("minecraft:emitter_rate_steady", Map.ofEntries(
+                                entry("spawn_rate", 120),
+                                entry("max_particles", 50)
+                        )),
+                        entry("minecraft:emitter_shape_custom", Map.ofEntries(
+                                entry("offset", List.of("Math.random(-4, 4)", "Math.random(-4, 4)", "Math.random(-4, 4)"))
+                        )),
+                        entry("minecraft:particle_appearance_billboard", Map.ofEntries(
+                                entry("size", List.of(1, 1)),
+                                entry("facing_camera_mode", "lookat_xyz"),
+                                entry("direction", Map.ofEntries(
+                                        entry("mode", "derive_from_velocity"),
+                                        entry("custom_direction", List.of(0, 0, 0)),
+                                        entry("min_speed_threshold", 0.1)
+                                ))
+                        )),
+                        entry("minecraft:particle_appearance_tinting", Map.ofEntries(
+                                entry("color", Map.ofEntries(
+                                        entry("gradient", Map.ofEntries(
+                                                entry("0.000000", List.of("variable.particle_random_1 * 0.6 + 0.4", "variable.particle_random_1 * 0.6 + 0.4", "variable.particle_random_1 * 0.6 + 0.4", 1))
+                                        )),
+                                        entry("interpolant", 0)
+                                ))
+                        )),
+                        entry("minecraft:particle_initial_speed", 0),
+                        entry("minecraft:particle_lifetime_expression", Map.ofEntries(
+                                entry("max_lifetime", "Math.random(0.3, 0.5)")
                         ))
                 ),
                 Map.of(),
