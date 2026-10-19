@@ -866,8 +866,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
 
         @Override
         public void channelRead(@NotNull ChannelHandlerContext context, @NotNull Object c) throws Exception {
-            Channel channel = (Channel) c;
-            channel.pipeline().addLast(SERVER_CHANNEL_HANDLER_NAME, new PreChannelInitializer());
+            // channels 列表里不止有 acceptor channel：Sable 之类的 mod 会把 UDP channel 也注册进去，
+            // 那里读上来的是 DatagramPacket，只有 Channel 才需要注入子连接处理器
+            if (c instanceof Channel channel) {
+                channel.pipeline().addLast(SERVER_CHANNEL_HANDLER_NAME, new PreChannelInitializer());
+            }
             super.channelRead(context, c);
         }
     }
