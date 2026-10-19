@@ -2612,6 +2612,20 @@
     "trims/items/helmet_trim": ["textures/trims/items/helmet_trim.png"],
     "trims/items/leggings_trim": ["textures/trims/items/leggings_trim.png"]
   },
+  "first_frames": {
+    "textures/blocks/command_block_front.png": "textures/blocks/command_block_front_mipmap.png",
+    "textures/blocks/command_block_back.png": "textures/blocks/command_block_back_mipmap.png",
+    "textures/blocks/command_block_side.png": "textures/blocks/command_block_side_mipmap.png",
+    "textures/blocks/command_block_conditional.png": "textures/blocks/command_block_conditional_mipmap.png",
+    "textures/blocks/chain_command_block_front.png": "textures/blocks/chain_command_block_front_mipmap.png",
+    "textures/blocks/chain_command_block_back.png": "textures/blocks/chain_command_block_back_mipmap.png",
+    "textures/blocks/chain_command_block_side.png": "textures/blocks/chain_command_block_side_mipmap.png",
+    "textures/blocks/chain_command_block_conditional.png": "textures/blocks/chain_command_block_conditional_mipmap.png",
+    "textures/blocks/repeating_command_block_front.png": "textures/blocks/repeating_command_block_front_mipmap.png",
+    "textures/blocks/repeating_command_block_back.png": "textures/blocks/repeating_command_block_back_mipmap.png",
+    "textures/blocks/repeating_command_block_side.png": "textures/blocks/repeating_command_block_side_mipmap.png",
+    "textures/blocks/repeating_command_block_conditional.png": "textures/blocks/repeating_command_block_conditional_mipmap.png"
+  },
   "tga": {
     "textures/blocks/azalea_leaves.png": {"path": "textures/blocks/azalea_leaves.tga", "keep": true},
     "textures/blocks/azalea_leaves_flowers.png": {"path": "textures/blocks/azalea_leaves_flowers.tga", "keep": true},

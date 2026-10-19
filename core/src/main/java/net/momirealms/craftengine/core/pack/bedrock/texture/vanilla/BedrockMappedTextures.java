@@ -65,14 +65,30 @@ final class BedrockMappedTextures implements BedrockTextureConverter {
                             Path file = context.root().resolve(target.path());
                             Files.createDirectories(file.getParent());
                             Files.write(file, bytes);
+                            if (target.firstFrame() != null && context.textures().claim(target.firstFrame(), source)) {
+                                Path firstFrame = context.root().resolve(target.firstFrame());
+                                Files.createDirectories(firstFrame.getParent());
+                                Files.write(firstFrame, bytes);
+                            }
                         }
                     } else {
                         if (data == null) {
                             data = JavaTextureAnimation.read(ClientPngReader.read(new ByteArrayInputStream(bytes)), metadata,
                                     context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
                         }
+                        // 图集使用播放序列的首帧；flipbook 单独读取完整条带，不能把条带作为图集底图。
+                        if (target.firstFrame() != null) {
+                            BedrockVanillaTextures.writeImage(context, source, target.firstFrame(), data.image());
+                        }
                         if (!BedrockVanillaTextures.writeKeyFrames(context, source, target, data.animation())) {
                             BedrockVanillaTextures.writeFrames(context, source, target, List.of(data), List::getFirst);
+                        }
+                    }
+                    // 静态替换也覆盖原版 flipbook，避免客户端继续用原版动画刷新这个图集条目。
+                    if (target.firstFrame() != null && (!animated || data.animation() == null)) {
+                        String path = target.path().substring(0, target.path().lastIndexOf('.'));
+                        for (BedrockTextureRule.Tile tile : target.tiles()) {
+                            context.textures().flipbook(tile.name(), tile.index(), path, 1, tile.replicate(), List.of(0), false);
                         }
                     }
                 }

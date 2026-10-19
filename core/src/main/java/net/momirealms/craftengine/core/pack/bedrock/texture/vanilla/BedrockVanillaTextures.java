@@ -63,22 +63,30 @@ public final class BedrockVanillaTextures {
             JsonObject target = entry.getValue().getAsJsonObject();
             tga.put(entry.getKey(), new BedrockTextureRule.Tga(target.get("path").getAsString(), target.get("keep").getAsBoolean()));
         }
+        Map<String, String> firstFrames = new HashMap<>();
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("first_frames").entrySet()) {
+            firstFrames.put(entry.getKey(), entry.getValue().getAsString());
+        }
         List<BedrockTextureRule> mappings = new ArrayList<>(json.getAsJsonObject("textures").size());
         for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("textures").entrySet()) {
             List<BedrockTextureRule.Target> targets = new ArrayList<>(entry.getValue().getAsJsonArray().size());
             for (JsonElement destination : entry.getValue().getAsJsonArray()) {
                 String path = destination.getAsString();
-                String name = path.substring(0, path.lastIndexOf('.'));
-                targets.add(new BedrockTextureRule.Target(path, tiles.getOrDefault(name, List.of())));
+                String firstFrame = firstFrames.get(path);
+                String atlasPath = firstFrame != null ? firstFrame : path;
+                String name = atlasPath.substring(0, atlasPath.lastIndexOf('.'));
+                targets.add(new BedrockTextureRule.Target(path, tiles.getOrDefault(name, List.of()), firstFrame));
             }
             mappings.add(new BedrockTextureRule(entry.getKey() + ".png", List.copyOf(targets)));
         }
-        return new Rules(List.copyOf(mappings), Map.copyOf(tiles), Map.copyOf(tga));
+        return new Rules(List.copyOf(mappings), Map.copyOf(tiles), Map.copyOf(tga), Map.copyOf(firstFrames));
     }
 
     static BedrockTextureRule.Target target(String path) {
-        String name = path.substring(0, path.lastIndexOf('.'));
-        return new BedrockTextureRule.Target(path, RULES.tiles().getOrDefault(name, List.of()));
+        String firstFrame = RULES.firstFrames().get(path);
+        String atlasPath = firstFrame != null ? firstFrame : path;
+        String name = atlasPath.substring(0, atlasPath.lastIndexOf('.'));
+        return new BedrockTextureRule.Target(path, RULES.tiles().getOrDefault(name, List.of()), firstFrame);
     }
 
     @Nullable
@@ -272,6 +280,7 @@ public final class BedrockVanillaTextures {
 
     private record Rules(List<BedrockTextureRule> mappings,
                          Map<String, List<BedrockTextureRule.Tile>> tiles,
-                         Map<String, BedrockTextureRule.Tga> tga) {
+                         Map<String, BedrockTextureRule.Tga> tga,
+                         Map<String, String> firstFrames) {
     }
 }
