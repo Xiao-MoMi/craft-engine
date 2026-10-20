@@ -24,15 +24,18 @@ hs_err_pid*
 replay_pid*
 
 build/
+docs/
 .gradle/
 .idea/
-.codex*/
+.codex/
+.vscode/
+.claude/
 
 !/libs/*.jar
 !/gradle/wrapper/*.jar
-.vscode/settings.json
 /runPaper/
 /runFolia/
+/runSpigot/
 /server/
 /buildSrc/.kotlin/
 /target
