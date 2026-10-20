@@ -111,21 +111,31 @@ public final class ItemRegistrationPlanCompiler {
             }
             if (!SUPPORTED_COMPONENTS.contains(component.getKey())) {
                 boolean animation = component.getKey().equals(DataComponentKeys.INTERACT_ANIMATION);
-                diagnostics.add(diagnostic(binding, animation ? Severity.WARNING : Severity.ERROR,
-                        animation ? "ANIMATION_RESOURCE_REQUIRED" : "UNSUPPORTED_COMPONENT",
-                        List.of(component.getKey().asString(), source.name())));
+                diagnostics.add(diagnostic(
+                                binding,
+                                animation ? Severity.WARNING : Severity.ERROR,
+                                animation ? "ANIMATION_RESOURCE_REQUIRED" : "UNSUPPORTED_COMPONENT",
+                                List.of(component.getKey().asString(), source.name())
+                ));
             }
         }
         ItemBehaviorDescription client = binding.clientBehavior();
-        if (!client.attack().equals(client.interact())
-                || client.attack().animation() != ItemBehaviorDescription.SwingAnimation.WHACK) {
-            diagnostics.add(diagnostic(binding, Severity.WARNING, "SWING_NOT_FULLY_EXPRESSIBLE",
-                    List.of("The target API exposes attack duration, not attack types or independent interact animations")));
+        if (!client.attack().equals(client.interact()) || client.attack().animation() != ItemBehaviorDescription.SwingAnimation.WHACK) {
+            diagnostics.add(diagnostic(
+                    binding,
+                    Severity.WARNING,
+                    "SWING_NOT_FULLY_EXPRESSIBLE",
+                    List.of("The target API exposes attack duration, not attack types or independent interact animations")
+            ));
         }
         // 保留类型投影提示，便于追踪客户端最终使用的原版物品类型。
         if (!binding.serverItemType().equals(binding.clientItemType())) {
-            diagnostics.add(diagnostic(binding, Severity.WARNING, "CLIENT_ITEM_TYPE_CHANGED",
-                    List.of(binding.serverItemType().asString(), binding.clientItemType().asString())));
+            diagnostics.add(diagnostic(
+                    binding,
+                    Severity.WARNING,
+                    "CLIENT_ITEM_TYPE_CHANGED",
+                    List.of(binding.serverItemType().asString(), binding.clientItemType().asString())
+            ));
         }
     }
 

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import net.momirealms.craftengine.core.entity.LivingEntity;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
@@ -25,15 +24,15 @@ public final class ItemBindingResolver {
 
     public ResolvedItemBinding resolve(Item item, @Nullable Player player, ItemPacketSource source) {
         Item clientItem = item.copy().toClientSide(player, source);
-        return resolve(item, clientItem, player);
+        return resolve(item, clientItem);
     }
 
-    public ResolvedItemBinding resolve(Item serverItem, Item clientItem, @Nullable LivingEntity user) {
+    public ResolvedItemBinding resolve(Item serverItem, Item clientItem) {
         Key definitionId = VersionHelper.isOrAbove1_21_2
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
         ItemDefinitionBinding definition = definitionId == null ? null : this.definitions.get(definitionId);
-        ItemBehaviorDescription clientBehavior = this.behaviorReader.read(clientItem, user);
+        ItemBehaviorDescription clientBehavior = this.behaviorReader.read(clientItem);
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),

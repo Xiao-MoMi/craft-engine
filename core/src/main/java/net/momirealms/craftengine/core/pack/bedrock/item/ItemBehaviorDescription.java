@@ -17,10 +17,6 @@ public record ItemBehaviorDescription(Use use,
         components = Map.copyOf(components);
     }
 
-    public enum RequiresEntity implements Duration {
-        INSTANCE
-    }
-
     public enum UseAnimation {
         NONE,
         EAT,
@@ -56,12 +52,9 @@ public record ItemBehaviorDescription(Use use,
         ABSENT
     }
 
-    public sealed interface Duration permits Ticks, RequiresEntity {
-    }
-
     public record Use(UseAnimation animation,
-                      Duration maximumDuration,
-                      @Nullable Duration chargeDuration,
+                      Ticks maximumDuration,
+                      @Nullable Ticks chargeDuration,
                       boolean nativeUseOnRelease) {
     }
 
@@ -69,7 +62,7 @@ public record ItemBehaviorDescription(Use use,
         public static final Swing LEGACY = new Swing(SwingAnimation.WHACK, 6);
     }
 
-    public record Ticks(int value) implements Duration {
+    public record Ticks(int value) {
     }
 
     public record Component(ComponentSource source, @Nullable JsonElement value) {
