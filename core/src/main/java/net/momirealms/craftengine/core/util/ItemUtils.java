@@ -2,8 +2,8 @@ package net.momirealms.craftengine.core.util;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
-import net.momirealms.craftengine.core.item.VanillaBreakPowers;
 import net.momirealms.craftengine.core.item.ItemSelector;
+import net.momirealms.craftengine.core.item.VanillaBreakPowers;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

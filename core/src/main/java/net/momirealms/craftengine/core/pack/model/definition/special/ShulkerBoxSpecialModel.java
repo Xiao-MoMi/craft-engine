@@ -10,8 +10,8 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class ShulkerBoxSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<ShulkerBoxSpecialModel> FACTORY = new Factory();

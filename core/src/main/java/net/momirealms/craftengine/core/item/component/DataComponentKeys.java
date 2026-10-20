@@ -8,6 +8,7 @@ public final class DataComponentKeys {
     private DataComponentKeys() {}
 
     public static final Key ATTACK_ANIMATION = Key.minecraft("attack_animation"); // 26.3
+    public static final Key ATTACK_RANGE = Key.minecraft("attack_range"); // 1.21.11
     public static final Key ATTRIBUTE_MODIFIERS = Key.minecraft("attribute_modifiers");
     public static final Key BANNER_PATTERN = Key.minecraft("banner_patterns");
     public static final Key BASE_COLOR = Key.minecraft("base_color");

@@ -7,8 +7,8 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class EndCubeSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<EndCubeSpecialModel> FACTORY = new Factory();

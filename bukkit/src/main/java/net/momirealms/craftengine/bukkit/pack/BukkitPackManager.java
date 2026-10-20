@@ -4,12 +4,17 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackCacheEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackPrepareEvent;
+import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemBehaviorReader;
+import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemRegistrationReader;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.PackCacheData;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanGenerator;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -24,6 +29,7 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,6 +42,16 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     public BukkitPackManager(BukkitCraftEngine plugin) {
         super(plugin);
         this.plugin = plugin;
+    }
+
+    @Override
+    protected ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException {
+        return ItemRegistrationPlanGenerator.generate(
+                pack,
+                this.plugin.itemManager().loadedItems().values(),
+                new BukkitItemBehaviorReader(),
+                new BukkitItemRegistrationReader()
+        );
     }
 
     @Override

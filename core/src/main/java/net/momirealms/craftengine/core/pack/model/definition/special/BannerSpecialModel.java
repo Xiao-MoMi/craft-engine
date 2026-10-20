@@ -6,8 +6,8 @@ import net.momirealms.craftengine.core.pack.revision.Revisions;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class BannerSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<BannerSpecialModel> FACTORY = new Factory();

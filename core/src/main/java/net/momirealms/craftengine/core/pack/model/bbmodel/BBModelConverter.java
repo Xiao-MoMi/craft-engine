@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.pack.model.bbmodel;
 
 import com.google.gson.*;
-import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.pack.Identifier;
 import net.momirealms.craftengine.core.pack.Pack;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.util.CharacterUtils;

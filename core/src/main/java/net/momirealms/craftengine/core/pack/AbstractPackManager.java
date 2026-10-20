@@ -9,14 +9,14 @@ import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.BitmapImage;
 import net.momirealms.craftengine.core.font.Font;
 import net.momirealms.craftengine.core.item.ItemKeys;
-import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.equipment.ComponentBasedEquipment;
 import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentLayerType;
 import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.pack.atlas.*;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemSource;
+import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
@@ -41,8 +41,8 @@ import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
 import net.momirealms.craftengine.core.pack.validation.PackValidator;
-import net.momirealms.craftengine.core.pack.validation.ValidationResources;
 import net.momirealms.craftengine.core.pack.validation.ValidationModelResolver;
+import net.momirealms.craftengine.core.pack.validation.ValidationResources;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowContext;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowValidation;
@@ -187,6 +187,8 @@ public abstract class AbstractPackManager implements PackManager {
     protected abstract void dispatchCacheEvent(PackCacheData cacheData);
 
     protected abstract void dispatchGenerationEvent(Path resourceFolder, Path zipPath);
+
+    protected abstract ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException;
 
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
@@ -1045,21 +1047,6 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
-        public void generateBedrockPack(String input, String output) throws IOException {
-            Timestamp timestamp = new Timestamp();
-            CraftEngine engine = this.plugin();
-            Map<Key, Key> mappings = Config.obfuscateItemModel() ? ItemModelMappings.getMappings() : Map.of();
-            List<BedrockItemSource> items = BedrockItemSource.collect(engine.itemManager().loadedItems().values(), mappings);
-            BedrockPackGenerator.Result result = new BedrockPackGenerator().generate(
-                    this.resolvePath(input),
-                    this.resolvePath(output),
-                    Config.packMaxVersion(),
-                    items
-            );
-            engine.logger().info("Generated Bedrock resource pack " + output + ": " + result.items() + " items, " + result.models() + " models, " + result.skipped() + " skipped (" + timestamp.deltaMillis() + " ms)");
-        }
-
-        @Override
         public void loadZip(String path) throws IOException {
             Timestamp timestamp = new Timestamp();
             GeneratedPack loaded = GeneratedPack.loadZip(resolveWorkflowPath(path));
@@ -1080,6 +1067,34 @@ public abstract class AbstractPackManager implements PackManager {
             Timestamp timestamp = new Timestamp();
             this.pack.export(resolveWorkflowPath(path));
             plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.export_finished", path, String.valueOf(timestamp.deltaMillis())));
+        }
+
+        @Override
+        public void generateBedrockPack(String input, String output) throws IOException {
+            if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
+                throw new IOException("Geyser item plan generation requires Minecraft 1.21.4 or newer");
+            }
+            Path sourcePath = this.resolvePath(input);
+            if (!Files.isRegularFile(sourcePath)) {
+                throw new IOException("Resource pack does not exist: " + sourcePath);
+            }
+            Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla-resource-pack")).download(VersionHelper.MINECRAFT_VERSION);
+            ItemRegistrationPlan plan;
+            try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
+                JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
+                plan = AbstractPackManager.this.generateGeyserItemPlan(resources);
+            }
+            for (ItemRegistrationPlan.Diagnostic diagnostic : plan.diagnostics()) {
+                String message = "Geyser item plan: " + diagnostic.code() + " [items=" + diagnostic.itemIds() + ", model=" + diagnostic.definitionId() + "] " + diagnostic.details();
+                if (diagnostic.severity() == ItemRegistrationPlan.Severity.INFO) {
+                    AbstractPackManager.this.plugin.logger().info(message);
+                } else {
+                    AbstractPackManager.this.plugin.logger().warn(message);
+                }
+            }
+            Path outputPath = this.resolvePath(output);
+            new BedrockPackGenerator().generate(plan, outputPath);
+            AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Restart Geyser to load the plan.");
         }
 
         @Override

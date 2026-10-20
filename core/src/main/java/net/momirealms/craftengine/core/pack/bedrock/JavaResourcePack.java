@@ -1,14 +1,11 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.bedrock.BedrockPackLanguages;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
-import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
-import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
-import net.momirealms.craftengine.core.pack.model.definition.ItemModels;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,13 +18,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
@@ -73,6 +64,22 @@ public final class JavaResourcePack {
             if (overlayPriority != null) {
                 indexResource(name.substring(separator + 1), entry, overlayPriority, resources);
             }
+        }
+        Set<String> placeholders = new HashSet<>();
+        // Protected ZIPs can contain empty files at paths needed as directories by real resources.
+        for (String path : resources.keySet()) {
+            int separator = path.lastIndexOf('/');
+            while (separator > 0) {
+                String parent = path.substring(0, separator);
+                ResourceEntry entry = resources.get(parent);
+                if (entry != null && entry.entry().getSize() == 0) {
+                    placeholders.add(parent);
+                }
+                separator = path.lastIndexOf('/', separator - 1);
+            }
+        }
+        for (String placeholder : placeholders) {
+            resources.remove(placeholder);
         }
         Path assets = Files.createDirectories(root.resolve("assets"));
         for (Map.Entry<String, ResourceEntry> resource : resources.entrySet()) {
@@ -127,28 +134,8 @@ public final class JavaResourcePack {
     }
 
     @Nullable
-    public JsonObject readItemDefinitionJson(Key key) throws IOException {
-        return this.readJson(ResourcePackUtils.itemDefinitionPath(key));
-    }
-
-    @Nullable
     public JsonObject readParticleJson(Key key) throws IOException {
         return this.readJson(ResourcePackUtils.particleDefinitionPath(key));
-    }
-
-    @Nullable
-    public ItemModel readItemDefinition(Key key) throws IOException {
-        JsonObject definition = this.readItemDefinitionJson(key);
-        if (definition == null || !(definition.get("model") instanceof JsonObject model)) {
-            return null;
-        }
-        return ItemModels.fromJson(model);
-    }
-
-    @Nullable
-    public ModernItemModel readModernItemModel(Key key) throws IOException {
-        JsonObject definition = this.readItemDefinitionJson(key);
-        return definition == null ? null : ModernItemModel.fromJson(definition);
     }
 
     public List<JsonObject> readAtlas(Key atlas) throws IOException {
@@ -183,8 +170,8 @@ public final class JavaResourcePack {
         return this.version;
     }
 
-    public List<Key> itemDefinitions() throws IOException {
-        List<Key> definitions = new ArrayList<>();
+    public Map<Key, JsonObject> itemDefinitions() throws IOException {
+        Map<Key, JsonObject> definitions = new TreeMap<>(Comparator.comparing(Key::asString));
         Path assets = this.root.resolve("assets");
         if (!Files.isDirectory(assets)) {
             return definitions;
@@ -196,36 +183,26 @@ public final class JavaResourcePack {
                     continue;
                 }
                 try (Stream<Path> files = Files.walk(items)) {
-                    for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
+                    Iterator<Path> iterator = files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).iterator();
+                    while (iterator.hasNext()) {
+                        Path file = iterator.next();
                         String path = CharacterUtils.replaceBackslashWithSlash(items.relativize(file).toString());
-                        definitions.add(Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5)));
-                    }
-                }
-            }
-        }
-        definitions.sort(Comparator.comparing(Key::asString));
-        return definitions;
-    }
-
-    public Set<String> languageResources() throws IOException {
-        Set<String> paths = new TreeSet<>();
-        try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(this.root.resolve("assets"))) {
-            for (Path namespace : namespaces) {
-                Path languages = namespace.resolve("lang");
-                if (!Files.isDirectory(languages)) {
-                    continue;
-                }
-                try (DirectoryStream<Path> files = Files.newDirectoryStream(languages, "*.json")) {
-                    for (Path file : files) {
-                        String name = file.getFileName().toString();
-                        if (Files.isRegularFile(file) && BedrockPackLanguages.isLocale(name.substring(0, name.length() - 5))) {
-                            paths.add("assets/" + namespace.getFileName() + "/lang/" + name);
+                        Key key = Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5));
+                        JsonObject definition;
+                        try {
+                            definition = readJson(file);
+                        } catch (IOException | JsonParseException exception) {
+                            throw new IOException("Failed to read item definition " + key + " at " + ResourcePackUtils.itemDefinitionPath(key), exception);
                         }
+                        if (definition == null) {
+                            throw new IOException("Missing or non-object item definition " + key + " at " + ResourcePackUtils.itemDefinitionPath(key));
+                        }
+                        definitions.put(key, definition);
                     }
                 }
             }
         }
-        return paths;
+        return definitions;
     }
 
     @Nullable

@@ -7,8 +7,8 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class BedSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<BedSpecialModel> FACTORY = new Factory();

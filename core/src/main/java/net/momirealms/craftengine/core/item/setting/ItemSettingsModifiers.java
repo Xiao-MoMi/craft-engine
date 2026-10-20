@@ -26,10 +26,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public final class ItemSettingsModifiers {
-    public static final ItemSettingsModifierType<ItemSettingsModifier> BEDROCK = register(Key.ce("bedrock"), value -> {
-        BedrockOptions options = BedrockOptions.fromConfig(value.getAsSection());
-        return settings -> settings.bedrock(options);
-    });
     public static final ItemSettingsModifierType<ItemSettingsModifier> REPAIRABLE = register(Key.ce("repairable"), value -> {
         if (value.is(Map.class)) {
             Repairable repairable = Repairable.fromConfig(value.getAsSection());

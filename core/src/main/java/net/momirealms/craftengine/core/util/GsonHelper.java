@@ -3,16 +3,12 @@ package net.momirealms.craftengine.core.util;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.TreeMap;
 
 public final class GsonHelper {
     private static final Gson GSON;
@@ -27,6 +23,24 @@ public final class GsonHelper {
 
     public static Gson get() {
         return GSON;
+    }
+
+    public static JsonElement sortObjectKeys(JsonElement element) {
+        if (element.isJsonObject()) {
+            JsonObject result = new JsonObject();
+            for (Map.Entry<String, JsonElement> entry : new TreeMap<>(element.getAsJsonObject().asMap()).entrySet()) {
+                result.add(entry.getKey(), sortObjectKeys(entry.getValue()));
+            }
+            return result;
+        }
+        if (element.isJsonArray()) {
+            JsonArray result = new JsonArray();
+            for (JsonElement value : element.getAsJsonArray()) {
+                result.add(sortObjectKeys(value));
+            }
+            return result;
+        }
+        return element.deepCopy();
     }
 
     public static void writeJsonFile(JsonElement json, Path path) throws IOException {

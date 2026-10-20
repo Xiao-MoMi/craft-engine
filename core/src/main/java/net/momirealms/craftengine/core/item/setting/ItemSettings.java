@@ -60,7 +60,6 @@ public final class ItemSettings {
     EquipmentSetPart equipmentSetPart;
     AttributeModifiers attributeModifiers;
     EquipmentPotionEffects equipmentPotionEffects;
-    BedrockOptions bedrock = BedrockOptions.DEFAULT;
 
     private ItemSettings() {}
 
@@ -176,7 +175,6 @@ public final class ItemSettings {
         newSettings.equipmentSetPart = settings.equipmentSetPart;
         newSettings.attributeModifiers = settings.attributeModifiers;
         newSettings.equipmentPotionEffects = settings.equipmentPotionEffects;
-        newSettings.bedrock = settings.bedrock;
         newSettings.customData = new IdentityHashMap<>(settings.customData);
         return newSettings;
     }
@@ -218,15 +216,6 @@ public final class ItemSettings {
 
     public ProjectileMeta projectileMeta() {
         return this.projectileMeta;
-    }
-
-    public BedrockOptions bedrock() {
-        return this.bedrock;
-    }
-
-    public ItemSettings bedrock(BedrockOptions bedrock) {
-        this.bedrock = bedrock;
-        return this;
     }
 
     public boolean disableVanillaBehavior() {

@@ -101,6 +101,27 @@ public interface ItemStackProxy extends DataComponentHolderProxy, ItemInstancePr
     @MethodInvoker(name = "getItem")
     Object getItem(Object target);
 
+    @MethodInvoker(name = "getUseAnimation")
+    Object getUseAnimation(Object target);
+
+    @MethodInvoker(name = "getUseDuration", activeIf = "max_version=1.20.6")
+    int getUseDuration(Object target);
+
+    @MethodInvoker(name = "getUseDuration", activeIf = "min_version=1.21")
+    int getUseDuration(Object target, @Type(clazz = LivingEntityProxy.class) Object entity);
+
+    @MethodInvoker(name = "useOnRelease")
+    boolean useOnRelease(Object target);
+
+    @MethodInvoker(name = "getSwingAnimation", activeIf = "min_version=1.21.11 && max_version=26.2")
+    Object getSwingAnimation(Object target);
+
+    @MethodInvoker(name = "getAttackAnimation", activeIf = "min_version=26.3")
+    Object getAttackAnimation(Object target);
+
+    @MethodInvoker(name = "getInteractAnimation", activeIf = "min_version=26.3")
+    Object getInteractAnimation(Object target);
+
     @MethodInvoker(name = "hasNonDefault", activeIf = "min_version=1.21.4")
     boolean hasNonDefault(Object target, @Type(clazz = DataComponentTypeProxy.class) Object type);
 

@@ -34,7 +34,7 @@ resource-pack:
       #   protection: true  # requires premium version
       # - type: generate_bedrock_pack
       #   input: "./generated/resource_pack.zip"
-      #   output: "./generated/bedrock_resource_pack.mcpack"
+      #   output: "../Geyser-Spigot/packs/craftengine.mcpack"
         - type: upload
           pack: default
           path: "./generated/resource_pack.zip"
@@ -813,11 +813,6 @@ client-optimization:
       restore-per-tick: 25
 
 bedrock:
-  resource-pack:
-    # Generated square icon resolution for 2D (builtin/generated) items, in pixels; 3D items use block models.
-    # Allowed values: 16, 32, 64, 128, 256. Invalid values fall back to 64 with a warning.
-    # Takes effect on the next resource pack generation after reloading the configuration.
-    item-icon-size: 64
   # Extra ways to identify Bedrock players when API detection does not identify them.
   # Geyser and Floodgate API detection remains active regardless of these options.
   additional-identification:

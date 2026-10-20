@@ -10,8 +10,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
 public final class PackWorkflows {
-    public static final PackWorkflowType<GeneratePackWorkflow> GENERATE = register(Key.ce("generate"), GeneratePackWorkflow.FACTORY);
     public static final PackWorkflowType<GenerateBedrockPackWorkflow> GENERATE_BEDROCK_PACK = register(Key.ce("generate_bedrock_pack"), GenerateBedrockPackWorkflow.FACTORY);
+    public static final PackWorkflowType<GeneratePackWorkflow> GENERATE = register(Key.ce("generate"), GeneratePackWorkflow.FACTORY);
     public static final PackWorkflowType<LoadZipPackWorkflow> LOAD_ZIP = register(Key.ce("load_zip"), LoadZipPackWorkflow.FACTORY);
     public static final PackWorkflowType<ExportPackWorkflow> EXPORT = register(Key.ce("export"), ExportPackWorkflow.FACTORY);
     public static final PackWorkflowType<PackSquashWorkflow> PACKSQUASH = register(Key.ce("packsquash"), PackSquashWorkflow.FACTORY);

@@ -8,8 +8,8 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class ChestSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<ChestSpecialModel> FACTORY = new Factory();

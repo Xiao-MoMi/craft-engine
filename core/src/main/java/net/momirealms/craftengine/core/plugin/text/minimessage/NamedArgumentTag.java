@@ -16,11 +16,9 @@ import java.util.Optional;
 
 public class NamedArgumentTag extends StaticTagResolver implements StringTag {
     public static final NamedArgumentTag INSTANCE = new NamedArgumentTag("arg");
-    private final String name;
 
     protected NamedArgumentTag(String name) {
         super(name);
-        this.name = name;
     }
 
     @Override
@@ -35,7 +33,10 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
         ContextKey<?> key = ContextKey.chain(keyString);
         Object value = parameter(context, key).orElse(null);
         if (value == null) {
-            value = arguments.popOr("No default value provided").toString();
+            if (!arguments.hasNext()) {
+                return Tag.selfClosingInserting(Component.empty());
+            }
+            value = arguments.pop().toString();
         }
         if (value instanceof Component component) {
             return Tag.selfClosingInserting(component);
@@ -64,10 +65,7 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
         return (boundArgs, context) -> {
             Object value = parameter(context, key).orElse(null);
             if (value == null) {
-                if (defaultTemplate == null) {
-                    throw new IllegalArgumentException("No default value provided for tag <" + this.name + ":" + String.join(":", args) + ">");
-                }
-                return defaultTemplate.render(context);
+                return defaultTemplate == null ? "" : defaultTemplate.render(context);
             }
             if (value instanceof Component component) {
                 return AdventureHelper.plainTextContent(component);
@@ -83,7 +81,7 @@ public class NamedArgumentTag extends StaticTagResolver implements StringTag {
         ParameterArgument parameter = parameterArgument(args);
         Object value = parameter(context, ContextKey.chain(parameter.key())).orElse(null);
         if (value == null) {
-            value = StringTag.requireArg(args, parameter.consumedArguments(), "No default value provided");
+            value = args.length > parameter.consumedArguments() ? args[parameter.consumedArguments()] : "";
         }
         return value;
     }

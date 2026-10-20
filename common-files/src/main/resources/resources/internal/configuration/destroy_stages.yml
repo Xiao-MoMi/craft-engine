@@ -14,9 +14,6 @@ config_factory:
     items:
       ${namespace:-"minecraft"}:destroy_stage_${stage}:
         data::item_name: destroy stage ${stage}
-        settings:
-          bedrock:
-            render_method: blend
         model:
           path: item/custom/destroy_stage_${stage}
           generation:

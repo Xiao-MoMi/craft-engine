@@ -8,8 +8,8 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
-import java.util.function.Consumer;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public final class SignSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<SignSpecialModel> FACTORY = new Factory();

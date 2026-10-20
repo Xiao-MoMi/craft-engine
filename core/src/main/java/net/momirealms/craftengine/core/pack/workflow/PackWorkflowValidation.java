@@ -38,12 +38,6 @@ public final class PackWorkflowValidation {
         this.packed = false;
     }
 
-    public void generateBedrockPack(String input, String output) {
-        if (resolvePath(input).equals(resolvePath(output))) {
-            throw new IllegalArgumentException("Bedrock output must not overwrite the input Java resource pack");
-        }
-    }
-
     public void export(String path) {
         requireGeneratedPack();
         Path output = resolvePath(path);
@@ -58,6 +52,15 @@ public final class PackWorkflowValidation {
         this.packed = true;
         this.protection = protection && VersionHelper.PREMIUM;
         resolvePath(path);
+    }
+
+    public void generateBedrockPack(String input, String output) {
+        Path sourcePath = resolvePath(input);
+        Path outputPath = resolvePath(output);
+        Path reportPath = outputPath.resolveSibling(outputPath.getFileName() + ".report.json");
+        if (sourcePath.equals(outputPath) || sourcePath.equals(reportPath)) {
+            throw new IllegalArgumentException("Bedrock pack and diagnostic report must not overwrite the input Java resource pack");
+        }
     }
 
     public ResourcePackHost requireHost(String pack) {

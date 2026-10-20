@@ -302,7 +302,6 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
-    private int bedrock$resource_pack$item_icon_size;
     private String bedrock$additional_identification$name_prefix;
     private boolean bedrock$additional_identification$floodgate_uuid;
     private boolean bedrock$additional_identification$geyser_brand;
@@ -877,18 +876,6 @@ public final class Config {
         this.client_optimization$entity_culling$rate_limiting$restore_per_tick = config.getInt("client-optimization.entity-culling.rate-limiting.restore-per-tick", 5);
 
         // bedrock support
-        String iconSize = Objects.toString(config.getValue("bedrock.resource-pack.item-icon-size"), "64");
-        this.bedrock$resource_pack$item_icon_size = switch (iconSize) {
-            case "16" -> 16;
-            case "32" -> 32;
-            case "64" -> 64;
-            case "128" -> 128;
-            case "256" -> 256;
-            default -> {
-                this.plugin.logger().warn("Invalid bedrock.resource-pack.item-icon-size '" + iconSize + "'. Expected 16, 32, 64, 128 or 256. Falling back to 64.");
-                yield 64;
-            }
-        };
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
@@ -1767,10 +1754,6 @@ public final class Config {
 
     public static boolean multiThreadedConfigLoad() {
         return instance.misc$multi_threaded_configuration_load;
-    }
-
-    public static int bedrockItemIconSize() {
-        return instance.bedrock$resource_pack$item_icon_size;
     }
 
     public static String bedrockIdentificationNamePrefix() {
