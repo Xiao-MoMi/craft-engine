@@ -16,4 +16,8 @@ public final class ResourcePackUtils {
     public static String itemDefinitionPath(Key key) {
         return "assets/" + key.namespace() + "/items/" + key.value() + ".json";
     }
+
+    public static String particleDefinitionPath(Key key) {
+        return "assets/" + key.namespace() + "/particles/" + key.value() + ".json";
+    }
 }

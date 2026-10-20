@@ -36,7 +36,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
         );
         BedrockVanillaTextures.transform(context, "textures/ui/title.png", List.of("gui/title/minecraft.png"), images -> {
             BufferedImage image = images.getFirst();
-            return ImageUtils.resize(ImageUtils.crop(image, 0, 0, image.getWidth(), image.getHeight() * 44 / 64), 1937, 333);
+            return ImageUtils.resize(ImageUtils.crop(image, 0, 0, image.getWidth(), (float) (image.getHeight() * 44) / 64), 1937, 333);
         });
         for (int index = 0; index < 4; index++) {
             this.writeSprite(

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockConversionContext;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -43,11 +44,11 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 continue;
             }
             for (BedrockParticleDefinition target : rule.targets()) {
-                targets.computeIfAbsent(target, ignored -> new ArrayList<>()).add(source);
+                targets.computeIfAbsent(target, ignored -> new ObjectArrayList<>()).add(source);
             }
         }
         for (BedrockParticleDefinition target : BedrockParticleRules.DRIPPING.keySet()) {
-            targets.computeIfAbsent(target, ignored -> new ArrayList<>());
+            targets.computeIfAbsent(target, ignored -> new ObjectArrayList<>());
         }
         Map<String, TextureData> loaded = new HashMap<>();
         for (Map.Entry<BedrockParticleDefinition, List<Source>> entry : targets.entrySet()) {
@@ -70,8 +71,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
             Source first = sources.getFirst();
             // 同一网络效果无法区分多个 Java 来源。即使只改了其中一个，也不能覆盖另一个的材质。
             if (drip == null && sources.stream().anyMatch(source -> !first.compatible(source))) {
-                CraftEngine.instance().logger().warn("Keeping original Bedrock particle " + target.identifier()
-                        + ": incompatible Java sources " + sources.stream().map(source -> source.rule().source()).toList());
+                CraftEngine.instance().logger().warn("Keeping original Bedrock particle " + target.identifier() + ": incompatible Java sources " + sources.stream().map(source -> source.rule().source()).toList());
                 continue;
             }
             if (sources.stream().anyMatch(source -> source.paths().isEmpty())) {
@@ -85,8 +85,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 paths = new ArrayList<>(paths);
                 paths.addAll(falling.paths());
                 // 与原有效果的运动阶段使用同一个时钟，每个阶段只在自己的纹理范围内随机选帧。
-                frame = "variable.particle_age < variable.stuck_time ? (" + frame + ") : ("
-                        + hangingCount + " + " + falling.rule().selection().frame(falling.paths().size()) + ")";
+                frame = "variable.particle_age < variable.stuck_time ? (" + frame + ") : (" + hangingCount + " + " + falling.rule().selection().frame(falling.paths().size()) + ")";
             }
             try {
                 List<BufferedImage> frames = new ArrayList<>(paths.size());
@@ -118,20 +117,20 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
     }
 
     private Source read(BedrockConversionContext context, BedrockParticleRule rule) {
-        String definitionPath = "assets/minecraft/particles/" + rule.source() + ".json";
+        Key particle = Key.of(rule.source());
         try {
-            JsonObject definition = context.pack().readJson(definitionPath);
+            JsonObject definition = context.pack().readParticleJson(particle);
             if (definition == null) {
                 return null;
             }
             if (!(definition.get("textures") instanceof JsonArray sequence) || sequence.isEmpty()) {
                 throw new IOException("Missing particle texture sequence");
             }
-            boolean changed = context.pack().hasCustomResource(definitionPath);
+            boolean changed = context.pack().hasCustomResource(ResourcePackUtils.particleDefinitionPath(particle));
             List<String> paths = new ArrayList<>(sequence.size());
             for (JsonElement entry : sequence) {
                 Key texture = Key.of(entry.getAsString());
-                String path = ResourcePackUtils.texturePath(new Key(texture.namespace(), "particle/" + texture.value()));
+                String path = ResourcePackUtils.texturePath(Key.of(texture.namespace(), "particle/" + texture.value()));
                 paths.add(path);
                 changed |= context.pack().hasCustomResource(path) || context.pack().hasCustomResource(path + ".mcmeta");
                 if (rule.selection() == BedrockParticleRule.Selection.QUARTER) {

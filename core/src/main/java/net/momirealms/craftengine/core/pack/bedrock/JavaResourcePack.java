@@ -132,6 +132,11 @@ public final class JavaResourcePack {
     }
 
     @Nullable
+    public JsonObject readParticleJson(Key key) throws IOException {
+        return this.readJson(ResourcePackUtils.particleDefinitionPath(key));
+    }
+
+    @Nullable
     public ItemModel readItemDefinition(Key key) throws IOException {
         JsonObject definition = this.readItemDefinitionJson(key);
         if (definition == null || !(definition.get("model") instanceof JsonObject model)) {

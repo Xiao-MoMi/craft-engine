@@ -10,6 +10,18 @@ record BedrockParticleRule(String source,
                           List<BedrockParticleDefinition> targets,
                           @Nullable String unsupportedReason) {
 
+    static BedrockParticleRule of(String source, Selection selection, BedrockParticleDefinition... targets) {
+        return of(source, selection, 0, targets);
+    }
+
+    static BedrockParticleRule of(String source, Selection selection, int padding, BedrockParticleDefinition... targets) {
+        return new BedrockParticleRule(source, selection, padding, List.of(targets), null);
+    }
+
+    static BedrockParticleRule unsupported(String source, Selection selection, String reason) {
+        return new BedrockParticleRule(source, selection, 0, List.of(), reason);
+    }
+
     enum Selection {
         RANDOM,
         AGE,
