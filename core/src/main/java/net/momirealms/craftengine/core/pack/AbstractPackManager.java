@@ -2577,6 +2577,9 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.excludeFileExtensions().contains(FileUtils.getExtension(file))) {
             return;
         }
+        if (Config.isFileExcluded(sourceFolder, file)) {
+            return;
+        }
         long lastModified = attrs.lastModifiedTime().toMillis();
         long size = attrs.size();
         byte[] data;
@@ -2612,6 +2615,9 @@ public abstract class AbstractPackManager implements PackManager {
                         return FileVisitResult.CONTINUE;
                     }
                     if (Config.excludeFileExtensions().contains(FileUtils.getExtension(entry))) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (Config.isFileExcluded(zipRoot, entry)) {
                         return FileVisitResult.CONTINUE;
                     }
                     Path entryPathInZip = zipRoot.relativize(entry);

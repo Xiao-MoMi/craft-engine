@@ -85,6 +85,7 @@ public final class Config {
     private List<ConditionalResolution> resource_pack$duplicated_files_handler;
     private List<String> resource_pack$merge_external_folders;
     private List<String> resource_pack$merge_external_zips;
+    private List<Pattern> resource_pack$exclude_files = List.of();
     private Set<String> resource_pack$exclude_file_extensions;
     private boolean resource_pack$cache_resource_files;
     private String resource_pack$description;
@@ -448,6 +449,15 @@ public final class Config {
         }
         this.resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
         this.resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
+        ImmutableList.Builder<Pattern> excludedFilesBuilder = ImmutableList.builder();
+        for (String regex : config.getStringList("resource-pack.exclude-files")) {
+            try {
+                excludedFilesBuilder.add(Pattern.compile(regex));
+            } catch (PatternSyntaxException e) {
+                this.plugin.logger().warn("Invalid regex in resource-pack.exclude-files: " + regex, e);
+            }
+        }
+        this.resource_pack$exclude_files = excludedFilesBuilder.build();
         this.resource_pack$exclude_file_extensions = new HashSet<>(config.getStringList("resource-pack.exclude-file-extensions"));
         this.resource_pack$cache_resource_files = config.getBoolean("resource-pack.cache-resource-files", true);
         this.resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
@@ -1102,6 +1112,20 @@ public final class Config {
 
     public static List<String> zipsToMerge() {
         return instance.resource_pack$merge_external_zips;
+    }
+
+    public static boolean isFileExcluded(Path root, Path file) {
+        List<Pattern> patterns = instance.resource_pack$exclude_files;
+        if (patterns.isEmpty()) {
+            return false;
+        }
+        String relativePath = CharacterUtils.replaceBackslashWithSlash(root.relativize(file).toString());
+        for (int i = 0; i < patterns.size(); i++) {
+            if (patterns.get(i).matcher(relativePath).matches()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static Set<String> excludeFileExtensions() {
