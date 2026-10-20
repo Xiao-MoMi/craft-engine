@@ -160,8 +160,7 @@ public final class GeyserItemRegistrationAdapter {
 
     private int version(String value) {
         String[] parts = value.split("\\.");
-        return Integer.parseInt(parts[0]) * 10000 + Integer.parseInt(parts[1]) * 100
-                + (parts.length > 2 ? Integer.parseInt(parts[2]) : 0);
+        return Integer.parseInt(parts[0]) * 10000 + Integer.parseInt(parts[1]) * 100 + (parts.length > 2 ? Integer.parseInt(parts[2]) : 0);
     }
 
     private boolean hasErrors(List<Diagnostic> diagnostics) {
