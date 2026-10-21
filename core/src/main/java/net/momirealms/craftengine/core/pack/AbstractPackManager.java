@@ -1079,21 +1079,21 @@ public abstract class AbstractPackManager implements PackManager {
                 throw new IOException("Resource pack does not exist: " + sourcePath);
             }
             Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla-resource-pack")).download(VersionHelper.MINECRAFT_VERSION);
+            Path outputPath = this.resolvePath(output);
             ItemRegistrationPlan plan;
             try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
                 plan = AbstractPackManager.this.generateGeyserItemPlan(resources);
-            }
-            for (ItemRegistrationPlan.Diagnostic diagnostic : plan.diagnostics()) {
-                String message = "Geyser item plan: " + diagnostic.code() + " [items=" + diagnostic.itemIds() + ", model=" + diagnostic.definitionId() + "] " + diagnostic.details();
-                if (diagnostic.severity() == ItemRegistrationPlan.Severity.INFO) {
-                    AbstractPackManager.this.plugin.logger().info(message);
-                } else {
-                    AbstractPackManager.this.plugin.logger().warn(message);
+                for (ItemRegistrationPlan.Diagnostic diagnostic : plan.diagnostics()) {
+                    String message = "Geyser item plan: " + diagnostic.code() + " [items=" + diagnostic.itemIds() + ", model=" + diagnostic.definitionId() + "] " + diagnostic.details();
+                    if (diagnostic.severity() == ItemRegistrationPlan.Severity.INFO) {
+                        AbstractPackManager.this.plugin.logger().info(message);
+                    } else {
+                        AbstractPackManager.this.plugin.logger().warn(message);
+                    }
                 }
+                new BedrockPackGenerator().generate(resources, plan, outputPath);
             }
-            Path outputPath = this.resolvePath(output);
-            new BedrockPackGenerator().generate(plan, outputPath);
             AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Restart Geyser to load the plan.");
         }
 

@@ -21,7 +21,7 @@ import java.util.UUID;
 
 public final class BedrockPackGenerator {
 
-    public void generate(ItemRegistrationPlan plan, Path output) throws IOException {
+    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, Path output) throws IOException {
         Path destination = output.toAbsolutePath().normalize();
         Files.createDirectories(destination.getParent());
         if (plan.hasErrors()) {

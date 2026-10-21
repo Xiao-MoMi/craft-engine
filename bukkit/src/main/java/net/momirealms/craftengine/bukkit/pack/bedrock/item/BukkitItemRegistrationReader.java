@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class BukkitItemRegistrationReader implements ItemRegistrationReader {
     private static final List<Key> COMPONENTS = List.of(
@@ -54,6 +55,10 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
         Map<Key, JsonElement> components = new LinkedHashMap<>();
         for (Map.Entry<Key, Object> entry : this.componentTypes.entrySet()) {
             JsonElement effective = item.getComponentAsJson(entry.getValue());
+            JsonElement defaultValue = item.type().getJsonComponent(entry.getValue()).orElse(null);
+            if (Objects.equals(effective, defaultValue)) {
+                continue;
+            }
             components.put(entry.getKey(), effective == null ? JsonNull.INSTANCE : effective);
         }
         return new ItemRegistrationProperties(components);

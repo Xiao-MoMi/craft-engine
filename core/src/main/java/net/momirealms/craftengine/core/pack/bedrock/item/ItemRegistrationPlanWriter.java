@@ -31,7 +31,7 @@ public final class ItemRegistrationPlanWriter {
             json.addProperty(BEDROCK_IDENTIFIER, entry.bedrockId().asString()); // 基岩物品 ID
             json.addProperty(JAVA_ITEM, entry.javaItemType().asString()); // 基础 Java 物品类型
             json.addProperty(MODEL, entry.definitionId().asString()); // 匹配的 item_model ID
-            JsonObject components = new JsonObject(); // 有效组件值
+            JsonObject components = new JsonObject(); // 相对原版的组件差异
             entry.properties().components().forEach((key, value) -> components.add(key.asString(), value)); // null 表示移除
             json.add(COMPONENTS, components); // 注册组件
             JsonObject resources = new JsonObject(); // 资源信息
