@@ -3,4 +3,3 @@ CREATE TABLE ce_pack_preferences (
     preferences TEXT NOT NULL DEFAULT ('{}'),
     PRIMARY KEY (player_id)
 );
-w
