@@ -3,145 +3,208 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
+import org.geysermc.geyser.api.item.custom.v2.component.ItemDataComponent;
 import org.geysermc.geyser.api.item.custom.v2.component.java.*;
 import org.geysermc.geyser.api.util.Holders;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.util.Unit;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.HashMap;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 
 final class GeyserItemComponentConverter {
-    private static final Set<String> SUPPORTED = Set.of(
-            "minecraft:consumable",
-            "minecraft:food",
-            "minecraft:equippable",
-            "minecraft:max_damage",
-            "minecraft:max_stack_size",
-            "minecraft:use_cooldown",
-            "minecraft:enchantable",
-            "minecraft:tool",
-            "minecraft:repairable",
-            "minecraft:enchantment_glint_override",
-            "minecraft:attack_range",
-            "minecraft:kinetic_weapon",
-            "minecraft:piercing_weapon",
-            "minecraft:swing_animation",
-            "minecraft:attack_animation",
-            "minecraft:use_effects",
-            "minecraft:compostable",
-            "minecraft:cooking_fuel"
-    );
+    private static final Map<String, Converter> CONVERTERS = new HashMap<>();
+
+    static {
+        register(
+                "minecraft:max_stack_size",
+                JavaItemDataComponents.MAX_STACK_SIZE,
+                (value, version) -> value.getAsInt()
+        );
+        register(
+                "minecraft:max_damage",
+                JavaItemDataComponents.MAX_DAMAGE,
+                (value, version) -> value.getAsInt()
+        );
+        register(
+                "minecraft:enchantment_glint_override",
+                JavaItemDataComponents.ENCHANTMENT_GLINT_OVERRIDE,
+                (value, version) -> value.getAsBoolean()
+        );
+        register(
+                "minecraft:enchantable",
+                JavaItemDataComponents.ENCHANTABLE,
+                (value, version) -> value.getAsJsonObject().get("value").getAsInt()
+        );
+        register(
+                "minecraft:consumable",
+                JavaItemDataComponents.CONSUMABLE,
+                (value, version) -> readConsumable(value.getAsJsonObject(), version)
+        );
+        register(
+                "minecraft:food",
+                JavaItemDataComponents.FOOD,
+                (value, version) -> readFood(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:equippable",
+                JavaItemDataComponents.EQUIPPABLE,
+                (value, version) -> readEquippable(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:use_cooldown",
+                JavaItemDataComponents.USE_COOLDOWN,
+                (value, version) -> readCooldown(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:tool",
+                JavaItemDataComponents.TOOL,
+                (value, version) -> readTool(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:repairable",
+                JavaItemDataComponents.REPAIRABLE,
+                (value, version) -> JavaRepairable.of(readHolders(value.getAsJsonObject().get("items")))
+        );
+        register(
+                "minecraft:attack_range",
+                JavaItemDataComponents.ATTACK_RANGE,
+                (value, version) -> readAttackRange(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:kinetic_weapon",
+                JavaItemDataComponents.KINETIC_WEAPON,
+                (value, version) -> readKineticWeapon(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:piercing_weapon",
+                JavaItemDataComponents.PIERCING_WEAPON,
+                (value, version) -> JavaPiercingWeapon.instance()
+        );
+        register(
+                "minecraft:attack_animation",
+                JavaItemDataComponents.ATTACK_ANIMATION,
+                (value, version) -> readAttackAnimation(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:swing_animation",
+                JavaItemDataComponents.ATTACK_ANIMATION,
+                (value, version) -> readAttackAnimation(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:use_effects",
+                JavaItemDataComponents.USE_EFFECTS,
+                (value, version) -> readUseEffects(value.getAsJsonObject())
+        );
+        register(
+                "minecraft:compostable",
+                JavaItemDataComponents.COMPOSTABLE,
+                (value, version) -> Unit.INSTANCE
+        );
+        register(
+                "minecraft:cooking_fuel",
+                JavaItemDataComponents.COOKING_FUEL,
+                (value, version) -> Unit.INSTANCE
+        );
+        registerUnsupported("minecraft:interact_animation"); // Geyser API 不支持交互动画组件
+        registerUnsupported("minecraft:blocks_attacks"); // Geyser API 未提供格挡组件接口
+        registerUnsupported("minecraft:instrument"); // Geyser API 未提供乐器组件接口
+    }
 
     private GeyserItemComponentConverter() {
     }
 
-    static boolean supports(String key) {
-        return SUPPORTED.contains(key);
-    }
-
-    static String targetKey(String key) {
-        return key.equals("minecraft:swing_animation") ? "minecraft:attack_animation" : key;
-    }
-
-    static void apply(CustomItemDefinition.Builder builder,
-                      String key,
-                      JsonElement value,
-                      int sourceVersion,
-                      List<String> warnings) {
-        switch (key) {
-            case "minecraft:max_stack_size" -> builder.component(JavaItemDataComponents.MAX_STACK_SIZE, integer(value, 1, 99));
-            case "minecraft:max_damage" -> builder.component(JavaItemDataComponents.MAX_DAMAGE, integer(value, 0, Integer.MAX_VALUE));
-            case "minecraft:enchantment_glint_override" -> builder.component(JavaItemDataComponents.ENCHANTMENT_GLINT_OVERRIDE, value.getAsBoolean());
-            case "minecraft:enchantable" -> builder.component(JavaItemDataComponents.ENCHANTABLE, integer(value.getAsJsonObject().get("value"), 0, Integer.MAX_VALUE));
-            case "minecraft:consumable" -> {
-                JsonObject object = value.getAsJsonObject();
-                String name = object.has("animation") ? object.get("animation").getAsString() : "eat";
-                if (name.equals("trident") || (name.equals("spear") && sourceVersion < 12111)) {
-                    throw new IllegalArgumentException("The API consumable animation enum cannot express TRIDENT");
-                }
-                JavaConsumable.Animation animation = JavaConsumable.Animation.valueOf(name.toUpperCase(Locale.ROOT));
-                float seconds = number(object, "consume_seconds", 1.6F, 0, Float.MAX_VALUE);
-                if (seconds == 0) {
-                    throw new IllegalArgumentException("Zero consume duration cannot be expressed by this API");
-                }
-                builder.component(JavaItemDataComponents.CONSUMABLE, JavaConsumable.of(seconds, animation));
-                warnFields(object, warnings, "sound", "has_consume_particles");
-            }
-            case "minecraft:food" -> {
-                JsonObject object = value.getAsJsonObject();
-                builder.component(JavaItemDataComponents.FOOD, JavaFoodProperties.of(
-                        integer(object.get("nutrition"), 0, Integer.MAX_VALUE),
-                        number(object, "saturation", 0, 0, Float.MAX_VALUE), bool(object, "can_always_eat", false)));
-            }
-            case "minecraft:equippable" -> {
-                JsonObject object = value.getAsJsonObject();
-                JavaEquippable.EquipmentSlot slot = JavaEquippable.EquipmentSlot.valueOf(object.get("slot").getAsString().toUpperCase(Locale.ROOT));
-                builder.component(JavaItemDataComponents.EQUIPPABLE, JavaEquippable.of(slot));
-                warnFields(object, warnings, "asset_id", "camera_overlay");
-            }
-            case "minecraft:use_cooldown" -> {
-                JsonObject object = value.getAsJsonObject();
-                JavaUseCooldown.Builder cooldown = JavaUseCooldown.builder();
-                float seconds = number(object, "seconds", 0, 0, Float.MAX_VALUE);
-                if (seconds == 0) {
-                    throw new IllegalArgumentException("Cooldown seconds must be positive");
-                }
-                cooldown.seconds(seconds);
-                if (object.has("cooldown_group")) {
-                    cooldown.cooldownGroup(Identifier.of(object.get("cooldown_group").getAsString()));
-                }
-                builder.component(JavaItemDataComponents.USE_COOLDOWN, cooldown.build());
-            }
-            case "minecraft:tool" -> builder.component(JavaItemDataComponents.TOOL, JavaTool.of(bool(value.getAsJsonObject(), "can_destroy_blocks_in_creative", true)));
-            case "minecraft:repairable" -> builder.component(JavaItemDataComponents.REPAIRABLE, JavaRepairable.of(holders(value.getAsJsonObject().get("items"))));
-            case "minecraft:attack_range" -> {
-                JsonObject object = value.getAsJsonObject();
-                builder.component(JavaItemDataComponents.ATTACK_RANGE, JavaAttackRange.builder()
-                        .minReach(number(object, "min_reach", 0, 0, 64))
-                        .maxReach(number(object, "max_reach", 3, 0, 64))
-                        .minCreativeReach(number(object, "min_creative_reach", 0, 0, 64))
-                        .maxCreativeReach(number(object, "max_creative_reach", 5, 0, 64))
-                        .hitboxMargin(number(object, "hitbox_margin", 0.3F, 0, 1)).build());
-            }
-            case "minecraft:kinetic_weapon" -> {
-                JsonObject object = value.getAsJsonObject();
-                JavaKineticWeapon.Builder kinetic = JavaKineticWeapon.builder()
-                        .delayTicks(object.has("delay_ticks") ? integer(object.get("delay_ticks"), 0, Integer.MAX_VALUE) : 0);
-                if (object.has("dismount_conditions")) {
-                    JsonObject condition = object.getAsJsonObject("dismount_conditions");
-                    kinetic.dismountConditions(JavaKineticWeapon.condition(
-                            integer(condition.get("max_duration_ticks"), 0, Integer.MAX_VALUE),
-                            number(condition, "min_speed", 0, -Float.MAX_VALUE, Float.MAX_VALUE),
-                            number(condition, "min_relative_speed", 0, -Float.MAX_VALUE, Float.MAX_VALUE)));
-                }
-                builder.component(JavaItemDataComponents.KINETIC_WEAPON, kinetic.build());
-            }
-            case "minecraft:piercing_weapon" -> builder.component(JavaItemDataComponents.PIERCING_WEAPON, JavaPiercingWeapon.instance());
-            case "minecraft:attack_animation", "minecraft:swing_animation" -> {
-                JsonObject object = value.getAsJsonObject();
-                int duration = object.has("duration") ? integer(object.get("duration"), 1, Integer.MAX_VALUE) : 6;
-                builder.component(JavaItemDataComponents.ATTACK_ANIMATION, JavaSwingAnimation.of(duration));
-                if (object.has("type") && !object.get("type").getAsString().equals("whack")) {
-                    warnings.add("Attack animation type requires resource support; the API only receives duration");
-                }
-            }
-            case "minecraft:use_effects" -> {
-                JsonObject object = value.getAsJsonObject();
-                builder.component(JavaItemDataComponents.USE_EFFECTS,
-                        JavaUseEffects.of(number(object, "speed_multiplier", 0.2F, 0, 1)));
-                if (object.has("can_sprint") && !object.get("can_sprint").getAsBoolean()) {
-                    warnings.add("can_sprint cannot be expressed by the API");
-                }
-            }
-            case "minecraft:compostable" -> builder.component(JavaItemDataComponents.COMPOSTABLE, Unit.INSTANCE);
-            case "minecraft:cooking_fuel" -> builder.component(JavaItemDataComponents.COOKING_FUEL, Unit.INSTANCE);
-            default -> throw new IllegalArgumentException("Unsupported component " + key);
+    static void apply(CustomItemDefinition.Builder builder, String key, @Nullable JsonElement value, int sourceVersion) {
+        Converter converter = CONVERTERS.get(key);
+        if (converter != null) {
+            converter.apply(builder, value, sourceVersion);
         }
     }
 
-    private static Holders holders(JsonElement value) {
+    private static <T> void register(String key, ItemDataComponent<T> component, ComponentReader<T> reader) {
+        CONVERTERS.put(key, (builder, value, version) -> {
+            if (value == null) {
+                builder.removeComponent(component);
+            } else {
+                builder.component(component, reader.read(value, version));
+            }
+        });
+    }
+
+    private static void registerUnsupported(String key) {
+        CONVERTERS.put(key, (builder, value, version) -> {
+        });
+    }
+
+    private static JavaConsumable readConsumable(JsonObject object, int sourceVersion) {
+        String animation = object.has("animation") ? object.get("animation").getAsString() : "eat";
+        // 旧版 spear 表示三叉戟，不能直接映射为新版长矛动画。
+        if (animation.equals("trident") || (animation.equals("spear") && sourceVersion < 12111)) {
+            throw new IllegalArgumentException("The API consumable animation enum cannot express TRIDENT");
+        }
+        float seconds = object.has("consume_seconds") ? object.get("consume_seconds").getAsFloat() : 1.6F;
+        return JavaConsumable.of(seconds, JavaConsumable.Animation.valueOf(animation.toUpperCase(Locale.ROOT)));
+    }
+
+    private static JavaFoodProperties readFood(JsonObject object) {
+        return JavaFoodProperties.of(
+                object.get("nutrition").getAsInt(),
+                object.get("saturation").getAsFloat(),
+                object.has("can_always_eat") && object.get("can_always_eat").getAsBoolean()
+        );
+    }
+
+    private static JavaEquippable readEquippable(JsonObject object) {
+        return JavaEquippable.of(JavaEquippable.EquipmentSlot.valueOf(object.get("slot").getAsString().toUpperCase(Locale.ROOT)));
+    }
+
+    private static JavaUseCooldown readCooldown(JsonObject object) {
+        JavaUseCooldown.Builder builder = JavaUseCooldown.builder().seconds(object.get("seconds").getAsFloat());
+        if (object.has("cooldown_group")) {
+            builder.cooldownGroup(Identifier.of(object.get("cooldown_group").getAsString()));
+        }
+        return builder.build();
+    }
+
+    private static JavaTool readTool(JsonObject object) {
+        return JavaTool.of(!object.has("can_destroy_blocks_in_creative") || object.get("can_destroy_blocks_in_creative").getAsBoolean());
+    }
+
+    private static JavaAttackRange readAttackRange(JsonObject object) {
+        return JavaAttackRange.builder()
+                .minReach(object.has("min_reach") ? object.get("min_reach").getAsFloat() : 0)
+                .maxReach(object.has("max_reach") ? object.get("max_reach").getAsFloat() : 3)
+                .minCreativeReach(object.has("min_creative_reach") ? object.get("min_creative_reach").getAsFloat() : 0)
+                .maxCreativeReach(object.has("max_creative_reach") ? object.get("max_creative_reach").getAsFloat() : 5)
+                .hitboxMargin(object.has("hitbox_margin") ? object.get("hitbox_margin").getAsFloat() : 0.3F)
+                .build();
+    }
+
+    private static JavaKineticWeapon readKineticWeapon(JsonObject object) {
+        JavaKineticWeapon.Builder builder = JavaKineticWeapon.builder()
+                .delayTicks(object.has("delay_ticks") ? object.get("delay_ticks").getAsInt() : 0);
+        if (object.has("dismount_conditions")) {
+            JsonObject condition = object.getAsJsonObject("dismount_conditions");
+            builder.dismountConditions(JavaKineticWeapon.condition(
+                    condition.get("max_duration_ticks").getAsInt(),
+                    condition.has("min_speed") ? condition.get("min_speed").getAsFloat() : 0,
+                    condition.has("min_relative_speed") ? condition.get("min_relative_speed").getAsFloat() : 0));
+        }
+        return builder.build();
+    }
+
+    private static JavaSwingAnimation readAttackAnimation(JsonObject object) {
+        // Geyser 的攻击动画组件只接收时长，动作类型由资源包处理。
+        return JavaSwingAnimation.of(object.has("duration") ? object.get("duration").getAsInt() : 6);
+    }
+
+    private static JavaUseEffects readUseEffects(JsonObject object) {
+        return JavaUseEffects.of(object.has("speed_multiplier") ? object.get("speed_multiplier").getAsFloat() : 0.2F);
+    }
+
+    private static Holders readHolders(JsonElement value) {
         if (value.isJsonPrimitive()) {
             String id = value.getAsString();
             return id.startsWith("#") ? Holders.ofTag(Identifier.of(id.substring(1))) : Holders.of(Identifier.of(id));
@@ -153,31 +216,13 @@ final class GeyserItemComponentConverter {
         return builder.build();
     }
 
-    private static void warnFields(JsonObject object, List<String> warnings, String... fields) {
-        for (String field : fields) {
-            if (object.has(field)) {
-                warnings.add(field + " is not translated by the API; retain the source resource requirement");
-            }
-        }
+    @FunctionalInterface
+    private interface Converter {
+        void apply(CustomItemDefinition.Builder builder, @Nullable JsonElement value, int sourceVersion);
     }
 
-    private static int integer(JsonElement value, int minimum, int maximum) {
-        int result = value.getAsBigDecimal().intValueExact();
-        if (result < minimum || result > maximum) {
-            throw new IllegalArgumentException("Integer outside [" + minimum + ", " + maximum + "]: " + result);
-        }
-        return result;
-    }
-
-    private static float number(JsonObject object, String field, float fallback, float minimum, float maximum) {
-        float result = object.has(field) ? object.get(field).getAsFloat() : fallback;
-        if (!Float.isFinite(result) || result < minimum || result > maximum) {
-            throw new IllegalArgumentException(field + " outside [" + minimum + ", " + maximum + "]: " + result);
-        }
-        return result;
-    }
-
-    private static boolean bool(JsonObject object, String field, boolean fallback) {
-        return object.has(field) ? object.get(field).getAsBoolean() : fallback;
+    @FunctionalInterface
+    private interface ComponentReader<T> {
+        T read(JsonElement value, int sourceVersion);
     }
 }

@@ -1,14 +1,13 @@
 package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription.Component;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationProperties;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationReader;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,7 +24,8 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
             DataComponentKeys.ENCHANTABLE,
             DataComponentKeys.TOOL,
             DataComponentKeys.REPAIRABLE,
-            DataComponentKeys.ENCHANTMENT_GLINT_OVERRIDE, Key.minecraft("attack_range"),
+            DataComponentKeys.ENCHANTMENT_GLINT_OVERRIDE,
+            DataComponentKeys.ATTACK_RANGE,
             DataComponentKeys.KINETIC_WEAPON,
             DataComponentKeys.PIERCING_WEAPON,
             DataComponentKeys.USE_EFFECTS,
@@ -51,11 +51,10 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
 
     @Override
     public ItemRegistrationProperties read(Item item) {
-        Map<Key, Component> components = new LinkedHashMap<>();
+        Map<Key, JsonElement> components = new LinkedHashMap<>();
         for (Map.Entry<Key, Object> entry : this.componentTypes.entrySet()) {
             JsonElement effective = item.getComponentAsJson(entry.getValue());
-            JsonElement defaultValue = item.type().getJsonComponent(entry.getValue()).orElse(null);
-            components.put(entry.getKey(), Component.of(effective, defaultValue));
+            components.put(entry.getKey(), effective == null ? JsonNull.INSTANCE : effective);
         }
         return new ItemRegistrationProperties(components);
     }

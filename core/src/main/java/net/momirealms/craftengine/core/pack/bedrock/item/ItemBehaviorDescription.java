@@ -1,21 +1,11 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonElement;
-import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
-import java.util.Objects;
-
 public record ItemBehaviorDescription(Use use,
                                       Swing attack,
-                                      Swing interact,
-                                      Map<Key, Component> components) {
-
-    public ItemBehaviorDescription {
-        components = Map.copyOf(components);
-    }
+                                      Swing interact) {
 
     public enum UseAnimation {
         NONE,
@@ -45,13 +35,6 @@ public record ItemBehaviorDescription(Use use,
         STAB
     }
 
-    public enum ComponentSource {
-        DEFAULT,
-        OVERRIDE,
-        REMOVED,
-        ABSENT
-    }
-
     public record Use(UseAnimation animation,
                       Ticks maximumDuration,
                       @Nullable Ticks chargeDuration,
@@ -63,18 +46,5 @@ public record ItemBehaviorDescription(Use use,
     }
 
     public record Ticks(int value) {
-    }
-
-    public record Component(ComponentSource source, @Nullable JsonElement value) {
-
-        public static Component of(@Nullable JsonElement effective, @Nullable JsonElement defaultValue) {
-            ComponentSource source;
-            if (Objects.equals(effective, defaultValue)) {
-                source = effective == null ? ComponentSource.ABSENT : ComponentSource.DEFAULT;
-            } else {
-                source = effective == null ? ComponentSource.REMOVED : ComponentSource.OVERRIDE;
-            }
-            return new Component(source, effective);
-        }
     }
 }

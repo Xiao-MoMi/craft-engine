@@ -1,21 +1,24 @@
 package net.momirealms.craftengine.bedrock.geyser;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
-import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationResult;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostReloadEvent;
 import org.geysermc.geyser.api.extension.Extension;
-import org.geysermc.geyser.api.extension.ExtensionLogger;
-import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinitionRegisterException;
+import org.geysermc.geyser.api.util.Identifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.stream.Stream;
+
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
@@ -26,7 +29,6 @@ public final class CraftEngineGeyserExtension implements Extension {
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         Path directory = this.geyserApi().packDirectory();
         if (!Files.isDirectory(directory)) {
-            this.logger().info("No Geyser packs directory at " + directory + "; skipping custom item registration.");
             return;
         }
         try (Stream<Path> paths = Files.list(directory)) {
@@ -42,52 +44,42 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     private void registerPack(Path packPath, GeyserDefineCustomItemsEvent event) {
-        ExtensionLogger logger = this.logger();
-        GeyserItemRegistrationResult result;
+        GeyserItemRegistrationAdapter adapter;
+        JsonArray entries;
         try {
-            result = new GeyserItemRegistrationAdapter().readPack(packPath);
-        } catch (IOException | RuntimeException exception) {
-            logger.error("Failed to read item registration plan from " + packPath + "; no items from this pack were registered.", exception);
-            return;
-        }
-        if (result == null) {
-            return;
-        }
-        for (GeyserItemRegistrationResult.Diagnostic diagnostic : result.diagnostics()) {
-            String message = "Item registration plan: " + diagnostic.message()
-                    + " [bedrock=" + diagnostic.bedrockId()
-                    + ", model=" + diagnostic.model()
-                    + ", file=" + diagnostic.definitionFile()
-                    + ", pack=" + packPath + "]";
-            switch (diagnostic.severity()) {
-                case "ERROR" -> logger.error(message);
-                case "WARNING" -> logger.warning(message);
-                default -> logger.info(message);
+            // 没有找到注册计划，跳过
+            JsonObject plan = GeyserItemRegistrationAdapter.readPack(packPath);
+            if (plan == null) {
+                return;
             }
-        }
-        if (result.hasErrors()) {
-            logger.error("Item registration plan in " + packPath + " contains errors; no items from this pack were registered.");
+            adapter = new GeyserItemRegistrationAdapter(plan.get(SOURCE_VERSION).getAsString());
+            entries = plan.getAsJsonArray(ENTRIES);
+        } catch (IOException | RuntimeException exception) {
+            this.logger().error("Failed to read item registration plan from " + packPath, exception);
             return;
         }
         int registered = 0;
-        for (GeyserItemRegistrationResult.Registration registration : result.registrations()) {
+        for (JsonElement value : entries) {
+            JsonObject entry = value.getAsJsonObject();
             try {
-                event.register(registration.javaItem(), registration.definition());
+                event.register(Identifier.of(entry.get(JAVA_ITEM).getAsString()), adapter.convert(entry));
                 registered++;
-            } catch (CustomItemDefinitionRegisterException exception) {
-                logger.error("Failed to register custom item " + registration.definition().bedrockIdentifier()
-                        + " [java=" + registration.javaItem()
-                        + ", model=" + registration.definition().model()
-                        + ", pack=" + packPath + "]", exception);
+            } catch (RuntimeException exception) {
+                this.logger().error(
+                        "Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER)
+                                + " [java=" + entry.get(JAVA_ITEM)
+                                + ", model=" + entry.get(MODEL)
+                                + ", file=assets/" + entry.get(MODEL).getAsString().replace(":", "/items/") + ".json"
+                                + ", pack=" + packPath + "]", exception
+                );
             }
         }
-        int failed = result.registrations().size() - registered;
-        String summary = "Registered " + registered + "/" + result.registrations().size()
-                + " custom items from " + packPath + "; failed=" + failed + ".";
+        int failed = entries.size() - registered;
+        String summary = "Registered " + registered + "/" + entries.size() + " custom items from " + packPath + "; failed=" + failed + ".";
         if (failed > 0) {
-            logger.warning(summary);
+            this.logger().warning(summary);
         } else {
-            logger.info(summary);
+            this.logger().info(summary);
         }
     }
 

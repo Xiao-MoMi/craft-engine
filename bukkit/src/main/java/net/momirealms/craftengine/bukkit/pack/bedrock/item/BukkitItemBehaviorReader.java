@@ -1,14 +1,10 @@
 package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
-import com.google.gson.JsonElement;
-import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription.*;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorReader;
-import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.BowItemProxy;
@@ -19,38 +15,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.SwingAnimationProxy;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
     private static final int CROSSBOW_BASE_CHARGE_TICKS = 25;
-    private static final List<Key> COMPONENTS = List.of(
-            DataComponentKeys.CONSUMABLE,
-            DataComponentKeys.FOOD,
-            DataComponentKeys.BLOCKS_ATTACK,
-            DataComponentKeys.KINETIC_WEAPON,
-            DataComponentKeys.PIERCING_WEAPON,
-            DataComponentKeys.USE_EFFECTS,
-            DataComponentKeys.USE_COOLDOWN,
-            DataComponentKeys.INSTRUMENT,
-            DataComponentKeys.ENCHANTMENTS,
-            DataComponentKeys.SWING_ANIMATION,
-            DataComponentKeys.ATTACK_ANIMATION,
-            DataComponentKeys.INTERACT_ANIMATION
-    );
-    private final Map<Key, Object> componentTypes;
-
-    public BukkitItemBehaviorReader() {
-        Map<Key, Object> componentTypes = new LinkedHashMap<>();
-        for (Key key : COMPONENTS) {
-            Object type = DataComponentTypes.byId(key);
-            if (type != null) {
-                componentTypes.put(key, type);
-            }
-        }
-        this.componentTypes = Map.copyOf(componentTypes);
-    }
 
     @Override
     public ItemBehaviorDescription read(Item item) {
@@ -74,13 +40,7 @@ public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
             attack = Swing.LEGACY;
             interact = attack;
         }
-        Map<Key, Component> components = new LinkedHashMap<>();
-        for (Map.Entry<Key, Object> entry : this.componentTypes.entrySet()) {
-            JsonElement effective = item.getComponentAsJson(entry.getValue());
-            JsonElement defaultValue = item.type().getJsonComponent(entry.getValue()).orElse(null);
-            components.put(entry.getKey(), Component.of(effective, defaultValue));
-        }
-        return new ItemBehaviorDescription(use, attack, interact, components);
+        return new ItemBehaviorDescription(use, attack, interact);
     }
 
     private int maximumDuration(Object stack, Object itemType) {

@@ -1,12 +1,9 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnostics) {
 
@@ -25,14 +22,7 @@ public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnos
                         Key definitionId,
                         ItemDefinitionBinding definition,
                         ItemRegistrationProperties properties,
-                        Map<Key, JsonElement> componentOverrides,
-                        Set<Key> removedComponents,
                         ResolvedItemBinding source) {
-
-        public Entry {
-            componentOverrides = Map.copyOf(componentOverrides);
-            removedComponents = Set.copyOf(removedComponents);
-        }
     }
 
     public record Diagnostic(Severity severity,

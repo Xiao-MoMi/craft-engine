@@ -1,12 +1,12 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
 
 import java.util.Map;
 
-public record ItemRegistrationProperties(Map<Key, ItemBehaviorDescription.Component> components) {
+public record ItemRegistrationProperties(Map<Key, JsonElement> components) {
 
     public ItemRegistrationProperties {
         components = Map.copyOf(components);
@@ -21,13 +21,10 @@ public record ItemRegistrationProperties(Map<Key, ItemBehaviorDescription.Compon
     }
 
     private int componentIntValue(Key key, int fallback) {
-        ItemBehaviorDescription.Component component = this.components.get(key);
-        if (component == null) {
+        JsonElement component = this.components.get(key);
+        if (component == null || component.isJsonNull()) {
             return fallback;
         }
-        return switch (component.source()) {
-            case DEFAULT, OVERRIDE -> component.value().getAsInt();
-            case ABSENT, REMOVED -> fallback;
-        };
+        return component.getAsInt();
     }
 }
