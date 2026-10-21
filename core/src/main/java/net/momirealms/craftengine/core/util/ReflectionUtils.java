@@ -1,9 +1,9 @@
 package net.momirealms.craftengine.core.util;
 
 import cn.gtemc.reflection.ImplLookupGetter;
-import net.momirealms.sparrow.reflection.SReflection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -27,9 +27,22 @@ public final class ReflectionUtils {
             return false;
         }
     });
-    public static final MethodHandles.Lookup LOOKUP = JNI_IS_AVAILABLE ? ImplLookupGetter.IMPL_LOOKUP : SReflection.getLookup();
+    public static final MethodHandles.Lookup LOOKUP = JNI_IS_AVAILABLE ? ImplLookupGetter.IMPL_LOOKUP : getFallbackLookup();
 
     private ReflectionUtils() {
+    }
+
+    @SuppressWarnings("all")
+    private static MethodHandles.Lookup getFallbackLookup() {
+        try {
+            Field unsafeField = Unsafe.class.getDeclaredField("theUnsafe");
+            unsafeField.setAccessible(true);
+            Unsafe unsafe = (Unsafe) unsafeField.get(null);
+            Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
+            return (MethodHandles.Lookup) unsafe.getObject(unsafe.staticFieldBase(lookupField), unsafe.staticFieldOffset(lookupField));
+        } catch (ReflectiveOperationException e) {
+            throw new ExceptionInInitializerError(e);
+        }
     }
 
     public static Class<?> getClazz(String... classes) {
