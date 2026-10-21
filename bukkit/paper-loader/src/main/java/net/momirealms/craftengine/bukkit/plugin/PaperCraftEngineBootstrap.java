@@ -31,6 +31,10 @@ import java.util.Set;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class PaperCraftEngineBootstrap implements PluginBootstrap {
+    static {
+        ByteBuddyUtils.configureUnsafeInjection();
+    }
+
     private static final Class<?> clazz$PluginProviderContext = PluginProviderContext.class;
     private static final Class<?> clazz$ComponentLogger = Objects.requireNonNull(
             ReflectionUtils.getClazz(

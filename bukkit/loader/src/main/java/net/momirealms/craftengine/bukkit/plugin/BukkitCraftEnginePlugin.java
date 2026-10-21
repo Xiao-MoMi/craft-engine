@@ -1,8 +1,13 @@
 package net.momirealms.craftengine.bukkit.plugin;
 
+import net.momirealms.craftengine.core.util.ByteBuddyUtils;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class BukkitCraftEnginePlugin extends JavaPlugin {
+    static {
+        ByteBuddyUtils.configureUnsafeInjection();
+    }
+
     private final BukkitCraftEngine plugin;
 
     public BukkitCraftEnginePlugin() {
