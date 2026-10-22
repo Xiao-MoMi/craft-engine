@@ -3,52 +3,96 @@ package net.momirealms.craftengine.bedrock.geyser;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
+import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
+import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
-import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
-import org.geysermc.geyser.api.event.lifecycle.GeyserPostReloadEvent;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.util.Identifier;
+import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Locale;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class CraftEngineGeyserExtension implements Extension {
+    private final Map<String, String> displayBlocks = new HashMap<>();
+    private final List<GeyserSelectedItemHandler.Variants> selectedItems = new ArrayList<>();
+
     @Subscribe
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {
+        this.displayBlocks.clear();
+        for (Path path : this.packFiles()) {
+            this.registerBlocks(path, event);
+        }
+        this.logger().info("Registered " + this.displayBlocks.size() + " CraftEngine display blocks.");
     }
 
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
-        Path directory = this.geyserApi().packDirectory();
-        if (!Files.isDirectory(directory)) {
-            return;
-        }
-        try (Stream<Path> paths = Files.list(directory)) {
-            for (Path path : paths.filter(Files::isRegularFile).sorted().toList()) {
-                String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-                if (name.endsWith(".mcpack") || name.endsWith(".zip")) {
-                    this.registerPack(path, event);
-                }
-            }
-        } catch (IOException exception) {
-            this.logger().error("Failed to scan Geyser packs directory " + directory, exception);
+        this.selectedItems.clear();
+        for (Path path : this.packFiles()) {
+            this.registerItems(path, event);
         }
     }
 
-    private void registerPack(Path packPath, GeyserDefineCustomItemsEvent event) {
+    private List<Path> packFiles() {
+        Path directory = this.geyserApi().packDirectory();
+        if (!Files.isDirectory(directory)) {
+            return List.of();
+        }
+        try (Stream<Path> paths = Files.list(directory)) {
+            return paths.filter(Files::isRegularFile).filter(path -> {
+                String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
+                return name.endsWith(".mcpack") || name.endsWith(".zip");
+            }).sorted().toList();
+        } catch (IOException exception) {
+            this.logger().error("Failed to scan Geyser packs directory " + directory, exception);
+            return List.of();
+        }
+    }
+
+    private void registerBlocks(Path path, GeyserDefineCustomBlocksEvent event) {
+        try {
+            JsonObject plan = GeyserRegistrationPlanReader.readPack(path, RegistrationPlanKind.BLOCK);
+            if (plan == null) {
+                return;
+            }
+            for (JsonElement value : plan.getAsJsonArray(ENTRIES)) {
+                JsonObject display = value.getAsJsonObject();
+                String name = display.get(NAME).getAsString();
+                if (!this.displayBlocks.containsKey(name)) {
+                    try {
+                        this.displayBlocks.put(name, GeyserBlockRegistrationAdapter.registerBlock(display, event));
+                    } catch (RuntimeException exception) {
+                        this.logger().error("Failed to register display block " + name + " from " + path, exception);
+                    }
+                }
+            }
+        } catch (IOException | RuntimeException exception) {
+            this.logger().error("Failed to read display blocks from " + path, exception);
+        }
+    }
+
+    private void registerItems(Path packPath, GeyserDefineCustomItemsEvent event) {
         GeyserItemRegistrationAdapter adapter;
         JsonArray entries;
         try {
             // 没有找到注册计划，跳过
-            JsonObject plan = GeyserItemRegistrationAdapter.readPack(packPath);
+            JsonObject plan = GeyserRegistrationPlanReader.readPack(packPath, RegistrationPlanKind.ITEM);
             if (plan == null) {
                 return;
             }
@@ -59,35 +103,42 @@ public final class CraftEngineGeyserExtension implements Extension {
             return;
         }
         int registered = 0;
+        int failed = 0;
+        int skipped = 0;
         for (JsonElement value : entries) {
             JsonObject entry = value.getAsJsonObject();
             try {
-                event.register(Identifier.of(entry.get(JAVA_ITEM).getAsString()), adapter.convert(entry));
-                registered++;
+                GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.displayBlocks);
+                for (CustomItemDefinition definition : converted.definitions()) {
+                    event.register(Identifier.of(entry.get(JAVA_ITEM).getAsString()), definition);
+                    registered++;
+                }
+                if (converted.selected() != null) {
+                    this.selectedItems.add(converted.selected());
+                }
+            } catch (UnsupportedOperationException exception) {
+                skipped++;
+                this.logger().warning("Skipped custom item " + entry.get(BEDROCK_IDENTIFIER) + " [model="
+                        + entry.get(MODEL) + ", pack=" + packPath + "]: " + exception.getMessage());
             } catch (RuntimeException exception) {
-                this.logger().error(
-                        "Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER)
-                                + " [java=" + entry.get(JAVA_ITEM)
-                                + ", model=" + entry.get(MODEL)
-                                + ", file=assets/" + entry.get(MODEL).getAsString().replace(":", "/items/") + ".json"
-                                + ", pack=" + packPath + "]", exception
-                );
+                failed++;
+                this.logger().error("Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER)
+                        + " [java=" + entry.get(JAVA_ITEM) + ", model=" + entry.get(MODEL)
+                        + ", pack=" + packPath + "]", exception);
             }
         }
-        int failed = entries.size() - registered;
-        String summary = "Registered " + registered + "/" + entries.size() + " custom items from " + packPath + "; failed=" + failed + ".";
-        if (failed > 0) {
-            this.logger().warning(summary);
-        } else {
-            this.logger().info(summary);
+        this.logger().info("Registered " + registered + " custom item variants from " + packPath
+                + "; skipped=" + skipped + ", failed=" + failed + ".");
+    }
+
+    @Subscribe
+    public void onSessionJoin(SessionJoinEvent event) {
+        if (!this.selectedItems.isEmpty()) {
+            try {
+                GeyserSelectedItemHandler.install((GeyserSession) event.connection(), this.selectedItems);
+            } catch (RuntimeException exception) {
+                this.logger().error("Failed to install Geyser selected-item adapter", exception);
+            }
         }
-    }
-
-    @Subscribe
-    public void onInitialized(GeyserPostInitializeEvent event) {
-    }
-
-    @Subscribe
-    public void onReloaded(GeyserPostReloadEvent event) {
     }
 }

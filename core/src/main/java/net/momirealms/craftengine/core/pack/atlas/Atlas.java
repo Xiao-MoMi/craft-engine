@@ -13,8 +13,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public final class Atlas {
-    private static final Sprite MISSING_SPRITE = new Sprite(false, null, null);
-    private static final Sprite GENERATED_SPRITE = new Sprite(true, null, null);
+    private static final Sprite MISSING_SPRITE = new Sprite(false, null, null, null);
     private final List<Source> sources = new ArrayList<>();
     private final Map<Key, SingleSprite> singleSprites = new HashMap<>();
     private final Map<Key, Sprite> sprites = new HashMap<>();
@@ -63,16 +62,17 @@ public final class Atlas {
                 case "paletted_permutations", "minecraft:paletted_permutations" -> {
                     JsonArray textures = sourceJson.getAsJsonArray("textures");
                     JsonObject permutations = sourceJson.getAsJsonObject("permutations");
-                    if (textures == null || permutations == null) {
+                    if (textures == null || permutations == null || !sourceJson.has("palette_key")) {
                         continue;
                     }
                     String separator = sourceJson.has("separator") ? sourceJson.get("separator").getAsString() : "_";
-                    Set<Key> sprites = new HashSet<>();
+                    Key paletteKey = Key.of(sourceJson.get("palette_key").getAsString());
+                    Map<Key, TexturePalette> sprites = new HashMap<>();
                     for (JsonElement texture : textures) {
                         if (texture instanceof JsonPrimitive texturePath) {
                             String path = texturePath.getAsString();
                             for (String permutation : permutations.keySet()) {
-                                sprites.add(Key.of(path + separator + permutation));
+                                sprites.put(Key.of(path + separator + permutation), new TexturePalette(Key.of(path), paletteKey, Key.of(permutations.get(permutation).getAsString())));
                             }
                         }
                     }
@@ -124,7 +124,7 @@ public final class Atlas {
     }
 
     public void addSingle(Key sprite, Key resource) {
-        this.sprites.put(sprite, new Sprite(true, resource, null));
+        this.sprites.put(sprite, new Sprite(true, resource, null, null));
     }
 
     public void addDeleted(Key key) {
@@ -139,6 +139,11 @@ public final class Atlas {
     @Nullable
     public TextureRegion getTextureRegion(Key texture) {
         return resolveSprite(texture).region;
+    }
+
+    @Nullable
+    public TexturePalette getTexturePalette(Key texture) {
+        return resolveSprite(texture).palette;
     }
 
     private Sprite resolveSprite(Key texture) {
@@ -164,10 +169,10 @@ public final class Atlas {
                 }
                 Key resource = source.resource(texture);
                 TextureRegion region = source.region(texture);
-                return resource == null && region == null ? GENERATED_SPRITE : new Sprite(true, resource, region);
+                return new Sprite(true, resource, region, source.palette(texture));
             }
         }
-        return single == null ? MISSING_SPRITE : new Sprite(true, single.resource, null);
+        return single == null ? MISSING_SPRITE : new Sprite(true, single.resource, null, null);
     }
 
     private interface Source {
@@ -187,12 +192,20 @@ public final class Atlas {
         default TextureRegion region(Key texture) {
             return null;
         }
+
+        @Nullable
+        default TexturePalette palette(Key texture) {
+            return null;
+        }
     }
 
-    private record Sprite(boolean defined, @Nullable Key resource, @Nullable TextureRegion region) {
+    private record Sprite(boolean defined, @Nullable Key resource, @Nullable TextureRegion region, @Nullable TexturePalette palette) {
     }
 
     public record TextureRegion(Key resource, double divisorX, double divisorY, UnstitchSource.Region region) {
+    }
+
+    public record TexturePalette(Key resource, Key key, Key palette) {
     }
 
     private record RegionSource(Map<Key, TextureRegion> regions) implements Source {
@@ -224,11 +237,16 @@ public final class Atlas {
     private record SingleSprite(Key resource, int sourceCount) {
     }
 
-    private record GeneratedSource(Set<Key> sprites) implements Source {
+    private record GeneratedSource(Map<Key, TexturePalette> sprites) implements Source {
 
         @Override
         public boolean matches(Key texture) {
-            return this.sprites.contains(texture);
+            return this.sprites.containsKey(texture);
+        }
+
+        @Override
+        public TexturePalette palette(Key texture) {
+            return this.sprites.get(texture);
         }
     }
 

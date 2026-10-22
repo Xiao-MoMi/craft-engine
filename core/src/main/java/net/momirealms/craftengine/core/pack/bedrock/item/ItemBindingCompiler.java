@@ -64,7 +64,7 @@ public final class ItemBindingCompiler {
             if (transformation != null) {
                 this.transformations.add(transformation);
             }
-            // Each leaf snapshots its ancestor conditions and transformations; composite siblings stay independent.
+            // 条件和变换在当前组合层内累积；组合的外层条件和变换保留在组合规则上。
             switch (model) {
                 case BaseItemModel base -> this.emit(new ItemRenderTarget.Model(base.path(), base.tints()), path);
                 case SpecialItemModel special -> this.emit(new ItemRenderTarget.Special(special.base(), special.specialModel()), path);
@@ -77,9 +77,11 @@ public final class ItemBindingCompiler {
                 case SelectItemModel select -> this.select(select, path);
                 case RangeDispatchItemModel range -> this.range(range, path);
                 case CompositeItemModel composite -> {
+                    Builder children = new Builder();
                     for (int i = 0; i < composite.models().size(); i++) {
-                        this.visit(composite.models().get(i), path + ".models[" + i + "]");
+                        children.visit(composite.models().get(i), path + ".models[" + i + "]");
                     }
+                    this.emit(new ItemRenderTarget.Composite(children.rules), path);
                 }
                 default ->
                         throw new IllegalArgumentException("Unsupported item model at " + path + ": " + model.getClass().getName());

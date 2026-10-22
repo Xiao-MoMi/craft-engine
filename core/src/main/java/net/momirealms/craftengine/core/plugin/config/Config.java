@@ -89,6 +89,8 @@ public final class Config {
     private Set<String> resource_pack$exclude_file_extensions;
     private boolean resource_pack$cache_resource_files;
     private String resource_pack$description;
+    private String resource_pack$bedrock$name;
+    private String resource_pack$bedrock$description;
 
     private boolean resource_pack$protection$crash_tools$method_1;
     private boolean resource_pack$protection$crash_tools$method_2;
@@ -438,6 +440,8 @@ public final class Config {
 
         // resource pack
         this.resource_pack$description = config.getString("resource-pack.description", "<gray>CraftEngine ResourcePack</gray>");
+        this.resource_pack$bedrock$name = config.getString("resource-pack.bedrock.name", "CraftEngine ResourcePack");
+        this.resource_pack$bedrock$description = config.getString("resource-pack.bedrock.description", "Generated from the Java resource pack");
         this.resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
         this.resource_pack$generate_mod_assets = config.getBoolean("resource-pack.generate-mod-assets", false);
         this.resource_pack$remove_tinted_leaves_particle = config.getBoolean("resource-pack.remove-tinted-leaves-particle", true);
@@ -1572,6 +1576,14 @@ public final class Config {
 
     public static String packDescription() {
         return instance.resource_pack$description;
+    }
+
+    public static String bedrockPackName() {
+        return instance.resource_pack$bedrock$name;
+    }
+
+    public static String bedrockPackDescription() {
+        return instance.resource_pack$bedrock$description;
     }
 
     public static String sacrificedVanillaArmorType() {

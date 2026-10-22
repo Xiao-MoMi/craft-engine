@@ -87,6 +87,9 @@ resource-pack:
 
   # The description of your resource pack
   description: "<gray>CraftEngine ResourcePack</gray>"
+  bedrock:
+    name: "CraftEngine ResourcePack"
+    description: "Generated from the Java resource pack"
   # Define the name of the overlay folders
   overlay-format: "ce_overlay_{version}"
   # Generate assets for CraftEngine fabric mod

@@ -18,6 +18,13 @@ public sealed interface ItemRenderTarget {
     record Special(Key base, SpecialModel model) implements ItemRenderTarget {
     }
 
+    record Composite(List<ItemBindingRule> children) implements ItemRenderTarget {
+
+        public Composite {
+            children = List.copyOf(children);
+        }
+    }
+
     enum Builtin implements ItemRenderTarget {
         EMPTY,
         MISSING,

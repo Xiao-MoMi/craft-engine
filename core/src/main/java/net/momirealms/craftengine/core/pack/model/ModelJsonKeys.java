@@ -21,7 +21,6 @@ public final class ModelJsonKeys {
     public static final String TINT_INDEX = "tintindex";
     public static final String SPRITE = "sprite";
     public static final String FORCE_TRANSLUCENT = "force_translucent";
-    public static final String ATLAS = "atlas";
     public static final String PARTICLE = "particle";
 
     public static final String ROTATION = "rotation";

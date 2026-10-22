@@ -36,7 +36,7 @@ public final class ItemRegistrationPlanGenerator {
             try {
                 Item item = definition.buildItem(ItemBuildContext.empty());
                 ResolvedItemBinding binding = resolver.resolve(item, null, ItemPacketSource.CONTAINER);
-                if (binding.definitionId() == null || binding.definition() == null) {
+                if (binding.itemModel() == null || binding.definition() == null) {
                     continue;
                 }
                 entries.add(createEntry(binding));
@@ -57,9 +57,17 @@ public final class ItemRegistrationPlanGenerator {
     @SuppressWarnings("all")
     private static Entry createEntry(ResolvedItemBinding binding) {
         // 注册身份只由基础 Java 物品和 item_model 决定，组件与行为修改不改变标识符。
-        String identity = binding.clientItemType().asString() + "|" + binding.definitionId().asString();
+        String identity = binding.clientItemType().asString() + "|" + binding.itemModel().asString();
         String token = HashUtils.sha1(identity.getBytes(StandardCharsets.UTF_8));
-        Key bedrockId = Key.ce("item_" + token);
-        return new Entry(bedrockId, "craftengine.item_" + token, binding.clientItemType(), binding.definitionId(), binding.definition(), binding.clientProperties(), binding);
+        Key bedrockId = Key.ce(token);
+        return new Entry(
+                bedrockId,
+                Key.CRAFTENGINE_NAMESPACE + "." + token,
+                binding.clientItemType(),
+                binding.itemModel(),
+                binding.definition(),
+                binding.clientProperties(),
+                binding
+        );
     }
 }

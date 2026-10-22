@@ -121,6 +121,12 @@ public final class JavaResourcePack {
                 throw new IOException("Missing pack.mcmeta in " + source);
             }
             extractResources(archive, new PackMeta(metadata).overlays().overlays(), version, root);
+            ZipEntry icon = archive.getEntry("pack.png");
+            if (icon != null) {
+                try (InputStream input = archive.getInputStream(icon)) {
+                    Files.copy(input, root.resolve("pack.png"));
+                }
+            }
         }
         try (IndexedZipFile archive = new IndexedZipFile(vanilla)) {
             extractResources(archive, List.of(), version, vanillaRoot);
@@ -230,6 +236,14 @@ public final class JavaResourcePack {
         JsonObject json = this.readJson("assets/" + model.namespace() + "/models/" + model.value() + ".json");
         if (json == null) {
             throw new IOException("Missing Java model " + model + " for " + this.version.version());
+        }
+        return json;
+    }
+
+    public JsonObject readVanillaModel(Key model) throws IOException {
+        JsonObject json = readJson(this.vanillaRoot.resolve("assets/" + model.namespace() + "/models/" + model.value() + ".json"));
+        if (json == null) {
+            throw new IOException("Missing vanilla Java model " + model + " for " + this.version.version());
         }
         return json;
     }

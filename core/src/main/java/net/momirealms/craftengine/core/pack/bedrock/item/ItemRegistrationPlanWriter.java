@@ -2,12 +2,14 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
@@ -16,14 +18,14 @@ public final class ItemRegistrationPlanWriter {
     private ItemRegistrationPlanWriter() {
     }
 
-    public static void write(ItemRegistrationPlan plan, Path path) throws IOException {
-        Files.writeString(path, toJson(plan).toString());
+    public static void write(ItemRegistrationPlan plan, Path path, BedrockItemIcons.Result generated) throws IOException {
+        Files.writeString(path, toJson(plan, generated).toString());
     }
 
-    public static JsonObject toJson(ItemRegistrationPlan plan) {
+    public static JsonObject toJson(ItemRegistrationPlan plan, BedrockItemIcons.Result generated) {
         JsonObject result = new JsonObject();
-        result.addProperty(KIND, ITEM_REGISTRATION_PLAN_KIND);
-        result.addProperty(FORMAT_VERSION, ITEM_REGISTRATION_PLAN_FORMAT_VERSION); // 计划格式版本
+        result.addProperty(KIND, RegistrationPlanKind.ITEM.id());
+        result.addProperty(FORMAT_VERSION, RegistrationPlanKind.ITEM.formatVersion()); // 计划格式版本
         result.addProperty(SOURCE_VERSION, VersionHelper.MINECRAFT_VERSION.version()); // 来源 Java 版本
         JsonArray entries = new JsonArray();
         for (ItemRegistrationPlan.Entry entry : plan.entries()) {
@@ -34,12 +36,7 @@ public final class ItemRegistrationPlanWriter {
             JsonObject components = new JsonObject(); // 相对原版的组件差异
             entry.properties().components().forEach((key, value) -> components.add(key.asString(), value)); // null 表示移除
             json.add(COMPONENTS, components); // 注册组件
-            JsonObject resources = new JsonObject(); // 资源信息
-            resources.addProperty(ICON, entry.icon()); // 基岩图标资源键
-            resources.addProperty(ATTACHABLE_IDENTIFIER, entry.bedrockId().asString()); // 预留 attachable ID
-            resources.addProperty(GENERATED, false); // 资源尚未生成
-            resources.addProperty(MODEL_RULE_COUNT, entry.definition().rules().size()); // 模型绑定规则数量
-            json.add(RESOURCES, resources); // 资源引用及状态
+            json.add(VARIANTS, variantsToJson(entry, generated)); // 全部分支
             ResolvedItemBinding binding = entry.source(); // 物品关联结果
             JsonObject source = new JsonObject(); // 来源信息
             source.addProperty(ITEM_ID, binding.itemId().asString()); // 来源 CE 物品 ID
@@ -67,5 +64,57 @@ public final class ItemRegistrationPlanWriter {
         }
         result.add(DIAGNOSTICS, diagnostics); // 诊断列表
         return GsonHelper.sortObjectKeys(result).getAsJsonObject(); // 排序键以稳定输出
+    }
+
+    private static JsonArray variantsToJson(ItemRegistrationPlan.Entry entry, BedrockItemIcons.Result generated) {
+        JsonArray variants = new JsonArray(); // 显示分支
+        for (BedrockItemIcons.Variant variant : generated.variants().getOrDefault(entry.bedrockId(), List.of())) {
+            JsonObject branch = new JsonObject(); // 当前分支
+            branch.addProperty(BEDROCK_IDENTIFIER, variant.id().asString()); // 分支物品 ID
+            JsonArray conditions = new JsonArray(); // 分支条件，全部满足
+            for (ItemBindingCondition condition : variant.rule().conditions()) {
+                JsonObject match = new JsonObject(); // 当前条件
+                switch (condition) {
+                    case ItemBindingCondition.BooleanMatch value -> {
+                        value.property().writeProperty(match); // 条件属性
+                        match.addProperty(EXPECTED, value.expected()); // 期望值
+                    }
+                    case ItemBindingCondition.SelectMatch value -> {
+                        value.property().writeProperty(match); // 选择属性
+                        JsonArray values = new JsonArray(); // 可选值
+                        value.values().forEach(values::add); // 任一匹配
+                        match.add(VALUES, values); // 匹配集合
+                        match.addProperty(NEGATED, value.negated()); // fallback 取反
+                    }
+                    case ItemBindingCondition.NumericRange value -> {
+                        value.property().writeProperty(match); // 数值属性
+                        match.addProperty(SCALE, value.scale()); // 数值倍率
+                        if (value.minInclusive() != null) {
+                            match.addProperty(MIN, value.minInclusive()); // 包含下界
+                        }
+                        if (value.maxExclusive() != null) {
+                            match.addProperty(MAX, value.maxExclusive()); // 不含上界
+                        }
+                    }
+                }
+                conditions.add(match); // 加入条件
+            }
+            branch.add(CONDITIONS, conditions); // 完整匹配条件
+            JsonObject resources = new JsonObject(); // 分支资源
+            BedrockItemBlocks.DisplayBlock block = generated.displayBlocks().get(variant.id()); // 展示方块
+            if (block == null) {
+                resources.addProperty(ICON, variant.icon()); // 图标资源键
+            } else {
+                resources.addProperty(DISPLAY_BLOCK, block.name()); // 展示方块名称
+            }
+            resources.addProperty(ATTACHABLE_IDENTIFIER, variant.id().asString()); // 预留 attachable ID
+            resources.addProperty(GENERATED, block != null || generated.icons().contains(variant.icon())); // 资源生成状态
+            if (variant.unsupportedReason() != null) {
+                resources.addProperty(UNSUPPORTED_REASON, variant.unsupportedReason()); // 跳过原因
+            }
+            branch.add(RESOURCES, resources); // 分支资源引用
+            variants.add(branch); // 加入分支
+        }
+        return variants;
     }
 }

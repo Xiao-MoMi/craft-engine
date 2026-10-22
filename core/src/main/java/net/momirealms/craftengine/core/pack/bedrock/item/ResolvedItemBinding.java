@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 public record ResolvedItemBinding(Key itemId,
                                   Key serverItemType,
                                   Key clientItemType,
-                                  @Nullable Key definitionId,
+                                  @Nullable Key itemModel,
                                   @Nullable ItemDefinitionBinding definition,
                                   ItemBehaviorDescription clientBehavior,
                                   ItemRegistrationProperties clientProperties) {

@@ -28,15 +28,15 @@ public final class ItemBindingResolver {
     }
 
     public ResolvedItemBinding resolve(Item serverItem, Item clientItem) {
-        Key definitionId = VersionHelper.isOrAbove1_21_2
+        Key itemModel = VersionHelper.isOrAbove1_21_2
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
-        ItemDefinitionBinding definition = definitionId == null ? null : this.definitions.get(definitionId);
+        ItemDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),
                 clientItem.vanillaId(),
-                definitionId,
+                itemModel,
                 definition,
                 this.behaviorReader.read(clientItem),
                 this.registrationReader.read(clientItem)

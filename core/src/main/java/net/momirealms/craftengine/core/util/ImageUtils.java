@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 public final class ImageUtils {
 
@@ -73,6 +74,43 @@ public final class ImageUtils {
                 int blue = Math.round(grey * (color & 255) / 255f);
                 result.setRGB(x, y, (pixel & 0xff000000) | (red << 16) | (green << 8) | blue);
             }
+        }
+        return result;
+    }
+
+    public static BufferedImage multiplyColor(BufferedImage image, int color) {
+        BufferedImage result = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                int pixel = image.getRGB(x, y);
+                int red = ((pixel >>> 16) & 255) * ((color >>> 16) & 255) / 255;
+                int green = ((pixel >>> 8) & 255) * ((color >>> 8) & 255) / 255;
+                int blue = (pixel & 255) * (color & 255) / 255;
+                result.setRGB(x, y, (pixel & 0xff000000) | (red << 16) | (green << 8) | blue);
+            }
+        }
+        return result;
+    }
+
+    public static BufferedImage composite(List<BufferedImage> layers) {
+        if (layers.size() == 1) {
+            return layers.getFirst();
+        }
+        int width = 1;
+        int height = 1;
+        for (BufferedImage layer : layers) {
+            width = Math.max(width, layer.getWidth());
+            height = Math.max(height, layer.getHeight());
+        }
+        BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = result.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            for (BufferedImage layer : layers) {
+                graphics.drawImage(layer, 0, 0, width, height, null);
+            }
+        } finally {
+            graphics.dispose();
         }
         return result;
     }
