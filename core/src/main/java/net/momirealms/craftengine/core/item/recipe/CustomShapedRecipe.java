@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import com.google.common.collect.Maps;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
 import net.momirealms.craftengine.core.item.recipe.input.RecipeInput;
@@ -256,7 +256,11 @@ public class CustomShapedRecipe extends CustomCraftingTableRecipe {
 
         @Override
         public CustomShapedRecipe readJson(Key id, JsonObject json) {
-            Map<Character, Ingredient> ingredients = Maps.transformValues(VANILLA_RECIPE_HELPER.shapedIngredientMap(json.getAsJsonObject("key")), this::parseVanillaIngredient);
+            JsonObject keyJson = json.getAsJsonObject("key");
+            Map<Character, Ingredient> ingredients = new HashMap<>();
+            for (Map.Entry<String, JsonElement> entry : keyJson.entrySet()) {
+                ingredients.put(entry.getKey().charAt(0), parseDatapackIngredient(entry.getValue()));
+            }
             return new CustomShapedRecipe(id,
                     true,
                     parseResult(VANILLA_RECIPE_HELPER.craftingResult(json.get("result"))),

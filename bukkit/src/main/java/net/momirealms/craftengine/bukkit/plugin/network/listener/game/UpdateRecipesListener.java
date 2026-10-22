@@ -6,11 +6,14 @@ import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.legacy.LegacyRecipeHolder;
+import net.momirealms.craftengine.core.plugin.network.protocol.recipe.legacy.UnknownRecipeTypeException;
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.SingleInputButtonDisplay;
+import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.UnknownDisplayTypeException;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MutableBoolean;
@@ -30,13 +33,21 @@ public final class UpdateRecipesListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
-            if (Config.disableItemOperations()) return;
-            MutableBoolean changed = new MutableBoolean(false);
+            if (Config.disableItemOperations()) {
+                return;
+            }
             FriendlyByteBuf buf = event.getBuffer();
+            List<LegacyRecipeHolder> holders;
+            try {
+                holders = buf.readCollection(ArrayList::new, byteBuf -> LegacyRecipeHolder.read(byteBuf, PacketUtils::readItem));
+            } catch (UnknownRecipeTypeException e) {
+                Debugger.PACKET.debug(() -> "Skipped rewriting recipe packet for player " + user.name() + ": " + e.getMessage());
+                return;
+            }
+            MutableBoolean changed = new MutableBoolean(false);
             BukkitItemManager itemManager = BukkitItemManager.instance();
             BukkitServerPlayer player = (BukkitServerPlayer) user;
-            List<LegacyRecipeHolder> holders = buf.readCollection(ArrayList::new, byteBuf -> {
-                LegacyRecipeHolder holder = LegacyRecipeHolder.read(byteBuf, $ -> PacketUtils.readItem(buf));
+            for (LegacyRecipeHolder holder : holders) {
                 holder.recipe().applyClientboundData(item -> {
                     Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                     if (remapped.isEmpty()) {
@@ -45,8 +56,7 @@ public final class UpdateRecipesListener {
                     changed.set(true);
                     return remapped.get();
                 });
-                return holder;
-            });
+            }
             if (changed.booleanValue()) {
                 event.setChanged(true);
                 buf.clear();
@@ -63,17 +73,25 @@ public final class UpdateRecipesListener {
 
         @Override
         public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
-            if (Config.disableItemOperations()) return;
-            MutableBoolean changed = new MutableBoolean(false);
+            if (Config.disableItemOperations()) {
+                return;
+            }
             FriendlyByteBuf buf = event.getBuffer();
-            BukkitItemManager itemManager = BukkitItemManager.instance();
-            BukkitServerPlayer player = (BukkitServerPlayer) user;
             Map<Key, List<Integer>> itemSets = buf.readMap(
                     FriendlyByteBuf::readKey,
                     b -> b.readCollection(ArrayList::new, FriendlyByteBuf::readVarInt)
             );
-            List<SingleInputButtonDisplay> displays = buf.readCollection(ArrayList::new, b -> {
-                SingleInputButtonDisplay display = SingleInputButtonDisplay.read(b, $ -> PacketUtils.readItem(buf));
+            List<SingleInputButtonDisplay> displays;
+            try {
+                displays = buf.readCollection(ArrayList::new, byteBuf -> SingleInputButtonDisplay.read(byteBuf, PacketUtils::readItem));
+            } catch (UnknownDisplayTypeException e) {
+                Debugger.PACKET.debug(() -> "Skipped rewriting recipe packet for player " + user.name() + ": " + e.getMessage());
+                return;
+            }
+            MutableBoolean changed = new MutableBoolean(false);
+            BukkitItemManager itemManager = BukkitItemManager.instance();
+            BukkitServerPlayer player = (BukkitServerPlayer) user;
+            for (SingleInputButtonDisplay display : displays) {
                 display.applyClientboundData(item -> {
                     Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                     if (remapped.isEmpty()) {
@@ -82,8 +100,7 @@ public final class UpdateRecipesListener {
                     changed.set(true);
                     return remapped.get();
                 });
-                return display;
-            });
+            }
             if (changed.booleanValue()) {
                 event.setChanged(true);
                 buf.clear();

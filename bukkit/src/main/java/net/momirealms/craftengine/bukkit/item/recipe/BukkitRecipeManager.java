@@ -216,12 +216,14 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 if (!hasCustomItem && Boolean.FALSE.equals(this.replacedDatapackRecipes.get(id))) {
                     continue;
                 }
-                super.recipeRegistry.unregister(id);
             }
             try {
-                super.recipeRegistry.register(id, RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe));
+                Object nativeRecipe = RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe);
                 if (dataPackRecipe) {
+                    replaceRecipe(id, nativeRecipe);
                     this.replacedDatapackRecipes.put(id, hasCustomItem);
+                } else {
+                    super.recipeRegistry.register(id, nativeRecipe);
                 }
             } catch (Exception e) {
                 collector.add(e);
@@ -229,27 +231,24 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         }
 
         // 重新注入特殊配方
-        super.recipeRegistry.unregister(RecipeInjector.REPAIR_ITEM);
-        super.recipeRegistry.register(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
+        replaceRecipe(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
 
         // 在低版本是特殊配方，高版本不是
         if (!VersionHelper.isOrAbove26_1) {
-            super.recipeRegistry.unregister(RecipeInjector.ARMOR_DYE);
-            super.recipeRegistry.unregister(RecipeInjector.FIREWORK_STAR_FADE);
-            super.recipeRegistry.register(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
-            super.recipeRegistry.register(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
+            replaceRecipe(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
+            replaceRecipe(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
         } else {
             Key recipeId = Key.of("firework_star_fade");
             Object fireworkStarFadeRecipe = super.recipeRegistry.get(recipeId);
             if (fireworkStarFadeRecipe != null) {
                 fireworkStarFadeRecipe = RecipeHolderProxy.INSTANCE.getValue(fireworkStarFadeRecipe);
-                super.recipeRegistry.unregister(recipeId);
                 try {
-                    super.recipeRegistry.register(recipeId, RecipeInjector.FIREWORK_STAR_FADE_RECIPE_CONSTRUCTOR.newInstance(
+                    Object nativeRecipe = RecipeInjector.FIREWORK_STAR_FADE_RECIPE_CONSTRUCTOR.newInstance(
                         FireworkStarFadeRecipeProxy.INSTANCE.getTarget(fireworkStarFadeRecipe),
                         FireworkStarFadeRecipeProxy.INSTANCE.getDye(fireworkStarFadeRecipe),
                         FireworkStarFadeRecipeProxy.INSTANCE.getResult(fireworkStarFadeRecipe)
-                    ));
+                    );
+                    replaceRecipe(recipeId, nativeRecipe);
                 } catch (ReflectiveOperationException e) {
                     this.plugin.logger().warn("Failed to construct FireworkStarFadeRecipe", e);
                 }
@@ -272,6 +271,27 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Optional.ofNullable(collector.result()).ifPresent(t -> {
             this.plugin.logger().warn("Failed to load recipes", t);
         });
+    }
+
+    private void replaceRecipe(Key id, Object recipe) {
+        Object previousRecipe = super.recipeRegistry.get(id);
+        if (previousRecipe != null && VersionHelper.isOrAbove1_20_2) {
+            previousRecipe = RecipeHolderProxy.INSTANCE.getValue(previousRecipe);
+        }
+        super.recipeRegistry.unregister(id);
+        try {
+            super.recipeRegistry.register(id, recipe);
+        } catch (RuntimeException e) {
+            try {
+                super.recipeRegistry.unregister(id);
+                if (previousRecipe != null) {
+                    super.recipeRegistry.register(id, previousRecipe);
+                }
+            } catch (RuntimeException restoreException) {
+                e.addSuppressed(restoreException);
+            }
+            throw e;
+        }
     }
 
     @SuppressWarnings({"deprecation", "removal"})
@@ -347,6 +367,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Set<Key> disabledRecipes = Config.disabledVanillaRecipes();
         boolean hasDisabledAny = !disabledRecipes.isEmpty();
 
+        Map<String, List<Key>> skippedRecipes = new LinkedHashMap<>();
         for (Map.Entry<Key, JsonObject> entry : this.lastDatapackRecipes.entrySet()) {
             Key id = entry.getKey();
             if (hasDisabledAny && disabledRecipes.contains(entry.getKey())) {
@@ -364,9 +385,43 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 markAsDataPackRecipe(id);
                 registerRecipeInternal(recipe, false, false);
             } catch (Throwable e) {
-                this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                if (Config.debugCommon()) {
+                    this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                } else {
+                    skippedRecipes.computeIfAbsent(reason(e), k -> new ArrayList<>(1)).add(id);
+                }
             }
         }
+
+        if (!Config.debugCommon() && !skippedRecipes.isEmpty()) {
+            this.plugin.logger().info("Skipped " + skippedRecipes.values().stream().mapToInt(List::size).sum() + " data pack recipes that CraftEngine can not read, they keep their vanilla behaviour. Reasons (set debug.common to true for the full stack traces): " + summarize(skippedRecipes));
+        }
+    }
+
+    private static String reason(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message == null || message.isEmpty()) {
+            return throwable.getClass().getSimpleName();
+        }
+        // 冒号后面是具体失败的物品/标签/类型，同类失败要能合并成一条
+        int separator = message.indexOf(": ");
+        return separator > 0 ? message.substring(0, separator) : message;
+    }
+
+    // 加了大量 mod 后这里可能上百条，逐条打日志会把启动输出淹掉
+    private static String summarize(Map<String, List<Key>> skippedRecipes) {
+        StringBuilder builder = new StringBuilder();
+        skippedRecipes.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<String, List<Key>> it) -> -it.getValue().size()).thenComparing(Map.Entry::getKey))
+                .limit(6)
+                .forEach(it -> builder.append(it.getKey()).append(" x").append(it.getValue().size())
+                        .append(" [").append(it.getValue().get(0)).append(it.getValue().size() > 1 ? ", ..." : "").append("], "));
+        if (skippedRecipes.size() > 6) {
+            builder.append("and ").append(skippedRecipes.size() - 6).append(" more reasons");
+        } else {
+            builder.setLength(builder.length() - 2);
+        }
+        return builder.toString();
     }
 
     public boolean shouldUnlockRecipesOnJoin() {

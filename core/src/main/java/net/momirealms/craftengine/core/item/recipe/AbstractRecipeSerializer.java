@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.item.recipe;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.recipe.predicate.AllOfDataComponentPredicate;
 import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
@@ -13,6 +15,7 @@ import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -38,6 +41,11 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
 
     protected CustomRecipeResult parseResult(DatapackRecipeResult recipeResult) {
         Item result = CraftEngine.instance().itemManager().build(recipeResult);
+        // 产出物品不存在时（例如 mod 用条件过滤掉的联动配方），冶炼类配方在同步给客户端时
+        // 会在 ItemStack.STREAM_CODEC 抛 "Empty ItemStack not allowed"，直接打断玩家进服
+        if (result.isEmpty()) {
+            throw new IllegalArgumentException("Non-existent recipe result: " + recipeResult.id());
+        }
         return new CustomRecipeResult(CloneableItem.of(result), recipeResult.count(), null);
     }
 
@@ -207,5 +215,76 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
             return null;
         }
         return Ingredient.of(elements, itemIds, minecraftItemIds, hasCustomItem);
+    }
+
+    @NotNull
+    protected Ingredient parseDatapackIngredient(JsonElement json) {
+        Ingredient ingredient = parseVanillaIngredient(readIngredientItems(json));
+        if (ingredient == null) {
+            throw new IllegalArgumentException("Empty recipe ingredient: " + json);
+        }
+        return ingredient;
+    }
+
+    private List<String> readIngredientItems(JsonElement element) {
+        if (element.isJsonArray()) {
+            List<String> items = new ArrayList<>(4);
+            for (JsonElement child : element.getAsJsonArray()) {
+                items.addAll(readIngredientItems(child));
+            }
+            return items;
+        }
+        String type = element.isJsonObject() ? VANILLA_RECIPE_HELPER.ingredientType(element.getAsJsonObject()) : null;
+        if (type == null) {
+            List<String> items = VANILLA_RECIPE_HELPER.singleIngredient(element);
+            if (items.isEmpty()) {
+                throw new IllegalArgumentException("Unsupported recipe ingredient: " + element);
+            }
+            return items;
+        }
+        JsonObject json = element.getAsJsonObject();
+        // 扩展类型必须先于普通 item/tag 解析，避免丢失模组原料的匹配条件。
+        switch (type) {
+            case "neoforge:difference" -> {
+                Set<String> base = resolveIngredientItems(json.get("base"));
+                base.removeAll(resolveIngredientItems(json.get("subtracted")));
+                return new ArrayList<>(base);
+            }
+            case "neoforge:compound" -> {
+                return readIngredientItems(json.has("children") ? json.get("children") : json.get("ingredients"));
+            }
+            case "neoforge:intersection" -> {
+                Set<String> items = null;
+                for (JsonElement child : json.getAsJsonArray("children")) {
+                    Set<String> childItems = resolveIngredientItems(child);
+                    if (items == null) {
+                        items = childItems;
+                    } else {
+                        items.retainAll(childItems);
+                    }
+                }
+                return items == null ? List.of() : new ArrayList<>(items);
+            }
+            default -> throw new IllegalArgumentException("Unsupported ingredient type: " + type);
+        }
+    }
+
+    private Set<String> resolveIngredientItems(JsonElement element) {
+        Set<String> result = new LinkedHashSet<>();
+        for (String item : readIngredientItems(element)) {
+            if (item.charAt(0) == '#') {
+                Key tag = Key.of(item.substring(1));
+                List<UniqueKey> items = CraftEngine.instance().itemManager().itemIdsByTag(tag);
+                if (items.isEmpty()) {
+                    throw new IllegalArgumentException("Unknown or empty item tag: " + tag);
+                }
+                for (UniqueKey key : items) {
+                    result.add(key.toString());
+                }
+            } else {
+                result.add(item);
+            }
+        }
+        return result;
     }
 }
