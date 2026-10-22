@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.item.recipe;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.recipe.input.CraftingInput;
@@ -167,17 +166,7 @@ public class CustomShapelessRecipe extends CustomCraftingTableRecipe {
         public CustomShapelessRecipe readJson(Key id, JsonObject json) {
             List<Ingredient> ingredients = new ArrayList<>();
             for (JsonElement element : json.getAsJsonArray("ingredients")) {
-                if (element.isJsonPrimitive()) {
-                    ingredients.add(parseVanillaIngredient(List.of(element.getAsString())));
-                } else if (element.isJsonObject() && element.getAsJsonObject().has("type")) {
-                    ingredients.add(parseNeoForgeIngredient(element.getAsJsonObject()));
-                } else {
-                    JsonArray single = new JsonArray();
-                    single.add(element);
-                    for (List<String> items : VANILLA_RECIPE_HELPER.shapelessIngredients(single)) {
-                        ingredients.add(parseVanillaIngredient(items));
-                    }
-                }
+                ingredients.add(parseDatapackIngredient(element));
             }
             return new CustomShapelessRecipe(
                     id,

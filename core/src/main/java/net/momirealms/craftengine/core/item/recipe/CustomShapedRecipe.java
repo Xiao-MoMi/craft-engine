@@ -258,12 +258,8 @@ public class CustomShapedRecipe extends CustomCraftingTableRecipe {
         public CustomShapedRecipe readJson(Key id, JsonObject json) {
             JsonObject keyJson = json.getAsJsonObject("key");
             Map<Character, Ingredient> ingredients = new HashMap<>();
-            VANILLA_RECIPE_HELPER.shapedIngredientMap(keyJson).forEach((c, items) -> ingredients.put(c, parseVanillaIngredient(items)));
             for (Map.Entry<String, JsonElement> entry : keyJson.entrySet()) {
-                JsonElement value = entry.getValue();
-                if (value.isJsonObject() && value.getAsJsonObject().has("type")) {
-                    ingredients.put(entry.getKey().charAt(0), parseNeoForgeIngredient(value.getAsJsonObject()));
-                }
+                ingredients.put(entry.getKey().charAt(0), parseDatapackIngredient(entry.getValue()));
             }
             return new CustomShapedRecipe(id,
                     true,

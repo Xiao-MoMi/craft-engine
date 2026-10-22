@@ -147,6 +147,11 @@ public class VanillaRecipeReader1_20 implements VanillaRecipeReader {
     }
 
     @Override
+    public @Nullable String ingredientType(JsonObject json) {
+        return json.has("type") ? json.get("type").getAsString() : null;
+    }
+
+    @Override
     public boolean showNotification(JsonObject json) {
         return !json.has("show_notification") || json.get("show_notification").getAsBoolean();
     }

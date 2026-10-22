@@ -29,7 +29,6 @@ public interface LegacyRecipeHolder {
             this.recipe.write(buf, writer);
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
         public static LegacyRecipeHolder read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
             Key type = buf.readKey();
             Key id = buf.readKey();
@@ -37,7 +36,7 @@ public interface LegacyRecipeHolder {
             if (recipeType == null) {
                 throw new UnknownRecipeTypeException("Unknown recipe type " + type + " of recipe " + id);
             }
-            return new LegacyRecipeHolderImpl(id, type, recipeType.read(buf, (FriendlyByteBuf.Reader) reader));
+            return new LegacyRecipeHolderImpl(id, type, recipeType.read(buf, reader));
         }
     }
 
@@ -50,7 +49,6 @@ public interface LegacyRecipeHolder {
             this.recipe.write(buf, writer);
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
         public static LegacyRecipeHolder read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
             Key id = buf.readKey();
             int type = buf.readVarInt();
@@ -58,7 +56,7 @@ public interface LegacyRecipeHolder {
             if (recipeType == null) {
                 throw new UnknownRecipeTypeException("Unknown recipe type " + type + " of recipe " + id);
             }
-            return new ModernRecipeHolderImpl(id, type, recipeType.read(buf, (FriendlyByteBuf.Reader) reader));
+            return new ModernRecipeHolderImpl(id, type, recipeType.read(buf, reader));
         }
     }
 }

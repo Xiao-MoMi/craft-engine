@@ -45,5 +45,8 @@ public interface VanillaRecipeReader {
 
     List<String> singleIngredient(JsonElement json);
 
+    @Nullable
+    String ingredientType(JsonObject json);
+
     boolean showNotification(JsonObject json);
 }
