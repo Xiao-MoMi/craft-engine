@@ -82,7 +82,8 @@ public final class OverwritableEquippableAssetIdProcessor implements NetworkItem
                     data.canBeSheared(),
                     data.cameraOverlay(),
                     data.equipSound(),
-                    data.shearingSound()
+                    data.shearingSound(),
+                    data.allowedEntities()
             ));
             return true;
         }

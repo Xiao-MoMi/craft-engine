@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.util.HolderSetUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -89,7 +90,9 @@ public class ComponentItemFactory1_21_2 extends ComponentItemFactory1_21 {
     @Override
     protected Optional<EquipmentData> equippable(ComponentItemWrapper item) {
         Optional<Tag> optionalData = item.getComponentAsSparrowTag(DataComponentTypes.EQUIPPABLE);
-        if (optionalData.isEmpty() || !(optionalData.get() instanceof CompoundTag tag)) return Optional.empty();
+        if (optionalData.isEmpty() || !(optionalData.get() instanceof CompoundTag tag)) {
+            return Optional.empty();
+        }
         return Optional.of(new EquipmentData(
                 EquipmentSlot.valueOf(tag.getString("slot").toUpperCase(Locale.ROOT)),
                 tag.containsKey("asset_id") ? Key.of(tag.getString("asset_id")) : null,
@@ -100,7 +103,8 @@ public class ComponentItemFactory1_21_2 extends ComponentItemFactory1_21 {
                 tag.getBoolean("can_be_sheared", false),
                 tag.containsKey("camera_overlay") ? Key.of(tag.getString("camera_overlay")) : null,
                 tag.containsKey("equip_sound") ? parseSound(tag.get("equip_sound")) : null,
-                tag.containsKey("shearing_sound") ? parseSound(tag.get("shearing_sound")) : null
+                tag.containsKey("shearing_sound") ? parseSound(tag.get("shearing_sound")) : null,
+                HolderSetUtils.fromNBT(tag.get("allowed_entities"))
         ));
     }
 
