@@ -54,7 +54,7 @@ public final class RecipeRegistry1_20 implements RecipeRegistry {
 
     @Override
     public Object get(Key id) {
-        return this.byName.get(id);
+        return this.byName.get(KeyUtils.toIdentifier(id));
     }
 
     @Override
