@@ -228,7 +228,7 @@ public abstract class AbstractRecipeSerializer<R extends Recipe> implements Reci
 
     private List<String> readIngredientItems(JsonElement element) {
         if (element.isJsonArray()) {
-            List<String> items = new ArrayList<>();
+            List<String> items = new ArrayList<>(4);
             for (JsonElement child : element.getAsJsonArray()) {
                 items.addAll(readIngredientItems(child));
             }

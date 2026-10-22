@@ -43,7 +43,6 @@ import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketL
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListenerHolder;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundCreativeModeTabItemsPacket;
-import net.momirealms.craftengine.core.plugin.network.protocol.recipe.legacy.UnknownRecipeTypeException;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
@@ -845,9 +844,6 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         if (holder != null) {
             try {
                 holder.listener().onPacketSend(user, event);
-            } catch (UnknownRecipeTypeException e) {
-                // 遇到 mod 自己注册的配方类型时读不下去后面的字节，放弃改写、原样发送，不是错误
-                Debugger.PACKET.debug(() -> "Skipped rewriting packet " + holder.id() + " for player " + user.name() + ": " + e.getMessage());
             } catch (Throwable t) {
                 this.plugin.logger().warn("An error occurred when handling packet " + holder.id(), t);
             }
