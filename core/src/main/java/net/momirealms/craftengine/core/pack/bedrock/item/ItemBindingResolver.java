@@ -32,14 +32,15 @@ public final class ItemBindingResolver {
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
         ItemDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
+        ItemRegistrationProperties properties = this.registrationReader.read(clientItem);
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),
                 clientItem.vanillaId(),
                 itemModel,
                 definition,
-                this.behaviorReader.read(clientItem),
-                this.registrationReader.read(clientItem)
+                this.behaviorReader.read(clientItem, properties),
+                properties
         );
     }
 }

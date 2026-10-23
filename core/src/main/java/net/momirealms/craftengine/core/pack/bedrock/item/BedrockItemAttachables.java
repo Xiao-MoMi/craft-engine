@@ -218,7 +218,7 @@ public final class BedrockItemAttachables {
         writeJson(file, root.resolve("attachables/" + resource + ".attachable.json"));
     }
 
-    private static void writeController(String id, JsonArray geometryFrames, JsonArray textureFrames, Path path) throws IOException {
+    static void writeController(String id, JsonArray geometryFrames, JsonArray textureFrames, Path path) throws IOException {
         JsonObject controller = new JsonObject();
         JsonObject arrays = new JsonObject();
         JsonObject geometryArray = new JsonObject();

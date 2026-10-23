@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
@@ -53,14 +54,18 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
     @Override
     public ItemRegistrationProperties read(Item item) {
         Map<Key, JsonElement> components = new LinkedHashMap<>();
+        JsonObject kineticWeapon = null;
         for (Map.Entry<Key, Object> entry : this.componentTypes.entrySet()) {
             JsonElement effective = item.getComponentAsJson(entry.getValue());
+            if (entry.getKey().equals(DataComponentKeys.KINETIC_WEAPON) && effective != null) {
+                kineticWeapon = effective.getAsJsonObject();
+            }
             JsonElement defaultValue = item.type().getJsonComponent(entry.getValue()).orElse(null);
             if (Objects.equals(effective, defaultValue)) {
                 continue;
             }
             components.put(entry.getKey(), effective == null ? JsonNull.INSTANCE : effective);
         }
-        return new ItemRegistrationProperties(components);
+        return new ItemRegistrationProperties(components, kineticWeapon);
     }
 }

@@ -29,6 +29,12 @@ public final class BedrockItemIcons {
         BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(models, textures);
         this.defaultHandler = new BedrockDefaultItemHandler(models, textures, renderer);
         this.handlers.put(ItemKeys.BOW, List.of(new Bedrock2DBowItemHandler(models, renderer), new Bedrock3DBowItemHandler(models, textures)));
+        this.handlers.put(ItemKeys.CROSSBOW, List.of(new Bedrock2DCrossbowItemHandler(models, renderer), new Bedrock3DCrossbowItemHandler(models, textures)));
+        this.handlers.put(ItemKeys.SHIELD, List.of(new Bedrock3DShieldItemHandler(models, textures)));
+        List<BedrockItemHandler> spears = List.of(new Bedrock2DSpearItemHandler(renderer), new Bedrock3DSpearItemHandler(models, textures));
+        for (Key spear : ItemKeys.SPEARS) {
+            this.handlers.put(spear, spears);
+        }
     }
 
     public Result write(ItemRegistrationPlan plan, Path root) throws IOException {
@@ -57,6 +63,9 @@ public final class BedrockItemIcons {
         Files.createDirectories(output.getParent());
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(atlas), output);
         context.blocks().finish(root); // 汇总写出方块图集、flipbook 和方块定义
+        context.crossbowPlayerAnimations().write(root);
+        BedrockSpearPlayerAnimations.write(context.javaSpears(), root);
+        BedrockShieldPlayerAnimations.write(context.javaShields(), root);
         return new Result(context.icons().keySet(), context.displays(), context.variants(), context.attachables()); // 供注册计划关联已生成资源与分支条件
     }
 

@@ -1,0 +1,45 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.player.first_person.crossbow_equipped": {
+      "loop": true,
+      "override_previous_animation": true,
+      "bones": {
+        "leftarm": {
+          "position": [
+            "1.5 - variable.item_use_normalized * 3.5",
+            "-3.799999952316284 + variable.short_arm_offset_left",
+            "8.25 - (1 - variable.item_use_normalized)"
+          ],
+          "rotation": [
+            165.0,
+            -60.0,
+            45.0
+          ],
+          "scale": [
+            0.4,
+            0.4,
+            0.4
+          ]
+        },
+        "rightitem": {
+          "position": [
+            0.0,
+            2.0,
+            "2.5 - query.item_remaining_use_duration('main_hand', 1.0) * 1.5"
+          ],
+          "rotation": [
+            -20.0,
+            -15.0,
+            -30.0
+          ],
+          "scale": [
+            1.0,
+            "1.15 - query.item_remaining_use_duration('main_hand', 1.0) * 0.15",
+            1.0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -14,6 +14,7 @@ import java.util.Map;
 public final class BedrockElementGeometry {
     private static final float RADIANS = (float) (Math.PI / 180);
     private static final float MAX_GEOMETRY_SIZE = 30;
+    private static final float MAX_CENTER_DISTANCE = 22;
     private static final float GEOMETRY_MARGIN = 0.0001f;
 
     private BedrockElementGeometry() {
@@ -145,12 +146,12 @@ public final class BedrockElementGeometry {
                 if (extent > MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) {
                     scale = Math.min(scale, (MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) / extent);
                 }
-                // 围绕方块中心缩放；基岩 Y 中心为 8，故到绝对边界 -30、30 的距离为 38、22。
+                // 客户端边界为方块坐标 [-0.875, 1.875]，各轴距方块中心最多 22 个模型单位。
                 if (min < 0) {
-                    scale = Math.min(scale, ((axis == 1 ? 38 : 30) - GEOMETRY_MARGIN) / -min);
+                    scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / -min);
                 }
                 if (max > 0) {
-                    scale = Math.min(scale, ((axis == 1 ? 22 : 30) - GEOMETRY_MARGIN) / max);
+                    scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / max);
                 }
                 // 偏离中心的模型至少伸入标准方块一个单位，不能只满足整体尺寸限制。
                 if (min > 0) {

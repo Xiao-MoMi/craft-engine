@@ -16,7 +16,10 @@ public final class BedrockItemGenerationContext {
     private final Map<Key, BedrockItemBlocks.DisplayBlock> displays = new LinkedHashMap<>(); // 分支 ID 到展示方块资源
     private final Map<Key, List<BedrockItemIcons.Variant>> variants = new LinkedHashMap<>(); // 物品 ID 到全部显示分支
     private final Set<Key> attachables = new HashSet<>();
+    private final Set<Key> javaSpears = new HashSet<>();
+    private final Set<Key> javaShields = new HashSet<>();
     private final BedrockItemBlocks blocks = new BedrockItemBlocks();
+    private final BedrockCrossbowPlayerAnimations crossbowPlayerAnimations = new BedrockCrossbowPlayerAnimations();
 
     public BedrockItemGenerationContext(Path root) {
         this.root = root;
@@ -42,7 +45,19 @@ public final class BedrockItemGenerationContext {
         return this.attachables;
     }
 
+    public Set<Key> javaSpears() {
+        return this.javaSpears;
+    }
+
+    public Set<Key> javaShields() {
+        return this.javaShields;
+    }
+
     public BedrockItemBlocks blocks() {
         return this.blocks;
+    }
+
+    public BedrockCrossbowPlayerAnimations crossbowPlayerAnimations() {
+        return this.crossbowPlayerAnimations;
     }
 }

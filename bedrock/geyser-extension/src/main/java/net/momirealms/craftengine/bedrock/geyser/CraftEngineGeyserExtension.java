@@ -7,6 +7,8 @@ import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserSpearComponents;
+import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
@@ -31,6 +33,7 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final List<GeyserSelectedItemHandler.Variants> selectedItems = new ArrayList<>();
+    private final Map<String, JsonObject> spears = new HashMap<>();
 
     @Subscribe
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {
@@ -44,6 +47,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         this.selectedItems.clear();
+        this.spears.clear();
         for (Path path : this.packFiles()) {
             this.registerItems(path, event);
         }
@@ -116,6 +120,15 @@ public final class CraftEngineGeyserExtension implements Extension {
                 if (converted.selected() != null) {
                     this.selectedItems.add(converted.selected());
                 }
+                String javaItem = entry.get(JAVA_ITEM).getAsString();
+                if (javaItem.startsWith("minecraft:") && javaItem.endsWith("_spear")) {
+                    for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
+                        JsonObject variant = branch.getAsJsonObject();
+                        if (variant.getAsJsonObject(RESOURCES).has(ATTACHABLE_IDENTIFIER)) {
+                            this.spears.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), entry);
+                        }
+                    }
+                }
             } catch (UnsupportedOperationException exception) {
                 skipped++;
                 this.logger().warning("Skipped custom item " + entry.get(BEDROCK_IDENTIFIER) + " [model="
@@ -129,6 +142,13 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
         this.logger().info("Registered " + registered + " custom item variants from " + packPath
                 + "; skipped=" + skipped + ", failed=" + failed + ".");
+    }
+
+    @Subscribe
+    public void onSessionInitialize(SessionInitializeEvent event) {
+        if (!this.spears.isEmpty()) {
+            GeyserSpearComponents.install((GeyserSession) event.connection(), this.spears);
+        }
     }
 
     @Subscribe
