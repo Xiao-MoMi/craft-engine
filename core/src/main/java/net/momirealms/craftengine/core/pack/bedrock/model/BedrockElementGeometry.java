@@ -14,14 +14,13 @@ import java.util.Map;
 public final class BedrockElementGeometry {
     private static final float RADIANS = (float) (Math.PI / 180);
     private static final float MAX_GEOMETRY_SIZE = 30;
+    private static final float GEOMETRY_MARGIN = 0.0001f;
 
     private BedrockElementGeometry() {
     }
 
-    public static Result convert(JavaModel model, Map<JavaModel.Face, Material> materials) {
+    public static JsonArray convert(JavaModel model, Map<JavaModel.Face, Material> materials) {
         JsonArray cubes = new JsonArray();
-        Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
-        Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
         for (JavaModel.Element element : model.elements()) {
             if (element.faces().isEmpty()) {
                 continue;
@@ -43,15 +42,6 @@ public final class BedrockElementGeometry {
                     from.sub(rotation.origin()).mul(scale).add(rotation.origin());
                     to.sub(rotation.origin()).mul(scale).add(rotation.origin());
                 }
-            }
-            Vector3f point = new Vector3f();
-            for (int corner = 0; corner < 8; corner++) {
-                point.set((corner & 1) == 0 ? from.x : to.x, (corner & 2) == 0 ? from.y : to.y, (corner & 4) == 0 ? from.z : to.z);
-                if (rotation != null) {
-                    matrix.transform(point.sub(rotation.origin())).add(rotation.origin());
-                }
-                minimum.min(point);
-                maximum.max(point);
             }
             Vector3f origin = new Vector3f(8 - to.x, from.y, from.z - 8);
             Vector3f size = new Vector3f(to).sub(from);
@@ -115,27 +105,58 @@ public final class BedrockElementGeometry {
                 cubes.add(cube(origin, size, rotation, faces));
             }
         }
+        return cubes;
+    }
+
+    public static Result fit(JsonArray cubes) {
+        Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
+        Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
+        for (JsonElement value : cubes) {
+            JsonObject cube = value.getAsJsonObject();
+            Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
+            Vector3f size = VectorUtils.vector3f(cube.getAsJsonArray("size"));
+            Vector3f pivot = new Vector3f();
+            Matrix3f rotation = new Matrix3f();
+            if (cube.has("rotation")) {
+                pivot.set(VectorUtils.vector3f(cube.getAsJsonArray("pivot")));
+                Vector3f angles = VectorUtils.vector3f(cube.getAsJsonArray("rotation")).mul(RADIANS);
+                rotation.rotationZYX(-angles.z, angles.y, -angles.x);
+            }
+            Vector3f point = new Vector3f();
+            for (int corner = 0; corner < 8; corner++) {
+                point.set(origin).add((corner & 1) == 0 ? 0 : size.x, (corner & 2) == 0 ? 0 : size.y, (corner & 4) == 0 ? 0 : size.z);
+                rotation.transform(point.sub(pivot)).add(pivot);
+                point.set(8 - point.x, point.y, point.z + 8);
+                minimum.min(point);
+                maximum.max(point);
+            }
+        }
+        return fit(cubes, minimum, maximum);
+    }
+
+    private static Result fit(JsonArray cubes, Vector3f minimum, Vector3f maximum) {
         float scale = 1;
         if (!cubes.isEmpty()) {
             for (int axis = 0; axis < 3; axis++) {
                 float min = minimum.get(axis) - 8;
                 float max = maximum.get(axis) - 8;
                 float extent = max - min;
-                if (extent > MAX_GEOMETRY_SIZE) {
-                    scale = Math.min(scale, MAX_GEOMETRY_SIZE / extent);
+                // 预留浮点余量，避免坐标写出后重算边界略微超限，导致客户端拒绝整个模型。
+                if (extent > MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) {
+                    scale = Math.min(scale, (MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) / extent);
                 }
                 // 围绕方块中心缩放；基岩 Y 中心为 8，故到绝对边界 -30、30 的距离为 38、22。
                 if (min < 0) {
-                    scale = Math.min(scale, (axis == 1 ? 38 : 30) / -min);
+                    scale = Math.min(scale, ((axis == 1 ? 38 : 30) - GEOMETRY_MARGIN) / -min);
                 }
                 if (max > 0) {
-                    scale = Math.min(scale, (axis == 1 ? 22 : 30) / max);
+                    scale = Math.min(scale, ((axis == 1 ? 22 : 30) - GEOMETRY_MARGIN) / max);
                 }
                 // 偏离中心的模型至少伸入标准方块一个单位，不能只满足整体尺寸限制。
                 if (min > 0) {
-                    scale = Math.min(scale, 7 / min);
+                    scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / min);
                 } else if (max < 0) {
-                    scale = Math.min(scale, 7 / -max);
+                    scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / -max);
                 }
             }
         }

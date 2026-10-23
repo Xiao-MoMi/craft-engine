@@ -30,7 +30,7 @@ public final class BedrockPackGenerator {
         Files.createDirectories(destination.getParent());
         if (plan.hasErrors()) {
             Path report = destination.resolveSibling(destination.getFileName() + ".report.json");
-            ItemRegistrationPlanWriter.write(plan, report, new BedrockItemIcons.Result(Set.of(), Map.of(), Map.of()));
+            ItemRegistrationPlanWriter.write(plan, report, new BedrockItemIcons.Result(Set.of(), Map.of(), Map.of(), Set.of()));
             throw new IOException("Bedrock item plan contains errors; the existing pack was not replaced. Report: " + report);
         }
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {

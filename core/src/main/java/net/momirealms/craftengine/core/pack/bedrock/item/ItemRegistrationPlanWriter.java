@@ -107,7 +107,9 @@ public final class ItemRegistrationPlanWriter {
             } else {
                 resources.addProperty(DISPLAY_BLOCK, block.name()); // 展示方块名称
             }
-            resources.addProperty(ATTACHABLE_IDENTIFIER, variant.id().asString()); // 预留 attachable ID
+            if (generated.attachables().contains(variant.id())) {
+                resources.addProperty(ATTACHABLE_IDENTIFIER, variant.id().asString()); // 已生成的手持模型
+            }
             resources.addProperty(GENERATED, block != null || generated.icons().contains(variant.icon())); // 资源生成状态
             if (variant.unsupportedReason() != null) {
                 resources.addProperty(UNSUPPORTED_REASON, variant.unsupportedReason()); // 跳过原因

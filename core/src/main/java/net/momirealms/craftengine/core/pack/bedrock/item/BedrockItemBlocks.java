@@ -3,7 +3,10 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
@@ -12,6 +15,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.*;
 import org.joml.Vector3f;
+import org.joml.Matrix4fc;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -28,46 +32,49 @@ public final class BedrockItemBlocks {
     private final JsonArray flipbooks = new JsonArray();
     private final JsonObject blocks = new JsonObject();
 
-    public DisplayBlock writeGenerated(Key item, JavaModel model, List<TextureData> layers, List<Integer> colors, Path root) throws IOException {
-        String name = "ce_" + HashUtils.sha1(item.asString().getBytes(StandardCharsets.UTF_8));
-        Map<String, String> materials = new LinkedHashMap<>();
-        JsonArray cubes = new JsonArray();
-        JsonObject transforms = this.displayTransforms(model, 1);
-        for (int index = 0; index < layers.size(); index++) {
-            TextureData data = layers.get(index);
-            String material = "layer" + index;
-            String tile = name + '_' + index;
-            this.writeTexture(data, colors.get(index), tile, root);
-            materials.put(material, tile);
-            this.addLayer(cubes, data, material, index, Math.max(data.image().getWidth(), data.image().getHeight()));
-        }
-        return this.writeGeometry(name, cubes, transforms, materials, root);
-    }
-
-    public DisplayBlock writeElements(Key item, JavaModel model, ItemRenderTarget.Model target, JavaPackTextureSource textures, Path root) throws IOException {
+    public DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root) throws IOException {
         String name = "ce_" + HashUtils.sha1(item.asString().getBytes(StandardCharsets.UTF_8));
         Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
-        Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();
         List<TextureData> images = new ArrayList<>();
-        for (JavaModel.Element element : model.elements()) {
-            for (JavaModel.Face face : element.faces().values()) {
-                Integer color = face.tintIndex() >= 0 && face.tintIndex() < target.tints().size() ? textures.resolveTint(target.tints().get(face.tintIndex())) : WHITE;
-                TextureKey key = new TextureKey(face.texture(), color);
-                BedrockElementGeometry.Material material = bindings.get(key);
-                if (material == null) {
-                    TextureData data = textures.read(face.texture(), TextureUsage.ITEM);
-                    int width = data.image().getWidth();
-                    int height = data.image().getHeight();
-                    float size = Math.max(width, height);
-                    material = new BedrockElementGeometry.Material("layer" + bindings.size(), width / size, height / size);
-                    bindings.put(key, material);
-                    images.add(data);
-                }
-                faces.put(face, material);
+        JsonArray cubes = new JsonArray();
+        JavaModel displayModel = null;
+        for (ItemBindingRule rule : models) {
+            ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
+            JavaModel model = resolver.resolve(target.model());
+            if (displayModel == null) {
+                displayModel = model;
             }
+            Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
+            BedrockModelTransform.uniformScale(transformation);
+            JsonArray part;
+            if (model.kind() == JavaModel.GeometryKind.GENERATED) {
+                part = new JsonArray();
+                List<Texture> layers = resolver.resolveLayers(model);
+                for (int layer = 0; layer < layers.size(); layer++) {
+                    int color = layer < target.tints().size() ? textures.resolveTint(target.tints().get(layer)) : WHITE;
+                    BedrockElementGeometry.Material material = bindTexture(new TextureKey(layers.get(layer), color), bindings, images, textures);
+                    TextureData data = textures.read(layers.get(layer), TextureUsage.ITEM);
+                    int size = Math.max(data.image().getWidth(), data.image().getHeight());
+                    BedrockGeneratedGeometry.addLayer(part, data, material.name(), layer, size, size);
+                }
+            } else if (model.kind() == JavaModel.GeometryKind.ELEMENTS) {
+                Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();
+                for (JavaModel.Element element : model.elements()) {
+                    for (JavaModel.Face face : element.faces().values()) {
+                        int color = face.tintIndex() >= 0 && face.tintIndex() < target.tints().size() ? textures.resolveTint(target.tints().get(face.tintIndex())) : WHITE;
+                        faces.put(face, bindTexture(new TextureKey(face.texture(), color), bindings, images, textures));
+                    }
+                }
+                part = BedrockElementGeometry.convert(model, faces);
+            } else {
+                throw new UnsupportedOperationException("Unsupported model geometry: " + model.id());
+            }
+            BedrockModelTransform.apply(part, transformation, 1);
+            cubes.addAll(part);
         }
-        BedrockElementGeometry.Result geometry = BedrockElementGeometry.convert(model, faces);
-        JsonObject transforms = this.displayTransforms(model, geometry.scale());
+        // 合并后统一缩小，避免各子模型分别适配尺寸而改变相对位置。
+        float geometryScale = BedrockElementGeometry.fit(cubes).scale();
+        JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, geometryScale);
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
         for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
@@ -75,11 +82,26 @@ public final class BedrockItemBlocks {
             this.writeTexture(images.get(index++), entry.getKey().color(), tile, root);
             materials.put(entry.getValue().name(), tile);
         }
-        return this.writeGeometry(name, geometry.cubes(), transforms, materials, root);
+        return this.writeGeometry(name, cubes, transforms, materials, root);
+    }
+
+    private static BedrockElementGeometry.Material bindTexture(TextureKey key, Map<TextureKey, BedrockElementGeometry.Material> bindings,
+                                                               List<TextureData> images, JavaPackTextureSource textures) throws IOException {
+        BedrockElementGeometry.Material material = bindings.get(key);
+        if (material == null) {
+            TextureData data = textures.read(key.texture(), TextureUsage.ITEM);
+            int width = data.image().getWidth();
+            int height = data.image().getHeight();
+            float size = Math.max(width, height);
+            material = new BedrockElementGeometry.Material("layer" + bindings.size(), width / size, height / size);
+            bindings.put(key, material);
+            images.add(data);
+        }
+        return material;
     }
 
     private void writeTexture(TextureData data, int color, String tile, Path root) throws IOException {
-        String path = "textures/ce_" + tile;
+        String path = "textures/" + tile;
         TextureAnimation animation = data.animation();
         int width = data.image().getWidth();
         int height = data.image().getHeight();
@@ -184,103 +206,6 @@ public final class BedrockItemBlocks {
             transforms.add(position.name().toLowerCase(Locale.ROOT), display);
         }
         return transforms;
-    }
-
-    private void addLayer(JsonArray cubes, TextureData data, String material, int layer, int size) {
-        int width = data.image().getWidth();
-        int height = data.image().getHeight();
-        float depth = 0.5f + layer / 1024f;
-        float u = 16f * width / size;
-        float v = 16f * height / size;
-        JsonObject faces = new JsonObject();
-        faces.add("south", this.face(material, 0, 0, u, v));
-        faces.add("north", this.face(material, u, 0, -u, v));
-        this.cube(cubes, -8, 0, -depth, 16, 16, depth * 2, faces);
-        byte[] edges = new byte[width * height];
-        TextureAnimation animation = data.animation();
-        if (animation == null) {
-            this.collectEdges(data.image(), edges);
-        } else {
-            BitSet visited = new BitSet();
-            int columns = animation.sheet().getWidth() / width;
-            // 轮廓合并所有播放帧，保留首帧中透明、后续帧中出现的像素边缘。
-            for (TextureAnimation.Frame frame : animation.frames()) {
-                if (!visited.get(frame.index())) {
-                    visited.set(frame.index());
-                    this.collectEdges(animation.sheet().getSubimage(frame.index() % columns * width,
-                            frame.index() / columns * height, width, height), edges);
-                }
-            }
-        }
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int edge = edges[y * width + x];
-                float left = 8 - (x + 1) * 16f / width;
-                float bottom = 16 - (y + 1) * 16f / height;
-                float uvX = (x + 0.1f) * 16 / size;
-                float uvY = (y + 0.1f) * 16 / size;
-                float span = 0.8f * 16 / size;
-                for (int side = 0; side < 4; side++) {
-                    if ((edge & (1 << side)) == 0) {
-                        continue;
-                    }
-                    String direction = switch (side) {
-                        case 0 -> "up";
-                        case 1 -> "down";
-                        case 2 -> "west";
-                        default -> "east";
-                    };
-                    JsonObject sideFaces = new JsonObject();
-                    sideFaces.add(direction, side < 2
-                            ? this.face(material, uvX + span, uvY + span, -span, -span)
-                            : this.face(material, uvX, uvY, span, span));
-                    this.cube(cubes, left + (side == 2 ? 16f / width : 0),
-                            bottom + (side == 0 ? 16f / height : 0), -depth,
-                            side < 2 ? 16f / width : 0, side < 2 ? 0 : 16f / height, depth * 2, sideFaces);
-                }
-            }
-        }
-    }
-
-    private void collectEdges(BufferedImage image, byte[] edges) {
-        int width = image.getWidth();
-        int height = image.getHeight();
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                if ((image.getRGB(x, y) >>> 24) == 0) {
-                    continue;
-                }
-                int index = y * width + x;
-                if (y == 0 || (image.getRGB(x, y - 1) >>> 24) == 0) {
-                    edges[index] |= 1;
-                }
-                if (y == height - 1 || (image.getRGB(x, y + 1) >>> 24) == 0) {
-                    edges[index] |= 2;
-                }
-                if (x == 0 || (image.getRGB(x - 1, y) >>> 24) == 0) {
-                    edges[index] |= 4;
-                }
-                if (x == width - 1 || (image.getRGB(x + 1, y) >>> 24) == 0) {
-                    edges[index] |= 8;
-                }
-            }
-        }
-    }
-
-    private void cube(JsonArray cubes, float x, float y, float z, float width, float height, float depth, JsonObject faces) {
-        JsonObject cube = new JsonObject();
-        cube.add("origin", VectorUtils.toJson(x, y, z));
-        cube.add("size", VectorUtils.toJson(width, height, depth));
-        cube.add("uv", faces);
-        cubes.add(cube);
-    }
-
-    private JsonObject face(String material, float u, float v, float width, float height) {
-        JsonObject face = new JsonObject();
-        face.add("uv", VectorUtils.toJson(u, v));
-        face.add("uv_size", VectorUtils.toJson(width, height));
-        face.addProperty("material_instance", material);
-        return face;
     }
 
     public void finish(Path root) throws IOException {

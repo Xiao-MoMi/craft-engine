@@ -66,7 +66,7 @@ public final class JavaModelResolver {
         return resolved;
     }
 
-    // 看看整个物品定义是否包含3d模型或者是带动态贴图的2d图标
+    // 根据模型变换、三维几何和动态贴图确定默认渲染方式。
     public RenderType classify(ItemDefinitionBinding definition) throws IOException {
         return this.classify(definition.rules());
     }
@@ -74,8 +74,9 @@ public final class JavaModelResolver {
     private RenderType classify(List<ItemBindingRule> rules) throws IOException {
         boolean block = false;
         boolean unknown = false;
-        // 任意分支含三维模型或动态贴图，整个定义都使用展示方块。
+        // 任意分支含模型变换、三维模型或动态贴图，整个定义都使用展示方块。
         for (ItemBindingRule rule : rules) {
+            block |= !rule.transformations().isEmpty();
             switch (rule.target()) {
                 case ItemRenderTarget.Model model -> {
                     JavaModel resolved = this.resolve(model.model());
@@ -205,6 +206,24 @@ public final class JavaModelResolver {
             }
         }
         return layers;
+    }
+
+    public boolean needsHandheldAttachable(JavaModel model) throws IOException {
+        if (this.vanillaIconModel == null) {
+            this.vanillaIconModel = this.resolve(Key.minecraft("item/generated"), true);
+        }
+        for (DisplayPosition position : DISPLAY_POSITIONS) {
+            switch (position) {
+                case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> {
+                    if (!model.display().getOrDefault(position, Transform.IDENTITY).equals(this.vanillaIconModel.display().get(position))) {
+                        return true;
+                    }
+                }
+                default -> {
+                }
+            }
+        }
+        return false;
     }
 
     public List<Texture> resolveLayers(JavaModel model) throws IOException {

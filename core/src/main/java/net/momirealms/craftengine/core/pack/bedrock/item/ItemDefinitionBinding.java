@@ -8,7 +8,7 @@ public record ItemDefinitionBinding(Key definitionId,
                                     boolean handAnimationOnSwap,
                                     boolean oversizedInGui,
                                     float swapAnimationScale,
-                                    List<ItemBindingRule> rules) {
+                                    List<ItemBindingRule> rules /* 全部变体分支 */) {
 
     public ItemDefinitionBinding {
         rules = List.copyOf(rules);
