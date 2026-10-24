@@ -3,6 +3,8 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
 import net.momirealms.craftengine.bedrock.geyser.proxy.item.custom.GeyserCustomItemDefinitionBuilderProxy;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
@@ -12,6 +14,7 @@ import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserBlockPlacer
 import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserItemDataComponents;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.predicate.PredicateStrategy;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +48,11 @@ public final class GeyserItemRegistrationAdapter {
             }
             definitions.add(this.convertVariant(entry, variant, displayBlocks, variants.size() - definitions.size()));
         }
-        return new ConvertedItem(definitions, definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)));
+        return new ConvertedItem(
+                definitions,
+                definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)),
+                GeyserItemComponentPatches.read(entry.getAsJsonObject(COMPONENTS), this.sourceVersion, entry.get(ITEM_TYPE).getAsString())
+        );
     }
 
     /*
@@ -70,7 +77,6 @@ public final class GeyserItemRegistrationAdapter {
         CustomItemDefinition.Builder builder = CustomItemDefinition.builder(bedrockId, model);
         builder.priority(priority);
         applyConditions(builder, variant.getAsJsonArray(CONDITIONS));
-        applyComponents(builder, entry.getAsJsonObject(COMPONENTS));
         applyResources(builder, bedrockId, variant.getAsJsonObject(RESOURCES), displayBlocks);
         return builder.build();
     }
@@ -79,13 +85,6 @@ public final class GeyserItemRegistrationAdapter {
         builder.predicateStrategy(PredicateStrategy.AND);
         for (JsonElement condition : conditions) {
             builder.predicate(GeyserItemPredicates.read(condition.getAsJsonObject()));
-        }
-    }
-
-    private void applyComponents(CustomItemDefinition.Builder builder, JsonObject components) {
-        for (Map.Entry<String, JsonElement> component : components.entrySet()) {
-            JsonElement value = component.getValue().isJsonNull() ? null : component.getValue();
-            GeyserItemComponentConverter.apply(builder, component.getKey(), value, this.sourceVersion);
         }
     }
 
@@ -110,6 +109,6 @@ public final class GeyserItemRegistrationAdapter {
         );
     }
 
-    public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual) {
+    public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual, @Nullable GeyserItemComponentPatch componentPatch) {
     }
 }

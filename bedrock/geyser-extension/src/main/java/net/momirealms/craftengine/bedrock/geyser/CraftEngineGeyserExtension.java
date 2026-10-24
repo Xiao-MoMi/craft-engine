@@ -7,7 +7,10 @@ import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
-import net.momirealms.craftengine.bedrock.geyser.item.GeyserSpearComponents;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserSpearComponentPatch;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
@@ -42,7 +45,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
-    private final Map<String, JsonObject> spears = new HashMap<>();
+    private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
 
     @Subscribe
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {
@@ -55,10 +58,12 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         this.contextualItems.clear();
-        this.spears.clear();
+        Map<String, GeyserItemComponentPatch> componentPatches = new HashMap<>();
         for (Path path : this.packFiles()) {
-            this.registerItems(path, event);
+            this.registerItems(path, event, componentPatches);
         }
+        componentPatches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
+        this.componentPatches = Map.copyOf(componentPatches);
     }
 
     private List<Path> packFiles() {
@@ -99,7 +104,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
     }
 
-    private void registerItems(Path packPath, GeyserDefineCustomItemsEvent event) {
+    private void registerItems(Path packPath, GeyserDefineCustomItemsEvent event, Map<String, GeyserItemComponentPatch> componentPatches) {
         GeyserItemRegistrationAdapter adapter;
         JsonArray entries;
         try {
@@ -143,6 +148,10 @@ public final class CraftEngineGeyserExtension implements Extension {
             Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
                 GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.displayBlocks);
+                GeyserItemComponentPatch attachedPatch = converted.componentPatch();
+                if (SPEAR_ITEMS.contains(identifier.toString())) {
+                    attachedPatch = GeyserItemComponentPatches.combine(GeyserSpearComponentPatch.read(entry), attachedPatch);
+                }
                 for (CustomItemDefinition definition : converted.definitions()) {
                     event.register(identifier, definition);
                     registered++;
@@ -152,34 +161,33 @@ public final class CraftEngineGeyserExtension implements Extension {
                         this.contextualItems.put(definition.bedrockIdentifier().toString(), definition);
                     }
                 }
-                String javaItem = entry.get(ITEM_TYPE).getAsString();
-                if (SPEAR_ITEMS.contains(javaItem)) {
+                if (attachedPatch != null) {
                     for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
                         JsonObject variant = branch.getAsJsonObject();
+                        GeyserItemComponentPatch patch = converted.componentPatch();
                         if (variant.getAsJsonObject(RESOURCES).get(ATTACHABLE).getAsBoolean()) {
-                            this.spears.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), entry);
+                            patch = attachedPatch;
+                        }
+                        if (patch != null) {
+                            componentPatches.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), patch);
                         }
                     }
                 }
             } catch (UnsupportedOperationException exception) {
                 skipped++;
-                this.logger().warning("Skipped custom item " + entry.get(BEDROCK_IDENTIFIER) + " [model="
-                        + entry.get(MODEL) + ", pack=" + packPath + "]: " + exception.getMessage());
+                this.logger().warning("Skipped custom item " + entry.get(BEDROCK_IDENTIFIER) + " [model=" + entry.get(MODEL) + ", pack=" + packPath + "]: " + exception.getMessage());
             } catch (RuntimeException exception) {
                 failed++;
-                this.logger().error("Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER)
-                        + " [java=" + entry.get(ITEM_TYPE) + ", model=" + entry.get(MODEL)
-                        + ", pack=" + packPath + "]", exception);
+                this.logger().error("Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER) + " [java=" + entry.get(ITEM_TYPE) + ", model=" + entry.get(MODEL) + ", pack=" + packPath + "]", exception);
             }
         }
-        this.logger().info("Registered " + registered + " custom item variants from " + packPath
-                + "; skipped=" + skipped + ", failed=" + failed + ".");
+        this.logger().info("Registered " + registered + " custom item variants from " + packPath + "; skipped=" + skipped + ", failed=" + failed + ".");
     }
 
     @Subscribe
     public void onSessionInitialize(SessionInitializeEvent event) {
-        if (!this.spears.isEmpty()) {
-            GeyserSpearComponents.install((GeyserSession) event.connection(), this.spears);
+        if (!this.componentPatches.isEmpty()) {
+            GeyserItemComponentPatcher.install((GeyserSession) event.connection(), this.componentPatches);
         }
         if (!this.contextualItems.isEmpty()) {
             GeyserItemRuntime.install((GeyserSession) event.connection(), this.contextualItems);

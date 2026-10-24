@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SortedSetMultimap;
 import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
 import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
@@ -19,11 +19,7 @@ import org.geysermc.geyser.registry.type.ItemMapping;
 import org.geysermc.geyser.registry.type.ItemMappings;
 import org.geysermc.geyser.session.GeyserSession;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class GeyserItemRuntime {
     private final GeyserSession session;
@@ -66,7 +62,8 @@ public final class GeyserItemRuntime {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private <K> ItemMapping bind(ItemMapping item, SortedSetMultimap<K, GeyserCustomMappingData> source,
+    private <K> ItemMapping bind(ItemMapping item,
+                                 SortedSetMultimap<K, GeyserCustomMappingData> source,
                                  Map<String, CustomItemDefinition> definitions) {
         SortedSetMultimap<K, GeyserCustomMappingData> mappings = MultimapBuilder.hashKeys().treeSetValues(source.valueComparator()).build();
         for (Map.Entry<K, GeyserCustomMappingData> entry : source.entries()) {
@@ -77,9 +74,18 @@ public final class GeyserItemRuntime {
                 for (MinecraftPredicate<? super ItemPredicateContext> predicate : definition.predicates()) {
                     predicates.add(GeyserItemPredicates.bind(predicate, this::dimension, () -> this.selected));
                 }
-                CustomItemDefinition bound = new SessionDefinition(definition.bedrockIdentifier(), definition.displayName(),
-                        definition.model(), definition.icon(), List.copyOf(predicates), definition.predicateStrategy(),
-                        definition.priority(), definition.bedrockOptions(), definition.components(), definition.removedComponents());
+                CustomItemDefinition bound = new SessionDefinition(
+                        definition.bedrockIdentifier(),
+                        definition.displayName(),
+                        definition.model(),
+                        definition.icon(),
+                        List.copyOf(predicates),
+                        definition.predicateStrategy(),
+                        definition.priority(),
+                        definition.bedrockOptions(),
+                        definition.components(),
+                        definition.removedComponents()
+                );
                 mapping = new GeyserCustomMappingData(bound, mapping.itemDefinition(), mapping.integerId());
             }
             mappings.put(entry.getKey(), mapping);
@@ -111,9 +117,14 @@ public final class GeyserItemRuntime {
         }
     }
 
-    private record SessionDefinition(Identifier bedrockIdentifier, String displayName, Identifier model, String icon,
+    private record SessionDefinition(Identifier bedrockIdentifier,
+                                     String displayName,
+                                     Identifier model,
+                                     String icon,
                                      List<MinecraftPredicate<? super ItemPredicateContext>> predicates,
-                                     PredicateStrategy predicateStrategy, int priority, CustomItemBedrockOptions bedrockOptions,
-                                     ItemDataComponentMap components, List<Identifier> removedComponents) implements CustomItemDefinition {
+                                     PredicateStrategy predicateStrategy, int priority,
+                                     CustomItemBedrockOptions bedrockOptions,
+                                     ItemDataComponentMap components,
+                                     List<Identifier> removedComponents) implements CustomItemDefinition {
     }
 }
