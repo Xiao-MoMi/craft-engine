@@ -62,7 +62,6 @@ public final class ItemRegistrationPlanGenerator {
         Key bedrockId = Key.ce(token);
         return new Entry(
                 bedrockId,
-                Key.CRAFTENGINE_NAMESPACE + "." + token,
                 binding.clientItemType(),
                 binding.itemModel(),
                 binding.definition(),

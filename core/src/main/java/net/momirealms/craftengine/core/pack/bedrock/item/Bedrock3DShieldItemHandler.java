@@ -80,7 +80,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
         Bedrock3DItemAttachables.write(entry.bedrockId(), stages, geometry.materials(), scripts,
                 new JsonArray(), new JsonObject(), new JsonArray(), context.root());
         ItemBindingRule registration = new ItemBindingRule(conditions, idle.target(), idle.transformations(), idle.sourcePath());
-        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), entry.icon(), registration, null)));
+        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), registration, null)));
         context.displays().put(entry.bedrockId(), display);
         context.attachables().add(entry.bedrockId());
         context.javaShields().add(entry.bedrockId());

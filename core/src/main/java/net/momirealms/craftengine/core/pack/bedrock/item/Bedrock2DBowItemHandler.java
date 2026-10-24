@@ -63,9 +63,9 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
         BedrockItemAttachables.writeBow(entry.bedrockId(), stages, idle, entry.source().clientBehavior().use().maximumDuration().value(), context.root());
         JsonObject icon = new JsonObject();
         icon.addProperty("textures", stages.get(idle).texture());
-        context.icons().add(entry.icon(), icon);
+        context.icons().add(entry.bedrockId().asString(), icon);
         ItemBindingRule registrationRule = new ItemBindingRule(registrationConditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
-        context.variants().put(entry.bedrockId(), List.of(new Variant(entry.bedrockId(), entry.icon(), registrationRule, null)));
+        context.variants().put(entry.bedrockId(), List.of(new Variant(entry.bedrockId(), registrationRule, null)));
         context.attachables().add(entry.bedrockId());
         return true;
     }

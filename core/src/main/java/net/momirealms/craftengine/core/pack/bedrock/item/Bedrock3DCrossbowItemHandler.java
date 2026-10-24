@@ -53,7 +53,7 @@ public final class Bedrock3DCrossbowItemHandler implements BedrockItemHandler {
         for (int i = 0; i < states.size(); i++) {
             BedrockCrossbowStates.State state = states.get(i);
             Bedrock3DCrossbowAttachables.write(state.id(), prepared.get(i), geometry.materials(), state, entry.source().clientBehavior().use(), context.root());
-            variants.add(new BedrockItemIcons.Variant(state.id(), state.icon(), state.registration(), null));
+            variants.add(new BedrockItemIcons.Variant(state.id(), state.registration(), null));
             context.displays().put(state.id(), displays.get(i));
             context.attachables().add(state.id());
         }

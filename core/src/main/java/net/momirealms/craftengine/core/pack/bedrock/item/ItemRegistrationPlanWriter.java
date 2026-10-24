@@ -69,8 +69,9 @@ public final class ItemRegistrationPlanWriter {
     private static JsonArray variantsToJson(ItemRegistrationPlan.Entry entry, BedrockItemIcons.Result generated) {
         JsonArray variants = new JsonArray(); // 显示分支
         for (BedrockItemIcons.Variant variant : generated.variants().getOrDefault(entry.bedrockId(), List.of())) {
+            String identifier = variant.id().asString();
             JsonObject branch = new JsonObject(); // 当前分支
-            branch.addProperty(BEDROCK_IDENTIFIER, variant.id().asString()); // 分支物品 ID
+            branch.addProperty(BEDROCK_IDENTIFIER, identifier); // 分支物品 ID
             JsonArray conditions = new JsonArray(); // 分支条件，全部满足
             for (ItemBindingCondition condition : variant.rule().conditions()) {
                 JsonObject match = new JsonObject(); // 当前条件
@@ -103,14 +104,14 @@ public final class ItemRegistrationPlanWriter {
             JsonObject resources = new JsonObject(); // 分支资源
             BedrockItemBlocks.DisplayBlock block = generated.displayBlocks().get(variant.id()); // 展示方块
             if (block == null) {
-                resources.addProperty(ICON, variant.icon()); // 图标资源键
+                resources.addProperty(ICON, identifier); // 图标资源键
             } else {
                 resources.addProperty(DISPLAY_BLOCK, block.name()); // 展示方块名称
             }
             if (generated.attachables().contains(variant.id())) {
-                resources.addProperty(ATTACHABLE_IDENTIFIER, variant.id().asString()); // 已生成的手持模型
+                resources.addProperty(ATTACHABLE_IDENTIFIER, identifier); // 已生成的手持模型
             }
-            resources.addProperty(GENERATED, block != null || generated.icons().contains(variant.icon())); // 资源生成状态
+            resources.addProperty(GENERATED, block != null || generated.icons().contains(identifier)); // 资源生成状态
             if (variant.unsupportedReason() != null) {
                 resources.addProperty(UNSUPPORTED_REASON, variant.unsupportedReason()); // 跳过原因
             }

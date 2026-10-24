@@ -42,9 +42,9 @@ public final class Bedrock2DSpearItemHandler implements BedrockItemHandler {
         ImageUtils.writePng(iconImage, context.root().resolve(path + ".png"));
         JsonObject icon = new JsonObject();
         icon.addProperty("textures", path);
-        context.icons().add(entry.icon(), icon);
+        context.icons().add(entry.bedrockId().asString(), icon);
         Bedrock2DSpearAttachables.write(entry, models, hands, context.root());
-        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), entry.icon(), models.registration(), null)));
+        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), models.registration(), null)));
         context.attachables().add(entry.bedrockId());
         return true;
     }

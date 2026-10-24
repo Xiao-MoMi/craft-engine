@@ -72,6 +72,6 @@ public final class BedrockItemIcons {
     public record Result(Set<String> icons, Map<Key, BedrockItemBlocks.DisplayBlock> displayBlocks, Map<Key, List<Variant>> variants, Set<Key> attachables) {
     }
 
-    public record Variant(Key id, String icon, ItemBindingRule rule, @Nullable String unsupportedReason) {
+    public record Variant(Key id, ItemBindingRule rule, @Nullable String unsupportedReason) {
     }
 }

@@ -53,7 +53,7 @@ public final class Bedrock3DBowItemHandler implements BedrockItemHandler {
         List<ItemBindingCondition> conditions = idleRule.conditions().stream()
                 .filter(condition -> !BedrockItemAttachables.isUseCondition(condition)).toList();
         ItemBindingRule registration = new ItemBindingRule(conditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
-        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), entry.icon(), registration, null)));
+        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), registration, null)));
         context.displays().put(entry.bedrockId(), display);
         context.attachables().add(entry.bedrockId());
         return true;

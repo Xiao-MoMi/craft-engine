@@ -17,7 +17,6 @@ public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnos
     }
 
     public record Entry(Key bedrockId,  // SHA1 后的 craftengine id
-                        String icon,  // craftengine.sha1
                         Key javaItemType,
                         Key definitionId,
                         ItemDefinitionBinding definition,

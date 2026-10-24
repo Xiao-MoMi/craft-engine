@@ -36,15 +36,12 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);
             Key id;
-            String iconName;
             if (rules.size() == 1) { // 单分支复用物品 ID，多分支分别分配资源名
                 id = entry.bedrockId();
-                iconName = entry.icon();
             } else {
                 id = Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_v" + i);
-                iconName = entry.icon() + "_v" + i;
             }
-            branches.add(new Variant(id, iconName, rule, null)); // 先保留规则，未生成资源的分支也会写入计划
+            branches.add(new Variant(id, rule, null)); // 先保留规则，未生成资源的分支也会写入计划
 
             // TODO 特殊的模型类型
             if (!(rule.target() instanceof ItemRenderTarget.Model) && !(rule.target() instanceof ItemRenderTarget.Composite)) {
@@ -77,14 +74,14 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
                     ImageUtils.writePng(image, context.root().resolve(path + ".png"));
                     JsonObject icon = new JsonObject();
                     icon.addProperty("textures", path); // 基岩图集路径不带 .png 后缀
-                    context.icons().add(iconName, icon);
+                    context.icons().add(id.asString(), icon);
                     if (displayModel != null && this.models.needsHandheldAttachable(displayModel)) {
                         BedrockItemAttachables.write(id, displayModel, image, path, context.root());
                         context.attachables().add(id);
                     }
                 }
             } catch (UnsupportedOperationException exception) { // 不支持的转换只记录当前分支的跳过原因
-                branches.set(i, new Variant(id, iconName, rule, exception.getMessage()));
+                branches.set(i, new Variant(id, rule, exception.getMessage()));
             }
         }
         return true;

@@ -62,7 +62,7 @@ final class BedrockCrossbowStates {
             ItemBindingRule source = rules.get(idle);
             ItemBindingRule registration = new ItemBindingRule(conditions, source.target(), source.transformations(), source.sourcePath());
             Key id = Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + '_' + charge);
-            states.add(new State(id, entry.icon() + '_' + charge, !charge.equals("none"), rules, idle, registration));
+            states.add(new State(id, !charge.equals("none"), rules, idle, registration));
         }
         return states;
     }
@@ -128,6 +128,6 @@ final class BedrockCrossbowStates {
         return scripts;
     }
 
-    record State(Key id, String icon, boolean charged, List<ItemBindingRule> rules, int idle, ItemBindingRule registration) {
+    record State(Key id, boolean charged, List<ItemBindingRule> rules, int idle, ItemBindingRule registration) {
     }
 }
