@@ -128,7 +128,7 @@ public final class CraftEngineGeyserExtension implements Extension {
          *       "generated": true // 是否已生成资源
          *     }
          *   }],
-         *   "client_behavior": {} // 使用、攻击等行为，此处省略
+         *   "client_behavior": {"use": {}} // 使用行为，字段省略
          * }
          */
         for (JsonElement value : entries) {

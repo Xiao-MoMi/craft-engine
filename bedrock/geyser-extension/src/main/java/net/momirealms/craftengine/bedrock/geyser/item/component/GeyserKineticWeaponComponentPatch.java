@@ -47,7 +47,8 @@ public record GeyserKineticWeaponComponentPatch(@Nullable NbtMap kinetic) implem
             existing = existing.getCompound(COMPONENT);
         }
         NbtMapBuilder weapon = GeyserWeaponComponents.DEFAULT_RANGE.toBuilder()
-                .putFloat("damage_modifier", 0f).putFloat("damage_multiplier", 1f);
+                .putFloat("damage_modifier", 0f)
+                .putFloat("damage_multiplier", 1f);
         weapon.putAll(existing);
         weapon.remove("dismount_conditions");
         weapon.remove("knockback_conditions");

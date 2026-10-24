@@ -46,9 +46,12 @@ public final class GeyserItemComponentPatches {
 
     public static GeyserItemComponentPatch read(JsonObject entry, int sourceVersion) {
         JsonObject components = entry.getAsJsonObject(COMPONENTS);
+        if (components == null) {
+            components = new JsonObject();
+        }
         JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
         String itemType = entry.get(ITEM_TYPE).getAsString();
-        // 先按 Java 最终行为补齐使用入口，再应用组件覆写，最后决定触屏按钮。
+        // 先按 Java 最终行为补齐使用入口，再应用组件覆写，最后决定触屏按钮
         GeyserItemComponentPatch patch = combine(GeyserItemUse.read(behavior, components, itemType), read(components, sourceVersion, itemType));
         return combine(patch, GeyserItemInteraction.read(behavior, components));
     }

@@ -37,9 +37,13 @@ public final class ItemRegistrationPlanWriter {
             json.addProperty(MODEL, entry.definitionId().asString()); // 匹配的 item_model ID
             JsonObject components = new JsonObject(); // 相对原版的组件差异
             entry.properties().components().forEach((key, value) -> components.add(key.asString(), value)); // null 表示移除
-            json.add(COMPONENTS, components); // 注册组件
+            if (!components.isEmpty()) {
+                json.add(COMPONENTS, components); // 注册组件
+            }
             json.add(VARIANTS, variantsToJson(entry, generated)); // 全部分支
-            json.add(CLIENT_BEHAVIOR, GsonHelper.get().toJsonTree(binding.clientBehavior())); // 使用、攻击及交互行为
+            JsonObject behavior = new JsonObject(); // Geyser 所需行为
+            behavior.add("use", GsonHelper.get().toJsonTree(binding.clientBehavior().use())); // 使用行为
+            json.add(CLIENT_BEHAVIOR, behavior); // 客户端行为
             entries.add(json); // 加入注册列表
         }
         result.add(ENTRIES, entries); // 全部注册条目

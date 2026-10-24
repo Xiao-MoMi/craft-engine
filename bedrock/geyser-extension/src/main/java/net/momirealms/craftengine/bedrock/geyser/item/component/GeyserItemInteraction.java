@@ -30,7 +30,11 @@ final class GeyserItemInteraction {
         return GeyserItemComponents.update((converted, properties) -> {
             NbtMap wearable = (NbtMap) converted.getOrDefault("minecraft:wearable", NbtMap.EMPTY);
             boolean playerEquipment = switch (wearable.getString("slot")) {
-                case "slot.armor.head", "slot.armor.chest", "slot.armor.legs", "slot.armor.feet", "slot.weapon.offhand" -> true;
+                case "slot.armor.head",
+                     "slot.armor.chest",
+                     "slot.armor.legs",
+                     "slot.armor.feet",
+                     "slot.weapon.offhand" -> true;
                 default -> false;
             };
             // 展示方块的 block_placer 仅用于渲染，不代表物品真的有使用动作。

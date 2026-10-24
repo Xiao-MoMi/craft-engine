@@ -36,8 +36,10 @@ final class GeyserWeaponComponents {
                     .putCompound("creative_reach", range.getCompound("creative_reach", DEFAULT_RANGE.getCompound("creative_reach")))
                     .putFloat("hitbox_margin", range.getFloat("hitbox_margin", 0.3f)).build();
             ItemDefinition vanilla = mappings.getDefinition("minecraft:iron_spear");
-            if (vanilla != null && vanilla.getComponentData().getCompound("components")
-                    .getCompound("minecraft:piercing_weapon").containsKey("minecraft:piercing_weapon")) {
+            if (vanilla != null && vanilla.getComponentData()
+                    .getCompound("components")
+                    .getCompound("minecraft:piercing_weapon")
+                    .containsKey("minecraft:piercing_weapon")) {
                 weapon = NbtMap.builder().putCompound("minecraft:piercing_weapon", weapon).build();
             }
             return data.toBuilder().putCompound("components", original.toBuilder()
