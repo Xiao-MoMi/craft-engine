@@ -4,6 +4,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
@@ -40,6 +41,7 @@ public final class BedrockPackGenerator {
             BedrockItemIcons.Result generated = new BedrockItemIcons(resources).write(plan, root);
             ItemRegistrationPlanWriter.write(plan, metadata, generated);
             BlockRegistrationPlanWriter.write(generated, root.resolve(RegistrationPlanKind.BLOCK.file()));
+            GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             GsonHelper.writeJsonFile(this.manifest(), root.resolve("manifest.json"));
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {

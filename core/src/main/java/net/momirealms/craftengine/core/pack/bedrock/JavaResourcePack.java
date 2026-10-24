@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -174,6 +175,50 @@ public final class JavaResourcePack {
 
     public MinecraftVersion version() {
         return this.version;
+    }
+
+    public JsonObject translations() throws IOException {
+        JsonObject translations = new JsonObject();
+        Path assets = this.root.resolve("assets");
+        if (!Files.isDirectory(assets)) {
+            return translations;
+        }
+        try (Stream<Path> namespaces = Files.list(assets)) {
+            List<Path> sorted = namespaces.filter(Files::isDirectory)
+                    .sorted(Comparator.comparing(path -> path.getFileName().toString())).toList();
+            for (Path namespace : sorted) {
+                Path directory = namespace.resolve("lang");
+                if (!Files.isDirectory(directory)) {
+                    continue;
+                }
+                try (DirectoryStream<Path> files = Files.newDirectoryStream(directory, "*.json")) {
+                    for (Path file : files) {
+                        String name = file.getFileName().toString();
+                        if (!Files.isRegularFile(file) || name.equals("deprecated.json")) {
+                            continue;
+                        }
+                        String locale = name.substring(0, name.length() - 5);
+                        JsonObject language = translations.getAsJsonObject(locale);
+                        if (language == null) {
+                            language = new JsonObject();
+                            translations.add(locale, language);
+                        }
+                        try {
+                            JsonObject source = readJson(file);
+                            if (source == null) {
+                                throw new IOException("Missing or non-object language file " + file);
+                            }
+                            for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
+                                language.addProperty(entry.getKey(), entry.getValue().getAsString());
+                            }
+                        } catch (RuntimeException exception) {
+                            throw new IOException("Failed to read language file " + file, exception);
+                        }
+                    }
+                }
+            }
+        }
+        return GsonHelper.sortObjectKeys(translations).getAsJsonObject();
     }
 
     public Map<Key, JsonObject> itemDefinitions() throws IOException {

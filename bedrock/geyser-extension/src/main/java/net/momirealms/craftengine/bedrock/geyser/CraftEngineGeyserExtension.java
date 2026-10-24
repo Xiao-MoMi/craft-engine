@@ -10,11 +10,13 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
+import org.geysermc.geyser.api.event.lifecycle.GeyserPreInitializeEvent;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
@@ -34,6 +36,11 @@ public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
+
+    @Subscribe
+    public void onPreInitialize(GeyserPreInitializeEvent event) {
+        GeyserTranslations.install(this.packFiles(), this.geyserApi().configDirectory(), this.logger());
+    }
 
     @Subscribe
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {

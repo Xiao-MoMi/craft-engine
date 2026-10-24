@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock;
 
 public final class BedrockPackLayout {
+    public static final String TRANSLATIONS = "craftengine/translations.json";
     public static final String TERRAIN_TEXTURE_ATLAS = "textures/terrain_texture.json";
     public static final String FLIPBOOK_TEXTURES = "textures/flipbook_textures.json";
     public static final String DISPLAY_BLOCK = "display_block";
