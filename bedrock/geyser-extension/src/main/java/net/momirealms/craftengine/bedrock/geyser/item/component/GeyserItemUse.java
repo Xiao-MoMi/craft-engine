@@ -34,6 +34,8 @@ final class GeyserItemUse {
         JsonObject use = behavior.getAsJsonObject("use");
         String animation = use.get("animation").getAsString();
         int ticks = use.getAsJsonObject("maximumDuration").get("value").getAsInt();
+        JsonObject chargeDuration = use.getAsJsonObject("chargeDuration");
+        int chargeTicks = chargeDuration == null ? 0 : chargeDuration.get("value").getAsInt();
         boolean using = !animation.equals("NONE") || ticks > 0 || use.get("nativeUseOnRelease").getAsBoolean();
         boolean spearUse = animation.equals("SPEAR");
         boolean spearPose = spearUse || SPEAR_ITEMS.contains(itemType);
@@ -66,6 +68,16 @@ final class GeyserItemUse {
                 }
                 modifiers.putAll(original.getCompound("minecraft:use_modifiers"));
                 if (!modifiers.isEmpty()) {
+                    // 由 shooter 决定能否开始使用，避免无弹药时 use_modifiers 仍启动拉弓。
+                    if (original.containsKey("minecraft:shooter")) {
+                        modifiers.putString("start_using", "if_first");
+                        NbtMap shooter = original.getCompound("minecraft:shooter");
+                        // 弩的装填时长必须为正，客户端才会阻止无弹药时继续启动 use_modifiers。
+                        if (shooter.getBoolean("charge_on_draw") && chargeTicks > 0) {
+                            converted.putCompound("minecraft:shooter", shooter.toBuilder()
+                                    .putFloat("max_draw_duration", chargeTicks / 20f).build());
+                        }
+                    }
                     modifiers.putFloat("use_duration", ticks / 20f);
                     converted.putCompound("minecraft:use_modifiers", modifiers.build());
                     properties.putInt("use_duration", ticks);

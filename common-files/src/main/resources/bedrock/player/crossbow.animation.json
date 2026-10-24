@@ -8,7 +8,7 @@
         "leftarm": {
           "position": [
             "1.5 - variable.item_use_normalized * 3.5",
-            "-3.799999952316284 + variable.short_arm_offset_left",
+            "-3.8 + variable.short_arm_offset_left",
             "8.25 - (1 - variable.item_use_normalized)"
           ],
           "rotation": [
