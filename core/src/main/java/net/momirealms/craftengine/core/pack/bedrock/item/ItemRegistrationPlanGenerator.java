@@ -7,11 +7,9 @@ import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan.Entry;
-import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -56,10 +54,9 @@ public final class ItemRegistrationPlanGenerator {
 
     @SuppressWarnings("all")
     private static Entry createEntry(ResolvedItemBinding binding) {
-        // 注册身份只由基础 Java 物品和 item_model 决定，组件与行为修改不改变标识符。
-        String identity = binding.clientItemType().asString() + "|" + binding.itemModel().asString();
-        String token = HashUtils.sha1(identity.getBytes(StandardCharsets.UTF_8));
-        Key bedrockId = Key.ce(token);
+        // 使用原始物品 ID，避免 Java 模型混淆改变基岩资源名称。
+        Key itemId = binding.itemId();
+        Key bedrockId = Key.ce(itemId.namespace() + '/' + itemId.value());
         return new Entry(
                 bedrockId,
                 binding.clientItemType(),

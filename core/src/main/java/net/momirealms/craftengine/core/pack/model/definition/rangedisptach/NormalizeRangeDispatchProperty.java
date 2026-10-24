@@ -63,7 +63,7 @@ public final class NormalizeRangeDispatchProperty implements RangeDispatchProper
         @Override
         public NormalizeRangeDispatchProperty read(JsonObject json) {
             return new NormalizeRangeDispatchProperty(
-                    Key.of(json.get("property").toString()),
+                    Key.of(json.get("property").getAsString()),
                     !json.has("normalize") || json.get("normalize").getAsBoolean()
             );
         }

@@ -13,6 +13,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
+
 public final class BedrockSpearPlayerAnimations {
     private BedrockSpearPlayerAnimations() {
     }
@@ -24,7 +26,7 @@ public final class BedrockSpearPlayerAnimations {
         StringBuilder condition = new StringBuilder("query.is_item_name_any('slot.weapon.mainhand'");
         javaSpears.stream().sorted(java.util.Comparator.comparing(Key::asString)).forEach(id -> condition.append(", '").append(id.asString()).append('\''));
         condition.append(')');
-        Path path = root.resolve("animation_controllers/craftengine_player.animation_controllers.json");
+        Path path = root.resolve(PLAYER_ANIMATION_CONTROLLER);
         JsonObject controllers;
         if (Files.exists(path)) {
             controllers = GsonHelper.readJsonFromFile(path).getAsJsonObject();
@@ -54,7 +56,7 @@ public final class BedrockSpearPlayerAnimations {
                 }
             }
         }
-        Path animationPath = root.resolve("animations/craftengine_spear_player.animation.json");
+        Path animationPath = root.resolve("animations/craftengine/shared/spear_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(file, animationPath);
     }

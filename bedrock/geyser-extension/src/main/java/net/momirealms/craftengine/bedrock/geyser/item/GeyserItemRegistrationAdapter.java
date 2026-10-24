@@ -11,7 +11,6 @@ import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserBlockPlacer
 import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserItemDataComponents;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.predicate.PredicateStrategy;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,6 @@ public final class GeyserItemRegistrationAdapter {
     }
 
     public ConvertedItem convert(JsonObject entry, Map<String, String> displayBlocks) {
-        GeyserSelectedItemHandler.Variants selected = readSelectedVariants(entry, displayBlocks);
         JsonArray variants = entry.getAsJsonArray(VARIANTS);
         List<CustomItemDefinition> definitions = new ArrayList<>(variants.size());
         // 先转换整组；任一条件不受支持时跳过整组，避免 fallback 错误覆盖。
@@ -44,18 +42,19 @@ public final class GeyserItemRegistrationAdapter {
             if (variants.size() > 1 && !resources.get(GENERATED).getAsBoolean()) {
                 throw new UnsupportedOperationException("A model branch has no generated render resource");
             }
-            definitions.add(this.convertVariant(entry, variant, displayBlocks));
+            definitions.add(this.convertVariant(entry, variant, displayBlocks, variants.size() - definitions.size()));
         }
-        return new ConvertedItem(definitions, selected);
+        return new ConvertedItem(definitions, definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)));
     }
 
-    private CustomItemDefinition convertVariant(JsonObject entry, JsonObject variant, Map<String, String> displayBlocks) {
+    private CustomItemDefinition convertVariant(JsonObject entry, JsonObject variant, Map<String, String> displayBlocks, int priority) {
         Identifier bedrockId = Identifier.of(variant.get(BEDROCK_IDENTIFIER).getAsString());
         Identifier model = Identifier.of(entry.get(MODEL).getAsString());
         CustomItemDefinition.Builder builder = CustomItemDefinition.builder(bedrockId, model);
+        builder.priority(priority);
         applyConditions(builder, variant.getAsJsonArray(CONDITIONS));
-        this.applyComponents(builder, entry.getAsJsonObject(COMPONENTS));
-        applyResources(builder, variant.getAsJsonObject(RESOURCES), displayBlocks);
+        applyComponents(builder, entry.getAsJsonObject(COMPONENTS));
+        applyResources(builder, bedrockId, variant.getAsJsonObject(RESOURCES), displayBlocks);
         return builder.build();
     }
 
@@ -73,10 +72,10 @@ public final class GeyserItemRegistrationAdapter {
         }
     }
 
-    private static void applyResources(CustomItemDefinition.Builder builder, JsonObject resources, Map<String, String> displayBlocks) {
+    private static void applyResources(CustomItemDefinition.Builder builder, Identifier bedrockId, JsonObject resources, Map<String, String> displayBlocks) {
         if (!resources.has(DISPLAY_BLOCK)) {
             CustomItemIcons icons = CustomItemIcons.builder()
-                    .defaultIcon(resources.get(ICON).getAsString())
+                    .defaultIcon(bedrockId.toString())
                     .build();
             builder.bedrockOptions(CustomItemBedrockOptions.builder().icons(icons));
             return;
@@ -91,41 +90,6 @@ public final class GeyserItemRegistrationAdapter {
                 GeyserBlockPlacer.of(Identifier.of(block), true));
     }
 
-    @Nullable
-    private static GeyserSelectedItemHandler.Variants readSelectedVariants(JsonObject entry, Map<String, String> blocks) {
-        JsonObject selected = null;
-        JsonObject unselected = null;
-        boolean hasSelected = false;
-        for (JsonElement value : entry.getAsJsonArray(VARIANTS)) {
-            JsonObject variant = value.getAsJsonObject();
-            for (JsonElement condition : variant.getAsJsonArray(CONDITIONS)) {
-                JsonObject match = condition.getAsJsonObject();
-                if (GeyserItemPredicates.property(match).equals("selected")) {
-                    hasSelected = true;
-                    if (match.get(EXPECTED).getAsBoolean()) {
-                        selected = variant;
-                    } else {
-                        unselected = variant;
-                    }
-                }
-            }
-        }
-        if (!hasSelected) {
-            return null;
-        }
-        if (entry.getAsJsonArray(VARIANTS).size() != 2 || selected == null || unselected == null
-                || selected.getAsJsonArray(CONDITIONS).size() != 1 || unselected.getAsJsonArray(CONDITIONS).size() != 1) {
-            throw new UnsupportedOperationException("Nested selected branches require additional runtime matching");
-        }
-        return new GeyserSelectedItemHandler.Variants(reference(selected, blocks), reference(unselected, blocks));
-    }
-
-    private static GeyserSelectedItemHandler.Reference reference(JsonObject variant, Map<String, String> blocks) {
-        JsonElement display = variant.getAsJsonObject(RESOURCES).get(DISPLAY_BLOCK);
-        return new GeyserSelectedItemHandler.Reference(variant.get(BEDROCK_IDENTIFIER).getAsString(),
-                display == null ? null : blocks.get(display.getAsString()));
-    }
-
-    public record ConvertedItem(List<CustomItemDefinition> definitions, @Nullable GeyserSelectedItemHandler.Variants selected) {
+    public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual) {
     }
 }

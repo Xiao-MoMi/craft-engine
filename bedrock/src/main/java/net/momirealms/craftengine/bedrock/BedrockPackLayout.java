@@ -8,6 +8,8 @@ public final class BedrockPackLayout {
     public static final String GEOMETRY = "geometry";
     public static final String MATERIALS = "materials";
     public static final String ITEM_TEXTURE_ATLAS = "textures/item_texture.json";
+    public static final String PLAYER_ANIMATION_CONTROLLER = "animation_controllers/craftengine/shared/player.animation_controllers.json";
+    public static final String PLAYER_ANIMATION_NOTICE = "craftengine/player_animation_NOTICE.txt";
 
     public static final String KIND = "kind";
     public static final String FORMAT_VERSION = "format_version";
@@ -16,7 +18,7 @@ public final class BedrockPackLayout {
     public static final String DIAGNOSTICS = "diagnostics";
 
     public static final String BEDROCK_IDENTIFIER = "bedrock_identifier";
-    public static final String JAVA_ITEM = "java_item";
+    public static final String ITEM_TYPE = "item_type";
     public static final String MODEL = "model";
     public static final String COMPONENTS = "components";
     public static final String RESOURCES = "resources";
@@ -29,15 +31,11 @@ public final class BedrockPackLayout {
     public static final String SCALE = "scale";
     public static final String MIN = "min";
     public static final String MAX = "max";
-    public static final String SOURCE = "source";
 
-    public static final String ICON = "icon";
-    public static final String ATTACHABLE_IDENTIFIER = "attachable_identifier";
+    public static final String ATTACHABLE = "attachable";
     public static final String UNSUPPORTED_REASON = "unsupported_reason";
     public static final String GENERATED = "generated";
     public static final String ITEM_ID = "item_id";
-    public static final String SERVER_ITEM_TYPE = "server_item_type";
-    public static final String CLIENT_ITEM_TYPE = "client_item_type";
     public static final String CLIENT_BEHAVIOR = "client_behavior";
 
     public static final String SEVERITY = "severity";

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import java.awt.image.BufferedImage;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public final class Bedrock2DSpearAttachables {
 
     static void write(ItemRegistrationPlan.Entry entry, BedrockSpearModels models, List<BufferedImage> stages, Path root) throws IOException {
         String resource = entry.bedrockId().namespace() + '/' + entry.bedrockId().value();
-        String prefix = entry.bedrockId().namespace() + '.' + entry.bedrockId().value();
+        String prefix = ResourcePackUtils.bedrockResourceIdentifier(entry.bedrockId());
         JsonObject textures = new JsonObject();
         textures.addProperty("enchanted", "textures/misc/enchanted_item_glint");
         JsonObject names = new JsonObject();
@@ -31,7 +32,7 @@ public final class Bedrock2DSpearAttachables {
             String alias = "stage_" + i;
             String identifier = "geometry." + prefix + '.' + alias;
             names.addProperty(alias, identifier);
-            String texture = "textures/craftengine_icons/" + resource + "_hand_" + i;
+            String texture = "textures/" + resource + "/hand/stage_" + i;
             ImageUtils.writePng(stages.get(i), root.resolve(texture + ".png"));
             textures.addProperty(alias, texture);
             geometryFrames.add("Geometry." + alias);
@@ -85,7 +86,7 @@ public final class Bedrock2DSpearAttachables {
         JsonObject hitAnimations = new JsonObject();
         hitAnimations.add("animation.craftengine.spear.hit", hit);
         animationFile.add("animations", hitAnimations);
-        writeJson(animationFile, root.resolve("animations/craftengine_spear_hit.animation.json"));
+        writeJson(animationFile, root.resolve("animations/craftengine/shared/spear_hit.animation.json"));
     }
 
     private static JsonObject geometry(String identifier, String texture) {

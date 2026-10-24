@@ -15,6 +15,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_NOTICE;
+
 public final class BedrockCrossbowPlayerAnimations {
     private final Map<Key, Integer> chargeDurations = new LinkedHashMap<>();
 
@@ -48,7 +51,7 @@ public final class BedrockCrossbowPlayerAnimations {
                 break;
             }
         }
-        Path controllerPath = root.resolve("animation_controllers/craftengine_player.animation_controllers.json");
+        Path controllerPath = root.resolve(PLAYER_ANIMATION_CONTROLLER);
         Files.createDirectories(controllerPath.getParent());
         GsonHelper.writeJsonFile(controllers, controllerPath);
 
@@ -64,11 +67,13 @@ public final class BedrockCrossbowPlayerAnimations {
         JsonObject item = bones.getAsJsonObject("rightitem");
         item.getAsJsonArray("position").set(2, new JsonPrimitive("2.5 - " + remaining + " * 1.5"));
         item.getAsJsonArray("scale").set(1, new JsonPrimitive("1.15 - " + remaining + " * 0.15"));
-        Path animationPath = root.resolve("animations/craftengine_crossbow_player.animation.json");
+        Path animationPath = root.resolve("animations/craftengine/shared/crossbow_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
         try (InputStream notice = BedrockCrossbowPlayerAnimations.class.getResourceAsStream("/bedrock/player/NOTICE.txt")) {
-            Files.copy(notice, root.resolve("craftengine_player_animation_NOTICE.txt"), StandardCopyOption.REPLACE_EXISTING);
+            Path noticePath = root.resolve(PLAYER_ANIMATION_NOTICE);
+            Files.createDirectories(noticePath.getParent());
+            Files.copy(notice, noticePath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

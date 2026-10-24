@@ -38,7 +38,7 @@ public final class Bedrock2DSpearItemHandler implements BedrockItemHandler {
             }
             hands.add(image);
         }
-        String path = "textures/craftengine_icons/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value();
+        String path = "textures/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "/icon";
         ImageUtils.writePng(iconImage, context.root().resolve(path + ".png"));
         JsonObject icon = new JsonObject();
         icon.addProperty("textures", path);

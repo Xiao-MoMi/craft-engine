@@ -43,8 +43,8 @@ public final class GeyserSpearComponents extends ChannelDuplexHandler {
                 ItemDefinition definition = definitions.get(i);
                 JsonObject entry = this.spears.get(definition.getIdentifier());
                 if (entry != null) {
-                    ItemDefinition vanilla = this.mappings.getDefinition(entry.get(JAVA_ITEM).getAsString());
-                    NbtMap data = patch(definition.getComponentData(), vanilla.getComponentData(), entry.getAsJsonObject(SOURCE).getAsJsonObject(CLIENT_BEHAVIOR));
+                    ItemDefinition vanilla = this.mappings.getDefinition(entry.get(ITEM_TYPE).getAsString());
+                    NbtMap data = patch(definition.getComponentData(), vanilla.getComponentData(), entry.getAsJsonObject(CLIENT_BEHAVIOR));
                     // 只替换发给客户端的组件数据，保留 Geyser 注册对象、runtime ID 和栈身份。
                     definitions.set(i, new SimpleItemDefinition(definition.getIdentifier(), definition.getRuntimeId(),
                             definition.getVersion(), definition.isComponentBased(), data));

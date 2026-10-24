@@ -30,20 +30,16 @@ public final class ItemRegistrationPlanWriter {
         JsonArray entries = new JsonArray();
         for (ItemRegistrationPlan.Entry entry : plan.entries()) {
             JsonObject json = new JsonObject();
+            ResolvedItemBinding binding = entry.source(); // 物品关联结果
             json.addProperty(BEDROCK_IDENTIFIER, entry.bedrockId().asString()); // 基岩物品 ID
-            json.addProperty(JAVA_ITEM, entry.javaItemType().asString()); // 基础 Java 物品类型
+            json.addProperty(ITEM_TYPE, entry.javaItemType().asString()); // 基础 Java 物品类型
+            json.addProperty(ITEM_ID, binding.itemId().asString()); // 来源 CE 物品 ID
             json.addProperty(MODEL, entry.definitionId().asString()); // 匹配的 item_model ID
             JsonObject components = new JsonObject(); // 相对原版的组件差异
             entry.properties().components().forEach((key, value) -> components.add(key.asString(), value)); // null 表示移除
             json.add(COMPONENTS, components); // 注册组件
             json.add(VARIANTS, variantsToJson(entry, generated)); // 全部分支
-            ResolvedItemBinding binding = entry.source(); // 物品关联结果
-            JsonObject source = new JsonObject(); // 来源信息
-            source.addProperty(ITEM_ID, binding.itemId().asString()); // 来源 CE 物品 ID
-            source.addProperty(SERVER_ITEM_TYPE, binding.serverItemType().asString()); // 投影前物品类型
-            source.addProperty(CLIENT_ITEM_TYPE, binding.clientItemType().asString()); // 投影后物品类型
-            source.add(CLIENT_BEHAVIOR, GsonHelper.get().toJsonTree(binding.clientBehavior())); // 使用、攻击及交互行为
-            json.add(SOURCE, source); // 来源物品信息
+            json.add(CLIENT_BEHAVIOR, GsonHelper.get().toJsonTree(binding.clientBehavior())); // 使用、攻击及交互行为
             entries.add(json); // 加入注册列表
         }
         result.add(ENTRIES, entries); // 全部注册条目
@@ -52,7 +48,7 @@ public final class ItemRegistrationPlanWriter {
             JsonObject json = new JsonObject(); // 当前条目
             json.addProperty(SEVERITY, diagnostic.severity().name()); // 诊断级别
             json.addProperty(CODE, diagnostic.code()); // 诊断代码
-            json.addProperty(JAVA_ITEM, diagnostic.javaItemType().asString()); // 基础 Java 物品类型
+            json.addProperty(ITEM_TYPE, diagnostic.javaItemType().asString()); // 基础 Java 物品类型
             if (diagnostic.definitionId() != null) { // 有模型 ID 时记录
                 json.addProperty(MODEL, diagnostic.definitionId().asString()); // 匹配的 item_model ID
             }
@@ -103,14 +99,10 @@ public final class ItemRegistrationPlanWriter {
             branch.add(CONDITIONS, conditions); // 完整匹配条件
             JsonObject resources = new JsonObject(); // 分支资源
             BedrockItemBlocks.DisplayBlock block = generated.displayBlocks().get(variant.id()); // 展示方块
-            if (block == null) {
-                resources.addProperty(ICON, identifier); // 图标资源键
-            } else {
+            if (block != null) {
                 resources.addProperty(DISPLAY_BLOCK, block.name()); // 展示方块名称
             }
-            if (generated.attachables().contains(variant.id())) {
-                resources.addProperty(ATTACHABLE_IDENTIFIER, identifier); // 已生成的手持模型
-            }
+            resources.addProperty(ATTACHABLE, generated.attachables().contains(variant.id())); // 是否已生成手持模型
             resources.addProperty(GENERATED, block != null || generated.icons().contains(identifier)); // 资源生成状态
             if (variant.unsupportedReason() != null) {
                 resources.addProperty(UNSUPPORTED_REASON, variant.unsupportedReason()); // 跳过原因

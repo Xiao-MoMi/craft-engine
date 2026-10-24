@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
 import java.io.IOException;
@@ -20,7 +21,7 @@ public final class Bedrock2DCrossbowAttachables {
     static void write(BedrockCrossbowStates.State state, List<BedrockItemAttachables.Stage> stages,
                       ItemBehaviorDescription.Use use, Path root) throws IOException {
         String resource = state.id().namespace() + '/' + state.id().value();
-        String prefix = state.id().namespace() + '.' + state.id().value();
+        String prefix = ResourcePackUtils.bedrockResourceIdentifier(state.id());
         JsonObject textures = new JsonObject();
         textures.addProperty("enchanted", "textures/misc/enchanted_item_glint");
         JsonObject names = new JsonObject();

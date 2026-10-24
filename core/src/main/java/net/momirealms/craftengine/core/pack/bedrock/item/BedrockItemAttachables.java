@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDu
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
@@ -127,6 +128,7 @@ public final class BedrockItemAttachables {
 
     private static void write(Key id, List<Stage> stages, @Nullable JsonArray preAnimation, int idleStage, Path root) throws IOException {
         String resource = id.namespace() + '/' + id.value();
+        String prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
         JsonObject animations = new JsonObject();
         JsonObject animationNames = new JsonObject();
         JsonArray animate = new JsonArray();
@@ -145,9 +147,9 @@ public final class BedrockItemAttachables {
                 alias = "stage_" + i;
                 suffix = "_v" + i;
             }
-            String geometryId = "geometry." + id.namespace() + '.' + id.value() + suffix;
+            String geometryId = "geometry." + prefix + suffix;
             if (preAnimation == null) {
-                String animationPrefix = "animation." + id.namespace() + '.' + id.value() + suffix + '.';
+                String animationPrefix = "animation." + prefix + suffix + '.';
                 geometries.add(geometry(stage, geometryId, animationPrefix, animations, animationNames, animate));
             } else {
                 // 沿用原版闲置、初拉、后续拉弓的局部位置；阶段选择仍由 Java 条件决定。
@@ -201,7 +203,7 @@ public final class BedrockItemAttachables {
         String controllerId = "controller.render.item_default";
         String visible = "context.item_slot == 'main_hand' || context.item_slot == 'off_hand'";
         if (preAnimation != null) {
-            controllerId = "controller.render." + id.namespace() + '.' + id.value();
+            controllerId = "controller.render." + prefix;
             visible = "(" + visible + ") && variable.ce_stage >= 0";
             writeController(controllerId, geometryFrames, textureFrames, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
         }
@@ -353,7 +355,7 @@ public final class BedrockItemAttachables {
     }
 
     static void bowAnimations(Key id, JsonObject animations, JsonObject names, JsonArray animate) {
-        String prefix = "animation." + id.namespace() + '.' + id.value();
+        String prefix = "animation." + ResourcePackUtils.bedrockResourceIdentifier(id);
         animations.add(prefix + ".bow_wield", bowWieldAnimation());
         names.addProperty("bow_wield", prefix + ".bow_wield");
         animate.add("bow_wield");

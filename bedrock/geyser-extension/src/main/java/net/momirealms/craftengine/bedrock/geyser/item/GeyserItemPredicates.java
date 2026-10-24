@@ -12,6 +12,8 @@ import org.geysermc.geyser.api.util.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import java.util.function.ToDoubleFunction;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
@@ -38,6 +40,9 @@ public final class GeyserItemPredicates {
     }
 
     private static MinecraftPredicate<ItemPredicateContext> readBoolean(JsonObject condition, String property) {
+        if (property.equals("selected")) {
+            return new Selected(condition.get(EXPECTED).getAsBoolean());
+        }
         MinecraftPredicate<ItemPredicateContext> predicate = switch (property) {
             case "broken" -> ItemConditionPredicate.BROKEN;
             case "damaged" -> context -> !context.unbreakable() && context.maxDamage() > 0 && context.damage() > 0;
@@ -48,13 +53,19 @@ public final class GeyserItemPredicates {
                 }
                 yield ItemConditionPredicate.hasComponent(Identifier.of(condition.get("component").getAsString()));
             }
-            case "selected" -> context -> false;
             default -> throw unsupported(property);
         };
         return condition.get(EXPECTED).getAsBoolean() ? predicate : predicate.negate();
     }
 
     private static MinecraftPredicate<ItemPredicateContext> readSelect(JsonObject condition, String property) {
+        if (property.equals("context_dimension")) {
+            List<String> dimensions = new ArrayList<>();
+            for (JsonElement value : condition.getAsJsonArray(VALUES)) {
+                dimensions.add(Identifier.of(value.getAsString()).toString());
+            }
+            return new Dimension(List.copyOf(dimensions), condition.get(NEGATED).getAsBoolean());
+        }
         List<MinecraftPredicate<ItemPredicateContext>> predicates = new ArrayList<>();
         for (JsonElement value : condition.getAsJsonArray(VALUES)) {
             predicates.add(switch (property) {
@@ -95,5 +106,42 @@ public final class GeyserItemPredicates {
         return new UnsupportedOperationException(property.equals("custom_model_data")
                 ? "custom_model_data branch mapping is not enabled"
                 : "Geyser API does not expose the item model property: " + property);
+    }
+
+    static boolean requiresSession(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof Selected || predicate instanceof Dimension;
+    }
+
+    static boolean usesSelection(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof Selected;
+    }
+
+    static MinecraftPredicate<? super ItemPredicateContext> bind(MinecraftPredicate<? super ItemPredicateContext> predicate,
+                                                                Supplier<String> dimension, BooleanSupplier selected) {
+        if (predicate instanceof Selected match) {
+            return context -> selected.getAsBoolean() == match.expected();
+        }
+        if (predicate instanceof Dimension match) {
+            // context.dimension() 是维度类型；Java context_dimension 使用实际世界 ID。
+            return context -> {
+                String world = dimension.get();
+                return (world != null && match.values().contains(world)) != match.negated();
+            };
+        }
+        return predicate;
+    }
+
+    private record Selected(boolean expected) implements MinecraftPredicate<ItemPredicateContext> {
+        @Override
+        public boolean test(ItemPredicateContext context) {
+            return !this.expected;
+        }
+    }
+
+    private record Dimension(List<String> values, boolean negated) implements MinecraftPredicate<ItemPredicateContext> {
+        @Override
+        public boolean test(ItemPredicateContext context) {
+            throw new IllegalStateException("Dimension predicate requires a Geyser session");
+        }
     }
 }

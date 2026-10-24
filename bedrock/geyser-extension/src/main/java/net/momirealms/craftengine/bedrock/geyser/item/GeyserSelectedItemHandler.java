@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.BlockMappingsProxy;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -14,8 +13,8 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryAct
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.*;
-import org.geysermc.geyser.api.block.custom.CustomBlockState;
 import org.geysermc.geyser.inventory.PlayerInventory;
+import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.session.GeyserSession;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,94 +22,97 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     private static final String HANDLER_NAME = "craftengine-selected-items";
     private final GeyserSession session;
-    private final Map<String, Pair> variants;
+    private final GeyserItemRuntime runtime;
+    private final Map<Integer, Replacement> originals = new HashMap<>();
     private int selectedSlot;
+    private String dimension;
 
-    GeyserSelectedItemHandler(GeyserSession session, Map<String, Pair> variants) {
+    GeyserSelectedItemHandler(GeyserSession session, GeyserItemRuntime runtime) {
         this.session = session;
-        this.variants = variants;
+        this.runtime = runtime;
         this.selectedSlot = session.getPlayerInventory().getHeldItemSlot();
     }
 
-    public static void install(GeyserSession session, List<Variants> items) {
-        Map<String, BlockDefinition> blocks = new HashMap<>();
-        // Spigot 会重定位 fastutil，通过 proxy 返回 Map，避免依赖被重定位的返回类型。
-        Map<CustomBlockState, BlockDefinition> states = BlockMappingsProxy.INSTANCE.getCustomBlockStateDefinitions(session.getBlockMappings());
-        for (Map.Entry<CustomBlockState, BlockDefinition> entry : states.entrySet()) {
-            blocks.put(entry.getKey().block().identifier(), entry.getValue());
-        }
-        Map<String, Pair> variants = new HashMap<>();
-        for (Variants item : items) {
-            Pair pair = new Pair(resolve(session, blocks, item.selected()), resolve(session, blocks, item.unselected()));
-            variants.put(item.selected().item(), pair);
-            variants.put(item.unselected().item(), pair);
-        }
-        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(session, variants);
+    public static void install(GeyserSession session, GeyserItemRuntime runtime) {
+        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(session, runtime);
         Channel channel = session.getUpstream().getSession().getPeer().getChannel();
-        channel.pipeline().addBefore(BedrockPeer.NAME, HANDLER_NAME, handler);
-        handler.refresh(-1);
+        // 匹配与槽位读取均在 Geyser 事件循环执行，不能在网络线程临时修改匹配上下文。
+        channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME, handler);
+        session.executeInEventLoop(handler::poll);
     }
 
-    private static Render resolve(GeyserSession session, Map<String, BlockDefinition> blocks, Reference reference) {
-        ItemDefinition item = session.getItemMappings().getDefinition(reference.item());
-        BlockDefinition block = reference.block() == null ? null : blocks.get(reference.block());
-        if (item == null || (reference.block() != null && block == null)) {
-            throw new IllegalStateException("Missing selected item runtime mapping: " + reference.item());
+    private void poll() {
+        if (this.session.isClosed()) {
+            return;
         }
-        return new Render(item, block);
+        if (this.session.isSpawned()) {
+            String world = this.runtime.dimension();
+            int selected = this.session.getPlayerInventory().getHeldItemSlot();
+            if (!Objects.equals(this.dimension, world)) {
+                this.dimension = world;
+                this.selectedSlot = selected;
+                this.session.getPlayerInventoryHolder().updateInventory();
+                if (this.session.getInventoryHolder() != null) {
+                    this.session.getInventoryHolder().updateInventory();
+                }
+            } else if (this.selectedSlot != selected) {
+                int previous = this.selectedSlot;
+                this.selectedSlot = selected;
+                this.refresh(previous);
+            }
+        }
+        // 同一维度类型下切换世界也要刷新；仅状态变化时发包，不定时重发整个背包。
+        this.session.scheduleInEventLoop(this::poll, 50, TimeUnit.MILLISECONDS);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-        boolean selection = false;
         if (message instanceof BedrockPacketWrapper wrapper && wrapper.getSenderSubClientId() == 0) {
-            selection = this.restoreIncoming(wrapper.getPacket());
+            this.restoreIncoming(wrapper.getPacket());
         }
         super.channelRead(context, message);
-        if (selection) {
-            // 等 Geyser 验证并处理切槽后再读取槽位；不能用客户端上报的物品内容判定 selected。
-            this.session.executeInEventLoop(() -> {
-                int slot = this.session.getPlayerInventory().getHeldItemSlot();
-                context.executor().execute(() -> this.select(slot));
-            });
-        }
     }
 
-    private boolean restoreIncoming(BedrockPacket packet) {
+    private void restoreIncoming(BedrockPacket packet) {
         // Geyser 按未选中变体校验交互物品，回程必须还原显示替换，保留 netId 和物品数据。
         switch (packet) {
             case MobEquipmentPacket equipment -> {
-                equipment.setItem(this.render(equipment.getItem(), false));
-                return equipment.getContainerId() == ContainerId.INVENTORY;
+                int slot = equipment.getHotbarSlot();
+                int netId = 0;
+                if (equipment.getContainerId() == ContainerId.INVENTORY && slot >= 0 && slot < 9) {
+                    netId = this.session.getPlayerInventory().getItem(slot + 36).getNetId();
+                }
+                equipment.setItem(this.restore(equipment.getItem(), netId));
             }
             case InventoryTransactionPacket transaction -> {
-                transaction.setItemInHand(this.render(transaction.getItemInHand(), false));
+                transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
                 this.restoreActions(transaction.getActions());
-                return true;
             }
             case PlayerAuthInputPacket input -> {
                 ItemUseTransaction transaction = input.getItemUseTransaction();
                 if (transaction != null) {
-                    transaction.setItemInHand(this.render(transaction.getItemInHand(), false));
+                    transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
                     this.restoreActions(transaction.getActions());
-                    return true;
                 }
             }
             default -> {
             }
         }
-        return false;
     }
 
     private void restoreActions(List<InventoryActionData> actions) {
         for (int i = 0; i < actions.size(); i++) {
             InventoryActionData action = actions.get(i);
-            ItemData from = this.render(action.getFromItem(), false);
-            ItemData to = this.render(action.getToItem(), false);
+            ItemData from = this.restore(action.getFromItem());
+            ItemData to = this.restore(action.getToItem());
             if (from != action.getFromItem() || to != action.getToItem()) {
                 actions.set(i, new InventoryActionData(action.getSource(), action.getSlot(), from, to, action.getStackNetworkId()));
             }
@@ -128,17 +130,11 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     private void renderOutgoing(BedrockPacket packet) {
         switch (packet) {
             case InventoryContentPacket inventory -> this.renderInventory(inventory);
-            case InventorySlotPacket inventory -> inventory.setItem(this.render(inventory.getItem(),
-                    inventory.getContainerId() == ContainerId.INVENTORY && inventory.getSlot() == this.selectedSlot));
+            case InventorySlotPacket inventory -> inventory.setItem(this.render(inventory.getItem(), inventory.getContainerId() == ContainerId.INVENTORY && inventory.getSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
             case MobEquipmentPacket equipment -> {
                 boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
                 boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
-                equipment.setItem(this.render(equipment.getItem(), own && mainHand && equipment.getHotbarSlot() == this.selectedSlot));
-            }
-            case PlayerHotbarPacket hotbar -> {
-                if (hotbar.getContainerId() == ContainerId.INVENTORY && hotbar.isSelectHotbarSlot()) {
-                    this.select(hotbar.getSelectedHotbarSlot());
-                }
+                equipment.setItem(this.render(equipment.getItem(), own && mainHand && equipment.getHotbarSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
             }
             case ItemStackResponsePacket ignored -> this.refresh(-1);
             default -> {
@@ -150,7 +146,7 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         List<ItemData> contents = inventory.getContents();
         List<ItemData> changed = null;
         for (int i = 0; i < contents.size(); i++) {
-            ItemData item = this.render(contents.get(i), inventory.getContainerId() == ContainerId.INVENTORY && i == this.selectedSlot);
+            ItemData item = this.render(contents.get(i), inventory.getContainerId() == ContainerId.INVENTORY && i == this.session.getPlayerInventory().getHeldItemSlot());
             if (item != contents.get(i)) {
                 if (changed == null) {
                     changed = new ArrayList<>(contents);
@@ -163,17 +159,20 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         }
     }
 
-    private void select(int slot) {
-        if (slot >= 0 && slot < 9 && this.selectedSlot != slot) {
-            int previous = this.selectedSlot;
-            this.selectedSlot = slot;
-            this.refresh(previous);
-        }
-    }
-
     private void refresh(int previous) {
         this.session.executeInEventLoop(() -> {
             PlayerInventory inventory = this.session.getPlayerInventory();
+            Set<Integer> active = new HashSet<>();
+            for (int slot = 0; slot < inventory.getSize(); slot++) {
+                active.add(inventory.getItem(slot).getNetId());
+            }
+            if (this.session.getOpenInventory() != null) {
+                for (int slot = 0; slot < this.session.getOpenInventory().getSize(); slot++) {
+                    active.add(this.session.getOpenInventory().getItem(slot).getNetId());
+                }
+            }
+            active.add(inventory.getCursor().getNetId());
+            this.originals.keySet().retainAll(active);
             int selected = inventory.getHeldItemSlot();
             for (int slot = 0; slot < 36; slot++) {
                 if (previous >= 0 && slot != previous && slot != selected) {
@@ -181,7 +180,7 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
                 }
                 int javaSlot = slot < 9 ? slot + 36 : slot;
                 ItemData item = inventory.getItem(javaSlot).getItemData(this.session);
-                if (slot == previous || slot == selected || this.variants.containsKey(item.getDefinition().getIdentifier())) {
+                if (slot == previous || slot == selected || this.runtime.hasSelected(item)) {
                     InventorySlotPacket update = new InventorySlotPacket();
                     update.setContainerId(ContainerId.INVENTORY);
                     update.setSlot(slot);
@@ -194,29 +193,47 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
 
     @Nullable
     ItemData render(@Nullable ItemData item, boolean selected) {
-        if (item == null) {
-            return null;
-        }
-        Pair pair = this.variants.get(item.getDefinition().getIdentifier());
-        if (pair == null) {
+        if (item == null || !selected || !this.runtime.hasSelected(item)) {
             return item;
         }
-        Render target = selected ? pair.selected() : pair.unselected();
+        GeyserItemStack stack = this.session.getPlayerInventory().getItemInHand();
+        // 排队中的旧槽位包不能使用新物品的组件；等待对应的最新槽位更新。
+        if (stack.getNetId() != item.getNetId()) {
+            return item;
+        }
+        ItemData target = this.runtime.selected(stack);
+        Render display = new Render(target.getDefinition(), target.getBlockDefinition());
+        this.originals.put(item.getNetId(), new Replacement(new Render(item.getDefinition(), item.getBlockDefinition()), display));
+        return replace(item, display);
+    }
+
+    @Nullable
+    ItemData restore(@Nullable ItemData item) {
+        return this.restore(item, 0);
+    }
+
+    @Nullable
+    ItemData restore(@Nullable ItemData item, int slotNetId) {
+        if (item == null || !this.runtime.hasSelected(item)) {
+            return item;
+        }
+        Replacement replacement = this.originals.get(item.getNetId() > 0 ? item.getNetId() : slotNetId);
+        if (replacement == null || item.getDefinition() != replacement.display().item()) {
+            return item;
+        }
+        return replace(item, replacement.original());
+    }
+
+    private static ItemData replace(ItemData item, Render target) {
         if (item.getDefinition() == target.item() && item.getBlockDefinition() == target.block()) {
             return item;
         }
         return item.toBuilder().definition(target.item()).blockDefinition(target.block()).build();
     }
 
-    public record Reference(String item, @Nullable String block) {
-    }
-
-    public record Variants(Reference selected, Reference unselected) {
-    }
-
     record Render(ItemDefinition item, @Nullable BlockDefinition block) {
     }
 
-    record Pair(Render selected, Render unselected) {
+    record Replacement(Render original, Render display) {
     }
 }

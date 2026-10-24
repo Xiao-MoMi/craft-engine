@@ -19,7 +19,6 @@ import org.joml.Matrix4fc;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,7 +32,7 @@ public final class BedrockItemBlocks {
     private final JsonObject blocks = new JsonObject();
 
     public DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root) throws IOException {
-        String name = "ce_" + HashUtils.sha1(item.asString().getBytes(StandardCharsets.UTF_8));
+        String name = item.namespace() + '/' + item.value();
         Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
         List<TextureData> images = new ArrayList<>();
         JsonArray cubes = new JsonArray();
@@ -78,11 +77,11 @@ public final class BedrockItemBlocks {
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
         for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
-            String tile = name + '_' + index;
+            String tile = name + "/layer_" + index;
             this.writeTexture(images.get(index++), entry.getKey().color(), tile, root);
             materials.put(entry.getValue().name(), tile);
         }
-        return this.writeGeometry(name, cubes, transforms, materials, root);
+        return this.writeGeometry(item, cubes, transforms, materials, root);
     }
 
     private static BedrockElementGeometry.Material bindTexture(TextureKey key, Map<TextureKey, BedrockElementGeometry.Material> bindings,
@@ -141,8 +140,9 @@ public final class BedrockItemBlocks {
         this.terrain.add(tile, texture);
     }
 
-    private DisplayBlock writeGeometry(String name, JsonArray cubes, JsonObject transforms, Map<String, String> materials, Path root) throws IOException {
-        String identifier = "geometry." + name; // 几何资源标识
+    private DisplayBlock writeGeometry(Key item, JsonArray cubes, JsonObject transforms, Map<String, String> materials, Path root) throws IOException {
+        String name = item.namespace() + '/' + item.value();
+        String identifier = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(item) + ".block"; // 展示方块几何标识，与手持几何区分
 
         // 几何描述
         JsonObject description = new JsonObject();

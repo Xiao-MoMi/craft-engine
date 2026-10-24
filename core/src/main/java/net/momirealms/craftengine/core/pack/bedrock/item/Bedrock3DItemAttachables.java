@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Vector3f;
 
@@ -29,7 +30,7 @@ public final class Bedrock3DItemAttachables {
     static void write(Key id, List<Stage> stages, List<Material> materials, JsonArray preAnimation,
                       JsonArray poseBones, JsonObject poseAnimations, JsonArray poseAnimate, Path root) throws IOException {
         String resource = id.namespace() + '/' + id.value();
-        String prefix = id.namespace() + '.' + id.value();
+        String prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
         JsonObject textureNames = new JsonObject();
         textureNames.addProperty("enchanted", "textures/misc/enchanted_item_glint");
         JsonObject geometryNames = new JsonObject();
@@ -39,7 +40,7 @@ public final class Bedrock3DItemAttachables {
         for (int layer = 0; layer < materials.size(); layer++) {
             Material material = materials.get(layer);
             String name = "layer" + layer;
-            String path = "textures/craftengine_bows/" + resource + '_' + name;
+            String path = "textures/" + resource + "/hand/layer_" + layer;
             JsonArray frames = writeTextures(material, name, path, textureNames, root);
             for (int stage = 0; stage < stages.size(); stage++) {
                 JsonArray cubes = select(stages.get(stage).cubes(), name);
@@ -129,7 +130,7 @@ public final class Bedrock3DItemAttachables {
             BufferedImage image = new BufferedImage(animation.width(), animation.height(), BufferedImage.TYPE_INT_ARGB);
             for (int tick = 0; tick < animation.duration(); tick += interval) {
                 animation.render(tick, material.color(), image);
-                String suffix = "_f" + tick / interval;
+                String suffix = "_frame_" + tick / interval;
                 ImageUtils.writePng(image, root.resolve(path + suffix + ".png"));
                 textures.addProperty(name + suffix, path + suffix);
                 frames.add("Texture." + name + suffix);

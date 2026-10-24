@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
+
 public final class BedrockShieldPlayerAnimations {
     private BedrockShieldPlayerAnimations() {
     }
@@ -28,7 +30,7 @@ public final class BedrockShieldPlayerAnimations {
         String main = "query.blocking && !query.is_emerging && query.is_item_name_any('slot.weapon.mainhand'" + names + ")";
         String off = "query.blocking && query.is_emerging && query.is_item_name_any('slot.weapon.offhand'" + names + ")";
         String active = "((" + main + ") || (" + off + "))";
-        Path controllerPath = root.resolve("animation_controllers/craftengine_player.animation_controllers.json");
+        Path controllerPath = root.resolve(PLAYER_ANIMATION_CONTROLLER);
         JsonObject controllers;
         if (Files.exists(controllerPath)) {
             controllers = GsonHelper.readJsonFromFile(controllerPath).getAsJsonObject();
@@ -59,7 +61,7 @@ public final class BedrockShieldPlayerAnimations {
         JsonObject file = GsonHelper.readJsonFromResource("/bedrock/player/shield.animation.json").getAsJsonObject();
         adaptHand(file, "main_hand", "right", main, -30);
         adaptHand(file, "off_hand", "left", off, 30);
-        Path animationPath = root.resolve("animations/craftengine_shield_player.animation.json");
+        Path animationPath = root.resolve("animations/craftengine/shared/shield_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(file, animationPath);
     }

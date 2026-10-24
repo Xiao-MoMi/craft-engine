@@ -53,7 +53,7 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
             if (image == null) {
                 return false;
             }
-            String texture = "textures/craftengine_icons/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "_v" + i;
+            String texture = "textures/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "/stage_" + i;
             stages.add(new BedrockItemAttachables.Stage(this.models.resolve(target.model()), image, texture, BedrockItemAttachables.bowCondition(rule), transformation));
         }
         // 全部阶段准备好以后才写入资源和单条注册映射，避免生成半套弓。

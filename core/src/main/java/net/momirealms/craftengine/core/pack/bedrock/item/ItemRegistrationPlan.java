@@ -16,7 +16,7 @@ public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnos
         return this.diagnostics.stream().anyMatch(diagnostic -> diagnostic.severity() == Severity.ERROR);
     }
 
-    public record Entry(Key bedrockId,  // SHA1 后的 craftengine id
+    public record Entry(Key bedrockId,  // craftengine:原始命名空间/物品路径
                         Key javaItemType,
                         Key definitionId,
                         ItemDefinitionBinding definition,

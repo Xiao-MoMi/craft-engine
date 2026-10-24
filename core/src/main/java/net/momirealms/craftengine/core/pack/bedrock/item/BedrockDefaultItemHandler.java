@@ -39,7 +39,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
             if (rules.size() == 1) { // 单分支复用物品 ID，多分支分别分配资源名
                 id = entry.bedrockId();
             } else {
-                id = Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_v" + i);
+                id = Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_variant_" + i);
             }
             branches.add(new Variant(id, rule, null)); // 先保留规则，未生成资源的分支也会写入计划
 
@@ -70,7 +70,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
                         images.add(image);
                     }
                     BufferedImage image = ImageUtils.composite(images);
-                    String path = "textures/craftengine_icons/" + id.namespace() + '/' + id.value();
+                    String path = "textures/" + id.namespace() + '/' + id.value() + "/icon";
                     ImageUtils.writePng(image, context.root().resolve(path + ".png"));
                     JsonObject icon = new JsonObject();
                     icon.addProperty("textures", path); // 基岩图集路径不带 .png 后缀

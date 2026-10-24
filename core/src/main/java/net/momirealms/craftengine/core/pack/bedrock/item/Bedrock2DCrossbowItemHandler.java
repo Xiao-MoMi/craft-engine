@@ -38,7 +38,7 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
                 if (image == null) {
                     return false;
                 }
-                String texture = "textures/craftengine_icons/" + state.id().namespace() + '/' + state.id().value() + "_v" + i;
+                String texture = "textures/" + state.id().namespace() + '/' + state.id().value() + "/stage_" + i;
                 stages.add(new BedrockItemAttachables.Stage(this.models.resolve(target.model()), image, texture, BedrockCrossbowStates.condition(rule), new Matrix4f()));
             }
             prepared.add(stages);

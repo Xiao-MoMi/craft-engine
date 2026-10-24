@@ -6,10 +6,9 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
-import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserSpearComponents;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
-import org.geysermc.geyser.api.event.bedrock.SessionJoinEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
@@ -21,18 +20,28 @@ import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class CraftEngineGeyserExtension implements Extension {
+    private static final Set<String> SPEAR_ITEMS = Set.of(
+            "minecraft:wooden_spear",
+            "minecraft:stone_spear",
+            "minecraft:copper_spear",
+            "minecraft:iron_spear",
+            "minecraft:golden_spear",
+            "minecraft:diamond_spear",
+            "minecraft:netherite_spear"
+    );
+
     private final Map<String, String> displayBlocks = new HashMap<>();
-    private final List<GeyserSelectedItemHandler.Variants> selectedItems = new ArrayList<>();
+    private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private final Map<String, JsonObject> spears = new HashMap<>();
 
     @Subscribe
@@ -41,12 +50,11 @@ public final class CraftEngineGeyserExtension implements Extension {
         for (Path path : this.packFiles()) {
             this.registerBlocks(path, event);
         }
-        this.logger().info("Registered " + this.displayBlocks.size() + " CraftEngine display blocks.");
     }
 
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
-        this.selectedItems.clear();
+        this.contextualItems.clear();
         this.spears.clear();
         for (Path path : this.packFiles()) {
             this.registerItems(path, event);
@@ -109,22 +117,46 @@ public final class CraftEngineGeyserExtension implements Extension {
         int registered = 0;
         int failed = 0;
         int skipped = 0;
+        /*
+         * {
+         *   "bedrock_identifier": "craftengine:example/rod", // 基础基岩 ID
+         *   "item_type": "minecraft:fishing_rod", // 基础 Java 物品
+         *   "item_id": "example:rod", // CE 物品 ID
+         *   "model": "example:rod", // 匹配的 item_model
+         *   "components": {}, // 组件差异，null 表示移除
+         *   "variants": [{ // 显示分支
+         *     "bedrock_identifier": "craftengine:example/rod_variant_0", // 分支基岩 ID，兼作图标键
+         *     "conditions": [{ // 条件全部满足
+         *       "property": "fishing_rod/cast", // 抛竿状态
+         *       "expected": true // 期望已抛竿
+         *     }],
+         *     "resources": { // 分支资源
+         *       "attachable": true, // 是否已生成手持模型
+         *       "generated": true // 是否已生成资源
+         *     }
+         *   }],
+         *   "client_behavior": {} // 使用、攻击等行为，此处省略
+         * }
+         */
         for (JsonElement value : entries) {
             JsonObject entry = value.getAsJsonObject();
+            Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
                 GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.displayBlocks);
                 for (CustomItemDefinition definition : converted.definitions()) {
-                    event.register(Identifier.of(entry.get(JAVA_ITEM).getAsString()), definition);
+                    event.register(identifier, definition);
                     registered++;
                 }
-                if (converted.selected() != null) {
-                    this.selectedItems.add(converted.selected());
+                if (converted.contextual()) {
+                    for (CustomItemDefinition definition : converted.definitions()) {
+                        this.contextualItems.put(definition.bedrockIdentifier().toString(), definition);
+                    }
                 }
-                String javaItem = entry.get(JAVA_ITEM).getAsString();
-                if (javaItem.startsWith("minecraft:") && javaItem.endsWith("_spear")) {
+                String javaItem = entry.get(ITEM_TYPE).getAsString();
+                if (SPEAR_ITEMS.contains(javaItem)) {
                     for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
                         JsonObject variant = branch.getAsJsonObject();
-                        if (variant.getAsJsonObject(RESOURCES).has(ATTACHABLE_IDENTIFIER)) {
+                        if (variant.getAsJsonObject(RESOURCES).get(ATTACHABLE).getAsBoolean()) {
                             this.spears.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), entry);
                         }
                     }
@@ -136,7 +168,7 @@ public final class CraftEngineGeyserExtension implements Extension {
             } catch (RuntimeException exception) {
                 failed++;
                 this.logger().error("Failed to register custom item " + entry.get(BEDROCK_IDENTIFIER)
-                        + " [java=" + entry.get(JAVA_ITEM) + ", model=" + entry.get(MODEL)
+                        + " [java=" + entry.get(ITEM_TYPE) + ", model=" + entry.get(MODEL)
                         + ", pack=" + packPath + "]", exception);
             }
         }
@@ -149,16 +181,8 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (!this.spears.isEmpty()) {
             GeyserSpearComponents.install((GeyserSession) event.connection(), this.spears);
         }
-    }
-
-    @Subscribe
-    public void onSessionJoin(SessionJoinEvent event) {
-        if (!this.selectedItems.isEmpty()) {
-            try {
-                GeyserSelectedItemHandler.install((GeyserSession) event.connection(), this.selectedItems);
-            } catch (RuntimeException exception) {
-                this.logger().error("Failed to install Geyser selected-item adapter", exception);
-            }
+        if (!this.contextualItems.isEmpty()) {
+            GeyserItemRuntime.install((GeyserSession) event.connection(), this.contextualItems);
         }
     }
 }
