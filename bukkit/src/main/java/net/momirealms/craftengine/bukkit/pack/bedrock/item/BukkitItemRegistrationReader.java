@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
@@ -14,8 +13,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public final class BukkitItemRegistrationReader implements ItemRegistrationReader {
+    private static final Set<Key> EFFECTIVE_COMPONENTS = Set.of(DataComponentKeys.EQUIPPABLE, DataComponentKeys.USE_EFFECTS, DataComponentKeys.KINETIC_WEAPON);
     private static final List<Key> COMPONENTS = List.of(
             DataComponentKeys.CONSUMABLE,
             DataComponentKeys.FOOD,
@@ -54,18 +55,15 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
     @Override
     public ItemRegistrationProperties read(Item item) {
         Map<Key, JsonElement> components = new LinkedHashMap<>();
-        JsonObject kineticWeapon = null;
         for (Map.Entry<Key, Object> entry : this.componentTypes.entrySet()) {
             JsonElement effective = item.getComponentAsJson(entry.getValue());
-            if (entry.getKey().equals(DataComponentKeys.KINETIC_WEAPON) && effective != null) {
-                kineticWeapon = effective.getAsJsonObject();
-            }
             JsonElement defaultValue = item.type().getJsonComponent(entry.getValue()).orElse(null);
-            if (Objects.equals(effective, defaultValue)) {
+            // 这些组件由动画生成或扩展补齐使用，原版默认值也需要进入注册计划。
+            if (Objects.equals(effective, defaultValue) && (effective == null || !EFFECTIVE_COMPONENTS.contains(entry.getKey()))) {
                 continue;
             }
             components.put(entry.getKey(), effective == null ? JsonNull.INSTANCE : effective);
         }
-        return new ItemRegistrationProperties(components, kineticWeapon);
+        return new ItemRegistrationProperties(components);
     }
 }

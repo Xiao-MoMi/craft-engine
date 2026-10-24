@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+
 public final class GeyserItemComponentPatches {
     private static final Map<String, GeyserItemComponentReader> CONVERTERS = new LinkedHashMap<>();
 
@@ -40,6 +42,15 @@ public final class GeyserItemComponentPatches {
 
     public static void register(String key, GeyserItemComponentReader converter) {
         CONVERTERS.put(key, converter);
+    }
+
+    public static GeyserItemComponentPatch read(JsonObject entry, int sourceVersion) {
+        JsonObject components = entry.getAsJsonObject(COMPONENTS);
+        JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
+        String itemType = entry.get(ITEM_TYPE).getAsString();
+        // 先按 Java 最终行为补齐使用入口，再应用组件覆写，最后决定触屏按钮。
+        GeyserItemComponentPatch patch = combine(GeyserItemUse.read(behavior, components, itemType), read(components, sourceVersion, itemType));
+        return combine(patch, GeyserItemInteraction.read(behavior, components));
     }
 
     @Nullable
@@ -74,6 +85,6 @@ public final class GeyserItemComponentPatches {
         // ItemMappings 属于协议注册表；缓存随本次计划持有，不保存玩家或会话。
         Map<ItemMappings, Map<NbtMap, NbtMap>> cache = new ConcurrentHashMap<>();
         return (data, mappings) -> cache.computeIfAbsent(mappings, ignored -> new ConcurrentHashMap<>())
-                .computeIfAbsent(data, original -> patch.apply(original, mappings));
+                        .computeIfAbsent(data, original -> patch.apply(original, mappings));
     }
 }

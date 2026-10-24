@@ -51,7 +51,7 @@ public final class GeyserItemRegistrationAdapter {
         return new ConvertedItem(
                 definitions,
                 definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)),
-                GeyserItemComponentPatches.read(entry.getAsJsonObject(COMPONENTS), this.sourceVersion, entry.get(ITEM_TYPE).getAsString())
+                GeyserItemComponentPatches.read(entry, this.sourceVersion)
         );
     }
 

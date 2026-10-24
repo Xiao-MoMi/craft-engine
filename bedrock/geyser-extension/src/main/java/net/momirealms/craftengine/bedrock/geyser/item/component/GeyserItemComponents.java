@@ -27,8 +27,10 @@ final class GeyserItemComponents {
         int maximum = value.isJsonNull() ? 0 : value.getAsInt();
         NbtMap component = null;
         if (maximum > 0) {
-            component = NbtMap.builder().putInt("max_durability", maximum)
-                    .putCompound("damage_chance", NbtMap.builder().putInt("min", 1).putInt("max", 1).build()).build();
+            component = NbtMap.builder()
+                    .putInt("max_durability", maximum)
+                    .putCompound("damage_chance", NbtMap.builder().putInt("min", 1).putInt("max", 1).build())
+                    .build();
         }
         return component("minecraft:durability", component);
     }
@@ -65,22 +67,26 @@ final class GeyserItemComponents {
         if (value.isJsonNull()) {
             return component("minecraft:wearable", null);
         }
-        String slot = switch (value.getAsJsonObject().get("slot").getAsString()) {
+        JsonObject object = value.getAsJsonObject();
+        String slot = switch (object.get("slot").getAsString()) {
             case "feet" -> "slot.armor.feet";
             case "legs" -> "slot.armor.legs";
             case "chest" -> "slot.armor.chest";
             case "head" -> "slot.armor.head";
             case "body" -> "slot.armor";
             case "saddle" -> "slot.saddle";
+            case "mainhand" -> "slot.weapon.mainhand";
+            case "offhand" -> "slot.weapon.offhand";
             default -> null;
         };
+        boolean dispensable = !object.has("dispensable") || object.get("dispensable").getAsBoolean();
         return update((components, properties) -> {
             if (slot == null) {
                 components.remove("minecraft:wearable");
             } else {
                 NbtMap existing = (NbtMap) components.getOrDefault("minecraft:wearable", NbtMap.EMPTY);
-                components.putCompound("minecraft:wearable", NbtMap.builder().putString("slot", slot)
-                        .putInt("protection", existing.getInt("protection")).build());
+                components.putCompound("minecraft:wearable", existing.toBuilder().putString("slot", slot)
+                        .putInt("protection", existing.getInt("protection")).putBoolean("dispensable", dispensable).build());
             }
         });
     }

@@ -39,7 +39,7 @@ public final class ItemBindingResolver {
                 clientItem.vanillaId(),
                 itemModel,
                 definition,
-                this.behaviorReader.read(clientItem, properties),
+                this.behaviorReader.read(clientItem),
                 properties
         );
     }

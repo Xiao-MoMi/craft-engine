@@ -10,7 +10,6 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
-import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserSpearComponentPatch;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
@@ -27,22 +26,11 @@ import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Set;
 import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class CraftEngineGeyserExtension implements Extension {
-    private static final Set<String> SPEAR_ITEMS = Set.of(
-            "minecraft:wooden_spear",
-            "minecraft:stone_spear",
-            "minecraft:copper_spear",
-            "minecraft:iron_spear",
-            "minecraft:golden_spear",
-            "minecraft:diamond_spear",
-            "minecraft:netherite_spear"
-    );
-
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
@@ -128,7 +116,7 @@ public final class CraftEngineGeyserExtension implements Extension {
          *   "item_type": "minecraft:fishing_rod", // 基础 Java 物品
          *   "item_id": "example:rod", // CE 物品 ID
          *   "model": "example:rod", // 匹配的 item_model
-         *   "components": {}, // 组件差异，null 表示移除
+         *   "components": {}, // 组件覆写及转换所需有效值，null 表示移除
          *   "variants": [{ // 显示分支
          *     "bedrock_identifier": "craftengine:example/rod_variant_0", // 分支基岩 ID，兼作图标键
          *     "conditions": [{ // 条件全部满足
@@ -148,29 +136,16 @@ public final class CraftEngineGeyserExtension implements Extension {
             Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
                 GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.displayBlocks);
-                GeyserItemComponentPatch attachedPatch = converted.componentPatch();
-                if (SPEAR_ITEMS.contains(identifier.toString())) {
-                    attachedPatch = GeyserItemComponentPatches.combine(GeyserSpearComponentPatch.read(entry), attachedPatch);
-                }
                 for (CustomItemDefinition definition : converted.definitions()) {
                     event.register(identifier, definition);
                     registered++;
+                    if (converted.componentPatch() != null) {
+                        componentPatches.put(definition.bedrockIdentifier().toString(), converted.componentPatch());
+                    }
                 }
                 if (converted.contextual()) {
                     for (CustomItemDefinition definition : converted.definitions()) {
                         this.contextualItems.put(definition.bedrockIdentifier().toString(), definition);
-                    }
-                }
-                if (attachedPatch != null) {
-                    for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
-                        JsonObject variant = branch.getAsJsonObject();
-                        GeyserItemComponentPatch patch = converted.componentPatch();
-                        if (variant.getAsJsonObject(RESOURCES).get(ATTACHABLE).getAsBoolean()) {
-                            patch = attachedPatch;
-                        }
-                        if (patch != null) {
-                            componentPatches.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), patch);
-                        }
                     }
                 }
             } catch (UnsupportedOperationException exception) {

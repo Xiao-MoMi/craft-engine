@@ -5,22 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record ItemBehaviorDescription(Use use,
                                       Swing attack,
-                                      Swing interact,
-                                      @Nullable Kinetic kinetic) {
-
-    public ItemBehaviorDescription(Use use, Swing attack, Swing interact) {
-        this(use, attack, interact, null);
-    }
-
-    public record Kinetic(int delayTicks,
-                          float forwardMovement,
-                          @Nullable KineticCondition dismount,
-                          @Nullable KineticCondition knockback,
-                          @Nullable KineticCondition damage) {
-    }
-
-    public record KineticCondition(int durationTicks, float minimumSpeed, float minimumRelativeSpeed) {
-    }
+                                      Swing interact) {
 
     public enum UseAnimation {
         NONE,

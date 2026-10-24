@@ -80,14 +80,23 @@ final class GeyserConsumableComponents {
 
     static GeyserItemComponentPatch useEffects(JsonElement value) {
         float speed = 0.2f;
-        if (!value.isJsonNull() && value.getAsJsonObject().has("speed_multiplier")) {
-            speed = value.getAsJsonObject().get("speed_multiplier").getAsFloat();
+        boolean vibrations = true;
+        if (!value.isJsonNull()) {
+            JsonObject object = value.getAsJsonObject();
+            if (object.has("speed_multiplier")) {
+                speed = object.get("speed_multiplier").getAsFloat();
+            }
+            if (object.has("interact_vibrations")) {
+                vibrations = object.get("interact_vibrations").getAsBoolean();
+            }
         }
         float movement = speed;
+        boolean emitVibrations = vibrations;
         return GeyserItemComponents.update((components, properties) -> {
             NbtMap existing = (NbtMap) components.get("minecraft:use_modifiers");
             if (existing != null) {
-                components.putCompound("minecraft:use_modifiers", existing.toBuilder().putFloat("movement_modifier", movement).build());
+                components.putCompound("minecraft:use_modifiers", existing.toBuilder()
+                        .putFloat("movement_modifier", movement).putBoolean("emit_vibrations", emitVibrations).build());
             }
         });
     }

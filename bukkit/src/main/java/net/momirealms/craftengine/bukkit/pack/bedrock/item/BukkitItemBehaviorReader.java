@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationProperties;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription;
@@ -21,7 +19,7 @@ public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
     private static final int CROSSBOW_BASE_CHARGE_TICKS = 25;
 
     @Override
-    public ItemBehaviorDescription read(Item item, ItemRegistrationProperties properties) {
+    public ItemBehaviorDescription read(Item item) {
         Object stack = item.minecraftItem();
         Object itemType = ItemStackProxy.INSTANCE.getItem(stack);
         UseAnimation animation = UseAnimation.fromNative(((Enum<?>) ItemStackProxy.INSTANCE.getUseAnimation(stack)).name(), VersionHelper.MINECRAFT_VERSION);
@@ -42,26 +40,7 @@ public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
             attack = Swing.LEGACY;
             interact = attack;
         }
-        JsonObject kinetic = properties.kineticWeapon();
-        Kinetic motion = null;
-        if (kinetic != null) {
-            motion = new Kinetic(kinetic.has("delay_ticks") ? kinetic.get("delay_ticks").getAsInt() : 0,
-                    kinetic.has("forward_movement") ? kinetic.get("forward_movement").getAsFloat() : 0,
-                    this.readKineticCondition(kinetic.getAsJsonObject("dismount_conditions")),
-                    this.readKineticCondition(kinetic.getAsJsonObject("knockback_conditions")),
-                    this.readKineticCondition(kinetic.getAsJsonObject("damage_conditions")));
-        }
-        return new ItemBehaviorDescription(use, attack, interact, motion);
-    }
-
-    @Nullable
-    private KineticCondition readKineticCondition(@Nullable JsonObject condition) {
-        if (condition == null) {
-            return null;
-        }
-        return new KineticCondition(condition.get("max_duration_ticks").getAsInt(),
-                condition.has("min_speed") ? condition.get("min_speed").getAsFloat() : 0,
-                condition.has("min_relative_speed") ? condition.get("min_relative_speed").getAsFloat() : 0);
+        return new ItemBehaviorDescription(use, attack, interact);
     }
 
     private int maximumDuration(Object stack, Object itemType) {
