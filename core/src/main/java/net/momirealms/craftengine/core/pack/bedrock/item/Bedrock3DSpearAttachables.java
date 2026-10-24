@@ -19,8 +19,8 @@ public final class Bedrock3DSpearAttachables {
                       List<Bedrock3DItemAttachables.Material> materials, Path root) throws IOException {
         JsonArray bones = new JsonArray();
         String parent = "ce_slot";
-        // rotateAround 拆成支点平移、旋转、反向平移，保持 Java 的 X/Y 顺序及左右手支点。
-        for (String name : List.of("move", "xp", "x", "xu", "yp", "y", "yu", "feedback")) {
+        // Java 第三人称先应用突刺，再应用使用姿态；两组独立骨骼允许动作同时存在。
+        for (String name : List.of("stab_move", "stab_xp", "stab_x", "stab_xu", "stab_feedback", "move", "xp", "x", "xu", "yp", "y", "yu", "feedback")) {
             JsonObject bone = new JsonObject();
             bone.addProperty("name", "ce_spear_" + name);
             bone.addProperty("parent", parent);
@@ -30,6 +30,22 @@ public final class Bedrock3DSpearAttachables {
         }
         ItemBehaviorDescription behavior = entry.source().clientBehavior();
         JsonArray scripts = models.scripts(behavior);
+        // 挥手进度属于玩家实体，attachable 需从持有者读取。
+        scripts.add("variable.attack_time = context.owning_entity->variable.attack_time;");
+        scripts.addAll(parameters(entry));
+        scripts.add("variable.ce_spear_side = context.item_slot == 'off_hand' ? -1 : 1;");
+        scripts.add("variable.ce_spear_time = variable.ce_spear_use ? math.max(0, variable.ce_use_ticks + query.frame_alpha - (context.is_first_person ? 1 : 0)) : 0;");
+        scripts.add("variable.ce_spear_hit_ticks = context.owning_entity->query.ticks_since_last_kinetic_weapon_hit;");
+        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
+        // Java 缓动公式在资源中显式计算，不能假定 Molang 同名函数与 Java 等价。
+        scripts.addAll(source.getAsJsonArray("pre_animation"));
+        JsonArray animate = source.getAsJsonArray("animate");
+        Bedrock3DItemAttachables.write(entry.bedrockId(), stages, materials, scripts, bones, source.getAsJsonObject("animations"), animate, root);
+    }
+
+    static JsonArray parameters(ItemRegistrationPlan.Entry entry) {
+        JsonArray scripts = new JsonArray();
+        ItemBehaviorDescription behavior = entry.source().clientBehavior();
         JsonElement component = entry.properties().components().get(DataComponentKeys.KINETIC_WEAPON);
         JsonObject kinetic = component == null || component.isJsonNull() ? null : component.getAsJsonObject();
         scripts.add("variable.ce_spear_delay = " + (kinetic == null || !kinetic.has("delay_ticks") ? 0 : kinetic.get("delay_ticks").getAsInt()) + ";");
@@ -42,13 +58,7 @@ public final class Bedrock3DSpearAttachables {
         }
         scripts.add("variable.ce_spear_forward = " + (kinetic == null || !kinetic.has("forward_movement") ? 0 : kinetic.get("forward_movement").getAsFloat()) + ";");
         scripts.add("variable.ce_spear_use = " + (kinetic != null && behavior.use().animation() == ItemBehaviorDescription.UseAnimation.SPEAR ? "variable.ce_using_item" : "0") + ";");
-        scripts.add("variable.ce_spear_attack = " + (behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.STAB ? "!variable.ce_using_item && variable.attack_time > 0" : "0") + ";");
-        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
-        scripts.addAll(source.getAsJsonArray("pre_animation"));
-        JsonArray animate = new JsonArray();
-        for (JsonElement value : source.getAsJsonArray("animate")) {
-            animate.add(value);
-        }
-        Bedrock3DItemAttachables.write(entry.bedrockId(), stages, materials, scripts, bones, source.getAsJsonObject("animations"), animate, root);
+        scripts.add("variable.ce_spear_attack = " + (behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.STAB ? "variable.attack_time > 0" : "0") + ";");
+        return scripts;
     }
 }

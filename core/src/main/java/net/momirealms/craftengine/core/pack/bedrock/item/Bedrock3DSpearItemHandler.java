@@ -47,7 +47,7 @@ public final class Bedrock3DSpearItemHandler implements BedrockItemHandler {
         Bedrock3DSpearAttachables.write(entry, selected, stages, geometry.materials(), context.root());
         context.displays().put(entry.bedrockId(), display);
         context.attachables().add(entry.bedrockId());
-        context.javaSpears().add(entry.bedrockId());
+        context.javaSpears().put(entry.bedrockId(), entry);
         context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), selected.registration(), null)));
         return true;
     }

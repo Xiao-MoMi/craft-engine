@@ -1,0 +1,53 @@
+{
+  "pre_animation": [
+    "variable.ce_spear_body_y = math.sin(math.sqrt(variable.ce_spear_swing) * 360) * 11.459156;",
+    "variable.ce_spear_arm_x = math.clamp(query.target_x_rotation - 44.163376 - ((query.is_gliding || variable.swim_amount > 0) ? 55 : 0), -120, 30) + (variable.ce_spear_use ? -40 * variable.ce_spear_start + 30 * variable.ce_spear_middle - 20 * variable.ce_spear_end + 20 * variable.ce_spear_lower + 10 * variable.ce_spear_back + 0.6 * variable.ce_spear_slow * variable.ce_spear_intensity : 0) + 90 * variable.ce_spear_prepare - 120 * variable.ce_spear_attack_linear + 30 * variable.ce_spear_retract + query.is_sneaking * 22.918312 + math.sin(query.life_time * 76.776345) * 2.864789;",
+    "variable.ce_spear_arm_y = math.clamp(query.target_y_rotation - 5.729578, -60, 60) - (variable.ce_spear_use ? variable.ce_spear_fast * variable.ce_spear_intensity : 0);",
+    "variable.ce_spear_arm_z = (variable.ce_spear_use ? -0.5 * variable.ce_spear_slow * variable.ce_spear_intensity : 0) + (math.cos(query.life_time * 103.132403) + 1) * 2.864789;",
+    "variable.ce_spear_sin_x = math.sin(variable.ce_spear_arm_x);",
+    "variable.ce_spear_cos_x = math.cos(variable.ce_spear_arm_x);",
+    "variable.ce_spear_sin_y = math.sin(variable.ce_spear_arm_y);",
+    "variable.ce_spear_cos_y = math.cos(variable.ce_spear_arm_y);",
+    "variable.ce_spear_sin_z = math.sin(variable.ce_spear_arm_z);",
+    "variable.ce_spear_cos_z = math.cos(variable.ce_spear_arm_z);",
+    "variable.ce_spear_root_x = query.is_sneaking * 28;",
+    "variable.ce_spear_m00 = variable.ce_spear_cos_z * variable.ce_spear_cos_y;",
+    "variable.ce_spear_m01 = variable.ce_spear_cos_z * variable.ce_spear_sin_y * variable.ce_spear_sin_x - variable.ce_spear_sin_z * variable.ce_spear_cos_x;",
+    "variable.ce_spear_m02 = variable.ce_spear_cos_z * variable.ce_spear_sin_y * variable.ce_spear_cos_x + variable.ce_spear_sin_z * variable.ce_spear_sin_x;",
+    "variable.ce_spear_m10 = math.cos(variable.ce_spear_root_x) * variable.ce_spear_sin_z * variable.ce_spear_cos_y - math.sin(variable.ce_spear_root_x) * variable.ce_spear_sin_y;",
+    "variable.ce_spear_m20 = -math.sin(variable.ce_spear_root_x) * variable.ce_spear_sin_z * variable.ce_spear_cos_y - math.cos(variable.ce_spear_root_x) * variable.ce_spear_sin_y;",
+    "variable.ce_spear_m21 = -math.sin(variable.ce_spear_root_x) * (variable.ce_spear_sin_z * variable.ce_spear_sin_y * variable.ce_spear_sin_x + variable.ce_spear_cos_z * variable.ce_spear_cos_x) + math.cos(variable.ce_spear_root_x) * variable.ce_spear_cos_y * variable.ce_spear_sin_x;",
+    "variable.ce_spear_m22 = -math.sin(variable.ce_spear_root_x) * (variable.ce_spear_sin_z * variable.ce_spear_sin_y * variable.ce_spear_cos_x - variable.ce_spear_cos_z * variable.ce_spear_sin_x) + math.cos(variable.ce_spear_root_x) * variable.ce_spear_cos_y * variable.ce_spear_cos_x;",
+    "variable.ce_spear_local_x = math.atan2(math.sin(variable.ce_spear_body_y) * variable.ce_spear_m01 + math.cos(variable.ce_spear_body_y) * variable.ce_spear_m21, math.sin(variable.ce_spear_body_y) * variable.ce_spear_m02 + math.cos(variable.ce_spear_body_y) * variable.ce_spear_m22);",
+    "variable.ce_spear_local_y = math.atan2(-math.sin(variable.ce_spear_body_y) * variable.ce_spear_m00 - math.cos(variable.ce_spear_body_y) * variable.ce_spear_m20, math.sqrt(math.pow(math.cos(variable.ce_spear_body_y) * variable.ce_spear_m00 - math.sin(variable.ce_spear_body_y) * variable.ce_spear_m20, 2) + variable.ce_spear_m10 * variable.ce_spear_m10));",
+    "variable.ce_spear_local_z = math.atan2(variable.ce_spear_m10, math.cos(variable.ce_spear_body_y) * variable.ce_spear_m00 - math.sin(variable.ce_spear_body_y) * variable.ce_spear_m20);"
+  ],
+  "bones": {
+    "body": {
+      "rotation": [
+        0,
+        "variable.ce_spear_body_y - this",
+        0
+      ]
+    },
+    "rightarm": {
+      "rotation": [
+        "variable.ce_spear_local_x - this",
+        "variable.ce_spear_local_y - this",
+        "variable.ce_spear_local_z - this"
+      ]
+    },
+    "rightitem": {
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}
