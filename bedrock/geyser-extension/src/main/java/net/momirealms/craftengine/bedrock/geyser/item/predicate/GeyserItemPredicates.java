@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.item;
+package net.momirealms.craftengine.bedrock.geyser.item.predicate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -30,12 +30,15 @@ public final class GeyserItemPredicates {
 
     public static MinecraftPredicate<ItemPredicateContext> read(JsonObject condition) {
         String property = property(condition);
+        // condition
         if (condition.has(EXPECTED)) {
             return readBoolean(condition, property);
         }
+        // select
         if (condition.has(VALUES)) {
             return readSelect(condition, property);
         }
+        // range_dispatch
         return readRange(condition, property);
     }
 
@@ -108,40 +111,22 @@ public final class GeyserItemPredicates {
                 : "Geyser API does not expose the item model property: " + property);
     }
 
-    static boolean requiresSession(MinecraftPredicate<? super ItemPredicateContext> predicate) {
-        return predicate instanceof Selected || predicate instanceof Dimension;
+    public static boolean requiresSession(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof SessionPredicate;
     }
 
-    static boolean usesSelection(MinecraftPredicate<? super ItemPredicateContext> predicate) {
-        return predicate instanceof Selected;
+    public static boolean usesSelection(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof SelectionPredicate;
     }
 
-    static MinecraftPredicate<? super ItemPredicateContext> bind(MinecraftPredicate<? super ItemPredicateContext> predicate,
-                                                                Supplier<String> dimension, BooleanSupplier selected) {
-        if (predicate instanceof Selected match) {
-            return context -> selected.getAsBoolean() == match.expected();
-        }
-        if (predicate instanceof Dimension match) {
-            // context.dimension() 是维度类型；Java context_dimension 使用实际世界 ID。
-            return context -> {
-                String world = dimension.get();
-                return (world != null && match.values().contains(world)) != match.negated();
-            };
+    public static MinecraftPredicate<? super ItemPredicateContext> bind(
+            MinecraftPredicate<? super ItemPredicateContext> predicate,
+            Supplier<String> dimension,
+            BooleanSupplier selected
+    ) {
+        if (predicate instanceof SessionPredicate sessionPredicate) {
+            return sessionPredicate.bind(dimension, selected);
         }
         return predicate;
-    }
-
-    private record Selected(boolean expected) implements MinecraftPredicate<ItemPredicateContext> {
-        @Override
-        public boolean test(ItemPredicateContext context) {
-            return !this.expected;
-        }
-    }
-
-    private record Dimension(List<String> values, boolean negated) implements MinecraftPredicate<ItemPredicateContext> {
-        @Override
-        public boolean test(ItemPredicateContext context) {
-            throw new IllegalStateException("Dimension predicate requires a Geyser session");
-        }
     }
 }

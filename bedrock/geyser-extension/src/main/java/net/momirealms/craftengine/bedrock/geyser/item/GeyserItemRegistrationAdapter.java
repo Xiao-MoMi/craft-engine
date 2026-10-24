@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
 import net.momirealms.craftengine.bedrock.geyser.proxy.item.custom.GeyserCustomItemDefinitionBuilderProxy;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
@@ -39,7 +40,7 @@ public final class GeyserItemRegistrationAdapter {
             if (resources.has(UNSUPPORTED_REASON)) {
                 throw new UnsupportedOperationException(resources.get(UNSUPPORTED_REASON).getAsString());
             }
-            if (variants.size() > 1 && !resources.get(GENERATED).getAsBoolean()) {
+            if (!resources.has(GENERATED) || !resources.get(GENERATED).getAsBoolean()) {
                 throw new UnsupportedOperationException("A model branch has no generated render resource");
             }
             definitions.add(this.convertVariant(entry, variant, displayBlocks, variants.size() - definitions.size()));
@@ -47,6 +48,22 @@ public final class GeyserItemRegistrationAdapter {
         return new ConvertedItem(definitions, definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)));
     }
 
+    /*
+     * { // entry
+     *   "model": "example:sword", // Java 物品模型定义 ID
+     *   "components": { // 各分支共用的组件
+     *     "minecraft:max_stack_size": 1 // 最大堆叠数量
+     *   },
+     *   "variants": [{ // variant 是其中一个分支
+     *     "bedrock_identifier": "craftengine:example/sword", // 分支基岩物品 ID
+     *     "conditions": [], // 匹配条件，空数组表示无条件
+     *     "resources": { // 分支显示资源
+     *       "display_block": "craftengine/example/sword", // 可选，缺省使用分支 ID 对应的图标
+     *       "generated": true // 图标或展示方块已生成
+     *     }
+     *   }]
+     * }
+     */
     private CustomItemDefinition convertVariant(JsonObject entry, JsonObject variant, Map<String, String> displayBlocks, int priority) {
         Identifier bedrockId = Identifier.of(variant.get(BEDROCK_IDENTIFIER).getAsString());
         Identifier model = Identifier.of(entry.get(MODEL).getAsString());
@@ -85,9 +102,12 @@ public final class GeyserItemRegistrationAdapter {
         if (block == null) {
             throw new IllegalStateException("Display block was not registered: " + name);
         }
-        // Geyser 2.12 的公开接口不允许原版映射设置 BLOCK_PLACER；此入口与其自定义头颅共用。
-        GeyserCustomItemDefinitionBuilderProxy.INSTANCE.geyserComponent(builder, GeyserItemDataComponents.BLOCK_PLACER,
-                GeyserBlockPlacer.of(Identifier.of(block), true));
+        // Geyser 的公开接口不允许原版映射设置 BLOCK_PLACER；此入口与其自定义头颅共用。
+        GeyserCustomItemDefinitionBuilderProxy.INSTANCE.geyserComponent(
+                builder,
+                GeyserItemDataComponents.BLOCK_PLACER,
+                GeyserBlockPlacer.of(Identifier.of(block), true)
+        );
     }
 
     public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual) {

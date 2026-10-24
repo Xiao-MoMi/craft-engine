@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 
 import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.MultimapBuilder;
+import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
 import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
