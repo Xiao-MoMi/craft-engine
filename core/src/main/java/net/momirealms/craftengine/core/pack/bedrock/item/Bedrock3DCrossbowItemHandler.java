@@ -56,6 +56,7 @@ public final class Bedrock3DCrossbowItemHandler implements BedrockItemHandler {
             variants.add(new BedrockItemIcons.Variant(state.id(), state.registration(), null));
             context.displays().put(state.id(), displays.get(i));
             context.attachables().add(state.id());
+            context.crossbowPlayerAnimations().register(state.id(), state.charged(), entry.source().clientBehavior().use().chargeDuration().value(), true);
         }
         context.variants().put(entry.bedrockId(), variants);
         return true;

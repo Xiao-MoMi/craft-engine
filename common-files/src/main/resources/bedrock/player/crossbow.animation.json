@@ -40,6 +40,30 @@
           ]
         }
       }
+    },
+    "animation.player.crossbow_equipped": {
+      "loop": true,
+      "bones": {
+        "leftarm": {
+          "position": [
+            0.0,
+            0.0,
+            0.5
+          ],
+          "rotation": [
+            "-this - 65.0 - (1.0 - variable.item_use_normalized) * 5.0",
+            "-this + (1.0 - variable.item_use_normalized) * 30.0",
+            "-this + 20.0 + (1.0 - variable.item_use_normalized) * 10.0"
+          ]
+        },
+        "rightarm": {
+          "rotation": [
+            "- 60.0 - this",
+            "- 45.0 - this",
+            "- 2.5 - this"
+          ]
+        }
+      }
     }
   }
 }

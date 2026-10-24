@@ -67,6 +67,7 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
         ItemBindingRule registrationRule = new ItemBindingRule(registrationConditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
         context.variants().put(entry.bedrockId(), List.of(new Variant(entry.bedrockId(), registrationRule, null)));
         context.attachables().add(entry.bedrockId());
+        context.bows().add(entry.bedrockId());
         return true;
     }
 }

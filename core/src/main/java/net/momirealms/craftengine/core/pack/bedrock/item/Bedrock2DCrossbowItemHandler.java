@@ -56,9 +56,7 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
             context.icons().add(state.id().asString(), icon);
             variants.add(new BedrockItemIcons.Variant(state.id(), state.registration(), null));
             context.attachables().add(state.id());
-            if (!state.charged()) {
-                context.crossbowPlayerAnimations().register(state.id(), entry.source().clientBehavior().use().chargeDuration().value());
-            }
+            context.crossbowPlayerAnimations().register(state.id(), state.charged(), entry.source().clientBehavior().use().chargeDuration().value(), false);
         }
         context.variants().put(entry.bedrockId(), variants);
         return true;

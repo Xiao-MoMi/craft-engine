@@ -18,6 +18,8 @@ public final class BedrockItemGenerationContext {
     private final Set<Key> attachables = new HashSet<>();
     private final Map<Key, ItemRegistrationPlan.Entry> javaSpears = new LinkedHashMap<>();
     private final Set<Key> javaShields = new HashSet<>();
+    private final Set<Key> bows = new HashSet<>();
+    private final Set<Key> javaBows = new HashSet<>();
     private final BedrockItemBlocks blocks = new BedrockItemBlocks();
     private final BedrockCrossbowPlayerAnimations crossbowPlayerAnimations = new BedrockCrossbowPlayerAnimations();
 
@@ -51,6 +53,14 @@ public final class BedrockItemGenerationContext {
 
     public Set<Key> javaShields() {
         return this.javaShields;
+    }
+
+    public Set<Key> bows() {
+        return this.bows;
+    }
+
+    public Set<Key> javaBows() {
+        return this.javaBows;
     }
 
     public BedrockItemBlocks blocks() {

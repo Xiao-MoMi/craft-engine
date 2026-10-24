@@ -56,6 +56,8 @@ public final class Bedrock3DBowItemHandler implements BedrockItemHandler {
         context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), registration, null)));
         context.displays().put(entry.bedrockId(), display);
         context.attachables().add(entry.bedrockId());
+        context.bows().add(entry.bedrockId());
+        context.javaBows().add(entry.bedrockId());
         return true;
     }
 
