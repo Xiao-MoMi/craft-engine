@@ -2403,6 +2403,17 @@ public abstract class AbstractPackManager implements PackManager {
             float swapAnimationScale = originalItemModel.swapAnimationScale();
 
             Map<Float, ItemModel> entries = new TreeMap<>();
+            ItemModel fallback = originalItemModel.model();
+            if (fallback instanceof RangeDispatchItemModel originalRangeDispatch
+                    && originalRangeDispatch.property() instanceof CustomModelDataRangeDispatchProperty property
+                    && property.index() == 0
+                    && originalRangeDispatch.scale() == 1f
+                    && originalRangeDispatch.transformation() == null) {
+                for (RangeDispatchItemModel.Entry originalEntry : originalRangeDispatch.entries()) {
+                    entries.put(originalEntry.threshold(), originalEntry.model());
+                }
+                fallback = originalRangeDispatch.fallBack();
+            }
             for (Map.Entry<Integer, ModernItemModel> modelWithDataEntry : entry.getValue().entrySet()) {
                 ModernItemModel modernItemModel = modelWithDataEntry.getValue();
                 entries.put(modelWithDataEntry.getKey().floatValue(), modernItemModel.model());
@@ -2415,7 +2426,7 @@ public abstract class AbstractPackManager implements PackManager {
             }
 
             RangeDispatchItemModel rangeDispatch = new RangeDispatchItemModel(
-                new CustomModelDataRangeDispatchProperty(0), 1f, entries, originalItemModel.model()
+                new CustomModelDataRangeDispatchProperty(0), 1f, entries, fallback
             );
 
             ModernItemModel newItemModel = new ModernItemModel(rangeDispatch, handAnimationOnSwap, oversizedInGui, swapAnimationScale);
