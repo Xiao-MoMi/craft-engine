@@ -334,6 +334,11 @@ item:
   # Even if your resource pack only supports version 1.21.2+, also generate overrides for older versions.
   # This may be helpful for some Bedrock resource pack converters working based on this.
   always-generate-model-overrides: false
+  # Collect legacy overrides from vanilla item files in assets/minecraft/models/item/*.json
+  # in the merged resource pack, including items without CraftEngine item configurations.
+  # Only predicates containing a numeric custom_model_data and no other conditions are collected
+  # into modern item models for Minecraft 1.21.4+.
+  collect-legacy-custom-model-data: true
 
   # Since Minecraft renders lore text in italics by default, you can
   # optionally prefix any lore with <!i> to remove the italic formatting.

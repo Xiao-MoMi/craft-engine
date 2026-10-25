@@ -30,6 +30,7 @@ import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
@@ -801,8 +802,8 @@ public abstract class AbstractPackManager implements PackManager {
             // 一定要先生成 item model 再生成 overrides
             this.generateModernItemModels1_21_2(generatedPackPath);
             this.generateModernItemModels1_21_4(generatedPackPath, revisions::add);
-            this.generateLegacyItemOverrides(generatedPackPath);
             this.generateModernItemOverrides(generatedPackPath, revisions::add);
+            this.generateLegacyItemOverrides(generatedPackPath);
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
@@ -2373,9 +2374,14 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void generateModernItemOverrides(Path generatedPackPath, Consumer<Revision> callback) {
-        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_4)) return;
-        for (Map.Entry<Key, TreeMap<Integer, ModernItemModel>> entry : this.plugin.itemManager().modernItemOverrides().entrySet()) {
-            Key vanillaItemModel = entry.getKey();
+        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_4)) {
+            return;
+        }
+        Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides = this.plugin.itemManager().modernItemOverrides();
+        Map<Key, Map<Float, ItemModel>> legacyOverrides = Config.collectLegacyCustomModelData() ? this.collectLegacyCustomModelData(generatedPackPath) : Map.of();
+        Set<Key> itemModels = new HashSet<>(modernOverrides.keySet());
+        itemModels.addAll(legacyOverrides.keySet());
+        for (Key vanillaItemModel : itemModels) {
             Path overridedItemPath = generatedPackPath
                     .resolve("assets")
                     .resolve(vanillaItemModel.namespace())
@@ -2402,7 +2408,7 @@ public abstract class AbstractPackManager implements PackManager {
             boolean oversizedInGui = originalItemModel.oversizedInGui();
             float swapAnimationScale = originalItemModel.swapAnimationScale();
 
-            Map<Float, ItemModel> entries = new TreeMap<>();
+            Map<Float, ItemModel> entries = new TreeMap<>(legacyOverrides.getOrDefault(vanillaItemModel, Map.of()));
             ItemModel fallback = originalItemModel.model();
             if (fallback instanceof RangeDispatchItemModel originalRangeDispatch
                     && originalRangeDispatch.property() instanceof CustomModelDataRangeDispatchProperty property
@@ -2414,7 +2420,11 @@ public abstract class AbstractPackManager implements PackManager {
                 }
                 fallback = originalRangeDispatch.fallBack();
             }
-            for (Map.Entry<Integer, ModernItemModel> modelWithDataEntry : entry.getValue().entrySet()) {
+            Map<Integer, ModernItemModel> customOverrides = modernOverrides.get(vanillaItemModel);
+            if (customOverrides == null) {
+                customOverrides = Map.of();
+            }
+            for (Map.Entry<Integer, ModernItemModel> modelWithDataEntry : customOverrides.entrySet()) {
                 ModernItemModel modernItemModel = modelWithDataEntry.getValue();
                 entries.put(modelWithDataEntry.getKey().floatValue(), modernItemModel.model());
                 if (modernItemModel.handAnimationOnSwap()) {
@@ -2448,6 +2458,53 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
         }
+    }
+
+    private Map<Key, Map<Float, ItemModel>> collectLegacyCustomModelData(Path generatedPackPath) {
+        Path itemModelsPath = generatedPackPath
+                .resolve("assets")
+                .resolve("minecraft")
+                .resolve("models")
+                .resolve("item");
+        if (!Files.isDirectory(itemModelsPath)) {
+            return Map.of();
+        }
+        Map<Key, Map<Float, ItemModel>> collected = new HashMap<>();
+        try (DirectoryStream<Path> paths = Files.newDirectoryStream(itemModelsPath, "*.json")) {
+            for (Path path : paths) {
+                String fileName = path.getFileName().toString();
+                Key itemModel = Key.minecraft(fileName.substring(0, fileName.length() - 5));
+                if (!PRESET_ITEMS.containsKey(itemModel)) {
+                    continue;
+                }
+                try {
+                    JsonObject model = GsonHelper.readJsonFromFile(path).getAsJsonObject();
+                    if (!(model.get("overrides") instanceof JsonArray overrides)) {
+                        continue;
+                    }
+                    Map<Float, ItemModel> entries = new TreeMap<>();
+                    for (JsonElement element : overrides) {
+                        if (element instanceof JsonObject override
+                                && override.get("predicate") instanceof JsonObject predicate
+                                && predicate.size() == 1
+                                && predicate.get("custom_model_data") instanceof JsonPrimitive customModelData
+                                && customModelData.isNumber()
+                                && override.get("model") instanceof JsonPrimitive modelPath
+                                && modelPath.isString()) {
+                            entries.put(customModelData.getAsFloat(), new BaseItemModel(Key.of(modelPath.getAsString())));
+                        }
+                    }
+                    if (!entries.isEmpty()) {
+                        collected.put(itemModel, entries);
+                    }
+                } catch (IOException | JsonParseException | IllegalArgumentException | IllegalStateException e) {
+                    this.plugin.logger().warn("Failed to collect legacy custom model data from " + path, e);
+                }
+            }
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to scan legacy item models in " + itemModelsPath, e);
+        }
+        return collected;
     }
 
     private void generateLegacyItemOverrides(Path generatedPackPath) {

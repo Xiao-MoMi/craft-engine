@@ -276,6 +276,7 @@ public final class Config {
     private boolean item$always_use_item_model;
     private boolean item$always_use_custom_model_data;
     private boolean item$always_generate_model_overrides;
+    private boolean item$collect_legacy_custom_model_data;
     private Key item$default_material = ItemKeys.NETHER_BRICK;
     private boolean item$default_drop_display$enable = false;
     private String item$default_drop_display$format = null;
@@ -686,6 +687,7 @@ public final class Config {
         this.item$custom_model_data_starting_value$default = config.getInt("item.custom-model-data-starting-value.default", 10000);
         this.item$always_use_item_model = config.getBoolean("item.always-use-item-model", true) && VersionHelper.isOrAbove1_21_2;
         this.item$always_generate_model_overrides = config.getBoolean("item.always-generate-model-overrides", false);
+        this.item$collect_legacy_custom_model_data = config.getBoolean("item.collect-legacy-custom-model-data", false);
         this.item$always_use_custom_model_data = this.item$always_generate_model_overrides || (config.getBoolean("item.always-use-custom-model-data", false) && VersionHelper.isOrAbove1_21_2);
         this.item$default_material = Key.of(config.getString("item.default-material", "nether_brick"));
         this.item$default_drop_display$enable = config.getBoolean("item.default-drop-display.enable", false);
@@ -1003,6 +1005,10 @@ public final class Config {
 
     public static boolean alwaysGenerateModelOverrides() {
         return instance.item$always_generate_model_overrides;
+    }
+
+    public static boolean collectLegacyCustomModelData() {
+        return instance.item$collect_legacy_custom_model_data;
     }
 
     public static boolean filterConfigurationPhaseDisconnect() {
