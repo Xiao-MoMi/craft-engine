@@ -7,6 +7,9 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
+import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver;
+import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
@@ -42,6 +45,9 @@ public final class BedrockPackGenerator {
             ItemRegistrationPlanWriter.write(plan, metadata, generated);
             BlockRegistrationPlanWriter.write(generated, root.resolve(RegistrationPlanKind.BLOCK.file()));
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
+            JavaFontResolver fonts = new JavaFontResolver(resources);
+            new BedrockFontGenerator(fonts).write(root);
+            new BedrockGuiGenerator(resources).write(root);
             GsonHelper.writeJsonFile(this.manifest(), root.resolve("manifest.json"));
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {

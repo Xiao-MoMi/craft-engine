@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Map;
 
 public final class VanillaResourcePackDownloader {
     private static final URI VERSION_MANIFEST = URI.create("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
@@ -51,7 +52,30 @@ public final class VanillaResourcePackDownloader {
         if (!download.matches(archive)) {
             this.downloadFile(download, archive);
         }
+        this.downloadFonts(metadata.getAsJsonObject("assetIndex"), directory);
         return archive;
+    }
+
+    private void downloadFonts(JsonObject metadata, Path directory) throws IOException {
+        Download index = new Download(URI.create(metadata.get("url").getAsString()), metadata.get("sha1").getAsString(), metadata.get("size").getAsLong());
+        Path indexPath = directory.resolve("asset-index.json");
+        if (!index.matches(indexPath)) {
+            this.downloadFile(index, indexPath);
+        }
+        JsonObject objects = GsonHelper.readJsonObjectFromFile(indexPath).getAsJsonObject("objects");
+        for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
+            if (!entry.getKey().startsWith("minecraft/font/")) {
+                continue;
+            }
+            JsonObject asset = entry.getValue().getAsJsonObject();
+            String hash = asset.get("hash").getAsString();
+            Download download = new Download(URI.create("https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash), hash, asset.get("size").getAsLong());
+            Path target = directory.resolve("assets").resolve(entry.getKey());
+            if (!download.matches(target)) {
+                Files.createDirectories(target.getParent());
+                this.downloadFile(download, target);
+            }
+        }
     }
 
     private Download findVersion(MinecraftVersion version) throws IOException {

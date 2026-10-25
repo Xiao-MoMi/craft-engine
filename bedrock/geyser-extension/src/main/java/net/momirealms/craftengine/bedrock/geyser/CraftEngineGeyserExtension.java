@@ -11,6 +11,10 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphs;
+import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
+import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
@@ -36,10 +40,18 @@ public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
+    private ContainerTitleLayout titleLayout;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
-        GeyserTranslations.install(this.packFiles(), this.geyserApi().configDirectory(), this.logger());
+        List<Path> packs = this.packFiles();
+        GeyserTranslations.install(packs, this.geyserApi().configDirectory(), this.logger());
+        this.titleLayout = GeyserGlyphs.install(packs, this.logger());
+    }
+
+    @Subscribe
+    public void onPostInitialize(GeyserPostInitializeEvent event) {
+        GeyserGuiMenus.install(this.logger(), this.titleLayout);
     }
 
     @Subscribe

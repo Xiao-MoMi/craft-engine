@@ -19,6 +19,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -132,6 +133,17 @@ public final class JavaResourcePack {
         try (IndexedZipFile archive = new IndexedZipFile(vanilla)) {
             extractResources(archive, List.of(), version, vanillaRoot);
         }
+        // Indexed font assets replace the empty definitions shipped inside client.jar.
+        Path fontAssets = vanilla.resolveSibling("assets").resolve("minecraft/font");
+        if (Files.isDirectory(fontAssets)) {
+            try (Stream<Path> files = Files.walk(fontAssets)) {
+                for (Path file : files.filter(Files::isRegularFile).toList()) {
+                    Path target = vanillaRoot.resolve("assets/minecraft/font").resolve(CharacterUtils.replaceBackslashWithSlash(fontAssets.relativize(file).toString()));
+                    Files.createDirectories(target.getParent());
+                    Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
         return new JavaResourcePack(root, vanillaRoot, version);
     }
 
@@ -175,6 +187,38 @@ public final class JavaResourcePack {
 
     public MinecraftVersion version() {
         return this.version;
+    }
+
+    public Map<Key, List<FontResource>> fonts() throws IOException {
+        Map<Key, List<FontResource>> fonts = new TreeMap<>(Comparator.comparing(Key::asString));
+        this.collectFonts(this.root, true, fonts);
+        this.collectFonts(this.vanillaRoot, false, fonts);
+        return fonts;
+    }
+
+    private void collectFonts(Path root, boolean custom, Map<Key, List<FontResource>> fonts) throws IOException {
+        Path assets = root.resolve("assets");
+        if (!Files.isDirectory(assets)) {
+            return;
+        }
+        try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(assets)) {
+            for (Path namespace : namespaces) {
+                Path directory = namespace.resolve("font");
+                if (!Files.isDirectory(directory)) {
+                    continue;
+                }
+                try (Stream<Path> files = Files.walk(directory)) {
+                    for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
+                        String path = CharacterUtils.replaceBackslashWithSlash(directory.relativize(file).toString());
+                        Key id = Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5));
+                        fonts.computeIfAbsent(id, key -> new ObjectArrayList<>(2)).add(new FontResource(readJson(file), custom));
+                    }
+                }
+            }
+        }
+    }
+
+    public record FontResource(JsonObject definition, boolean custom) {
     }
 
     public JsonObject translations() throws IOException {

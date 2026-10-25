@@ -25,6 +25,19 @@ public final class GsonHelper {
         return GSON;
     }
 
+    public static JsonArray createArray(int first, int second) {
+        JsonArray array = new JsonArray(2);
+        array.add(first);
+        array.add(second);
+        return array;
+    }
+
+    public static JsonObject createObject(String key, JsonElement value) {
+        JsonObject object = new JsonObject();
+        object.add(key, value);
+        return object;
+    }
+
     public static JsonElement sortObjectKeys(JsonElement element) {
         if (element.isJsonObject()) {
             JsonObject result = new JsonObject();

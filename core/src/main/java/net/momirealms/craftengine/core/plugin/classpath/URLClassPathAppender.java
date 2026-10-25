@@ -2,33 +2,34 @@ package net.momirealms.craftengine.core.plugin.classpath;
 
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Field;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.util.Collection;
 
 public final class URLClassPathAppender implements ClassPathAppender {
-    private final Collection<URL> unopenedURLs;
-    private final Collection<URL> pathURLs;
+    private final MethodHandle addURL;
 
-    @SuppressWarnings({"unchecked", "resource"})
+    @SuppressWarnings("resource")
     public URLClassPathAppender(ClassLoader classLoader) {
         try {
             URLClassLoader urlClassLoader = findURLClassLoader(classLoader); // 兼容类似ignite的加载器
-            if (urlClassLoader != null) classLoader = urlClassLoader;
+            if (urlClassLoader != null) {
+                classLoader = urlClassLoader;
+            }
             Field field = findURLClassPathField(classLoader.getClass()); // 尝试获取ucp字段
             Object ucp = ReflectionUtils.LOOKUP.unreflectGetter(field).invoke(classLoader);
-            this.unopenedURLs = (Collection<URL>) ReflectionUtils.LOOKUP.unreflectGetter(ucp.getClass().getDeclaredField("unopenedUrls")).invoke(ucp);
-            this.pathURLs = (Collection<URL>) ReflectionUtils.LOOKUP.unreflectGetter(ucp.getClass().getDeclaredField("path")).invoke(ucp);
+            this.addURL = ReflectionUtils.LOOKUP.unreflect(ucp.getClass().getDeclaredMethod("addURL", URL.class)).bindTo(ucp);
         } catch (Throwable t) {
             throw new UnsupportedOperationException("Unsupported classloader " + classLoader.getClass(), t);
         }
     }
 
     private static Field findURLClassPathField(Class<?> clazz) {
-        if (clazz == null) return null;
+        if (clazz == null) {
+            return null;
+        }
         try {
             return clazz.getDeclaredField("ucp");
         } catch (NoSuchFieldException ignored) {
@@ -37,7 +38,9 @@ public final class URLClassPathAppender implements ClassPathAppender {
     }
 
     private static URLClassLoader findURLClassLoader(ClassLoader classLoader) {
-        if (classLoader instanceof URLClassLoader urlClassLoader) return urlClassLoader;
+        if (classLoader instanceof URLClassLoader urlClassLoader) {
+            return urlClassLoader;
+        }
         ClassLoader parent = classLoader.getParent();
         return parent == null ? null : findURLClassLoader(parent);
     }
@@ -46,11 +49,8 @@ public final class URLClassPathAppender implements ClassPathAppender {
     public void addJarToClasspath(Path file) {
         try {
             URL url = file.toUri().toURL();
-            synchronized (this.unopenedURLs)  {
-                this.unopenedURLs.add(url);
-                this.pathURLs.add(url);
-            }
-        } catch (MalformedURLException e) {
+            this.addURL.invokeExact(url);
+        } catch (Throwable e) {
             throw new RuntimeException(e);
         }
     }
