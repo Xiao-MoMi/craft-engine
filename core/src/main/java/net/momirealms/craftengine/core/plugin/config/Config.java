@@ -215,6 +215,8 @@ public final class Config {
     private boolean block$light_system$enable;
 
     private boolean recipe$enable;
+    private boolean recipe$force_sync_reload;
+    private boolean recipe$reload_on_all = true;
     private boolean recipe$disable_vanilla_recipes$all;
     private boolean recipe$unlock_on_ingredient_obtained;
     private Set<Key> recipe$disable_vanilla_recipes$list;
@@ -766,6 +768,8 @@ public final class Config {
 
         // recipe
         this.recipe$enable = config.getBoolean("recipe.enable", true);
+        this.recipe$force_sync_reload = config.getBoolean("recipe.force-sync-reload", false);
+        this.recipe$reload_on_all = config.getBoolean("recipe.reload-on-all", true);
         this.recipe$disable_vanilla_recipes$all = config.getBoolean("recipe.disable-vanilla-recipes.all", false);
         this.recipe$disable_vanilla_recipes$list = config.getStringList("recipe.disable-vanilla-recipes.list").stream().map(Key::of).collect(Collectors.toSet());
         this.recipe$ingredient_sources = config.getStringList("recipe.ingredient-sources");
@@ -1081,6 +1085,14 @@ public final class Config {
 
     public static boolean enableRecipeSystem() {
         return instance.recipe$enable;
+    }
+
+    public static boolean forceSyncRecipeReload() {
+        return instance.recipe$force_sync_reload;
+    }
+
+    public static boolean reloadRecipesOnAll() {
+        return instance.recipe$reload_on_all;
     }
 
     public static boolean disableAllVanillaRecipes() {

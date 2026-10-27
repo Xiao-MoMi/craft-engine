@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.ResourceOperationCoordinator;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
 import net.momirealms.craftengine.core.util.Timestamp;
 import org.bukkit.command.CommandSender;
@@ -80,7 +81,7 @@ public final class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                             }
                         });
                     } else if (argument == ReloadArgument.ALL) {
-                        plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().platform().run(r), true, true, true, false).thenAcceptAsync(reloadResult -> {
+                        plugin().reloadPlugin(plugin().scheduler().async(), r -> plugin().scheduler().platform().run(r), Config.reloadRecipesOnAll(), true, true, false).thenAcceptAsync(reloadResult -> {
                             if (reloadResult.success()) {
                                 handleFeedback(context, MessageConstants.COMMAND_RELOAD_CONFIG_SUCCESS,
                                         Component.text(reloadResult.asyncTime() + reloadResult.syncTime()),

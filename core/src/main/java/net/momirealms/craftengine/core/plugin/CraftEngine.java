@@ -330,10 +330,12 @@ public abstract class CraftEngine implements Plugin {
             asyncExecutor.execute(() -> {
                 long asyncTime = -1;
                 int issues = 0;
+                boolean syncRecipeReload;
                 try {
                     Timestamp timestamp = new Timestamp();
                     // 重载config
                     this.config.load();
+                    syncRecipeReload = reloadRecipe && Config.forceSyncRecipeReload();
                     // 重载翻译
                     this.translationManager.reload();
                     // 重载其他管理器
@@ -368,7 +370,7 @@ public abstract class CraftEngine implements Plugin {
                     }
 
                     // 执行延迟任务
-                    this.runDelayTasks(reloadRecipe);
+                    this.runDelayTasks(reloadRecipe && !syncRecipeReload);
                     // 重新发送tags，需要等待tags更新完成
                     this.networkManager.delayedLoad();
                     asyncTime = timestamp.deltaMillis();
@@ -389,6 +391,9 @@ public abstract class CraftEngine implements Plugin {
                             this.paintingManager.runDelayedSyncTasks();
                             // 同步注册配方
                             if (reloadRecipe) {
+                                if (syncRecipeReload) {
+                                    this.recipeManager.delayedLoad();
+                                }
                                 this.recipeManager.runDelayedSyncTasks();
                             }
                             // 同步修改进度

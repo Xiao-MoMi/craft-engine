@@ -629,6 +629,10 @@ network:
 recipe:
   # Master switch for custom recipes
   enable: true
+  # Build actual items and register recipes on the server main thread when enabled.
+  force-sync-reload: false
+  # Reload recipes with /ce reload all. Disable to require /ce reload recipe.
+  reload-on-all: true
 
   # Manage Minecraft's built-in recipe behavior
   disable-vanilla-recipes:
