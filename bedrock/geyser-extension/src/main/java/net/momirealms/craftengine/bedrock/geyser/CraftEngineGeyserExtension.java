@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserAdventureHelper;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphs;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
@@ -44,6 +45,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
+        GeyserAdventureHelper.disableLegacyFormattingWarning();
         List<Path> packs = this.packFiles();
         GeyserTranslations.install(packs, this.geyserApi().configDirectory(), this.logger());
         this.titleLayout = GeyserGlyphs.install(packs, this.logger());

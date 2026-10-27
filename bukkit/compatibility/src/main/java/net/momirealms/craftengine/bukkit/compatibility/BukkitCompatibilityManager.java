@@ -21,6 +21,7 @@ import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEn
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineFurnitureElementConfig;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineProvider;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicItemDropListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMechanicListener;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsSkillFunction;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsSpawnFunction;
 import net.momirealms.craftengine.bukkit.compatibility.nameplates.CustomNameplateHatSettings;
@@ -242,6 +243,9 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
         }
         if (this.hasPlugin("floodgate")) {
             this.hasFloodgate = true;
+        }
+        if (this.hasPlugin("MythicMobs")) {
+            runCatchingHook(() -> new MythicMechanicListener(this.plugin), "MythicMobs");
         }
         // 对安装了 FreedomChat 的用户告警
         if (Bukkit.getPluginManager().getPlugin("FreedomChat") != null) {
