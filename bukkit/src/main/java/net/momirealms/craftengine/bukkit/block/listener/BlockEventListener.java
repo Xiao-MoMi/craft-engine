@@ -12,6 +12,7 @@ import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
 import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
+import net.momirealms.craftengine.core.block.behavior.BlockBreakResult;
 import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.item.ItemDefinition;
@@ -155,9 +156,57 @@ public final class BlockEventListener implements Listener {
         WorldPosition position = new WorldPosition(world, location.getBlockX() + 0.5, location.getBlockY() + 0.5, location.getBlockZ() + 0.5);
         BukkitItem itemInHand = serverPlayer.getItemInHand(InteractionHand.MAIN_HAND);
 
+        ImmutableBlockState state = BlockStateUtils.isVanillaBlock(stateId) ? null : this.manager.getImmutableBlockStateUnsafe(stateId);
+        if (state != null && !state.isEmpty() && !event.isCancelled()) {
+            // double check adventure mode to prevent dupe
+            Object abilities = PlayerProxy.INSTANCE.getAbilities(serverPlayer.minecraftPlayer());
+            if (!AbilitiesProxy.INSTANCE.isMayBuild(abilities) && !serverPlayer.canBreak(blockPos, null)) {
+                return;
+            }
+
+            // trigger api event
+            CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems());
+            boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
+            if (isCancelled) {
+                event.setCancelled(true);
+                return;
+            }
+
+            // 同步选项
+            event.setDropItems(customBreakEvent.dropItems());
+
+            if (state.behavior().onPlayerBreak(world, serverPlayer, blockPos, state) == BlockBreakResult.CANCEL) {
+                event.setCancelled(true);
+                return;
+            }
+
+            List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.BLOCK_BREAK);
+            if (!functions.isEmpty()) {
+                // execute functions
+                Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
+                Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
+                        .withParameter(DirectContextParameters.PLAYER, serverPlayer)
+                        .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
+                        .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
+                        .withParameter(DirectContextParameters.EVENT, cancellable)
+                        .withParameter(DirectContextParameters.POSITION, position)
+                        .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
+                        .build()
+                ), functions);
+                if (cancellable.isCancelled()) {
+                    return;
+                }
+            }
+        }
+
         if (!event.isCancelled() && !ItemUtils.isEmpty(itemInHand)) {
             ItemDefinition itemDefinition = itemInHand.getDefinitionOrNull();
             if (itemDefinition != null) {
+                if (itemDefinition.behavior().onBreakBlock(world, serverPlayer, blockPos) == BlockBreakResult.CANCEL) {
+                    event.setCancelled(true);
+                    return;
+                }
+
                 List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.BLOCK_BREAK);
                 if (!functions.isEmpty()) {
                     Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
@@ -173,11 +222,10 @@ public final class BlockEventListener implements Listener {
                         return;
                     }
                 }
-                itemDefinition.behavior().onBreakBlock(world, serverPlayer, blockPos);
             }
         }
 
-        if (BlockStateUtils.isVanillaBlock(stateId)) {
+        if (state == null) {
             // sound system
             if (Config.enableSoundSystem() && (!event.isCancelled() || Config.processCancelledBreak())) {
                 if (BukkitItemUtils.isDebugStick(itemInHand)) return;
@@ -196,54 +244,16 @@ public final class BlockEventListener implements Listener {
                     player.playSound(block.getLocation().add(0.5, 0.5, 0.5), soundId.toString(), SoundCategory.BLOCKS, 1f, 0.8f);
                 }
             }
-        } else {
-            ImmutableBlockState state = this.manager.getImmutableBlockStateUnsafe(stateId);
-            if (!state.isEmpty()) {
-                if (!event.isCancelled()) {
-                    // double check adventure mode to prevent dupe
-                    Object abilities = PlayerProxy.INSTANCE.getAbilities(serverPlayer.minecraftPlayer());
-                    if (!AbilitiesProxy.INSTANCE.isMayBuild(abilities) && !serverPlayer.canBreak(blockPos, null)) {
-                        return;
-                    }
-
-                    // trigger api event
-                    CustomBlockBreakEvent customBreakEvent = new CustomBlockBreakEvent(serverPlayer, location, block, state, event.isDropItems());
-                    boolean isCancelled = EventUtils.fireAndCheckCancel(customBreakEvent);
-                    if (isCancelled) {
-                        event.setCancelled(true);
-                        return;
-                    }
-
-                    // 同步选项
-                    event.setDropItems(customBreakEvent.dropItems());
-
-                    List<Function<Context>> functions = state.owner().value().eventFunctions(EventTrigger.BLOCK_BREAK);
-                    if (!functions.isEmpty()) {
-                        // execute functions
-                        Cancellable cancellable = Cancellable.of(event::isCancelled, event::setCancelled);
-                        Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder()
-                                .withParameter(DirectContextParameters.PLAYER, serverPlayer)
-                                .withParameter(DirectContextParameters.BLOCK, new BukkitExistingBlock(block))
-                                .withParameter(DirectContextParameters.CUSTOM_BLOCK_STATE, state)
-                                .withParameter(DirectContextParameters.EVENT, cancellable)
-                                .withParameter(DirectContextParameters.POSITION, position)
-                                .withOptionalParameter(DirectContextParameters.ITEM_IN_HAND, ItemUtils.emptyToNull(itemInHand))
-                                .build()
-                        ), functions);
-                        if (cancellable.isCancelled()) {
-                            return;
-                        }
-                    }
-
-                    // play sound
+        } else if (!state.isEmpty()) {
+            if (!event.isCancelled()) {
+                // play sound
+                serverPlayer.playSound(position, state.settings().sounds().breakSound(), SoundSource.BLOCK);
+            }
+            // Restore sounds in cancelled events
+            else {
+                if (Config.processCancelledBreak()) {
+                    if (BukkitItemUtils.isDebugStick(itemInHand)) return;
                     serverPlayer.playSound(position, state.settings().sounds().breakSound(), SoundSource.BLOCK);
-                }
-                // Restore sounds in cancelled events
-                else {
-                    if (Config.processCancelledBreak()) {
-                        if (BukkitItemUtils.isDebugStick(itemInHand)) return;
-                        serverPlayer.playSound(position, state.settings().sounds().breakSound(), SoundSource.BLOCK);
-                    }
                 }
             }
         }

@@ -91,6 +91,14 @@ public final class DualBlockBehavior extends BukkitBlockBehavior implements Comb
     }
 
     @Override
+    public BlockBreakResult onPlayerBreak(World world, Player player, BlockPos pos, ImmutableBlockState state) {
+        if (this.first.onPlayerBreak(world, player, pos, state) == BlockBreakResult.CANCEL) {
+            return BlockBreakResult.CANCEL;
+        }
+        return this.second.onPlayerBreak(world, player, pos, state);
+    }
+
+    @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         InteractionResult r1 = this.first.useOnBlock(context, state);
         boolean hasPass = (r1 == InteractionResult.PASS);

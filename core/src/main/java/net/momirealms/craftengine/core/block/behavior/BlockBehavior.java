@@ -464,6 +464,10 @@ public abstract class BlockBehavior {
         return state.settings().replaceable();
     }
 
+    public BlockBreakResult onPlayerBreak(World world, Player player, BlockPos pos, ImmutableBlockState state) {
+        return BlockBreakResult.PASS;
+    }
+
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         return InteractionResult.TRY_EMPTY_HAND;
     }

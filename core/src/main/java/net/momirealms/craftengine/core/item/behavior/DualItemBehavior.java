@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.item.behavior;
 
+import net.momirealms.craftengine.core.block.behavior.BlockBreakResult;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -62,8 +63,10 @@ public final class DualItemBehavior extends ItemBehavior {
     }
 
     @Override
-    public void onBreakBlock(World world, Player player, BlockPos pos) {
-        this.first.onBreakBlock(world, player, pos);
-        this.second.onBreakBlock(world, player, pos);
+    public BlockBreakResult onBreakBlock(World world, Player player, BlockPos pos) {
+        if (this.first.onBreakBlock(world, player, pos) == BlockBreakResult.CANCEL) {
+            return BlockBreakResult.CANCEL;
+        }
+        return this.second.onBreakBlock(world, player, pos);
     }
 }
