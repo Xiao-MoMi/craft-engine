@@ -119,7 +119,13 @@ public class VanillaRecipeReader1_20 implements VanillaRecipeReader {
 
     @Override
     public int cookingTime(JsonObject object) {
-        return object.has("cookingtime") ? object.get("cookingtime").getAsInt() : 200;
+        if (object.has("cookingtime")) {
+            return object.get("cookingtime").getAsInt();
+        }
+        return switch (object.get("type").getAsString()) {
+            case "minecraft:blasting", "blasting", "minecraft:smoking", "smoking", "minecraft:campfire_cooking", "campfire_cooking" -> 100;
+            default -> 200;
+        };
     }
 
     @Override

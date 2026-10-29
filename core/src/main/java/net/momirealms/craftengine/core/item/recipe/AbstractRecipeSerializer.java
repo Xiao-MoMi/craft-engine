@@ -22,6 +22,8 @@ import java.util.*;
 
 public abstract class AbstractRecipeSerializer<R extends Recipe> implements RecipeSerializer<R> {
     protected static final VanillaRecipeReader VANILLA_RECIPE_HELPER =
+            VersionHelper.isOrAbove26_3 ?
+            new VanillaRecipeReader26_3() :
             VersionHelper.isOrAbove26_1 ?
             new VanillaRecipeReader26_1() :
             VersionHelper.isOrAbove1_21_2 ?
