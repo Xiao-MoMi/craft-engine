@@ -36,8 +36,7 @@ public final class BedrockGeneratedGeometry {
             for (TextureAnimation.Frame frame : animation.frames()) {
                 if (!visited.get(frame.index())) {
                     visited.set(frame.index());
-                    collectEdges(animation.sheet().getSubimage(frame.index() % columns * width,
-                            frame.index() / columns * height, width, height), edges);
+                    collectEdges(animation.sheet().getSubimage(frame.index() % columns * width, frame.index() / columns * height, width, height), edges);
                 }
             }
         }
@@ -64,9 +63,16 @@ public final class BedrockGeneratedGeometry {
                     sideFaces.add(direction, side < 2
                             ? face(material, uvX + spanU, uvY + spanV, -spanU, -spanV)
                             : face(material, uvX, uvY, spanU, spanV));
-                    cube(cubes, left + (side == 2 ? 16f / width : 0),
-                            bottom + (side == 0 ? 16f / height : 0), -depth,
-                            side < 2 ? 16f / width : 0, side < 2 ? 0 : 16f / height, depth * 2, sideFaces);
+                    cube(
+                            cubes,
+                            left + (side == 2 ? 16f / width : 0),
+                            bottom + (side == 0 ? 16f / height : 0),
+                            -depth,
+                            side < 2 ? 16f / width : 0,
+                            side < 2 ? 0 : 16f / height,
+                            depth * 2,
+                            sideFaces
+                    );
                 }
             }
         }

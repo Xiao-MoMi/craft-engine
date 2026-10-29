@@ -39,15 +39,13 @@ public final class BedrockModelTransform {
         Vector3f y = new Vector3f(matrix.m10(), matrix.m11(), matrix.m12());
         Vector3f z = new Vector3f(matrix.m20(), matrix.m21(), matrix.m22());
         float scale = x.length();
-        if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1
-                || scale <= 0 || matrix.determinant3x3() <= 0) {
+        if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1 || scale <= 0 || matrix.determinant3x3() <= 0) {
             throw new UnsupportedOperationException("Model transformation requires an affine matrix with positive uniform scale");
         }
         x.div(scale);
         y.div(scale);
         z.div(scale);
-        if (Math.abs(y.lengthSquared() - 1) > 0.00001f || Math.abs(z.lengthSquared() - 1) > 0.00001f
-                || Math.abs(x.dot(y)) > 0.00001f || Math.abs(x.dot(z)) > 0.00001f || Math.abs(y.dot(z)) > 0.00001f) {
+        if (Math.abs(y.lengthSquared() - 1) > 0.00001f || Math.abs(z.lengthSquared() - 1) > 0.00001f || Math.abs(x.dot(y)) > 0.00001f || Math.abs(x.dot(z)) > 0.00001f || Math.abs(y.dot(z)) > 0.00001f) {
             throw new UnsupportedOperationException("Non-uniform scale and shear in model transformations are not supported");
         }
         return scale;
@@ -59,7 +57,11 @@ public final class BedrockModelTransform {
         }
         float scale = uniformScale(transformation);
         // Java 在 display 居中之后乘入局部矩阵，局部坐标仍为 0..1；同时还原已有的几何缩小。
-        Matrix4f coordinates = new Matrix4f().translation(8 * geometryScale, 8 * (1 - geometryScale), -8 * geometryScale)
+        Matrix4f coordinates = new Matrix4f()
+                .translation(
+                        8 * geometryScale,
+                        8 * (1 - geometryScale),
+                        -8 * geometryScale)
                 .scale(-16 * geometryScale, 16 * geometryScale, 16 * geometryScale);
         Matrix4f matrix = new Matrix4f(coordinates).mul(transformation).mul(new Matrix4f(coordinates).invert());
         Quaternionf rotation = matrix.getUnnormalizedRotation(new Quaternionf());
