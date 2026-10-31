@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.MinecraftLocaleProxy;
-import org.geysermc.geyser.api.extension.ExtensionLogger;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -23,29 +23,23 @@ public final class GeyserTranslations {
     private GeyserTranslations() {
     }
 
-    public static void install(List<Path> packs, Path configDirectory, ExtensionLogger logger) {
+    public static Map<String, Map<String, String>> read(List<Path> packs) throws IOException {
         Map<String, Map<String, String>> translations = new HashMap<>();
-        List<Path> sorted = packs.stream().sorted(Comparator.comparing(path -> path.getFileName().toString())).toList();
-        for (Path pack : sorted) {
-            try {
-                for (Map.Entry<String, Map<String, String>> entry : readPack(pack).entrySet()) {
-                    translations.computeIfAbsent(entry.getKey(), locale -> new HashMap<>()).putAll(entry.getValue());
-                }
-            } catch (IOException | RuntimeException exception) {
-                logger.error("Failed to read translations from " + pack, exception);
+        for (Path pack : packs) {
+            for (Map.Entry<String, Map<String, String>> entry : readPack(pack).entrySet()) {
+                translations.computeIfAbsent(entry.getKey(), locale -> new HashMap<>()).putAll(entry.getValue());
             }
         }
-        if (translations.isEmpty()) {
-            return;
-        }
-        try {
-            Map<String, Map<String, String>> overrides = readOverrides(configDirectory.resolve("locales/overrides"));
-            MinecraftLocaleProxy proxy = MinecraftLocaleProxy.INSTANCE;
-            proxy.localeMappings(new GeyserTranslationMap(proxy.localeMappings(), translations, overrides));
-            logger.info("Loaded resource pack translations for " + translations.size() + " languages.");
-        } catch (IOException | RuntimeException exception) {
-            logger.error("Failed to install resource pack translations", exception);
-        }
+        return translations;
+    }
+
+    public static void install(Supplier<GeyserTextData> source, Path configDirectory) throws IOException {
+        MinecraftLocaleProxy proxy = MinecraftLocaleProxy.INSTANCE;
+        proxy.localeMappings(new GeyserTranslationMap(
+                proxy.localeMappings(),
+                source,
+                readOverrides(configDirectory.resolve("locales/overrides"))
+        ));
     }
 
     private static Map<String, Map<String, String>> readPack(Path path) throws IOException {

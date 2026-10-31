@@ -4,10 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
-import org.geysermc.geyser.api.extension.ExtensionLogger;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,7 +23,7 @@ public final class GeyserGlyphs {
     private GeyserGlyphs() {
     }
 
-    public static ContainerTitleLayout install(List<Path> packs, ExtensionLogger logger) {
+    public static GeyserTextData read(List<Path> packs) throws IOException {
         Map<String, Map<Integer, Integer>> fonts = new HashMap<>();
         Map<String, Map<Integer, FontGlyph>> metrics = new HashMap<>();
         for (Path pack : packs) {
@@ -63,20 +61,9 @@ public final class GeyserGlyphs {
                         }
                     }
                 }
-            } catch (IOException | RuntimeException exception) {
-                logger.error("Failed to read glyph mappings from " + pack, exception);
             }
         }
-        if (fonts.isEmpty()) {
-            return metrics.isEmpty() ? null : new ContainerTitleLayout(metrics);
-        }
-        try {
-            MessageTranslatorProxy translator = MessageTranslatorProxy.INSTANCE;
-            translator.bedrockSerializer(new GeyserGlyphSerializer(translator.bedrockSerializer(), fonts).wrap());
-            logger.info("Loaded image glyph mappings for " + fonts.size() + " fonts.");
-        } catch (RuntimeException | LinkageError exception) {
-            logger.error("Failed to install image glyph mappings", exception);
-        }
-        return metrics.isEmpty() ? null : new ContainerTitleLayout(metrics);
+        return new GeyserTextData(fonts, metrics.isEmpty() ? null : new ContainerTitleLayout(metrics),
+                GeyserTranslations.read(packs));
     }
 }

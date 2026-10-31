@@ -5,6 +5,7 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
@@ -29,9 +30,11 @@ import java.util.UUID;
 
 public final class BedrockPackGenerator {
 
-    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, Path output) throws IOException {
+    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, Path output, Path dataOutput) throws IOException {
         Path destination = output.toAbsolutePath().normalize();
+        Path dataDestination = dataOutput.toAbsolutePath().normalize();
         Files.createDirectories(destination.getParent());
+        Files.createDirectories(dataDestination.getParent());
         if (plan.hasErrors()) {
             Path report = destination.resolveSibling(destination.getFileName() + ".report.json");
             ItemRegistrationPlanWriter.write(plan, report, new BedrockItemIcons.Result(Set.of(), Map.of(), Map.of(), Set.of()));
@@ -48,18 +51,31 @@ public final class BedrockPackGenerator {
             JavaFontResolver fonts = new JavaFontResolver(resources);
             new BedrockFontGenerator(fonts).write(root);
             new BedrockGuiGenerator(resources).write(root);
-            GsonHelper.writeJsonFile(this.manifest(), root.resolve("manifest.json"));
+            JsonObject manifest = this.manifest();
+            GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {
                     Files.copy(icon, root.resolve("pack_icon.png"));
                 }
             }
             Path temporary = Files.createTempFile(destination.getParent(), "bedrock-pack-", ".tmp");
+            Path dataTemporary = Files.createTempFile(dataDestination.getParent(), "bedrock-data-", ".tmp");
             try {
+                Path data = fileSystem.getPath("extension-data").toAbsolutePath();
+                for (String file : BedrockPackFiles.SERVER_FILES) {
+                    Path target = data.resolve(file);
+                    Files.createDirectories(target.getParent());
+                    Files.move(root.resolve(file), target);
+                }
+                // Matching manifests let the extension reject a pair observed halfway through publication.
+                GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
                 ZipUtils.compress(root, temporary);
+                ZipUtils.compress(data, dataTemporary);
                 Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(dataTemporary, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } finally {
                 Files.deleteIfExists(temporary);
+                Files.deleteIfExists(dataTemporary);
             }
         }
     }

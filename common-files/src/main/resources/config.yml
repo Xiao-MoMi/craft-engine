@@ -34,7 +34,8 @@ resource-pack:
       #   protection: true  # requires premium version
       # - type: generate_bedrock_pack
       #   input: "./generated/resource_pack.zip"
-      #   output: "../Geyser-Spigot/packs/craftengine.mcpack"
+      #   pack_output: "../Geyser-Spigot/packs/craftengine.mcpack"
+      #   data_output: "../Geyser-Spigot/extensions/craftengine/data/craftengine.cedata"
         - type: upload
           pack: default
           path: "./generated/resource_pack.zip"

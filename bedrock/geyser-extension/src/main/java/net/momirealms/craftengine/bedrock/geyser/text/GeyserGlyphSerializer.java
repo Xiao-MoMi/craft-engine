@@ -10,13 +10,18 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public final class GeyserGlyphSerializer implements InvocationHandler {
     public static final String RESOLVED_FONT = "craftengine:resolved_glyphs";
     private final Object delegate;
-    private final Map<String, Map<Integer, Integer>> fonts;
+    private final Supplier<Map<String, Map<Integer, Integer>>> fonts;
 
     public GeyserGlyphSerializer(Object delegate, Map<String, Map<Integer, Integer>> fonts) {
+        this(delegate, () -> fonts);
+    }
+
+    public GeyserGlyphSerializer(Object delegate, Supplier<Map<String, Map<Integer, Integer>>> fonts) {
         this.delegate = delegate;
         this.fonts = fonts;
     }
@@ -48,7 +53,7 @@ public final class GeyserGlyphSerializer implements InvocationHandler {
             return source;
         }
         Object result = source;
-        Map<Integer, Integer> glyphs = this.fonts.get(font);
+        Map<Integer, Integer> glyphs = this.fonts.get().get(font);
         if (glyphs != null && AdventureTextComponentProxy.CLASS.isInstance(source)) {
             AdventureTextComponentProxy text = AdventureTextComponentProxy.INSTANCE;
             String content = text.content(source);

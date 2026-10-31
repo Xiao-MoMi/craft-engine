@@ -19,7 +19,7 @@ public interface PackWorkflowContext {
 
     void export(String path) throws Exception;
 
-    void generateBedrockPack(String input, String output) throws Exception;
+    void generateBedrockPack(String input, String output, String dataOutput) throws Exception;
 
     void validatePack() throws Exception;
 

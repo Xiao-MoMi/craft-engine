@@ -13,11 +13,17 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserAdventureHelper;
-import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphs;
+import net.momirealms.craftengine.bedrock.geyser.pack.GeyserLivePacks;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphSerializer;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserTextContext;
+import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.text.MinecraftLocaleProxy;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
-import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
+import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
+import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
+import org.geysermc.geyser.api.event.lifecycle.GeyserShutdownEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
@@ -28,13 +34,10 @@ import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.session.GeyserSession;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
@@ -42,19 +45,55 @@ public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
-    private ContainerTitleLayout titleLayout;
+    private GeyserLivePacks packs;
+    private Object originalSerializer;
+    private Map<String, Map<String, String>> originalTranslations;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
         GeyserAdventureHelper.disableLegacyFormattingWarning();
-        List<Path> packs = this.packFiles();
-        GeyserTranslations.install(packs, this.geyserApi().configDirectory(), this.logger());
-        this.titleLayout = GeyserGlyphs.install(packs, this.logger());
+        try {
+            this.packs = new GeyserLivePacks(this.geyserApi().packDirectory(), this.dataFolder().resolve("data"),
+                    this.dataFolder().resolve("pack-snapshots"), this.logger());
+            this.originalTranslations = MinecraftLocaleProxy.INSTANCE.localeMappings();
+            GeyserTranslations.install(() -> this.packs.text(GeyserTextContext.session()), this.geyserApi().configDirectory());
+            this.originalSerializer = MessageTranslatorProxy.INSTANCE.bedrockSerializer();
+            MessageTranslatorProxy.INSTANCE.bedrockSerializer(new GeyserGlyphSerializer(this.originalSerializer,
+                    () -> this.packs.text(GeyserTextContext.session()).fonts()).wrap());
+        } catch (IOException exception) {
+            throw new IllegalStateException("Failed to load CraftEngine pack/data pairs", exception);
+        }
     }
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
-        GeyserGuiMenus.install(this.logger(), this.titleLayout);
+        GeyserGuiMenus.install(this.logger(), () -> this.packs.text(GeyserTextContext.session()).layout());
+        GeyserTextContext.install();
+        this.packs.start();
+    }
+
+    @Subscribe
+    public void onLoadPacks(SessionLoadResourcePacksEvent event) {
+        this.packs.load(event);
+    }
+
+    @Subscribe
+    public void onDisconnect(SessionDisconnectEvent event) {
+        this.packs.disconnect(event.connection());
+    }
+
+    @Subscribe
+    public void onShutdown(GeyserShutdownEvent event) {
+        if (this.packs != null) {
+            this.packs.close();
+        }
+        GeyserTextContext.uninstall();
+        if (this.originalSerializer != null) {
+            MessageTranslatorProxy.INSTANCE.bedrockSerializer(this.originalSerializer);
+        }
+        if (this.originalTranslations != null) {
+            MinecraftLocaleProxy.INSTANCE.localeMappings(this.originalTranslations);
+        }
     }
 
     @Subscribe
@@ -77,19 +116,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     private List<Path> packFiles() {
-        Path directory = this.geyserApi().packDirectory();
-        if (!Files.isDirectory(directory)) {
-            return List.of();
-        }
-        try (Stream<Path> paths = Files.list(directory)) {
-            return paths.filter(Files::isRegularFile).filter(path -> {
-                String name = path.getFileName().toString().toLowerCase(Locale.ROOT);
-                return name.endsWith(".mcpack") || name.endsWith(".zip");
-            }).sorted().toList();
-        } catch (IOException exception) {
-            this.logger().error("Failed to scan Geyser packs directory " + directory, exception);
-            return List.of();
-        }
+        return this.packs.registrationFiles();
     }
 
     private void registerBlocks(Path path, GeyserDefineCustomBlocksEvent event) {
@@ -183,6 +210,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onSessionInitialize(SessionInitializeEvent event) {
+        GeyserTextContext.install((GeyserSession) event.connection());
         GeyserContainerCloseHandler.install((GeyserSession) event.connection());
         if (!this.componentPatches.isEmpty()) {
             GeyserItemComponentPatcher.install((GeyserSession) event.connection(), this.componentPatches);

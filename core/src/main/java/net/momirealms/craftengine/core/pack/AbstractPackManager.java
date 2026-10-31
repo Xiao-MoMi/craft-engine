@@ -1071,7 +1071,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
-        public void generateBedrockPack(String input, String output) throws IOException {
+        public void generateBedrockPack(String input, String output, String dataOutput) throws IOException {
             if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
                 throw new IOException("Geyser item plan generation requires Minecraft 1.21.4 or newer");
             }
@@ -1081,6 +1081,7 @@ public abstract class AbstractPackManager implements PackManager {
             }
             Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla-resource-pack")).download(VersionHelper.MINECRAFT_VERSION);
             Path outputPath = this.resolvePath(output);
+            Path dataPath = this.resolvePath(dataOutput);
             ItemRegistrationPlan plan;
             try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
@@ -1093,9 +1094,9 @@ public abstract class AbstractPackManager implements PackManager {
                         AbstractPackManager.this.plugin.logger().warn(message);
                     }
                 }
-                new BedrockPackGenerator().generate(resources, plan, outputPath);
+                new BedrockPackGenerator().generate(resources, plan, outputPath, dataPath);
             }
-            AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Restart Geyser to load the plan.");
+            AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Extension data: " + dataPath + ". Reconnect to load resource updates; restart Geyser if registrations changed.");
         }
 
         @Override
