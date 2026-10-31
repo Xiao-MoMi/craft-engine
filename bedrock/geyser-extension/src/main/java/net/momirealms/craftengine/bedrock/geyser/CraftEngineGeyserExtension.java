@@ -5,6 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockBreakHandler;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockPlacementHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
@@ -20,6 +23,7 @@ import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorPro
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.MinecraftLocaleProxy;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
 import org.geysermc.event.subscribe.Subscribe;
+import org.geysermc.event.PostOrder;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
@@ -36,18 +40,40 @@ import org.geysermc.geyser.session.GeyserSession;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
+    private final GeyserWorldBlocks worldBlocks = new GeyserWorldBlocks();
+    private final Set<String> blockItems = new HashSet<>();
+    private GeyserBlockPlacementHandler placementHandler;
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
     private GeyserLivePacks packs;
     private Object originalSerializer;
     private Map<String, Map<String, String>> originalTranslations;
+
+    public boolean sendMiningProgress(UUID viewer, int breakerId, int serverStateId, int x, int y, int z, float progress, float speed) {
+        if (!this.worldBlocks.containsServerState(serverStateId)) {
+            return false;
+        }
+        if (!(this.geyserApi().connectionByUuid(viewer) instanceof GeyserSession session) || session.isClosed()
+                || !(session.getBlockBreakHandler() instanceof GeyserBlockBreakHandler handler)) {
+            return false;
+        }
+        session.executeInEventLoop(() -> {
+            if (!session.isClosed()) {
+                handler.updateMiningProgress(breakerId, x, y, z, progress, speed);
+            }
+        });
+        return true;
+    }
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
@@ -67,7 +93,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
+        this.worldBlocks.install();
         GeyserGuiMenus.install(this.logger(), () -> this.packs.text(GeyserTextContext.session()).layout());
+        this.placementHandler = GeyserBlockPlacementHandler.install(this.blockItems);
+        this.logger().info("Enabled Java placement repeat interval for " + this.blockItems.size() + " CE block item variants.");
         GeyserTextContext.install();
         this.packs.start();
     }
@@ -80,14 +109,21 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
         this.packs.disconnect(event.connection());
+        if (this.placementHandler != null && event.connection() instanceof GeyserSession session) {
+            this.placementHandler.disconnect(session);
+        }
     }
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        this.worldBlocks.uninstall();
         if (this.packs != null) {
             this.packs.close();
         }
         GeyserTextContext.uninstall();
+        if (this.placementHandler != null) {
+            this.placementHandler.uninstall();
+        }
         if (this.originalSerializer != null) {
             MessageTranslatorProxy.INSTANCE.bedrockSerializer(this.originalSerializer);
         }
@@ -96,7 +132,9 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
     }
 
-    @Subscribe
+    // Geyser installs its built-in mushroom mappings after extensions, at NORMAL order.
+    // Apply CE's state overrides afterwards so their geometry and mining components survive.
+    @Subscribe(postOrder = PostOrder.LAST)
     public void onDefineCustomBlocks(GeyserDefineCustomBlocksEvent event) {
         this.displayBlocks.clear();
         for (Path path : this.packFiles()) {
@@ -107,6 +145,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         this.contextualItems.clear();
+        this.blockItems.clear();
         Map<String, GeyserItemComponentPatch> componentPatches = new HashMap<>();
         for (Path path : this.packFiles()) {
             this.registerItems(path, event, componentPatches);
@@ -131,6 +170,9 @@ public final class CraftEngineGeyserExtension implements Extension {
                 if (!this.displayBlocks.containsKey(name)) {
                     try {
                         this.displayBlocks.put(name, GeyserBlockRegistrationAdapter.registerBlock(display, event));
+                        if (display.has("java_state")) {
+                            this.worldBlocks.add(display);
+                        }
                     } catch (RuntimeException exception) {
                         this.logger().error("Failed to register display block " + name + " from " + path, exception);
                     }
@@ -185,9 +227,14 @@ public final class CraftEngineGeyserExtension implements Extension {
             Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
                 GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.displayBlocks);
+                JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
+                boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
                 for (CustomItemDefinition definition : converted.definitions()) {
                     event.register(identifier, definition);
                     registered++;
+                    if (placesBlock) {
+                        this.blockItems.add(definition.bedrockIdentifier().toString());
+                    }
                     if (converted.componentPatch() != null) {
                         componentPatches.put(definition.bedrockIdentifier().toString(), converted.componentPatch());
                     }
@@ -210,6 +257,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onSessionInitialize(SessionInitializeEvent event) {
+        if (!this.worldBlocks.isEmpty()) {
+            ((GeyserSession) event.connection()).setBlockBreakHandler(new GeyserBlockBreakHandler((GeyserSession) event.connection(), this.worldBlocks));
+        }
         GeyserTextContext.install((GeyserSession) event.connection());
         GeyserContainerCloseHandler.install((GeyserSession) event.connection());
         if (!this.componentPatches.isEmpty()) {

@@ -43,6 +43,9 @@ public final class ItemRegistrationPlanWriter {
             json.add(VARIANTS, variantsToJson(entry, generated)); // 全部分支
             JsonObject behavior = new JsonObject(); // Geyser 所需行为
             behavior.add("use", GsonHelper.get().toJsonTree(binding.clientBehavior().use())); // 使用行为
+            if (binding.placesBlock()) {
+                behavior.addProperty(PLACES_BLOCK, true);
+            }
             json.add(CLIENT_BEHAVIOR, behavior); // 客户端行为
             entries.add(json); // 加入注册列表
         }

@@ -109,9 +109,17 @@ public final class BedrockElementGeometry {
         return cubes;
     }
 
-    public static Result fit(JsonArray cubes) {
+    public static float fittingScale(JsonArray cubes) {
+        if (cubes.isEmpty()) {
+            return 1;
+        }
         Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
         Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
+        bounds(cubes, minimum, maximum);
+        return Math.min(horizontalScale(minimum, maximum), centeredScale(minimum.y, maximum.y));
+    }
+
+    private static void bounds(JsonArray cubes, Vector3f minimum, Vector3f maximum) {
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
             Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
@@ -132,47 +140,83 @@ public final class BedrockElementGeometry {
                 maximum.max(point);
             }
         }
-        return fit(cubes, minimum, maximum);
     }
 
-    private static Result fit(JsonArray cubes, Vector3f minimum, Vector3f maximum) {
+    private static float horizontalScale(Vector3f minimum, Vector3f maximum) {
+        return Math.min(centeredScale(minimum.x, maximum.x), centeredScale(minimum.z, maximum.z));
+    }
+
+    private static float centeredScale(float minimum, float maximum) {
+        float min = minimum - 8;
+        float max = maximum - 8;
         float scale = 1;
-        if (!cubes.isEmpty()) {
-            for (int axis = 0; axis < 3; axis++) {
-                float min = minimum.get(axis) - 8;
-                float max = maximum.get(axis) - 8;
-                float extent = max - min;
-                // 预留浮点余量，避免坐标写出后重算边界略微超限，导致客户端拒绝整个模型。
-                if (extent > MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) {
-                    scale = Math.min(scale, (MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) / extent);
-                }
-                // 客户端边界为方块坐标 [-0.875, 1.875]，各轴距方块中心最多 22 个模型单位。
-                if (min < 0) {
-                    scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / -min);
-                }
-                if (max > 0) {
-                    scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / max);
-                }
-                // 偏离中心的模型至少伸入标准方块一个单位，不能只满足整体尺寸限制。
-                if (min > 0) {
-                    scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / min);
-                } else if (max < 0) {
-                    scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / -max);
-                }
-            }
+        if (max - min > MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) {
+            scale = (MAX_GEOMETRY_SIZE - GEOMETRY_MARGIN) / (max - min);
         }
-        if (scale != 1) {
-            // 几何围绕方块中心缩小，显示变换反向补偿，保留原有视觉尺寸。
-            for (JsonElement value : cubes) {
-                JsonObject cube = value.getAsJsonObject();
-                scale(cube.getAsJsonArray("origin"), scale, true);
-                scale(cube.getAsJsonArray("size"), scale, false);
-                if (cube.has("pivot")) {
-                    scale(cube.getAsJsonArray("pivot"), scale, true);
-                }
-            }
+        if (min < 0) {
+            scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / -min);
         }
+        if (max > 0) {
+            scale = Math.min(scale, (MAX_CENTER_DISTANCE - GEOMETRY_MARGIN) / max);
+        }
+        // 偏离中心的模型至少伸入标准方块一个单位。
+        if (min > 0) {
+            scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / min);
+        } else if (max < 0) {
+            scale = Math.min(scale, (7 - GEOMETRY_MARGIN) / -max);
+        }
+        return scale;
+    }
+
+    public static Result fit(JsonArray cubes) {
+        float scale = fittingScale(cubes);
+        scaleCubes(cubes, scale, 8);
         return new Result(cubes, scale);
+    }
+
+    public static float fitWorldBlock(JsonArray cubes) {
+        if (cubes.isEmpty()) {
+            return 1;
+        }
+        Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
+        Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
+        bounds(cubes, minimum, maximum);
+        if (fitsAxis(minimum.x, maximum.x) && fitsAxis(minimum.y, maximum.y) && fitsAxis(minimum.z, maximum.z)) {
+            return 1;
+        }
+        float horizontal = horizontalScale(minimum, maximum);
+        float pivotY = 8;
+        float scale = Math.min(horizontal, centeredScale(minimum.y, maximum.y));
+        if (minimum.y == 0 && maximum.y > 0) {
+            // 贴地模型绕底部缩放；缩小后仍须满足客户端的方块重叠条件。
+            float top = Math.min(MAX_GEOMETRY_SIZE, 8 + MAX_CENTER_DISTANCE);
+            float grounded = Math.min(horizontal, (top - GEOMETRY_MARGIN) / maximum.y);
+            if (grounded * maximum.y >= 1) {
+                pivotY = 0;
+                scale = grounded;
+            }
+        }
+        scaleCubes(cubes, scale, pivotY);
+        return scale;
+    }
+
+    private static boolean fitsAxis(float min, float max) {
+        return max - min <= MAX_GEOMETRY_SIZE && min >= 8 - MAX_CENTER_DISTANCE && max <= 8 + MAX_CENTER_DISTANCE
+                && min <= 15 && max >= 1;
+    }
+
+    private static void scaleCubes(JsonArray cubes, float scale, float pivotY) {
+        if (scale == 1) {
+            return;
+        }
+        for (JsonElement value : cubes) {
+            JsonObject cube = value.getAsJsonObject();
+            scale(cube.getAsJsonArray("origin"), scale, pivotY);
+            scale(cube.getAsJsonArray("size"), scale, 0);
+            if (cube.has("pivot")) {
+                scale(cube.getAsJsonArray("pivot"), scale, pivotY);
+            }
+        }
     }
 
     private static JsonObject cube(Vector3f origin, Vector3f size, JavaModel.Rotation rotation, JsonObject faces) {
@@ -187,9 +231,9 @@ public final class BedrockElementGeometry {
         return cube;
     }
 
-    private static void scale(JsonArray vector, float scale, boolean position) {
+    private static void scale(JsonArray vector, float scale, float pivotY) {
         for (int axis = 0; axis < 3; axis++) {
-            float center = position && axis == 1 ? 8 : 0;
+            float center = axis == 1 ? pivotY : 0;
             vector.set(axis, new com.google.gson.JsonPrimitive((vector.get(axis).getAsFloat() - center) * scale + center));
         }
     }

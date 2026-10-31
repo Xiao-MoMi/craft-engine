@@ -190,6 +190,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private boolean swingHandAck;
     private int lastSwingHandTick;
     private float miningProgress;
+    private boolean advancedMiningThisTick;
     // for client visual sync
     private int resentSoundTick;
     private int resentSwingTick;
@@ -802,6 +803,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
 
         // 本tick内有挥手
+        this.advancedMiningThisTick = false;
         if (hasSwingHand()) {
             if (this.gameTicks - this.preventBreakTick >= 3) {
                 // 连续挥手且没被重置
@@ -826,6 +828,10 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                 }
             }
             this.swingHandAck = false;
+        }
+        if (!this.advancedMiningThisTick && this.miningProgress > 0 && this.isDestroyingCustomBlock && this.destroyPos != null
+                && currentDestroyStageDisplay() == null) {
+            this.broadcastDestroyProgressVanilla(this.destroyPos, this.lastSentState, this.miningProgress, 0, false);
         }
 
         // 实体剔除更新相机位置
@@ -992,6 +998,9 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             this.destroyedState = state;
             this.isDestroyingBlock = true;
             this.isDestroyingCustomBlock = custom;
+            if (custom && currentDestroyStageDisplay() == null) {
+                this.broadcastDestroyProgressVanilla(pos, 0, 0, 0, false);
+            }
         }
 
         if (custom) {
@@ -1174,8 +1183,9 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                 ImmutableBlockState customState = optionalCustomState.get();
                 // accumulate progress
                 this.miningProgress = progressToAdd + miningProgress;
+                this.advancedMiningThisTick = true;
                 // broadcast changes; dedup (vanilla 0~10 stage or custom item index) happens inside
-                broadcastDestroyProgress(hitPos, this.miningProgress);
+                this.broadcastDestroyProgress(hitPos, this.miningProgress, progressToAdd);
 
                 // can break now
                 if (this.miningProgress >= 1f) {
@@ -1229,16 +1239,20 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void broadcastDestroyProgress(BlockPos hitPos, float progress) {
+        this.broadcastDestroyProgress(hitPos, progress, 0);
+    }
+
+    private void broadcastDestroyProgress(BlockPos hitPos, float progress, float speed) {
         DestroyStageDisplayEntitySetting display = currentDestroyStageDisplay();
         int key = progress < 0 ? -1 : (display != null ? display.itemIndexForProgress(progress) : (int) (progress * 10.0F));
-        if (key == this.lastSentState) {
-            return;
-        }
+        boolean changed = key != this.lastSentState;
         this.lastSentState = key;
         if (display != null) {
-            broadcastDestroyProgressViaDisplay(hitPos, progress, display);
+            if (changed) {
+                this.broadcastDestroyProgressViaDisplay(hitPos, progress, display);
+            }
         } else {
-            broadcastDestroyProgressVanilla(hitPos, key);
+            this.broadcastDestroyProgressVanilla(hitPos, key, progress, speed, changed);
         }
     }
 
@@ -1251,11 +1265,26 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void broadcastDestroyProgressVanilla(BlockPos hitPos, int stage) {
-        Object packet = ClientboundBlockDestructionPacketProxy.INSTANCE.newInstance(Integer.MAX_VALUE - entityId(), LocationUtils.toBlockPos(hitPos), stage);
-        sendPacket(packet, false);
+        this.broadcastDestroyProgressVanilla(hitPos, stage, stage < 0 ? -1 : stage / 10f, 0, true);
+    }
+
+    private void broadcastDestroyProgressVanilla(BlockPos hitPos, int stage, float progress, float speed, boolean changed) {
+        int breakerId = Integer.MAX_VALUE - entityId();
+        int stateId = this.destroyedState == null ? -1 : BlockStateUtils.blockStateToId(this.destroyedState);
+        Object packet = changed ? ClientboundBlockDestructionPacketProxy.INSTANCE.newInstance(breakerId, LocationUtils.toBlockPos(hitPos), stage) : null;
+        this.sendDestroyProgress(this, hitPos, breakerId, stateId, progress, speed, packet);
         for (Player other : getTrackedBy()) {
-            if (!isWithinDestroyRange(hitPos, other)) continue;
-            other.sendPacket(packet, false);
+            if (isWithinDestroyRange(hitPos, other)) {
+                this.sendDestroyProgress(other, hitPos, breakerId, stateId, progress, speed, packet);
+            }
+        }
+    }
+
+    private void sendDestroyProgress(Player viewer, BlockPos position, int breakerId, int stateId, float progress, float speed, @Nullable Object packet) {
+        // A synchronized Bedrock viewer must not also receive Java stages: Geyser would start a second, estimated timer.
+        if (!this.plugin.compatibilityManager().sendMiningProgress(viewer, breakerId, stateId, position, progress, speed)
+                && packet != null) {
+            viewer.sendPacket(packet, false);
         }
     }
 

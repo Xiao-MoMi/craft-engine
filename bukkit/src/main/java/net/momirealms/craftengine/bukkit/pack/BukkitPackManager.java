@@ -5,6 +5,8 @@ import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackCacheEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackPrepareEvent;
 import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemBehaviorReader;
+import net.momirealms.craftengine.bukkit.pack.bedrock.block.BukkitWorldBlockSources;
+import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemRegistrationReader;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
@@ -57,6 +59,11 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     @Override
     protected void dispatchCacheEvent(PackCacheData cacheData) {
         EventUtils.fireAndForget(new AsyncResourcePackCacheEvent(cacheData));
+    }
+
+    @Override
+    protected List<WorldBlockSource> collectBedrockWorldBlocks() {
+        return BukkitWorldBlockSources.collect(this.plugin.blockManager().loadedBlocks().values());
     }
 
     @Override

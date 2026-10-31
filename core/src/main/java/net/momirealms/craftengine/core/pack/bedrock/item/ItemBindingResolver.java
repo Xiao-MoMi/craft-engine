@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.behavior.BlockItem;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -41,7 +42,8 @@ public final class ItemBindingResolver {
                 itemModel,
                 definition,
                 behavior,
-                properties
+                properties,
+                serverItem.getBehavior().orElse(null) instanceof BlockItem
         );
     }
 }

@@ -39,6 +39,7 @@ public final class GeyserLivePacks implements AutoCloseable {
     private final Map<GeyserConnection, State> sessions = new HashMap<>();
     private final Set<GeyserPackSnapshot> snapshots = new HashSet<>();
     private final Set<String> reported = new HashSet<>();
+    private final Map<Path, GeyserPackStatus> statuses = new LinkedHashMap<>();
     private final State startup;
     private State current;
 
@@ -72,7 +73,27 @@ public final class GeyserLivePacks implements AutoCloseable {
 
     public void start() {
         this.prepare();
+        this.startup.packs.forEach((path, pack) -> this.status(path, pack.uuid(), GeyserPackStatus.State.READY, ""));
         this.executor.scheduleWithFixedDelay(this::refresh, 1, 1, TimeUnit.SECONDS);
+    }
+
+    public synchronized Map<Path, GeyserPackStatus> statuses() {
+        return Map.copyOf(this.statuses);
+    }
+
+    private synchronized void status(Path path, UUID generated, GeyserPackStatus.State state, String reason) {
+        GeyserPackSnapshot served = this.current.packs.get(path);
+        GeyserPackSnapshot registered = this.startup.packs.get(path);
+        GeyserPackStatus status = new GeyserPackStatus(generated, served == null ? null : served.uuid(),
+                registered == null ? null : registered.uuid(), state, reason);
+        if (!status.equals(this.statuses.put(path, status))) {
+            String message = "CraftEngine pack " + path + ": " + status.message();
+            if (state == GeyserPackStatus.State.READY) {
+                this.logger.info(message);
+            } else {
+                this.logger.warning(message);
+            }
+        }
     }
 
     void prepare() {
@@ -118,24 +139,37 @@ public final class GeyserLivePacks implements AutoCloseable {
             }
             boolean changed = false;
             List<Path> sources = this.sources();
-            if (!sources.containsAll(this.startup.packs.keySet())) {
-                this.report("A CraftEngine pack was removed; restart Geyser to update registrations.");
+            for (Path path : this.startup.packs.keySet()) {
+                if (!sources.contains(path)) {
+                    this.observed.remove(path);
+                    boolean removed = !Files.isRegularFile(path);
+                    this.status(path, null, removed ? GeyserPackStatus.State.RESTART_REQUIRED : GeyserPackStatus.State.WAITING_FOR_PAIR,
+                            removed ? "Resource pack removed; restart Geyser to update registrations." : "Missing extension data; keeping the previous pack.");
+                }
             }
             for (Path path : sources) {
                 Stamp before = this.stamp(path);
                 if (before.equals(this.observed.get(path))) {
                     continue;
                 }
-                GeyserPackSnapshot next = GeyserPackSnapshot.read(path, BedrockPackFiles.data(path, this.dataDirectory), this.store);
+                GeyserPackSnapshot next;
+                try {
+                    next = GeyserPackSnapshot.read(path, BedrockPackFiles.data(path, this.dataDirectory), this.store);
+                } catch (IOException | RuntimeException exception) {
+                    this.status(path, null, GeyserPackStatus.State.WAITING_FOR_PAIR, exception.toString());
+                    continue;
+                }
                 boolean retained = false;
                 try {
                     if (!before.equals(this.stamp(path))) {
                         continue;
                     }
                     GeyserPackSnapshot initial = this.startup.packs.get(path);
-                    if (initial == null || !initial.sameRegistrations(next)) {
+                    GeyserRegistrationChanges changes = initial == null ? null : initial.registrationChanges(next);
+                    if (initial == null || changes.requiresRestart()) {
                         this.observed.put(path, before);
-                        this.report("CraftEngine registrations changed in " + path + "; restart Geyser. The running server keeps the previous pack.");
+                        this.status(path, next.uuid(), GeyserPackStatus.State.RESTART_REQUIRED,
+                                initial == null ? "New pack; restart Geyser to register it." : changes.summary());
                         continue;
                     }
                     updated.put(path, next);
@@ -150,6 +184,12 @@ public final class GeyserLivePacks implements AutoCloseable {
                     this.observed.put(path, before);
                     retained = true;
                     changed = true;
+                    this.status(path, next.uuid(), GeyserPackStatus.State.READY, "Reconnect to load this version.");
+                } catch (IOException | RuntimeException exception) {
+                    synchronized (this) {
+                        updated = new LinkedHashMap<>(this.current.packs);
+                    }
+                    this.status(path, next.uuid(), GeyserPackStatus.State.WAITING_FOR_PAIR, exception.toString());
                 } finally {
                     if (!retained) {
                         next.delete();

@@ -39,6 +39,7 @@ public final class BedrockPackLayout {
     public static final String GENERATED = "generated";
     public static final String ITEM_ID = "item_id";
     public static final String CLIENT_BEHAVIOR = "client_behavior";
+    public static final String PLACES_BLOCK = "places_block";
 
     public static final String SEVERITY = "severity";
     public static final String CODE = "code";

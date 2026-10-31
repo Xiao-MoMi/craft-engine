@@ -20,6 +20,10 @@ public final class BlockRegistrationPlanWriter {
     }
 
     public static void write(BedrockItemIcons.Result generated, Path path) throws IOException {
+        write(generated, new BedrockWorldBlocks.Result(new JsonArray(), new JsonArray()), path);
+    }
+
+    public static void write(BedrockItemIcons.Result generated, BedrockWorldBlocks.Result world, Path path) throws IOException {
         Map<String, BedrockItemBlocks.DisplayBlock> blocks = new TreeMap<>();
         for (BedrockItemBlocks.DisplayBlock block : generated.displayBlocks().values()) {
             blocks.putIfAbsent(block.name(), block);
@@ -35,6 +39,10 @@ public final class BlockRegistrationPlanWriter {
             entries.add(entry);
         }
         JsonObject result = new JsonObject();
+        entries.addAll(world.entries());
+        if (!world.diagnostics().isEmpty()) {
+            result.add("diagnostics", world.diagnostics());
+        }
         result.addProperty(KIND, RegistrationPlanKind.BLOCK.id());
         result.addProperty(FORMAT_VERSION, RegistrationPlanKind.BLOCK.formatVersion());
         result.add(ENTRIES, entries);

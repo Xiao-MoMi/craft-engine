@@ -8,6 +8,8 @@ import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockWorldBlocks;
+import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
@@ -25,12 +27,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 public final class BedrockPackGenerator {
 
     public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, Path output, Path dataOutput) throws IOException {
+        this.generate(resources, plan, List.of(), output, dataOutput);
+    }
+
+    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path output, Path dataOutput) throws IOException {
         Path destination = output.toAbsolutePath().normalize();
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
         Files.createDirectories(destination.getParent());
@@ -46,7 +53,8 @@ public final class BedrockPackGenerator {
             Files.createDirectories(metadata.getParent());
             BedrockItemIcons.Result generated = new BedrockItemIcons(resources).write(plan, root);
             ItemRegistrationPlanWriter.write(plan, metadata, generated);
-            BlockRegistrationPlanWriter.write(generated, root.resolve(RegistrationPlanKind.BLOCK.file()));
+            BedrockWorldBlocks.Result worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
+            BlockRegistrationPlanWriter.write(generated, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             JavaFontResolver fonts = new JavaFontResolver(resources);
             new BedrockFontGenerator(fonts).write(root);

@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.sparrow.message.tag.resolver.TagResolver;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,10 @@ public interface CompatibilityManager {
     TagResolver[] createExternalTagResolvers();
 
     boolean isBedrockPlayer(Player player);
+
+    default boolean sendMiningProgress(Player viewer, int breakerId, int serverStateId, BlockPos position, float progress, float speed) {
+        return false;
+    }
 
     ModelProvider getModelProvider(String id);
 

@@ -9,5 +9,6 @@ public record ResolvedItemBinding(Key itemId,
                                   @Nullable Key itemModel,
                                   @Nullable ItemDefinitionBinding definition,
                                   ItemBehaviorDescription clientBehavior,
-                                  ItemRegistrationProperties clientProperties) {
+                                  ItemRegistrationProperties clientProperties,
+                                  boolean placesBlock) {
 }

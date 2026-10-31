@@ -88,8 +88,11 @@ public final class GeyserPackSnapshot {
         return this.uuid;
     }
 
-    public boolean sameRegistrations(GeyserPackSnapshot other) {
-        return this.registrations.equals(other.registrations);
+    public GeyserRegistrationChanges registrationChanges(GeyserPackSnapshot other) {
+        GeyserRegistrationChanges changes = new GeyserRegistrationChanges();
+        changes.compare(RegistrationPlanKind.ITEM, this.registrations.get(0), other.registrations.get(0));
+        changes.compare(RegistrationPlanKind.BLOCK, this.registrations.get(1), other.registrations.get(1));
+        return changes;
     }
 
     public void delete() throws IOException {

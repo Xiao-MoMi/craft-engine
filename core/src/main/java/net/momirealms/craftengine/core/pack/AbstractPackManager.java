@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.item.equipment.EquipmentLayerType;
 import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.pack.atlas.*;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
@@ -190,6 +191,8 @@ public abstract class AbstractPackManager implements PackManager {
     protected abstract void dispatchGenerationEvent(Path resourceFolder, Path zipPath);
 
     protected abstract ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException;
+
+    protected abstract List<WorldBlockSource> collectBedrockWorldBlocks();
 
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
@@ -1094,7 +1097,7 @@ public abstract class AbstractPackManager implements PackManager {
                         AbstractPackManager.this.plugin.logger().warn(message);
                     }
                 }
-                new BedrockPackGenerator().generate(resources, plan, outputPath, dataPath);
+                new BedrockPackGenerator().generate(resources, plan, AbstractPackManager.this.collectBedrockWorldBlocks(), outputPath, dataPath);
             }
             AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Extension data: " + dataPath + ". Reconnect to load resource updates; restart Geyser if registrations changed.");
         }
