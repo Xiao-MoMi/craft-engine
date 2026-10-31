@@ -64,7 +64,6 @@ import net.momirealms.craftengine.core.world.score.TeamManager;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -944,7 +943,6 @@ public abstract class CraftEngine implements Plugin {
      *
      * @return PluginTaskRegistry
      */
-    @ApiStatus.Experimental
     public PluginTaskRegistry beforeEnableTaskRegistry() {
         return this.preEnableTaskRegistry;
     }
@@ -956,7 +954,6 @@ public abstract class CraftEngine implements Plugin {
      *
      * @return PluginTaskRegistry
      */
-    @ApiStatus.Experimental
     public PluginTaskRegistry afterEnableTaskRegistry() {
         return this.postEnableTaskRegistry;
     }

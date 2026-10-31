@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.ImageUtils;
 
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;

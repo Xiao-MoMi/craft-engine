@@ -3,14 +3,14 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons.Variant;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.ImageUtils;
+import org.joml.Matrix4fc;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
-import org.joml.Matrix4fc;
 
 public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
     private final JavaModelResolver models;

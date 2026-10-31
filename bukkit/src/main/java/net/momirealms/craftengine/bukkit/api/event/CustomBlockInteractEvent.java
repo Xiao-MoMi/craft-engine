@@ -95,7 +95,6 @@ public final class CustomBlockInteractEvent extends PlayerEvent implements Cance
         return this.state;
     }
 
-    @ApiStatus.Experimental
     @NotNull
     public ItemStack item() {
         return this.item;

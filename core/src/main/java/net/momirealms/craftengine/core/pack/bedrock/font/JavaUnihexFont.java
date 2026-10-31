@@ -2,11 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntMaps;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver.Glyph;
 
 import java.io.BufferedReader;

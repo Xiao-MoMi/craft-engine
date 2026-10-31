@@ -7,11 +7,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorReader;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.BowItemProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.CrossbowItemProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.InstrumentItemProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.InstrumentProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.*;
 import net.momirealms.craftengine.proxy.minecraft.world.item.component.SwingAnimationProxy;
 import org.jetbrains.annotations.Nullable;
 

@@ -8,9 +8,7 @@ import net.momirealms.craftengine.core.registry.Registries;
 import net.momirealms.craftengine.core.registry.WritableRegistry;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Experimental
 public abstract class FurnitureBehaviors {
     protected FurnitureBehaviors() {}
 

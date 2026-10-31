@@ -4,11 +4,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class BedrockItemGenerationContext {
     private final Path root;

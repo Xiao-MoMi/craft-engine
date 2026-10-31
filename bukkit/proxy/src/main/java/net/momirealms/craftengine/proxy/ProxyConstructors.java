@@ -1,9 +1,10 @@
 package net.momirealms.craftengine.proxy;
 
-import java.lang.invoke.MethodHandle;
 import net.momirealms.sparrow.reflection.constructor.SConstructor2;
 import net.momirealms.sparrow.reflection.constructor.SparrowConstructor;
 import net.momirealms.sparrow.reflection.exception.SparrowReflectionException;
+
+import java.lang.invoke.MethodHandle;
 
 public final class ProxyConstructors {
 

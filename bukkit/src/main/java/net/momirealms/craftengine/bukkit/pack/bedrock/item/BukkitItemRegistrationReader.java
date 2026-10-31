@@ -10,11 +10,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPropert
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationReader;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public final class BukkitItemRegistrationReader implements ItemRegistrationReader {
     private static final Set<Key> EFFECTIVE_COMPONENTS = Set.of(DataComponentKeys.EQUIPPABLE, DataComponentKeys.KINETIC_WEAPON);

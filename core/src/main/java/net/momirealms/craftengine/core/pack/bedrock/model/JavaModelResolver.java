@@ -6,35 +6,25 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemDefinitionBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
-import net.momirealms.craftengine.core.util.Direction;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.ModelUtils;
-import net.momirealms.craftengine.core.util.VectorUtils;
+import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_ENTITY;
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_GENERATED;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
+import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Rotation;
 import static net.momirealms.craftengine.core.pack.model.ModelJsonKeys.*;
 
 public final class JavaModelResolver {
