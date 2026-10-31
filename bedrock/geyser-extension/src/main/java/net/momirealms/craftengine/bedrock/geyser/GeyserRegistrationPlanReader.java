@@ -13,7 +13,8 @@ import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserRegistrationPlanReader {
 

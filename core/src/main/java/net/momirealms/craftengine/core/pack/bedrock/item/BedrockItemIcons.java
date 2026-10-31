@@ -67,6 +67,7 @@ public final class BedrockItemIcons {
         BedrockSpearPlayerAnimations.write(context.javaSpears(), root);
         BedrockShieldPlayerAnimations.write(context.javaShields(), root);
         BedrockBowPlayerAnimations.write(context.bows(), context.javaBows(), root);
+        BedrockSwingPlayerAnimations.write(context.javaSwings(), root);
         return new Result(context.icons().keySet(), context.displays(), context.variants(), context.attachables()); // 供注册计划关联已生成资源与分支条件
     }
 

@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.*;
 import org.joml.Vector3f;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
-import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class Bedrock3DItemAttachables {
     private Bedrock3DItemAttachables() {
@@ -37,7 +35,7 @@ public final class Bedrock3DItemAttachables {
             Material material = materials.get(layer);
             String name = "layer" + layer;
             String path = "textures/" + resource + "/hand/layer_" + layer;
-            JsonArray frames = writeTextures(material, name, path, textureNames, root);
+            JsonArray frames = BedrockItemTextures.writeFrames(material.data(), material.color(), name, path, textureNames, root);
             for (int stage = 0; stage < stages.size(); stage++) {
                 JsonArray cubes = select(stages.get(stage).cubes(), name);
                 if (cubes.isEmpty()) {
@@ -110,29 +108,6 @@ public final class Bedrock3DItemAttachables {
         JsonObject attachable = new JsonObject();
         attachable.add("description", description);
         writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
-    }
-
-    private static JsonArray writeTextures(Material material, String name, String path, JsonObject textures, Path root) throws IOException {
-        TextureData data = material.data();
-        TextureAnimation animation = data.animation();
-        JsonArray frames = new JsonArray();
-        if (animation == null) {
-            BufferedImage image = material.color() == WHITE ? data.image() : ImageUtils.multiplyColor(data.image(), material.color());
-            ImageUtils.writePng(image, root.resolve(path + ".png"));
-            textures.addProperty(name, path);
-            frames.add("Texture." + name);
-        } else {
-            int interval = animation.sampleInterval();
-            BufferedImage image = new BufferedImage(animation.width(), animation.height(), BufferedImage.TYPE_INT_ARGB);
-            for (int tick = 0; tick < animation.duration(); tick += interval) {
-                animation.render(tick, material.color(), image);
-                String suffix = "_frame_" + tick / interval;
-                ImageUtils.writePng(image, root.resolve(path + suffix + ".png"));
-                textures.addProperty(name + suffix, path + suffix);
-                frames.add("Texture." + name + suffix);
-            }
-        }
-        return frames;
     }
 
     private static JsonArray select(JsonArray source, String material) {

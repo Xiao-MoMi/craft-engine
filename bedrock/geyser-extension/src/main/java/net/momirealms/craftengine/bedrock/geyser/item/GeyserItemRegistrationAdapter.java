@@ -12,8 +12,8 @@ import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemIcons;
 import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserBlockPlacer;
 import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserItemDataComponents;
-import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.predicate.PredicateStrategy;
+import org.geysermc.geyser.api.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;

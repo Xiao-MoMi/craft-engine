@@ -1,15 +1,9 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
-import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.geyser.proxy.inventory.OpenScreenPacketProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureStyleProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTextColorProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTextComponentProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTranslatableComponentProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTranslationRendererProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.api.extension.ExtensionLogger;
 import org.geysermc.geyser.registry.Registries;

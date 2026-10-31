@@ -1,0 +1,22 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.player.first_person.attack_rotation": {
+      "loop": true,
+      "bones": {
+        "rightarm": {
+          "position": [
+            "math.clamp(-15.5 * math.sin(variable.first_person_item_rotation_factor * variable.attack_time * 112.0), -7.0, 999.0) * math.sin(variable.first_person_item_rotation_factor * variable.attack_time * 112.0)",
+            "math.sin(variable.first_person_item_rotation_factor * (1.0 - variable.attack_time) * (1.0 - variable.attack_time) * 200.0) * 7.5 - variable.first_person_item_rotation_factor * variable.attack_time * 15.0 + variable.short_arm_offset_right",
+            "math.sin(variable.first_person_item_rotation_factor * variable.attack_time * 120.0) * 1.75"
+          ],
+          "rotation": [
+            "math.sin(variable.first_person_item_rotation_factor * (1.0 - variable.attack_time) * (1.0 - variable.attack_time) * 280.0) * -60.0",
+            "math.sin(variable.first_person_item_rotation_factor * (1.0 - variable.attack_time) * (1.0 - variable.attack_time) * 280.0) * 40.0",
+            "math.sin(variable.first_person_item_rotation_factor * (1.0 - variable.attack_time) * (1.0 - variable.attack_time) * 280.0) * 20.0"
+          ]
+        }
+      }
+    }
+  }
+}

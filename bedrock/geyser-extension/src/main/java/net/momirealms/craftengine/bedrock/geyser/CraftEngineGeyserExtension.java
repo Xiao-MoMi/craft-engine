@@ -5,34 +5,35 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
+import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
+import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
-import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserAdventureHelper;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphs;
-import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserTranslations;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
-import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
-import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
-import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.event.subscribe.Subscribe;
+import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
+import org.geysermc.geyser.api.event.lifecycle.GeyserPostInitializeEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserPreInitializeEvent;
 import org.geysermc.geyser.api.extension.Extension;
-import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
+import org.geysermc.geyser.api.util.Identifier;
+import org.geysermc.geyser.session.GeyserSession;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Locale;
-import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
@@ -182,6 +183,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onSessionInitialize(SessionInitializeEvent event) {
+        GeyserContainerCloseHandler.install((GeyserSession) event.connection());
         if (!this.componentPatches.isEmpty()) {
             GeyserItemComponentPatcher.install((GeyserSession) event.connection(), this.componentPatches);
         }

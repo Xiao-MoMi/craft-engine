@@ -13,18 +13,12 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryAct
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.*;
-import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.inventory.GeyserItemStack;
+import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {

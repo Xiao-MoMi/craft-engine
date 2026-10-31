@@ -1,14 +1,10 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
+import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTextColorProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTextDecorationProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
-import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphSerializer;
 
 import java.util.ArrayList;
 import java.util.List;

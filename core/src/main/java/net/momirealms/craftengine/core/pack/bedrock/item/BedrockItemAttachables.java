@@ -440,6 +440,14 @@ public final class BedrockItemAttachables {
         GsonHelper.writeJsonFile(json, path);
     }
 
+    static Matrix4f firstPersonSlotMatrix() {
+        SlotPose pose = SlotPose.firstPerson(false);
+        // 原生骨骼坐标反转 Y；slot 的 pivot 相对绑定骨骼低 16 个模型单位。
+        return new Matrix4f().translation(pose.translation.x, 16 - pose.translation.y, pose.translation.z)
+                .rotateZYX(pose.rotation.z * RADIANS, pose.rotation.y * RADIANS, pose.rotation.x * RADIANS)
+                .scale(pose.scale);
+    }
+
     private record SlotPose(Vector3f rotation, Vector3f translation, float scale) {
         private static final SlotPose THIRD_PERSON = new SlotPose(new Vector3f(90, 0, 0), new Vector3f(0, 13, -3), 1);
 

@@ -4,9 +4,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
-import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
 import org.geysermc.geyser.api.extension.ExtensionLogger;
 
 import java.io.IOException;

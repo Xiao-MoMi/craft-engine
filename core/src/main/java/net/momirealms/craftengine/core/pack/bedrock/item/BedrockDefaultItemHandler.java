@@ -58,6 +58,15 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
                 JavaModel displayModel = this.sharedDisplayModel(parts);
                 if (type == JavaModelResolver.RenderType.BLOCK) {
                     context.displays().put(id, context.blocks().write(id, parts, this.models, this.textures, context.root()));
+                    if (BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.models, this.textures, context.root())) {
+                        context.attachables().add(id);
+                        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+                        if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.NONE &&
+                                behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.WHACK &&
+                                behavior.interact().animation() == ItemBehaviorDescription.SwingAnimation.WHACK) {
+                            context.javaSwings().add(id);
+                        }
+                    }
                     continue;
                 }
                 if (type == JavaModelResolver.RenderType.ITEM) { // 无法确定渲染方式时不生成二维图标

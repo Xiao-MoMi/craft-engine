@@ -1,11 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.proxy.text;
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
-import net.momirealms.sparrow.reflection.proxy.annotation.Type;
+import net.momirealms.sparrow.reflection.proxy.annotation.*;
 
 @ReflectionProxy(name = "org.geysermc.geyser.translator.text.MessageTranslator")
 public interface MessageTranslatorProxy {
