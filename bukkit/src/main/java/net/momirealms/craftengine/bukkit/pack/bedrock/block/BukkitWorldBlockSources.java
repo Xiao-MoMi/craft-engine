@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bukkit.pack.bedrock.block;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitVanillaBlockStateWrapper;
 import net.momirealms.craftengine.bukkit.util.CollisionUtils;
 import net.momirealms.craftengine.core.block.BlockDefinition;
@@ -24,31 +25,44 @@ public final class BukkitWorldBlockSources {
     }
 
     public static List<WorldBlockSource> collect(Collection<BlockDefinition> definitions) {
-        List<BlockDefinition> ordered = new ArrayList<>(definitions);
+        List<BlockDefinition> ordered = new ObjectArrayList<>(definitions);
         ordered.sort(Comparator.comparing(block -> block.id().asString()));
-        List<WorldBlockSource> result = new ArrayList<>();
+        List<WorldBlockSource> result = new ObjectArrayList<>();
         Object context = CollisionContextProxy.INSTANCE.empty();
         for (BlockDefinition block : ordered) {
             int index = 0;
             for (ImmutableBlockState state : block.variantProvider().states()) {
                 Object nms = state.customBlockState().minecraftState();
-                Object collision = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(nms,
-                        EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
+                Object collision = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
                 List<Object> boxes = VoxelShapeProxy.INSTANCE.toAabbs(collision);
                 List<AABB> collisionBoxes = new ArrayList<>(boxes.size());
                 for (Object box : boxes) {
                     collisionBoxes.add(CollisionUtils.fromMinecraftAabb(box));
                 }
-                Object selection = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(nms,
-                        EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
+                Object selection = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
                 AABB selectionBox = VoxelShapeProxy.INSTANCE.isEmpty(selection) ? null : CollisionUtils.fromMinecraftAabb(VoxelShapeProxy.INSTANCE.bounds(selection));
                 int lightDampening = VersionHelper.isOrAbove1_21_2
                         ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$1(nms)
                         : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO);
-                result.add(new WorldBlockSource(block.id(), index++, state.customBlockState().registryId(),
-                        new BukkitVanillaBlockStateWrapper(nms, state.customBlockState().registryId()).getAsString(), state.visualBlockState(), state.settings().hardness(),
-                        state.settings().luminance(), lightDampening, state.settings().friction(), collisionBoxes,
-                        selectionBox, state.hasConstantBlockEntityRenderer()));
+                result.add(
+                        new WorldBlockSource(
+                                block.id(),
+                                index++,
+                                state.customBlockState().registryId(),
+                                new BukkitVanillaBlockStateWrapper(
+                                        nms,
+                                        state.customBlockState().registryId()
+                                ).getAsString(),
+                                state.visualBlockState(),
+                                state.settings().hardness(),
+                                state.settings().luminance(),
+                                lightDampening,
+                                state.settings().friction(),
+                                collisionBoxes,
+                                selectionBox,
+                                state.hasConstantBlockEntityRenderer()
+                        )
+                );
             }
         }
         return result;

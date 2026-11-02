@@ -20,36 +20,29 @@ import java.util.Map;
 import java.util.Set;
 
 public final class BedrockItemIcons {
-    private final BedrockItemHandler defaultHandler;
-    private final Map<Key, List<BedrockItemHandler>> handlers = new HashMap<>();
-
-    public BedrockItemIcons(JavaResourcePack pack) {
-        JavaPackTextureSource textures = new JavaPackTextureSource(pack);
-        JavaModelResolver models = new JavaModelResolver(pack, textures);
-        BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(models, textures);
-        this.defaultHandler = new BedrockDefaultItemHandler(models, textures, renderer);
-        this.handlers.put(ItemKeys.BOW, List.of(new Bedrock2DBowItemHandler(models, renderer), new Bedrock3DBowItemHandler(models, textures)));
-        this.handlers.put(ItemKeys.CROSSBOW, List.of(new Bedrock2DCrossbowItemHandler(models, renderer), new Bedrock3DCrossbowItemHandler(models, textures)));
-        this.handlers.put(ItemKeys.SHIELD, List.of(new Bedrock3DShieldItemHandler(models, textures)));
-        List<BedrockItemHandler> spears = List.of(new Bedrock2DSpearItemHandler(renderer), new Bedrock3DSpearItemHandler(models, textures));
-        for (Key spear : ItemKeys.SPEARS) {
-            this.handlers.put(spear, spears);
-        }
+    private BedrockItemIcons() {
     }
 
-    public Result write(ItemRegistrationPlan plan, Path root) throws IOException {
+    public static Result write(JavaResourcePack resources, ItemRegistrationPlan plan, Path root) throws IOException {
+        // 准备工作
+        JavaPackTextureSource textures = new JavaPackTextureSource(resources);
+        JavaModelResolver models = new JavaModelResolver(resources, textures);
+        BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(models, textures);
+        BedrockItemHandler defaultHandler = new BedrockDefaultItemHandler(models, textures, renderer);
+        Map<Key, List<BedrockItemHandler>> handlers = createHandlers(models, textures, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root);
+
         for (ItemRegistrationPlan.Entry entry : plan.entries()) {
             try {
                 boolean handled = false;
-                for (BedrockItemHandler handler : this.handlers.getOrDefault(entry.javaItemType(), List.of())) {
+                for (BedrockItemHandler handler : handlers.getOrDefault(entry.javaItemType(), List.of())) {
                     if (handler.write(entry, context)) {
                         handled = true;
                         break;
                     }
                 }
                 if (!handled) {
-                    this.defaultHandler.write(entry, context);
+                    defaultHandler.write(entry, context);
                 }
             } catch (IOException | RuntimeException exception) { // 读取或生成失败时补充定义 ID、路径并终止
                 throw new IOException("Failed to generate icon for " + entry.definitionId() + " at " + ResourcePackUtils.itemDefinitionPath(entry.definitionId()) + ": " + exception.getMessage(), exception);
@@ -69,6 +62,18 @@ public final class BedrockItemIcons {
         BedrockBowPlayerAnimations.write(context.bows(), context.javaBows(), root);
         BedrockSwingPlayerAnimations.write(context.javaSwings(), root);
         return new Result(context.icons().keySet(), context.displays(), context.variants(), context.attachables()); // 供注册计划关联已生成资源与分支条件
+    }
+
+    private static Map<Key, List<BedrockItemHandler>> createHandlers(JavaModelResolver models, JavaPackTextureSource textures, BedrockItemIconRenderer renderer) {
+        Map<Key, List<BedrockItemHandler>> handlers = new HashMap<>();
+        handlers.put(ItemKeys.BOW, List.of(new Bedrock2DBowItemHandler(models, renderer), new Bedrock3DBowItemHandler(models, textures)));
+        handlers.put(ItemKeys.CROSSBOW, List.of(new Bedrock2DCrossbowItemHandler(models, renderer), new Bedrock3DCrossbowItemHandler(models, textures)));
+        handlers.put(ItemKeys.SHIELD, List.of(new Bedrock3DShieldItemHandler(models, textures)));
+        List<BedrockItemHandler> spears = List.of(new Bedrock2DSpearItemHandler(renderer), new Bedrock3DSpearItemHandler(models, textures));
+        for (Key spear : ItemKeys.SPEARS) {
+            handlers.put(spear, spears);
+        }
+        return handlers;
     }
 
     public record Result(Set<String> icons, Map<Key, BedrockItemBlocks.DisplayBlock> displayBlocks, Map<Key, List<Variant>> variants, Set<Key> attachables) {

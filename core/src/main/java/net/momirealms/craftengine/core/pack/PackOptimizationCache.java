@@ -137,7 +137,7 @@ final class PackOptimizationCache {
             }
             Path parent = path.toAbsolutePath().getParent();
             Files.createDirectories(parent);
-            temporary = Files.createTempFile(parent, "pack-optimization-", ".tmp");
+            temporary = Files.createTempFile(parent, "pack_optimization_", ".tmp");
             CRC32 checksum = new CRC32();
             try (var output = new DataOutputStream(new CheckedOutputStream(
                     new BufferedOutputStream(Files.newOutputStream(temporary)), checksum))) {

@@ -31,11 +31,10 @@ import java.util.UUID;
 
 public final class BedrockPackGenerator {
 
-    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, Path output, Path dataOutput) throws IOException {
-        this.generate(resources, plan, List.of(), output, dataOutput);
+    private BedrockPackGenerator() {
     }
 
-    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path packOutput, Path dataOutput) throws IOException {
+    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path packOutput, Path dataOutput) throws IOException {
         Path packDestination = packOutput.toAbsolutePath().normalize();
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
         Files.createDirectories(packDestination.getParent());
@@ -49,7 +48,7 @@ public final class BedrockPackGenerator {
             Path metadata = root.resolve(RegistrationPlanKind.ITEM.file());
             Files.createDirectories(metadata.getParent());
 
-            BedrockItemIcons.Result generated = new BedrockItemIcons(resources).write(plan, root);
+            BedrockItemIcons.Result generated = BedrockItemIcons.write(resources, plan, root);
             ItemRegistrationPlanWriter.write(plan, metadata, generated);
             JsonArray worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
             BlockRegistrationPlanWriter.write(generated, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
@@ -61,7 +60,7 @@ public final class BedrockPackGenerator {
             BedrockGuiGenerator.write(resources, root);
 
             // 元数据
-            JsonObject manifest = this.manifest();
+            JsonObject manifest = manifest();
             GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
 
             // 复制 pack 图标
@@ -94,7 +93,7 @@ public final class BedrockPackGenerator {
         }
     }
 
-    private JsonObject manifest() {
+    private static JsonObject manifest() {
         JsonArray version = new JsonArray();
         version.add(1);
         version.add(0);

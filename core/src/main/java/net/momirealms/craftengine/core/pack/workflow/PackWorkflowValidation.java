@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.workflow;
 
 import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.nio.file.Path;
@@ -60,13 +61,15 @@ public final class PackWorkflowValidation {
         Path outputPath = resolvePath(output);
         Path dataPath = this.resolvePath(dataOutput);
         if (sourcePath.equals(outputPath) || sourcePath.equals(dataPath)) {
-            throw new IllegalArgumentException("Bedrock pack and extension data must not overwrite the input Java resource pack");
+            throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.input_conflict", sourcePath.toString()));
         }
         if (dataPath.equals(outputPath)) {
-            throw new IllegalArgumentException("Bedrock extension data must have a separate output file");
+            throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.output_conflict", dataPath.toString()));
         }
-        if (!dataPath.equals(BedrockPackFiles.data(outputPath, dataPath.getParent()))) {
-            throw new IllegalArgumentException("Bedrock data_output must use the resource pack basename with " + BedrockPackFiles.DATA_EXTENSION);
+        Path expectedDataPath = BedrockPackFiles.data(outputPath, dataPath.getParent());
+        if (!dataPath.equals(expectedDataPath)) {
+            throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.data_filename",
+                    dataPath.toString(), expectedDataPath.toString()));
         }
     }
 

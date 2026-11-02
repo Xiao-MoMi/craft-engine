@@ -333,6 +333,13 @@ resource_pack.bedrock.font.space: "Invalid advance for character '<arg:0>'"
 resource_pack.bedrock.font.spacing: "Empty or subpixel bitmap spacing is unsupported"
 resource_pack.bedrock.item.binding: "Could not bind item <arg:0> (material <arg:1>) for Bedrock: <arg:2>"
 resource_pack.bedrock.item.failed: "Bedrock pack generation stopped because item bindings failed. See the warnings above."
+resource_pack.bedrock.workflow.data_filename: "data_output is set to <arg:0>. Use <arg:1> to match the resource pack filename."
+resource_pack.bedrock.workflow.finished: "Generated the Bedrock resource pack at <arg:0> and its extension data at <arg:1> in <arg:2> ms."
+resource_pack.bedrock.workflow.input_conflict: "pack_output and data_output must both differ from the input Java resource pack path <arg:0>."
+resource_pack.bedrock.workflow.input_file: "The input Java resource pack is missing or is not a regular file: <arg:0>."
+resource_pack.bedrock.workflow.output_conflict: "pack_output and data_output refer to the same file <arg:0>. Choose separate files."
+resource_pack.bedrock.workflow.started: "Generating Bedrock resource pack…"
+resource_pack.bedrock.workflow.unsupported_version: "Generating the Bedrock resource pack requires Minecraft <arg:0> or later. The server is running <arg:1>."
 resource_pack.circular_dependencies: 'Circular resource pack dependencies: <arg:0>'
 resource_pack.compression_finished: Compressed resource pack in <arg:0>ms
 resource_pack.compression_started: Compressing resource pack...(This progress might be slow if you have obfuscation enabled)

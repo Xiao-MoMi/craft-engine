@@ -333,6 +333,13 @@ resource_pack.bedrock.font.space: "Ungültige Vorschubbreite für Zeichen „<ar
 resource_pack.bedrock.font.spacing: "Leere oder unterpixelgroße Bitmap-Abstände werden nicht unterstützt"
 resource_pack.bedrock.item.binding: "Bedrock-Bindung für Item <arg:0> (Material <arg:1>) fehlgeschlagen: <arg:2>"
 resource_pack.bedrock.item.failed: "Die Erstellung des Bedrock-Pakets wurde wegen fehlgeschlagener Item-Bindungen abgebrochen. Siehe die vorherigen Warnungen."
+resource_pack.bedrock.workflow.data_filename: "data_output ist auf „<arg:0>“ gesetzt. Verwende „<arg:1>“, damit der Dateiname zum Ressourcenpaket passt."
+resource_pack.bedrock.workflow.finished: "Das Bedrock-Ressourcenpaket wurde unter „<arg:0>“ und die Erweiterungsdaten unter „<arg:1>“ erstellt. Dauer: <arg:2> ms."
+resource_pack.bedrock.workflow.input_conflict: "Weder pack_output noch data_output darf auf das Java-Eingabepaket „<arg:0>“ verweisen."
+resource_pack.bedrock.workflow.input_file: "Das Java-Eingabepaket „<arg:0>“ fehlt oder ist keine reguläre Datei."
+resource_pack.bedrock.workflow.output_conflict: "pack_output und data_output verweisen auf dieselbe Datei „<arg:0>“. Wähle unterschiedliche Ausgabepfade."
+resource_pack.bedrock.workflow.started: "Bedrock-Ressourcenpaket wird erstellt …"
+resource_pack.bedrock.workflow.unsupported_version: "Zum Erstellen des Bedrock-Ressourcenpakets ist Minecraft <arg:0> oder neuer erforderlich. Auf dem Server läuft <arg:1>."
 resource_pack.circular_dependencies: "Zyklische Abhängigkeiten zwischen Ressourcenpaketen: <arg:0>"
 resource_pack.compression_finished: Resource Pack in <arg:0>ms komprimiert
 resource_pack.compression_started: Komprimiere Resource Pack...(Dieser Vorgang kann länger dauern, falls Obfuscation aktiviert ist)

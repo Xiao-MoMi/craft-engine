@@ -333,6 +333,13 @@ resource_pack.bedrock.font.space: "字符“<arg:0>”的前进宽度无效"
 resource_pack.bedrock.font.spacing: "不支持空白或小于一个像素的位图间距"
 resource_pack.bedrock.item.binding: "无法为基岩版绑定物品 <arg:0>（材质 <arg:1>）：<arg:2>"
 resource_pack.bedrock.item.failed: "物品绑定失败，已停止生成基岩资源包。请查看上方的警告。"
+resource_pack.bedrock.workflow.data_filename: "data_output 当前为“<arg:0>”。请使用“<arg:1>”，使扩展数据与资源包的文件名匹配。"
+resource_pack.bedrock.workflow.finished: "已生成基岩资源包“<arg:0>”和扩展数据“<arg:1>”，耗时 <arg:2> 毫秒。"
+resource_pack.bedrock.workflow.input_conflict: "pack_output 和 data_output 都不能指向输入 Java 资源包“<arg:0>”。"
+resource_pack.bedrock.workflow.input_file: "输入的 Java 资源包不存在或不是普通文件：“<arg:0>”。"
+resource_pack.bedrock.workflow.output_conflict: "pack_output 和 data_output 指向了同一个文件“<arg:0>”，请分别设置输出路径。"
+resource_pack.bedrock.workflow.started: "正在生成基岩版资源包…"
+resource_pack.bedrock.workflow.unsupported_version: "生成基岩资源包需要 Minecraft <arg:0> 或更高版本，当前服务端版本为 <arg:1>。"
 resource_pack.circular_dependencies: 资源包存在循环依赖：<arg:0>
 resource_pack.compression_finished: 资源包压缩完成，耗时<arg:0>毫秒
 resource_pack.compression_started: 正在压缩资源包…（如果启用了混淆功能，此过程可能会比较慢）

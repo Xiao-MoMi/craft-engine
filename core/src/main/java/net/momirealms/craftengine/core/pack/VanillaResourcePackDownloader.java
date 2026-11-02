@@ -33,100 +33,100 @@ public final class VanillaResourcePackDownloader {
     }
 
     public synchronized Path download(MinecraftVersion version) throws IOException {
-        Path directory = Files.createDirectories(this.cacheDirectory.resolve(version.version()));
-        Path metadataPath = directory.resolve("version.json");
-        if (!Files.isRegularFile(metadataPath)) {
-            this.downloadFile(this.findVersion(version), metadataPath);
-        }
-        JsonObject metadata = GsonHelper.readJsonObjectFromFile(metadataPath);
-        if (metadata == null || !version.version().equals(metadata.get("id").getAsString())) {
-            throw new IOException("Invalid vanilla resource metadata for Minecraft " + version.version());
-        }
+        Path directory = this.cacheDirectory.resolve(version.version());
+        JsonObject metadata = this.readVersionMetadata(version.version(), directory);
         JsonObject client = metadata.getAsJsonObject("downloads").getAsJsonObject("client");
-        Download download = new Download(
-                URI.create(client.get("url").getAsString()),
-                client.get("sha1").getAsString(),
-                client.get("size").getAsLong()
-        );
-        Path archive = directory.resolve("client.jar");
-        if (!download.matches(archive)) {
-            this.downloadFile(download, archive);
-        }
-        this.downloadFonts(metadata.getAsJsonObject("assetIndex"), directory);
+        Path archive = ensureDownloaded(Download.fromMetadata(client), directory.resolve("client.jar"));
+        downloadFonts(metadata.getAsJsonObject("assetIndex"), directory);
         return archive;
     }
 
-    private void downloadFonts(JsonObject metadata, Path directory) throws IOException {
-        Download index = new Download(URI.create(metadata.get("url").getAsString()), metadata.get("sha1").getAsString(), metadata.get("size").getAsLong());
-        Path indexPath = directory.resolve("asset-index.json");
-        if (!index.matches(indexPath)) {
-            this.downloadFile(index, indexPath);
+    private JsonObject readVersionMetadata(String version, Path directory) throws IOException {
+        Path metadataPath = directory.resolve("version.json");
+        // A cached version.json lets a complete cache work without contacting the version manifest.
+        if (!Files.isRegularFile(metadataPath)) {
+            ensureDownloaded(this.findVersion(version), metadataPath);
         }
+        JsonObject metadata = GsonHelper.readJsonObjectFromFile(metadataPath);
+        if (metadata == null || !version.equals(metadata.get("id").getAsString())) {
+            throw new IOException("Invalid vanilla resource metadata for Minecraft " + version);
+        }
+        return metadata;
+    }
+
+    private static void downloadFonts(JsonObject assetIndex, Path directory) throws IOException {
+        Path indexPath = ensureDownloaded(Download.fromMetadata(assetIndex), directory.resolve("asset-index.json"));
         JsonObject objects = GsonHelper.readJsonObjectFromFile(indexPath).getAsJsonObject("objects");
+        Path assets = directory.resolve("assets");
         for (Map.Entry<String, JsonElement> entry : objects.entrySet()) {
             if (!entry.getKey().startsWith("minecraft/font/")) {
                 continue;
             }
-            JsonObject asset = entry.getValue().getAsJsonObject();
-            String hash = asset.get("hash").getAsString();
-            Download download = new Download(URI.create("https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash), hash, asset.get("size").getAsLong());
-            Path target = directory.resolve("assets").resolve(entry.getKey());
-            if (!download.matches(target)) {
-                Files.createDirectories(target.getParent());
-                this.downloadFile(download, target);
-            }
+            Download font = Download.fromAsset(entry.getValue().getAsJsonObject());
+            ensureDownloaded(font, assets.resolve(entry.getKey()));
         }
     }
 
-    private Download findVersion(MinecraftVersion version) throws IOException {
-        HttpRequest request = HttpClientManager.requestBuilder().uri(this.versionManifest).GET().build();
-        HttpResponse<String> response;
-        try {
-            response = HttpClientManager.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new IOException("Interrupted while resolving Minecraft " + version.version(), e);
-        }
-        if (response.statusCode() != 200) {
-            throw new IOException("Failed to fetch Minecraft version manifest: HTTP " + response.statusCode());
-        }
-        JsonObject manifest = JsonParser.parseString(response.body()).getAsJsonObject();
+    private Download findVersion(String version) throws IOException {
+        String body = fetch(this.versionManifest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        JsonObject manifest = JsonParser.parseString(body).getAsJsonObject();
         for (JsonElement element : manifest.getAsJsonArray("versions")) {
             JsonObject entry = element.getAsJsonObject();
-            if (version.version().equals(entry.get("id").getAsString())) {
+            if (version.equals(entry.get("id").getAsString())) {
                 return new Download(URI.create(entry.get("url").getAsString()), entry.get("sha1").getAsString(), -1);
             }
         }
-        throw new IOException("Minecraft version is not available in the official manifest: " + version.version());
+        throw new IOException("Minecraft version is not available in the official manifest: " + version);
     }
 
-    private void downloadFile(Download download, Path target) throws IOException {
+    private static Path ensureDownloaded(Download download, Path target) throws IOException {
+        if (download.matches(target)) {
+            return target;
+        }
+        Files.createDirectories(target.getParent());
         Path temporary = Files.createTempFile(target.getParent(), target.getFileName().toString(), ".part");
         try {
-            HttpRequest request = HttpClientManager.requestBuilder().uri(download.uri()).GET().build();
-            HttpResponse<Path> response;
-            try {
-                response = HttpClientManager.send(request, HttpResponse.BodyHandlers.ofFile(temporary));
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IOException("Interrupted while downloading " + download.uri(), e);
-            }
-            if (response.statusCode() != 200) {
-                throw new IOException("Failed to download " + download.uri() + ": HTTP " + response.statusCode());
-            }
+            fetch(download.uri(), HttpResponse.BodyHandlers.ofFile(temporary));
             if (!download.matches(temporary)) {
                 throw new IOException("Size or SHA-1 mismatch for " + download.uri());
             }
-            Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
+            return Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING);
         } finally {
             Files.deleteIfExists(temporary);
         }
     }
 
+    private static <T> T fetch(URI uri, HttpResponse.BodyHandler<T> handler) throws IOException {
+        HttpRequest request = HttpClientManager.requestBuilder().uri(uri).GET().build();
+        try {
+            HttpResponse<T> response = HttpClientManager.send(request, handler);
+            if (response.statusCode() != 200) {
+                throw new IOException("Failed to download " + uri + ": HTTP " + response.statusCode());
+            }
+            return response.body();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while downloading " + uri, e);
+        }
+    }
+
     private record Download(URI uri, String sha1, long size) {
 
+        private static Download fromMetadata(JsonObject entry) {
+            URI uri = URI.create(entry.get("url").getAsString());
+            return new Download(uri, entry.get("sha1").getAsString(), entry.get("size").getAsLong());
+        }
+
+        private static Download fromAsset(JsonObject entry) {
+            String hash = entry.get("hash").getAsString();
+            URI uri = URI.create("https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash);
+            return new Download(uri, hash, entry.get("size").getAsLong());
+        }
+
         private boolean matches(Path path) throws IOException {
-            return Files.isRegularFile(path) && (this.size < 0 || Files.size(path) == this.size) && this.sha1.equalsIgnoreCase(HashUtils.sha1(path));
+            return Files.isRegularFile(path)
+                    && (this.size < 0 || Files.size(path) == this.size)
+                    && this.sha1.equalsIgnoreCase(HashUtils.sha1(path));
         }
     }
 }

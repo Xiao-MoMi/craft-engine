@@ -1076,22 +1076,28 @@ public abstract class AbstractPackManager implements PackManager {
         @Override
         public void generateBedrockPack(String input, String output, String dataOutput) throws IOException {
             if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
-                throw new IOException("Geyser item plan generation requires Minecraft 1.21.4 or newer");
+                throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.unsupported_version", MinecraftVersion.V1_21_4.version(), VersionHelper.MINECRAFT_VERSION.version()));
             }
             Path sourcePath = this.resolvePath(input);
             if (!Files.isRegularFile(sourcePath)) {
-                throw new IOException("Resource pack does not exist: " + sourcePath);
+                throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.input_file", sourcePath.toString()));
             }
-            Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla-resource-pack")).download(VersionHelper.MINECRAFT_VERSION);
+            TranslationManager.info("resource_pack.bedrock.workflow.started");
+            Timestamp timestamp = new Timestamp();
+            Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla_resource_pack")).download(VersionHelper.MINECRAFT_VERSION);
             Path outputPath = this.resolvePath(output);
             Path dataPath = this.resolvePath(dataOutput);
-            ItemRegistrationPlan plan;
             try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
-                plan = AbstractPackManager.this.generateGeyserItemPlan(resources);
-                new BedrockPackGenerator().generate(resources, plan, AbstractPackManager.this.collectBedrockWorldBlocks(), outputPath, dataPath);
+                BedrockPackGenerator.generate(
+                        resources,
+                        AbstractPackManager.this.generateGeyserItemPlan(resources),
+                        AbstractPackManager.this.collectBedrockWorldBlocks(),
+                        outputPath,
+                        dataPath
+                );
             }
-            AbstractPackManager.this.plugin.logger().info("Generated Bedrock pack " + outputPath + " with " + plan.entries().size() + " item definitions" + ". Extension data: " + dataPath + ". Reconnect to load resource updates; restart Geyser if registrations changed.");
+            TranslationManager.info("resource_pack.bedrock.workflow.finished", outputPath.toString(), dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
         }
 
         @Override
@@ -1257,7 +1263,7 @@ public abstract class AbstractPackManager implements PackManager {
     private void optimizeResourcePack(Path path) {
         Timestamp timestamp = new Timestamp();
         this.optimizationCache.setMaximumBytes(Config.optimizationCacheSize());
-        Path optimizationCachePath = this.plugin.dataFolderPath().resolve("cache").resolve("pack-optimization.bin");
+        Path optimizationCachePath = this.plugin.dataFolderPath().resolve("cache").resolve("pack_optimization.bin");
         try {
             this.optimizationCache.load(optimizationCachePath);
         } catch (IOException e) {

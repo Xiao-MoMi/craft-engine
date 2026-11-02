@@ -91,10 +91,6 @@ public final class JavaModelResolver {
         return block ? RenderType.BLOCK : (unknown ? RenderType.UNKNOWN : RenderType.ITEM);
     }
 
-    public enum RenderType {
-        ITEM, BLOCK, UNKNOWN
-    }
-
     private JavaModel resolve(Key model, boolean vanilla) throws IOException {
         InheritedModel inherited = this.inherit(model, vanilla, new HashSet<>(4));
         List<Element> elements = new ArrayList<>(inherited.elements().size());
@@ -251,8 +247,13 @@ public final class JavaModelResolver {
                 texture = new Texture(Key.of(reference), false);
             }
             faces.put(Direction.valueOf(entry.getKey().toUpperCase(Locale.ROOT)),
-                    new Face(texture, coordinates, face.has(ROTATION) ? face.get(ROTATION).getAsInt() : 0,
-                            face.has(TINT_INDEX) ? face.get(TINT_INDEX).getAsInt() : -1));
+                    new Face(
+                            texture,
+                            coordinates,
+                            face.has(ROTATION) ? face.get(ROTATION).getAsInt() : 0,
+                            face.has(TINT_INDEX) ? face.get(TINT_INDEX).getAsInt() : -1
+                    )
+            );
         }
         return new Element(from, to, faces, json.has(ROTATION) ? this.readRotation(json.getAsJsonObject(ROTATION)) : null);
     }
@@ -271,8 +272,11 @@ public final class JavaModelResolver {
             if (this.pack.version().isBelow(MinecraftVersion.V1_21_11)) {
                 throw new IOException("Euler element rotations require Java 1.21.11 or newer");
             }
-            angles = new Vector3f(json.has(X) ? json.get(X).getAsFloat() : 0,
-                    json.has(Y) ? json.get(Y).getAsFloat() : 0, json.has(Z) ? json.get(Z).getAsFloat() : 0);
+            angles = new Vector3f(
+                    json.has(X) ? json.get(X).getAsFloat() : 0,
+                    json.has(Y) ? json.get(Y).getAsFloat() : 0,
+                    json.has(Z) ? json.get(Z).getAsFloat() : 0
+            );
         }
         return new Rotation(VectorUtils.vector3f(json.getAsJsonArray(ORIGIN)), angles,
                 json.has(RESCALE) && json.get(RESCALE).getAsBoolean());
@@ -327,6 +331,10 @@ public final class JavaModelResolver {
             return new Texture(Key.of(texture.getAsString()), false);
         }
         throw new IOException("Cyclic texture reference #" + currentSlot + " in model " + model);
+    }
+
+    public enum RenderType {
+        ITEM, BLOCK, UNKNOWN
     }
 
     private record InheritedModel(GeometryKind kind,

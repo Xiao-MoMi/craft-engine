@@ -144,7 +144,7 @@ resource-pack:
   # Optimize your resource pack by reducing its size without any quality loss.
   # Add an optimize step to the workflow to run optimization.
   optimization:
-    # Cache optimization results in memory and cache/pack-optimization.bin.
+    # Cache optimization results in memory and cache/pack_optimization.bin.
     # Load the snapshot on the first optimization after restart; save when results change.
     # Approximate memory budget in MiB; the disk snapshot contains only retained entries.
     # 0 disables and clears both caches on the next optimization.
