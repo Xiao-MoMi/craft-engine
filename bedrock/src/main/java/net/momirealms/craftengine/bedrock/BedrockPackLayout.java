@@ -12,6 +12,7 @@ public final class BedrockPackLayout {
     public static final String NAME = "name";
     public static final String GEOMETRY = "geometry";
     public static final String MATERIALS = "materials";
+    public static final String TINT_METHODS = "tint_methods";
     public static final String ITEM_TEXTURE_ATLAS = "textures/item_texture.json";
     public static final String PLAYER_ANIMATION_CONTROLLER = "animation_controllers/craftengine/shared/player.animation_controllers.json";
     public static final String PLAYER_ANIMATION_NOTICE = "craftengine/player_animation_NOTICE.txt";

@@ -43,13 +43,17 @@ public final class GeyserBlockRegistrationAdapter {
                     .placeAir(true);
         }
         JsonObject materials = display.getAsJsonObject(MATERIALS);
+        JsonObject tintMethods = display.getAsJsonObject(TINT_METHODS);
         for (Map.Entry<String, JsonElement> entry : materials.entrySet()) {
-            MaterialInstance material = MaterialInstance.builder()
+            MaterialInstance.Builder builder = MaterialInstance.builder()
                     .texture(entry.getValue().getAsString())
                     .renderMethod("alpha_test_single_sided")
                     .faceDimming(world)
-                    .ambientOcclusionExponent(world ? 1 : 0)
-                    .build();
+                    .ambientOcclusionExponent(world ? 1 : 0);
+            if (tintMethods != null && tintMethods.has(entry.getKey())) {
+                builder.tintMethod(tintMethods.get(entry.getKey()).getAsString());
+            }
+            MaterialInstance material = builder.build();
             components.materialInstance(entry.getKey(), material);
             if (entry.getKey().equals("layer0")) {
                 components.materialInstance("*", material);

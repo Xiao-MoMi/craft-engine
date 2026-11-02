@@ -134,25 +134,20 @@ public final class JavaBlockModelResolver {
             throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.model_renderer", model.id().asString()));
         }
         boolean uvLock = selected.has("uvlock") && selected.get("uvlock").getAsBoolean();
-        List<JavaModel.Element> elements = uvLock ? new ArrayList<>(model.elements().size()) : model.elements();
-        for (JavaModel.Element element : model.elements()) {
-            Map<Direction, JavaModel.Face> faces = uvLock ? new EnumMap<>(Direction.class) : element.faces();
-            for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
-                JavaModel.Face face = entry.getValue();
-                if (face.tintIndex() >= 0) {
-                    throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.tint"));
-                }
-                if (uvLock) {
-                    faces.put(entry.getKey(), lockUv(face, entry.getKey(), rotation));
-                }
-            }
-            if (uvLock) {
-                elements.add(new JavaModel.Element(element.from(), element.to(), faces, element.rotation()));
-            }
-        }
-        JavaModel resolved = uvLock ? new JavaModel(model.id(), model.kind(), model.textures(), elements, model.display(), model.guiLight()) : model;
         Matrix4f transform = new Matrix4f().translation(0.5f, 0.5f, 0.5f).mul(rotation).translate(-0.5f, -0.5f, -0.5f);
-        return new Part(resolved, transform);
+        return new Part(uvLock ? lockUv(model, rotation) : model, transform);
+    }
+
+    private static JavaModel lockUv(JavaModel model, Matrix4fc rotation) {
+        List<JavaModel.Element> elements = new ArrayList<>(model.elements().size());
+        for (JavaModel.Element element : model.elements()) {
+            Map<Direction, JavaModel.Face> faces = new EnumMap<>(Direction.class);
+            for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
+                faces.put(entry.getKey(), lockUv(entry.getValue(), entry.getKey(), rotation));
+            }
+            elements.add(new JavaModel.Element(element.from(), element.to(), faces, element.rotation()));
+        }
+        return new JavaModel(model.id(), model.kind(), model.textures(), elements, model.display(), model.guiLight());
     }
 
     private static JavaModel.Face lockUv(JavaModel.Face face, Direction side, Matrix4fc rotation) {
