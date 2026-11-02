@@ -2,8 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -14,20 +13,18 @@ import java.util.List;
 import java.util.Locale;
 
 public final class BedrockDefaultItemHandler implements BedrockItemHandler {
-    private final JavaModelResolver models;
-    private final JavaPackTextureSource textures;
+    private final JavaModelResources resources;
     private final BedrockItemIconRenderer renderer;
 
-    public BedrockDefaultItemHandler(JavaModelResolver models, JavaPackTextureSource textures, BedrockItemIconRenderer renderer) {
-        this.models = models;
-        this.textures = textures;
+    public BedrockDefaultItemHandler(JavaModelResources resources, BedrockItemIconRenderer renderer) {
+        this.resources = resources;
         this.renderer = renderer;
     }
 
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         List<ItemBindingRule> rules = entry.definition().rules();
-        JavaModelResolver.RenderType type = this.models.classify(entry.definition());
+        ItemRenderType type = ItemRenderType.classify(entry.definition(), this.resources);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(rules.size());
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);
@@ -44,7 +41,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     }
 
     private GeneratedItemVariant writeVariant(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
-                                               ItemBindingRule rule, JavaModelResolver.RenderType type) throws IOException {
+                                               ItemBindingRule rule, ItemRenderType type) throws IOException {
         List<ItemBindingRule> parts;
         if (rule.target() instanceof ItemRenderTarget.Model) {
             parts = List.of(rule);
@@ -59,23 +56,23 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
             if (!(part.target() instanceof ItemRenderTarget.Model target)) {
                 throw new UnsupportedOperationException("Unsupported composite child: " + part.sourcePath());
             }
-            JavaModel model = this.models.resolve(target.model());
+            JavaModel model = this.resources.models().resolve(target.model());
             if (!models.isEmpty() && !model.display().equals(models.getFirst().display())) {
                 validateDisplay(models.getFirst(), model, type);
                 separateHandPoses = true;
             }
             models.add(model);
         }
-        if (type == JavaModelResolver.RenderType.BLOCK) {
+        if (type == ItemRenderType.BLOCK) {
             return this.writeDisplayBlock(entry, context, id, rule, parts);
         }
-        if (type == JavaModelResolver.RenderType.ITEM) {
+        if (type == ItemRenderType.ITEM) {
             return this.writeIcon(context, id, rule, parts, models, separateHandPoses);
         }
         return GeneratedItemVariant.skipped(id, rule, null);
     }
 
-    private static void validateDisplay(JavaModel first, JavaModel model, JavaModelResolver.RenderType type) {
+    private static void validateDisplay(JavaModel first, JavaModel model, ItemRenderType type) {
         for (DisplayPosition view : DisplayPosition.values()) {
             if (first.display().get(view).equals(model.display().get(view))) {
                 continue;
@@ -84,7 +81,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
                 case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> true;
                 default -> false;
             };
-            if (!handheld || type != JavaModelResolver.RenderType.ITEM) {
+            if (!handheld || type != ItemRenderType.ITEM) {
                 throw new UnsupportedOperationException("Composite models have different " + view.name().toLowerCase(Locale.ROOT)
                         + " display transforms: " + first.id() + " and " + model.id());
             }
@@ -94,13 +91,13 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     private GeneratedItemVariant writeDisplayBlock(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
                                                     ItemBindingRule rule, List<ItemBindingRule> parts) throws IOException {
         if (rule.target() instanceof ItemRenderTarget.Model target && !target.tints().isEmpty() && rule.transformations().isEmpty()) {
-            GeneratedItemVariant dyed = BedrockDyedItem.write(entry, id, rule, target, this.models, this.textures, context);
+            GeneratedItemVariant dyed = BedrockDyedItem.write(entry, id, rule, target, this.resources.models(), this.resources.textures(), context);
             if (dyed != null) {
                 return dyed;
             }
         }
-        BedrockItemBlocks.DisplayBlock display = context.blocks().write(id, parts, this.models, this.textures, context.root());
-        if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.models, this.textures, context.root())) {
+        BedrockItemBlocks.DisplayBlock display = context.blocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
+        if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.resources.models(), this.resources.textures(), context.root())) {
             return GeneratedItemVariant.block(id, rule, display, false);
         }
         ItemBehaviorDescription behavior = entry.source().clientBehavior();
@@ -125,7 +122,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
         BufferedImage icon = ImageUtils.composite(images);
         String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
         ImageUtils.writePng(icon, context.root().resolve(texture + ".png"));
-        boolean attachable = separateHandPoses || (!models.isEmpty() && this.models.needsHandheldAttachable(models.getFirst()));
+        boolean attachable = separateHandPoses || (!models.isEmpty() && this.renderer.needsHandheldAttachable(models.getFirst()));
         if (separateHandPoses) {
             BedrockItemAttachables.writeComposite(id, models, images, context.root());
         } else if (attachable) {

@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
@@ -20,9 +21,9 @@ public final class JavaBlockModelResolver {
     private final JavaResourcePack resources;
     private final JavaModelResolver models;
 
-    public JavaBlockModelResolver(JavaResourcePack resources, JavaModelResolver models) {
-        this.resources = resources;
-        this.models = models;
+    public JavaBlockModelResolver(JavaModelResources resources) {
+        this.resources = resources.pack();
+        this.models = resources.models();
     }
 
     public List<Part> resolve(BlockStateWrapper state) throws IOException {

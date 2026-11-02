@@ -311,6 +311,7 @@ resource_pack.bedrock.block.no_visual: "已跳过方块 <arg:0> 的状态 <arg:1
 resource_pack.bedrock.block.property: "未知的 multipart 属性 <arg:0>"
 resource_pack.bedrock.block.renderer: "方块需要专用实体渲染器"
 resource_pack.bedrock.block.rotation: "方块状态的旋转角度必须是 90 度的倍数"
+resource_pack.bedrock.block.scaled: "为符合基岩版方块几何边界，已将方块 <arg:0> 的状态 <arg:1> 的模型缩放至 <arg:2>%。"
 resource_pack.bedrock.block.skipped: "已跳过方块 <arg:0> 的状态 <arg:1>：<arg:2>"
 resource_pack.bedrock.block.tint: "不支持依赖世界环境的方块着色"
 resource_pack.bedrock.block.uv: "矩形面无法表示该 UV 锁定效果"

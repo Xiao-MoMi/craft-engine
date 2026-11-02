@@ -39,8 +39,7 @@ final class ItemConditionIntersection {
             if (existing instanceof ItemBindingCondition.BooleanMatch previous && next instanceof ItemBindingCondition.BooleanMatch incoming && previous.property().equals(incoming.property())) {
                 return previous.expected() == incoming.expected();
             }
-            if (existing instanceof ItemBindingCondition.SelectMatch previous && next instanceof ItemBindingCondition.SelectMatch incoming
-                    && previous.property().equals(incoming.property())) {
+            if (existing instanceof ItemBindingCondition.SelectMatch previous && next instanceof ItemBindingCondition.SelectMatch incoming && previous.property().equals(incoming.property())) {
                 ItemBindingCondition.SelectMatch intersection = intersectSelect(previous, incoming);
                 if (!intersection.negated() && intersection.values().isEmpty()) {
                     return false;

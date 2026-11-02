@@ -3,11 +3,10 @@ package net.momirealms.craftengine.core.pack.bedrock.block;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -22,70 +21,39 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.logging.Logger;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class BedrockWorldBlocks {
-    private static final Logger LOGGER = Logger.getLogger("CraftEngine");
     private final JavaPackTextureSource textures;
     private final JavaBlockModelResolver models;
     private final BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
 
-    public BedrockWorldBlocks(JavaResourcePack resources) {
-        this.textures = new JavaPackTextureSource(resources);
-        this.models = new JavaBlockModelResolver(resources, new JavaModelResolver(resources, this.textures));
+    private BedrockWorldBlocks(JavaModelResources resources) {
+        this.textures = resources.textures();
+        this.models = new JavaBlockModelResolver(resources);
     }
 
-    public JsonArray write(List<WorldBlockSource> sources, Path root) throws IOException {
-        JsonArray entries = new JsonArray();
-        Map<String, List<WorldBlockSource>> groups = new LinkedHashMap<>();
-        for (WorldBlockSource source : sources) {
-            if (source.visual() == null) {
-                TranslationManager.warn("resource_pack.bedrock.block.no_visual", source.id().asString(), Integer.toString(source.stateIndex()));
-            } else {
-                groups.computeIfAbsent(source.visual().getAsString(), ignored -> new ArrayList<>()).add(source);
-            }
-        }
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root) throws IOException {
+        return new BedrockWorldBlocks(resources).writeBlocks(sources, root);
+    }
+
+    private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root) throws IOException {
+        Map<String, List<WorldBlockSource>> groups = groupByVisualState(sources);
         this.atlas.read(root);
         Path blockFile = root.resolve("blocks.json");
         JsonObject blocks = Files.isRegularFile(blockFile) ? GsonHelper.readJsonObjectFromFile(blockFile) : new JsonObject();
+        JsonArray entries = new JsonArray(groups.size());
         for (Map.Entry<String, List<WorldBlockSource>> group : groups.entrySet()) {
             try {
-                WorldBlockSource first = group.getValue().getFirst();
-                JsonObject properties = components(first);
-                for (WorldBlockSource source : group.getValue()) {
-                    if (source.entityRenderer()) {
-                        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.renderer"));
-                    }
-                    if (source != first && !properties.equals(components(source))) {
-                        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.conflict", group.getKey()));
-                    }
-                }
-                List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
-                String name = "craftengine/world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
-                JsonObject entry = this.geometry(name, parts, group.getValue(), root);
-                entry.addProperty("java_state", group.getKey());
-                for (Map.Entry<String, JsonElement> property : properties.entrySet()) {
-                    entry.add(property.getKey(), property.getValue());
-                }
-                JsonArray states = new JsonArray();
-                for (WorldBlockSource source : group.getValue()) {
-                    JsonObject server = new JsonObject();
-                    server.addProperty("id", source.serverStateId());
-                    server.addProperty("state", source.serverState());
-                    server.addProperty("block_id", source.id().asString());
-                    server.addProperty("hardness", source.hardness());
-                    states.add(server);
-                }
-                entry.add("server_states", states);
-                entries.add(entry);
-                JsonObject block = new JsonObject();
-                block.addProperty("sound", "stone");
-                blocks.add("geyser_custom:" + name, block);
+                entries.add(this.writeGroup(group.getKey(), group.getValue(), blocks, root));
             } catch (UnsupportedOperationException exception) {
-                // A visual state has one client definition; rejecting the entire group avoids applying the first state's shape to the others.
+                // 同一显示状态只能注册一套方块属性；跳过整组，避免其他状态误用首个状态的碰撞箱。
                 for (WorldBlockSource source : group.getValue()) {
                     TranslationManager.warn("resource_pack.bedrock.block.skipped", source.id().asString(), Integer.toString(source.stateIndex()), exception.getLocalizedMessage());
                 }
@@ -97,6 +65,51 @@ public final class BedrockWorldBlocks {
             this.atlas.finish(root);
         }
         return entries;
+    }
+
+    private static Map<String, List<WorldBlockSource>> groupByVisualState(List<WorldBlockSource> sources) {
+        Map<String, List<WorldBlockSource>> groups = new LinkedHashMap<>();
+        for (WorldBlockSource source : sources) {
+            if (source.visual() == null) {
+                TranslationManager.warn("resource_pack.bedrock.block.no_visual", source.id().asString(), Integer.toString(source.stateIndex()));
+            } else {
+                groups.computeIfAbsent(source.visual().getAsString(), ignored -> new ArrayList<>()).add(source);
+            }
+        }
+        return groups;
+    }
+
+    private JsonObject writeGroup(String visualState, List<WorldBlockSource> sources, JsonObject blocks, Path root) throws IOException {
+        JsonObject properties = sharedComponents(visualState, sources);
+        WorldBlockSource first = sources.getFirst();
+        String name = "craftengine/world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
+        List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
+
+        JsonObject entry = this.writeGeometry(name, parts, sources, root);
+        entry.addProperty("java_state", visualState);
+        for (Map.Entry<String, JsonElement> property : properties.entrySet()) {
+            entry.add(property.getKey(), property.getValue());
+        }
+        entry.add("server_states", serverStatesToJson(sources));
+
+        JsonObject block = new JsonObject();
+        block.addProperty("sound", "stone");
+        blocks.add("geyser_custom:" + name, block);
+        return entry;
+    }
+
+    private static JsonObject sharedComponents(String visualState, List<WorldBlockSource> sources) {
+        WorldBlockSource first = sources.getFirst();
+        JsonObject properties = components(first);
+        for (WorldBlockSource source : sources) {
+            if (source.entityRenderer()) {
+                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.renderer"));
+            }
+            if (source != first && !properties.equals(components(source))) {
+                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.conflict", visualState));
+            }
+        }
+        return properties;
     }
 
     private static JsonObject components(WorldBlockSource source) {
@@ -130,11 +143,44 @@ public final class BedrockWorldBlocks {
         return result;
     }
 
-    private JsonObject geometry(String name, List<JavaBlockModelResolver.Part> parts, List<WorldBlockSource> sources, Path root) throws IOException {
+    private static JsonArray serverStatesToJson(List<WorldBlockSource> sources) {
+        JsonArray states = new JsonArray(sources.size());
+        for (WorldBlockSource source : sources) {
+            JsonObject state = new JsonObject();
+            state.addProperty("id", source.serverStateId());
+            state.addProperty("state", source.serverState());
+            state.addProperty("block_id", source.id().asString());
+            state.addProperty("hardness", source.hardness());
+            states.add(state);
+        }
+        return states;
+    }
+
+    private JsonObject writeGeometry(String name, List<JavaBlockModelResolver.Part> parts, List<WorldBlockSource> sources, Path root) throws IOException {
+        Map<String, TextureData> texturesBySlot = new LinkedHashMap<>();
+        JsonArray cubes = this.buildCubes(parts, texturesBySlot);
+        // 每个部件先应用自己的变换，再统一缩放整个方块以保留部件之间的相对位置。
+        float scale = BedrockElementGeometry.fitWorldBlock(cubes);
+        JsonObject materials = this.writeMaterials(name, texturesBySlot, root);
+        String id = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(Key.ce(name.substring("craftengine/".length()))) + ".world";
+        writeGeometryFile(root.resolve("models/blocks/" + name + ".geo.json"), id, cubes);
+        if (scale < 1) {
+            String percent = String.format(Locale.ROOT, "%.4f", scale * 100.0);
+            for (WorldBlockSource source : sources) {
+                TranslationManager.warn("resource_pack.bedrock.block.scaled", source.id().asString(), Integer.toString(source.stateIndex()), percent);
+            }
+        }
+
+        JsonObject entry = new JsonObject();
+        entry.addProperty(NAME, name);
+        entry.addProperty(GEOMETRY, id);
+        entry.add(MATERIALS, materials);
+        return entry;
+    }
+
+    private JsonArray buildCubes(List<JavaBlockModelResolver.Part> parts, Map<String, TextureData> texturesBySlot) throws IOException {
         Map<JavaModel.Texture, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
-        Map<String, TextureData> textures = new LinkedHashMap<>();
         Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();
-        JsonObject materials = new JsonObject();
         JsonArray cubes = new JsonArray();
         for (JavaBlockModelResolver.Part part : parts) {
             for (JavaModel.Element element : part.model().elements()) {
@@ -146,7 +192,7 @@ public final class BedrockWorldBlocks {
                         String slot = "layer" + bindings.size();
                         material = new BedrockElementGeometry.Material(slot, data.image().getWidth() / size, data.image().getHeight() / size);
                         bindings.put(face.texture(), material);
-                        textures.put(slot, data);
+                        texturesBySlot.put(slot, data);
                     }
                     faces.put(face, material);
                 }
@@ -155,13 +201,20 @@ public final class BedrockWorldBlocks {
             BedrockModelTransform.apply(converted, part.transform(), 1);
             cubes.addAll(converted);
         }
-        float scale = BedrockElementGeometry.fitWorldBlock(cubes);
-        for (Map.Entry<String, TextureData> texture : textures.entrySet()) {
+        return cubes;
+    }
+
+    private JsonObject writeMaterials(String name, Map<String, TextureData> texturesBySlot, Path root) throws IOException {
+        JsonObject materials = new JsonObject();
+        for (Map.Entry<String, TextureData> texture : texturesBySlot.entrySet()) {
             String tile = name + '/' + texture.getKey();
             this.atlas.write(texture.getValue(), 0xffffff, tile, root);
             materials.addProperty(texture.getKey(), tile);
         }
-        String id = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(Key.ce(name.substring("craftengine/".length()))) + ".world";
+        return materials;
+    }
+
+    private static void writeGeometryFile(Path path, String id, JsonArray cubes) throws IOException {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", id);
         description.addProperty("texture_width", 16);
@@ -180,19 +233,7 @@ public final class BedrockWorldBlocks {
         JsonObject file = new JsonObject();
         file.addProperty(FORMAT_VERSION, "1.21.0");
         file.add("minecraft:geometry", geometries);
-        Path path = root.resolve("models/blocks/" + name + ".geo.json");
         Files.createDirectories(path.getParent());
         GsonHelper.writeJsonFile(file, path);
-        if (scale < 1) {
-            for (WorldBlockSource source : sources) {
-                LOGGER.warning(String.format(Locale.ROOT, "Scaled Bedrock world model %s (state %d) to %.4f%% to fit block geometry bounds.",
-                        source.id().asString(), source.stateIndex(), scale * 100.0));
-            }
-        }
-        JsonObject entry = new JsonObject();
-        entry.addProperty(NAME, name);
-        entry.addProperty(GEOMETRY, id);
-        entry.add(MATERIALS, materials);
-        return entry;
     }
 }

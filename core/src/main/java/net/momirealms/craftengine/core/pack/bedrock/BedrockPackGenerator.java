@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ZipUtils;
@@ -44,12 +45,14 @@ public final class BedrockPackGenerator {
             Path itemPlanPath = root.resolve(RegistrationPlanKind.ITEM.file());
             Files.createDirectories(itemPlanPath.getParent());
 
+            JavaModelResources modelResources = new JavaModelResources(resources);
             // 物品
-            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(resources, plan, root);
+            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root);
             ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems);
             // 方块
-            JsonArray worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
-            BlockRegistrationPlanWriter.write(generatedItems, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
+            Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
+            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root);
+            BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blockPlanPath);
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             // 字体文件

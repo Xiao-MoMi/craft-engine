@@ -6,16 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemDefinitionBinding;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemRenderTarget;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.*;
-import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.io.IOException;
@@ -32,19 +25,12 @@ public final class JavaModelResolver {
     private static final InheritedModel GENERATED_MODEL = new InheritedModel(GeometryKind.GENERATED, new JsonArray(), Map.of(PARTICLE, new JsonPrimitive("#layer0")), Map.of(), GuiLight.FRONT);
     private static final InheritedModel ENTITY_MODEL = new InheritedModel(GeometryKind.ENTITY, new JsonArray(), Map.of(), Map.of(), GuiLight.SIDE);
     private final JavaResourcePack pack;
-    private final JavaPackTextureSource textures;
     private final Map<Key, InheritedModel> inheritedModels = new HashMap<>();
     private final Map<Key, InheritedModel> vanillaInheritedModels = new HashMap<>();
     private final Map<Key, JavaModel> models = new HashMap<>();
-    private JavaModel vanillaIconModel;
 
     public JavaModelResolver(JavaResourcePack pack) {
-        this(pack, new JavaPackTextureSource(pack));
-    }
-
-    public JavaModelResolver(JavaResourcePack pack, JavaPackTextureSource textures) {
         this.pack = pack;
-        this.textures = textures;
     }
 
     public JavaModel resolve(Key model) throws IOException {
@@ -56,39 +42,8 @@ public final class JavaModelResolver {
         return resolved;
     }
 
-    // 根据模型变换、三维几何和动态贴图确定默认渲染方式。
-    public RenderType classify(ItemDefinitionBinding definition) throws IOException {
-        return this.classify(definition.rules());
-    }
-
-    private RenderType classify(List<ItemBindingRule> rules) throws IOException {
-        boolean block = false;
-        boolean unknown = false;
-        // 任意分支含模型变换、三维模型或动态贴图，整个定义都使用展示方块。
-        for (ItemBindingRule rule : rules) {
-            block |= !rule.transformations().isEmpty();
-            switch (rule.target()) {
-                case ItemRenderTarget.Model model -> {
-                    JavaModel resolved = this.resolve(model.model());
-                    if (resolved.kind() != GeometryKind.GENERATED) {
-                        block = true;
-                    } else {
-                        for (Texture layer : this.resolveLayers(resolved)) {
-                            TextureData data = this.textures.read(layer, TextureUsage.ITEM);
-                            block |= data.animation() != null;
-                        }
-                    }
-                }
-                case ItemRenderTarget.Special ignored -> block = true;
-                case ItemRenderTarget.Composite composite -> {
-                    RenderType type = this.classify(composite.parts());
-                    block |= type == RenderType.BLOCK;
-                    unknown |= type == RenderType.UNKNOWN;
-                }
-                case ItemRenderTarget.Builtin builtin -> unknown |= builtin != ItemRenderTarget.Builtin.EMPTY;
-            }
-        }
-        return block ? RenderType.BLOCK : (unknown ? RenderType.UNKNOWN : RenderType.ITEM);
+    public JavaModel resolveVanilla(Key model) throws IOException {
+        return this.resolve(model, true);
     }
 
     private JavaModel resolve(Key model, boolean vanilla) throws IOException {
@@ -163,53 +118,6 @@ public final class JavaModelResolver {
 
     public Texture resolveTexture(Key model, String slot) throws IOException {
         return this.resolveTexture(model, slot, this.resolve(model).textures());
-    }
-
-    @Nullable
-    public List<Texture> resolveIconLayers(JavaModel model) throws IOException {
-        if (model.kind() != GeometryKind.GENERATED) {
-            return null;
-        }
-        if (this.vanillaIconModel == null) {
-            this.vanillaIconModel = this.resolve(Key.minecraft("item/generated"), true);
-        }
-        if (model.guiLight() != this.vanillaIconModel.guiLight()) {
-            return null;
-        }
-        for (Map.Entry<DisplayPosition, Transform> entry : model.display().entrySet()) {
-            boolean handheld = switch (entry.getKey()) {
-                case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> true;
-                default -> false;
-            };
-            if (!handheld && !entry.getValue().equals(this.vanillaIconModel.display().get(entry.getKey()))) {
-                return null;
-            }
-        }
-        List<Texture> layers = this.resolveLayers(model);
-        for (Texture texture : layers) {
-            if (texture.forceTranslucent()) {
-                return null;
-            }
-        }
-        return layers;
-    }
-
-    public boolean needsHandheldAttachable(JavaModel model) throws IOException {
-        if (this.vanillaIconModel == null) {
-            this.vanillaIconModel = this.resolve(Key.minecraft("item/generated"), true);
-        }
-        for (DisplayPosition position : DISPLAY_POSITIONS) {
-            switch (position) {
-                case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> {
-                    if (!model.display().getOrDefault(position, Transform.IDENTITY).equals(this.vanillaIconModel.display().get(position))) {
-                        return true;
-                    }
-                }
-                default -> {
-                }
-            }
-        }
-        return false;
     }
 
     public List<Texture> resolveLayers(JavaModel model) throws IOException {
@@ -331,10 +239,6 @@ public final class JavaModelResolver {
             return new Texture(Key.of(texture.getAsString()), false);
         }
         throw new IOException("Cyclic texture reference #" + currentSlot + " in model " + model);
-    }
-
-    public enum RenderType {
-        ITEM, BLOCK, UNKNOWN
     }
 
     private record InheritedModel(GeometryKind kind,

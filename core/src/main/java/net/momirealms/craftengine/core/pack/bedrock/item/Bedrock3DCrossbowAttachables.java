@@ -21,7 +21,7 @@ public final class Bedrock3DCrossbowAttachables {
     private Bedrock3DCrossbowAttachables() {
     }
 
-    public static void write(Key id, List<Stage> stages, List<Material> materials, BedrockCrossbowStates.State state, ItemBehaviorDescription.Use use, Path root) throws IOException {
+    static void write(Key id, List<Stage> stages, List<Material> materials, BedrockCrossbowStates.State state, ItemBehaviorDescription.Use use, Path root) throws IOException {
         JsonArray bones = new JsonArray();
         bones.add(useBone(USE_X, "ce_slot"));
         bones.add(useBone(USE_Y, USE_X));

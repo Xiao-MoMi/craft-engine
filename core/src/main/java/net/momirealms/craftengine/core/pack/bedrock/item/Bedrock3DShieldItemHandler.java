@@ -2,8 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 
 import java.io.IOException;
@@ -11,12 +10,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
-    private final JavaModelResolver models;
-    private final JavaPackTextureSource textures;
+    private final JavaModelResources resources;
 
-    public Bedrock3DShieldItemHandler(JavaModelResolver models, JavaPackTextureSource textures) {
-        this.models = models;
-        this.textures = textures;
+    public Bedrock3DShieldItemHandler(JavaModelResources resources) {
+        this.resources = resources;
     }
 
     @Override
@@ -32,7 +29,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
                 idle = rule;
             }
         }
-        if (idle == null || this.models.classify(entry.definition()) != JavaModelResolver.RenderType.BLOCK) {
+        if (idle == null || ItemRenderType.classify(entry.definition(), this.resources) != ItemRenderType.BLOCK) {
             return null;
         }
         List<ItemBindingCondition> conditions = idle.conditions().stream().filter(condition -> !isUsingItem(condition)).toList();
@@ -41,7 +38,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
                 return null;
             }
         }
-        BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(this.models, this.textures);
+        BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(this.resources.models(), this.resources.textures());
         List<Bedrock3DItemAttachables.Stage> stages = new ArrayList<>(rules.size());
         BedrockItemBlocks.DisplayBlock display;
         try {
@@ -55,7 +52,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
                 }
                 stages.add(geometry.createStage(rule, condition.toString()));
             }
-            display = context.blocks().write(entry.bedrockId(), List.of(idle), this.models, this.textures, context.root());
+            display = context.blocks().write(entry.bedrockId(), List.of(idle), this.resources.models(), this.resources.textures(), context.root());
         } catch (UnsupportedOperationException exception) {
             return null;
         }

@@ -3,8 +3,8 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.item.ItemKeys;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -22,12 +22,10 @@ public final class BedrockItemResourceGenerator {
     private BedrockItemResourceGenerator() {
     }
 
-    public static Result write(JavaResourcePack resources, ItemRegistrationPlan plan, Path root) throws IOException {
-        JavaPackTextureSource textures = new JavaPackTextureSource(resources);
-        JavaModelResolver models = new JavaModelResolver(resources, textures);
-        BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(models, textures);
-        BedrockDefaultItemHandler defaultHandler = new BedrockDefaultItemHandler(models, textures, renderer);
-        Map<Key, List<BedrockItemHandler>> handlers = createHandlers(models, textures, renderer);
+    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root) throws IOException {
+        BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(resources);
+        BedrockDefaultItemHandler defaultHandler = new BedrockDefaultItemHandler(resources, renderer);
+        Map<Key, List<BedrockItemHandler>> handlers = createHandlers(resources, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root);
 
         Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
@@ -91,11 +89,13 @@ public final class BedrockItemResourceGenerator {
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(atlas), output);
     }
 
-    private static Map<Key, List<BedrockItemHandler>> createHandlers(JavaModelResolver models, JavaPackTextureSource textures, BedrockItemIconRenderer renderer) {
+    private static Map<Key, List<BedrockItemHandler>> createHandlers(JavaModelResources resources, BedrockItemIconRenderer renderer) {
+        JavaModelResolver models = resources.models();
+        JavaPackTextureSource textures = resources.textures();
         Map<Key, List<BedrockItemHandler>> handlers = new HashMap<>();
         handlers.put(ItemKeys.BOW, List.of(new Bedrock2DBowItemHandler(models, renderer), new Bedrock3DBowItemHandler(models, textures)));
         handlers.put(ItemKeys.CROSSBOW, List.of(new Bedrock2DCrossbowItemHandler(models, renderer), new Bedrock3DCrossbowItemHandler(models, textures)));
-        handlers.put(ItemKeys.SHIELD, List.of(new Bedrock3DShieldItemHandler(models, textures)));
+        handlers.put(ItemKeys.SHIELD, List.of(new Bedrock3DShieldItemHandler(resources)));
         List<BedrockItemHandler> spears = List.of(new Bedrock2DSpearItemHandler(renderer), new Bedrock3DSpearItemHandler(models, textures));
         for (Key spear : ItemKeys.SPEARS) {
             handlers.put(spear, spears);

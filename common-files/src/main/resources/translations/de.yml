@@ -311,6 +311,7 @@ resource_pack.bedrock.block.no_visual: "Block <arg:0>, Zustand <arg:1> überspru
 resource_pack.bedrock.block.property: "Unbekannte multipart-Eigenschaft <arg:0>"
 resource_pack.bedrock.block.renderer: "Der Block erfordert einen speziellen Entity-Renderer"
 resource_pack.bedrock.block.rotation: "Blockzustände benötigen Drehwinkel in 90-Grad-Schritten"
+resource_pack.bedrock.block.scaled: "Das Bedrock-Modell für Block <arg:0>, Zustand <arg:1>, wurde auf <arg:2> % verkleinert, damit es in die Geometriegrenzen des Blocks passt."
 resource_pack.bedrock.block.skipped: "Block <arg:0>, Zustand <arg:1> übersprungen: <arg:2>"
 resource_pack.bedrock.block.tint: "Weltabhängige Blockfärbung wird nicht unterstützt"
 resource_pack.bedrock.block.uv: "Die UV-Sperre lässt sich nicht durch eine rechteckige Fläche darstellen"

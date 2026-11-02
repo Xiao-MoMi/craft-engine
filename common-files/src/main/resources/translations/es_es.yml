@@ -311,6 +311,7 @@ resource_pack.bedrock.block.no_visual: "Se omitió el estado <arg:1> del bloque 
 resource_pack.bedrock.block.property: "Propiedad multipart desconocida: <arg:0>"
 resource_pack.bedrock.block.renderer: "El bloque necesita un renderizador de entidades especializado"
 resource_pack.bedrock.block.rotation: "La rotación del estado debe ser múltiplo de 90 grados"
+resource_pack.bedrock.block.scaled: "Se ha reducido el modelo de Bedrock del bloque <arg:0> en el estado <arg:1> al <arg:2> % para que se ajuste a los límites de la geometría del bloque."
 resource_pack.bedrock.block.skipped: "Se omitió el estado <arg:1> del bloque <arg:0>: <arg:2>"
 resource_pack.bedrock.block.tint: "No se admite el tinte de bloque que depende del mundo"
 resource_pack.bedrock.block.uv: "El bloqueo UV no se puede representar con una cara rectangular"
