@@ -15,6 +15,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,15 +42,25 @@ public final class Bedrock3DItemAttachables {
             JsonArray frames = BedrockItemTextures.writeFrames(material.data(), material.color(), name, path, textureNames, root);
             JsonArray defaults = material.dyeColor() == null ? null : BedrockItemTextures.writeFrames(
                     material.data(), material.dyeColor(), name + "_default", path + "_default", textureNames, root);
+            Map<JsonArray, JsonObject> layerGeometries = new HashMap<>();
             for (int stage = 0; stage < stages.size(); stage++) {
                 JsonArray cubes = select(stages.get(stage).cubes(), name);
                 if (cubes.isEmpty()) {
                     continue;
                 }
                 String alias = "stage_" + stage + '_' + name;
-                String geometry = "geometry." + prefix + '.' + alias;
-                geometryNames.addProperty(alias, geometry);
-                geometries.add(geometry(geometry, cubes, stages.get(stage).model(), poseBones));
+                JsonObject geometry = layerGeometries.get(cubes);
+                JavaModel model = stages.get(stage).model();
+                float radius = modelRadius(cubes);
+                if (geometry == null) {
+                    geometry = geometry("geometry." + prefix + '.' + alias, cubes, model, radius, poseBones);
+                    layerGeometries.put(cubes, geometry);
+                    geometries.add(geometry);
+                } else {
+                    // 同一组面可用于不同的手持姿态，裁剪范围要覆盖每个阶段的 display。
+                    BedrockItemAttachables.expandDisplayBounds(geometry.getAsJsonObject("description"), model, radius);
+                }
+                geometryNames.addProperty(alias, geometry.getAsJsonObject("description").get("identifier").getAsString());
                 JsonObject controller = new JsonObject();
                 controller.addProperty("geometry", "Geometry." + alias);
                 JsonObject textureArrays = new JsonObject();
@@ -158,7 +169,7 @@ public final class Bedrock3DItemAttachables {
         return cubes;
     }
 
-    private static JsonObject geometry(String identifier, JsonArray cubes, JavaModel model, JsonArray poseBones) {
+    private static float modelRadius(JsonArray cubes) {
         float radius = 0;
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
@@ -172,6 +183,10 @@ public final class Bedrock3DItemAttachables {
             }
             radius = Math.max(radius, distance + halfSize.length());
         }
+        return radius;
+    }
+
+    private static JsonObject geometry(String identifier, JsonArray cubes, JavaModel model, float radius, JsonArray poseBones) {
         JsonObject geometry = BedrockItemAttachables.displayGeometry(model, cubes, identifier, radius);
         JsonArray bones = new JsonArray();
         for (JsonElement value : geometry.getAsJsonArray("bones")) {

@@ -8,19 +8,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-final class BedrockSpearModels {
+final class BedrockHeldItemModels {
     private final ItemBindingRule inventory;
     private final List<ItemBindingRule> hands;
     private final List<String> conditions;
 
-    private BedrockSpearModels(ItemBindingRule inventory, List<ItemBindingRule> hands, List<String> conditions) {
+    private BedrockHeldItemModels(ItemBindingRule inventory, List<ItemBindingRule> hands, List<String> conditions) {
         this.inventory = inventory;
         this.hands = hands;
         this.conditions = conditions;
     }
 
     @Nullable
-    static BedrockSpearModels collect(ItemRegistrationPlan.Entry entry) {
+    static BedrockHeldItemModels collect(ItemRegistrationPlan.Entry entry) {
         ItemBindingRule inventory = null;
         List<ItemBindingRule> hands = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
@@ -43,19 +43,24 @@ final class BedrockSpearModels {
             }
             if (!contexts.isEmpty()) {
                 hands.add(rule);
-                conditions.add("(" + contexts + ") && (" + BedrockCrossbowStates.condition(rule) + ")");
+                conditions.add("(" + contexts + ") && (" + BedrockItemAttachables.useCondition(rule) + ")");
             }
         }
         if (inventory == null || hands.isEmpty()) {
             return null;
         }
         List<ItemBindingCondition> base = base(inventory);
-        for (ItemBindingRule rule : hands) {
+        // 只消化客户端能判定的显示和使用条件，不能把耐久等物品分支折叠为一个 ID。
+        for (ItemBindingRule rule : entry.definition().rules()) {
             if (!base.equals(base(rule))) {
                 return null;
             }
+            if (matches(rule, "gui") && (!inventory.target().equals(rule.target())
+                    || !inventory.transformations().equals(rule.transformations()))) {
+                return null;
+            }
         }
-        return new BedrockSpearModels(inventory, hands, conditions);
+        return new BedrockHeldItemModels(inventory, hands, conditions);
     }
 
     private static List<ItemBindingCondition> base(ItemBindingRule rule) {

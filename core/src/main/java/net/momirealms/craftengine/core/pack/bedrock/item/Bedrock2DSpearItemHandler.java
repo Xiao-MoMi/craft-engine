@@ -16,7 +16,7 @@ public final class Bedrock2DSpearItemHandler implements BedrockItemHandler {
 
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
-        BedrockSpearModels models = BedrockSpearModels.collect(entry);
+        BedrockHeldItemModels models = BedrockHeldItemModels.collect(entry);
         if (models == null) {
             return null;
         }

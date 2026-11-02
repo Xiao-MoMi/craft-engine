@@ -55,6 +55,8 @@ final class GeyserItemUse {
             if (!using) {
                 converted.remove("minecraft:use_modifiers");
                 properties.remove("use_duration");
+            } else if (animation.equals("TRIDENT") && itemType.equals("minecraft:trident")) {
+                GeyserConsumableComponents.tridentUse(converted, properties, ticks);
             } else {
                 NbtMapBuilder modifiers = NbtMap.builder();
                 boolean hasKinetic = kineticEnabled != null ? kineticEnabled : original.containsKey("minecraft:kinetic_weapon");

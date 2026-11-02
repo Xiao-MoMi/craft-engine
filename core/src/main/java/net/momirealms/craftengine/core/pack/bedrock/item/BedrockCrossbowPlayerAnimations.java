@@ -17,7 +17,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_NOTICE;
 
 public final class BedrockCrossbowPlayerAnimations {
@@ -36,20 +35,11 @@ public final class BedrockCrossbowPlayerAnimations {
         }
     }
 
-    public void write(Path root) throws IOException {
+    void write(BedrockPlayerAnimationController controller, Path root) throws IOException {
         if (this.chargeDurations.isEmpty()) {
             return;
         }
-        Path controllerPath = root.resolve(PLAYER_ANIMATION_CONTROLLER);
-        JsonObject controllers;
-        if (Files.exists(controllerPath)) {
-            controllers = GsonHelper.readJsonFromFile(controllerPath).getAsJsonObject();
-        } else {
-            controllers = GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
-        }
-        JsonObject states = controllers.getAsJsonObject("animation_controllers")
-                .getAsJsonObject("controller.animation.player.root").getAsJsonObject("states");
-        JsonArray animations = states.getAsJsonObject("first_person").getAsJsonArray("animations");
+        JsonArray animations = controller.animations("first_person");
         for (JsonElement animation : animations) {
             if (animation instanceof JsonObject entry && entry.has("first_person_crossbow_equipped")) {
                 String vanilla = entry.get("first_person_crossbow_equipped").getAsString();
@@ -62,7 +52,7 @@ public final class BedrockCrossbowPlayerAnimations {
                 break;
             }
         }
-        animations = states.getAsJsonObject("third_person").getAsJsonArray("animations");
+        animations = controller.animations("third_person");
         String unloaded = condition(this.chargeDurations.keySet());
         String charged = condition(this.chargedItems);
         for (JsonElement animation : animations) {
@@ -89,8 +79,6 @@ public final class BedrockCrossbowPlayerAnimations {
         JsonObject holdAnimation = new JsonObject();
         holdAnimation.addProperty("crossbow_hold", "variable.ce_crossbow_charged");
         animations.add(holdAnimation);
-        Files.createDirectories(controllerPath.getParent());
-        GsonHelper.writeJsonFile(controllers, controllerPath);
 
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/crossbow.animation.json").getAsJsonObject();
         JsonObject bones = animationFile.getAsJsonObject("animations")

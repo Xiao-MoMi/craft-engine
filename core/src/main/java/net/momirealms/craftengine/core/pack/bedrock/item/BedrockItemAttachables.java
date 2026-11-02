@@ -165,7 +165,7 @@ public final class BedrockItemAttachables {
         return true;
     }
 
-    static String bowCondition(ItemBindingRule rule) {
+    static String useCondition(ItemBindingRule rule) {
         StringBuilder expression = new StringBuilder("1");
         for (ItemBindingCondition condition : rule.conditions()) {
             if (condition instanceof ItemBindingCondition.BooleanMatch match && match.property() instanceof UsingItemConditionProperty) {
@@ -267,24 +267,30 @@ public final class BedrockItemAttachables {
         bones.add(bone(bonePrefix + Y, bonePrefix + X));
         bones.add(mesh);
 
-        float radius = 0;
-        for (View view : VIEWS) {
-            JavaModel.Transform source = model.display().getOrDefault(view.position, JavaModel.Transform.IDENTITY);
-            float scale = Math.max(Math.abs(source.scale().x), Math.max(Math.abs(source.scale().y), Math.abs(source.scale().z)));
-            // 包围球覆盖模型、display 平移及挂点补偿，避免大姿态被裁剪。
-            radius = Math.max(radius, (modelRadius * scale + source.translation().length()) * view.pose.scale + view.pose.translation.length() + 8);
-        }
         JsonObject description = new JsonObject();
         description.addProperty("identifier", geometryId);
         description.addProperty("texture_width", 16);
         description.addProperty("texture_height", 16);
-        description.addProperty("visible_bounds_width", Math.ceil(radius / 8));
-        description.addProperty("visible_bounds_height", Math.ceil(radius / 8));
+        expandDisplayBounds(description, model, modelRadius);
         description.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);
         geometry.add("bones", bones);
         return geometry;
+    }
+
+    static void expandDisplayBounds(JsonObject description, JavaModel model, float modelRadius) {
+        float radius = 0;
+        for (View view : VIEWS) {
+            JavaModel.Transform source = model.display().getOrDefault(view.position, JavaModel.Transform.IDENTITY);
+            float scale = Math.max(Math.abs(source.scale().x), Math.max(Math.abs(source.scale().y), Math.abs(source.scale().z)));
+            radius = Math.max(radius, (modelRadius * scale + source.translation().length()) * view.pose.scale + view.pose.translation.length() + 8);
+        }
+        double size = Math.ceil(radius / 8);
+        if (!description.has("visible_bounds_width") || size > description.get("visible_bounds_width").getAsDouble()) {
+            description.addProperty("visible_bounds_width", size);
+            description.addProperty("visible_bounds_height", size);
+        }
     }
 
     private static JsonObject bowGeometry(String identifier, String texture, float x, float z, Matrix4fc transformation) {

@@ -30,7 +30,7 @@ public final class Bedrock3DBowItemHandler implements BedrockItemHandler {
         BedrockItemBlocks.DisplayBlock display;
         try {
             for (ItemBindingRule rule : rules) {
-                stages.add(geometry.createStage(rule, BedrockItemAttachables.bowCondition(rule)));
+                stages.add(geometry.createStage(rule, BedrockItemAttachables.useCondition(rule)));
             }
             // 背包和掉落使用待机 display，手持几何不缩到方块范围。
             display = context.blocks().write(entry.bedrockId(), List.of(idleRule), this.models, this.textures, context.root());

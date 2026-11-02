@@ -19,7 +19,7 @@ public final class Bedrock2DSpearAttachables {
     private Bedrock2DSpearAttachables() {
     }
 
-    static void write(ItemRegistrationPlan.Entry entry, BedrockSpearModels models, List<BufferedImage> stages, Path root) throws IOException {
+    static void write(ItemRegistrationPlan.Entry entry, BedrockHeldItemModels models, List<BufferedImage> stages, Path root) throws IOException {
         String resource = entry.bedrockId().namespace() + '/' + entry.bedrockId().value();
         String prefix = ResourcePackUtils.bedrockResourceIdentifier(entry.bedrockId());
         JsonObject textures = new JsonObject();

@@ -15,7 +15,7 @@ public final class Bedrock3DSpearAttachables {
     private Bedrock3DSpearAttachables() {
     }
 
-    static void write(ItemRegistrationPlan.Entry entry, BedrockSpearModels models, List<Bedrock3DItemAttachables.Stage> stages,
+    static void write(ItemRegistrationPlan.Entry entry, BedrockHeldItemModels models, List<Bedrock3DItemAttachables.Stage> stages,
                       List<Bedrock3DItemAttachables.Material> materials, Path root) throws IOException {
         JsonArray bones = new JsonArray();
         String parent = "ce_slot";

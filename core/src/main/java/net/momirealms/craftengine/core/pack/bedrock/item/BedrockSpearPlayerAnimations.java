@@ -13,23 +13,46 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
+import java.util.stream.Collectors;
 
 public final class BedrockSpearPlayerAnimations {
     private BedrockSpearPlayerAnimations() {
     }
 
-    public static void write(Map<Key, ItemRegistrationPlan.Entry> javaSpears, Path root) throws IOException {
+    static void write(Map<Key, ItemRegistrationPlan.Entry> javaSpears, BedrockPlayerAnimationController controller, Path root) throws IOException {
         if (javaSpears.isEmpty()) {
             return;
         }
         List<ItemRegistrationPlan.Entry> entries = javaSpears.values().stream()
                 .sorted(Comparator.comparing(entry -> entry.bedrockId().asString())).toList();
-        StringBuilder condition = new StringBuilder("query.is_item_name_any('slot.weapon.mainhand'");
+        JsonObject player = GsonHelper.readJsonFromResource("/bedrock/spear/java_player.json").getAsJsonObject();
+        String firstPersonCondition = entries.stream().map(entry -> "'" + entry.bedrockId().asString() + "'")
+                .collect(Collectors.joining(", ", "query.is_item_name_any('slot.weapon.mainhand', ", ")"));
+        JsonArray firstPerson = controller.animations("first_person");
+        for (JsonElement animation : firstPerson) {
+            if (animation instanceof JsonObject entry && entry.has("first_person_melee_spear_controller")) {
+                String vanilla = entry.get("first_person_melee_spear_controller").getAsString();
+                entry.addProperty("first_person_melee_spear_controller", "(" + vanilla + ") && !(" + firstPersonCondition + ")");
+            }
+        }
+        JsonArray thirdPerson = controller.animations("third_person");
+        String setup = thirdPersonSetup(entries, player);
+        for (JsonElement animation : thirdPerson) {
+            if (animation instanceof JsonObject entry && entry.has("third_person_melee_spear_controller")) {
+                String vanilla = entry.get("third_person_melee_spear_controller").getAsString();
+                entry.addProperty("third_person_melee_spear_controller", setup + "return (" + vanilla + ") && !variable.ce_java_spear;");
+            }
+        }
+        // 绕过原版 hold/use/attack 互斥状态，使突刺余下的动作能与举矛叠加。
+        JsonObject hold = new JsonObject();
+        hold.addProperty("third_person_melee_spear_hold", "variable.ce_java_spear");
+        thirdPerson.add(hold);
+        writeHoldAnimation(player, root);
+    }
+
+    private static String thirdPersonSetup(List<ItemRegistrationPlan.Entry> entries, JsonObject player) throws IOException {
         StringBuilder scripts = new StringBuilder("variable.ce_java_spear = 0; variable.ce_using_item = query.is_using_item && query.main_hand_item_use_duration > 0; ");
         for (ItemRegistrationPlan.Entry entry : entries) {
-            condition.append(", '").append(entry.bedrockId().asString()).append("'");
             scripts.append("query.is_item_name_any('slot.weapon.mainhand', '").append(entry.bedrockId().asString())
                     .append("') ? { variable.ce_java_spear = 1; ");
             for (JsonElement parameter : Bedrock3DSpearAttachables.parameters(entry)) {
@@ -37,9 +60,7 @@ public final class BedrockSpearPlayerAnimations {
             }
             scripts.append("}; ");
         }
-        condition.append(')');
         JsonObject pose = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
-        JsonObject player = GsonHelper.readJsonFromResource("/bedrock/spear/java_player.json").getAsJsonObject();
         // 第三人称 getTicksUsingItem(partialTicks) 不减一；手臂和物品复用同一组阶段公式。
         scripts.append("variable.ce_java_spear ? { variable.ce_spear_time = variable.ce_spear_use ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration + query.frame_alpha) : 0; ")
                 .append("variable.ce_spear_hit_ticks = query.ticks_since_last_kinetic_weapon_hit; ");
@@ -50,40 +71,10 @@ public final class BedrockSpearPlayerAnimations {
         for (JsonElement expression : player.getAsJsonArray("pre_animation")) {
             scripts.append(expression.getAsString()).append(' ');
         }
-        scripts.append("}; ");
+        return scripts.append("}; ").toString();
+    }
 
-        Path path = root.resolve(PLAYER_ANIMATION_CONTROLLER);
-        JsonObject controllers;
-        if (Files.exists(path)) {
-            controllers = GsonHelper.readJsonFromFile(path).getAsJsonObject();
-        } else {
-            controllers = GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
-        }
-        JsonObject states = controllers.getAsJsonObject("animation_controllers")
-                .getAsJsonObject("controller.animation.player.root").getAsJsonObject("states");
-        for (String state : List.of("first_person", "third_person")) {
-            JsonArray animations = states.getAsJsonObject(state).getAsJsonArray("animations");
-            String controller = state + "_melee_spear_controller";
-            for (JsonElement animation : animations) {
-                if (animation instanceof JsonObject entry && entry.has(controller)) {
-                    String original = entry.get(controller).getAsString();
-                    if (state.equals("first_person")) {
-                        entry.addProperty(controller, "(" + original + ") && !(" + condition + ")");
-                    } else {
-                        entry.addProperty(controller, scripts + "return (" + original + ") && !variable.ce_java_spear;");
-                    }
-                }
-            }
-            if (state.equals("third_person")) {
-                // 绕过原版 hold/use/attack 互斥状态，使突刺余下的动作能与举矛叠加。
-                JsonObject animation = new JsonObject();
-                animation.addProperty("third_person_melee_spear_hold", "variable.ce_java_spear");
-                animations.add(animation);
-            }
-        }
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(controllers, path);
-
+    private static void writeHoldAnimation(JsonObject player, Path root) throws IOException {
         JsonObject file = GsonHelper.readJsonFromResource("/bedrock/spear/player.animation.json").getAsJsonObject();
         JsonObject animations = new JsonObject();
         JsonObject hold = file.getAsJsonObject("animations").getAsJsonObject("animation.humanoid.melee_spear_hold");
@@ -100,7 +91,7 @@ public final class BedrockSpearPlayerAnimations {
                 JsonArray vector = new JsonArray();
                 for (int i = 0; i < replacement.size(); i++) {
                     String vanilla = original == null ? "0" : original.get(i).getAsString();
-                    vector.add(new JsonPrimitive("(" + condition + ") ? (" + replacement.get(i).getAsString() + ") : (" + vanilla + ")"));
+                    vector.add(new JsonPrimitive("variable.ce_java_spear ? (" + replacement.get(i).getAsString() + ") : (" + vanilla + ")"));
                 }
                 target.add(transform.getKey(), vector);
             }

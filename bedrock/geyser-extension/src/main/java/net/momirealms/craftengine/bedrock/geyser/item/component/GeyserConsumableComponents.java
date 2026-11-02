@@ -13,6 +13,14 @@ final class GeyserConsumableComponents {
     private GeyserConsumableComponents() {
     }
 
+    static void tridentUse(NbtMapBuilder components, NbtMapBuilder properties, int useTicks) {
+        // Geyser 用持续使用模拟三叉戟蓄力，但当前的动画映射表只有 SPEAR，没有 TRIDENT。
+        components.putIfAbsent("minecraft:food", EMPTY_FOOD);
+        components.putCompound("minecraft:use_animation", NbtMap.builder().putString("value", "spear").build());
+        properties.putInt("use_animation", 6);
+        useDuration(components, properties, useTicks / 20f);
+    }
+
     static GeyserItemComponentPatch consumable(JsonElement value, int sourceVersion) {
         if (value.isJsonNull()) {
             return GeyserItemComponents.update((components, properties) -> {

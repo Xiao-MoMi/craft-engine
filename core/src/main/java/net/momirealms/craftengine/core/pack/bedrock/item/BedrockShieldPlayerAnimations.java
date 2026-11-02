@@ -15,13 +15,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
-
 public final class BedrockShieldPlayerAnimations {
+    private static final String MAIN_HAND = "ce_main_hand_shield";
+    private static final String OFF_HAND = "ce_off_hand_shield";
+    private static final String MAIN_BLOCKING = "variable." + MAIN_HAND;
+    private static final String OFF_BLOCKING = "variable." + OFF_HAND;
+    private static final String BLOCKING = "(" + MAIN_BLOCKING + " || " + OFF_BLOCKING + ")";
+
     private BedrockShieldPlayerAnimations() {
     }
 
-    public static void write(Set<Key> shields, Path root) throws IOException {
+    static void write(Set<Key> shields, BedrockPlayerAnimationController controller, Path root) throws IOException {
         if (shields.isEmpty()) {
             return;
         }
@@ -29,41 +33,48 @@ public final class BedrockShieldPlayerAnimations {
         shields.stream().sorted(Comparator.comparing(Key::asString)).forEach(id -> names.append(", '").append(id.asString()).append('\''));
         String main = "query.blocking && !query.is_emerging && query.is_item_name_any('slot.weapon.mainhand'" + names + ")";
         String off = "query.blocking && query.is_emerging && query.is_item_name_any('slot.weapon.offhand'" + names + ")";
-        String active = "((" + main + ") || (" + off + "))";
-        Path controllerPath = root.resolve(PLAYER_ANIMATION_CONTROLLER);
-        JsonObject controllers;
-        if (Files.exists(controllerPath)) {
-            controllers = GsonHelper.readJsonFromFile(controllerPath).getAsJsonObject();
-        } else {
-            controllers = GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
+        for (String view : List.of("first_person", "third_person")) {
+            JsonObject state = controller.state(view);
+            // 视角切换或解除格挡时，当前状态在处理骨骼前重新计算双手条件。
+            JsonObject variables = state.asMap().computeIfAbsent("variables", ignored -> new JsonObject()).getAsJsonObject();
+            variables.add(MAIN_HAND, booleanVariable(main));
+            variables.add(OFF_HAND, booleanVariable(off));
+            updateBlockingAnimations(state.getAsJsonArray("animations"));
         }
-        JsonObject states = controllers.getAsJsonObject("animation_controllers")
-                .getAsJsonObject("controller.animation.player.root").getAsJsonObject("states");
-        for (String state : List.of("first_person", "third_person")) {
-            for (JsonElement value : states.getAsJsonObject(state).getAsJsonArray("animations")) {
-                if (!(value instanceof JsonObject animation)) {
-                    continue;
-                }
-                for (Map.Entry<String, JsonElement> entry : animation.entrySet()) {
-                    String original = entry.getValue().getAsString();
-                    switch (entry.getKey()) {
-                        case "first_person_swap_item" -> entry.setValue(new JsonPrimitive("(" + original + ") || " + active));
-                        case "first_person_shield_block" -> entry.setValue(new JsonPrimitive("(" + original + ") && !" + active));
-                        case "shield_block_main_hand" -> entry.setValue(new JsonPrimitive("((" + original + ") && !" + active + ") || (" + main + ")"));
-                        case "shield_block_off_hand" -> entry.setValue(new JsonPrimitive("((" + original + ") && !" + active + ") || (" + off + ")"));
-                    }
-                }
-            }
-        }
-        Files.createDirectories(controllerPath.getParent());
-        GsonHelper.writeJsonFile(controllers, controllerPath);
 
         JsonObject file = GsonHelper.readJsonFromResource("/bedrock/player/shield.animation.json").getAsJsonObject();
-        adaptHand(file, "main_hand", "right", main, -30);
-        adaptHand(file, "off_hand", "left", off, 30);
+        adaptHand(file, "main_hand", "right", MAIN_BLOCKING, -30);
+        adaptHand(file, "off_hand", "left", OFF_BLOCKING, 30);
         Path animationPath = root.resolve("animations/craftengine/shared/shield_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(file, animationPath);
+    }
+
+    private static JsonObject booleanVariable(String condition) {
+        JsonObject curve = new JsonObject();
+        curve.addProperty("0.0", 0);
+        curve.addProperty("1.0", 1);
+        JsonObject variable = new JsonObject();
+        variable.addProperty("input", condition);
+        variable.add("remap_curve", curve);
+        return variable;
+    }
+
+    private static void updateBlockingAnimations(JsonArray animations) {
+        for (JsonElement value : animations) {
+            if (!(value instanceof JsonObject animation)) {
+                continue;
+            }
+            for (Map.Entry<String, JsonElement> entry : animation.entrySet()) {
+                String original = "(" + entry.getValue().getAsString() + ")";
+                switch (entry.getKey()) {
+                    case "first_person_swap_item" -> entry.setValue(new JsonPrimitive(original + " || " + BLOCKING));
+                    case "first_person_shield_block" -> entry.setValue(new JsonPrimitive(original + " && !" + BLOCKING));
+                    case "shield_block_main_hand" -> entry.setValue(new JsonPrimitive("(" + original + " && !" + BLOCKING + ") || " + MAIN_BLOCKING));
+                    case "shield_block_off_hand" -> entry.setValue(new JsonPrimitive("(" + original + " && !" + BLOCKING + ") || " + OFF_BLOCKING));
+                }
+            }
+        }
     }
 
     private static void adaptHand(JsonObject file, String hand, String side, String condition, int yaw) {

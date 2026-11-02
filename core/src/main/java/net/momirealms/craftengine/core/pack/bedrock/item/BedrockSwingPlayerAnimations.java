@@ -16,13 +16,11 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Set;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
-
 public final class BedrockSwingPlayerAnimations {
     private BedrockSwingPlayerAnimations() {
     }
 
-    public static void write(Set<Key> items, Path root) throws IOException {
+    static void write(Set<Key> items, BedrockPlayerAnimationController controller, Path root) throws IOException {
         if (items.isEmpty()) {
             return;
         }
@@ -55,19 +53,12 @@ public final class BedrockSwingPlayerAnimations {
         }
         scripts.append("}; return ");
 
-        Path controllerPath = root.resolve(PLAYER_ANIMATION_CONTROLLER);
-        JsonObject controllers = Files.exists(controllerPath)
-                ? GsonHelper.readJsonFromFile(controllerPath).getAsJsonObject()
-                : GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
-        JsonArray animations = controllers.getAsJsonObject("animation_controllers").getAsJsonObject("controller.animation.player.root")
-                .getAsJsonObject("states").getAsJsonObject("first_person").getAsJsonArray("animations");
+        JsonArray animations = controller.animations("first_person");
         for (JsonElement element : animations) {
             if (element instanceof JsonObject animation && animation.has("first_person_attack_controller")) {
                 animation.addProperty("first_person_attack_controller", scripts + animation.get("first_person_attack_controller").getAsString() + ';');
             }
         }
-        Files.createDirectories(controllerPath.getParent());
-        GsonHelper.writeJsonFile(controllers, controllerPath);
 
         JsonObject file = GsonHelper.readJsonFromResource("/bedrock/player/attack.animation.json").getAsJsonObject();
         JsonObject bone = file.getAsJsonObject("animations").getAsJsonObject("animation.player.first_person.attack_rotation")

@@ -13,27 +13,16 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.Set;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
-
 public final class BedrockBowPlayerAnimations {
     private BedrockBowPlayerAnimations() {
     }
 
-    public static void write(Set<Key> bows, Set<Key> javaBows, Path root) throws IOException {
+    static void write(Set<Key> bows, Set<Key> javaBows, BedrockPlayerAnimationController controller, Path root) throws IOException {
         if (bows.isEmpty()) {
             return;
         }
         String active = "(" + condition(bows) + " && query.is_using_item && query.main_hand_item_use_duration > 0)";
-        Path path = root.resolve(PLAYER_ANIMATION_CONTROLLER);
-        JsonObject controllers;
-        if (Files.exists(path)) {
-            controllers = GsonHelper.readJsonFromFile(path).getAsJsonObject();
-        } else {
-            controllers = GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
-        }
-        JsonArray animations = controllers.getAsJsonObject("animation_controllers")
-                .getAsJsonObject("controller.animation.player.root").getAsJsonObject("states")
-                .getAsJsonObject("third_person").getAsJsonArray("animations");
+        JsonArray animations = controller.animations("third_person");
         for (JsonElement value : animations) {
             if (!(value instanceof JsonObject animation)) {
                 continue;
@@ -47,8 +36,6 @@ public final class BedrockBowPlayerAnimations {
                 animation.addProperty("use_item_progress", "(" + original + ") && !" + active);
             }
         }
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(controllers, path);
         if (!javaBows.isEmpty()) {
             JsonObject file = GsonHelper.readJsonFromResource("/bedrock/player/bow.animation.json").getAsJsonObject();
             JsonArray rotation = file.getAsJsonObject("animations").getAsJsonObject("animation.player.bow_equipped")
