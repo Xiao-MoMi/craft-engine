@@ -80,7 +80,7 @@ public final class Bedrock2DSpearAttachables {
         file.addProperty(FORMAT_VERSION, "1.10.0");
         file.add("minecraft:attachable", attachable);
         writeJson(file, root.resolve("attachables/" + resource + ".attachable.json"));
-        JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/spear/spear.animation.json").getAsJsonObject();
+        JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.animation.json").getAsJsonObject();
         JsonObject nativeAnimations = animationFile.getAsJsonObject("animations");
         JsonObject hit = nativeAnimations.remove("animation.spear.hit").getAsJsonObject();
         JsonObject hitAnimations = new JsonObject();
@@ -90,7 +90,7 @@ public final class Bedrock2DSpearAttachables {
     }
 
     private static JsonObject geometry(String identifier, String texture) {
-        JsonObject geometry = GsonHelper.readJsonFromResource("/bedrock/spear/spear.geo.json")
+        JsonObject geometry = GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.geo.json")
                 .getAsJsonObject().getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
         geometry.getAsJsonObject("description").addProperty("identifier", identifier);
         geometry.getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("texture_meshes")

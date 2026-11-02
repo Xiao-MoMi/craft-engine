@@ -77,8 +77,7 @@ public final class ItemBindingCompiler {
                 case SelectItemModel select -> this.select(select, path);
                 case RangeDispatchItemModel range -> this.range(range, path);
                 case CompositeItemModel composite -> this.composite(composite, path);
-                default ->
-                        throw new IllegalArgumentException("Unsupported item model at " + path + ": " + model.getClass().getName());
+                default -> throw new IllegalArgumentException("Unsupported item model at " + path + ": " + model.getClass().getName());
             }
             if (transformation != null) {
                 this.transformations.removeLast();

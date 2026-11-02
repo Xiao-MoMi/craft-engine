@@ -24,7 +24,7 @@ public final class BedrockSpearPlayerAnimations {
         if (spearPoseScriptsByItem.isEmpty()) {
             return;
         }
-        JsonObject player = GsonHelper.readJsonFromResource("/bedrock/spear/java_player.json").getAsJsonObject();
+        JsonObject player = GsonHelper.readJsonFromResource("/bedrock/player/spear.pose.json").getAsJsonObject();
         updateFirstPersonController(controller.state("first_person"), spearPoseScriptsByItem.keySet());
         updateThirdPersonController(controller.state("third_person"), spearPoseScriptsByItem, player);
         writeHoldAnimation(player, root);
@@ -49,7 +49,7 @@ public final class BedrockSpearPlayerAnimations {
     private static String thirdPersonSetup(Map<Key, List<String>> spearPoseScriptsByItem, JsonObject player) throws IOException {
         StringBuilder scripts = new StringBuilder("variable.ce_java_spear = 0; variable.ce_using_item = query.is_using_item && query.main_hand_item_use_duration > 0; ");
         spearPoseScriptsByItem.forEach((id, poseScripts) -> appendSpearParameters(scripts, id, poseScripts));
-        JsonObject pose = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
+        JsonObject pose = GsonHelper.readJsonFromResource("/bedrock/item/spear/handheld.pose.json").getAsJsonObject();
         // 第三人称 getTicksUsingItem(partialTicks) 不减一；手臂和物品复用同一组阶段公式。
         scripts.append("variable.ce_java_spear ? { variable.ce_spear_time = variable.ce_spear_use ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration + query.frame_alpha) : 0; ")
                 .append("variable.ce_spear_hit_ticks = query.ticks_since_last_kinetic_weapon_hit; ");
@@ -74,7 +74,7 @@ public final class BedrockSpearPlayerAnimations {
     }
 
     private static void writeHoldAnimation(JsonObject player, Path root) throws IOException {
-        JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/spear/player.animation.json").getAsJsonObject();
+        JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/spear.animation.json").getAsJsonObject();
         JsonObject animations = new JsonObject();
         JsonObject hold = animationFile.getAsJsonObject("animations")
                 .getAsJsonObject("animation.humanoid.melee_spear_hold");

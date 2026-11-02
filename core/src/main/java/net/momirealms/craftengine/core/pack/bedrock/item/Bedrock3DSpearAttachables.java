@@ -38,7 +38,7 @@ public final class Bedrock3DSpearAttachables {
         scripts.add("variable.ce_spear_side = context.item_slot == 'off_hand' ? -1 : 1;");
         scripts.add("variable.ce_spear_time = variable.ce_spear_use ? math.max(0, variable.ce_use_ticks + query.frame_alpha - (context.is_first_person ? 1 : 0)) : 0;");
         scripts.add("variable.ce_spear_hit_ticks = context.owning_entity->query.ticks_since_last_kinetic_weapon_hit;");
-        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
+        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/item/spear/handheld.pose.json").getAsJsonObject();
         // Java 缓动公式在资源中显式计算，不能假定 Molang 同名函数与 Java 等价。
         scripts.addAll(source.getAsJsonArray("pre_animation"));
         JsonArray animate = source.getAsJsonArray("animate");

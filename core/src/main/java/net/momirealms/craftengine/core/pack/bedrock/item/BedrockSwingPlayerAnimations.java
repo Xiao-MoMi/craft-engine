@@ -24,7 +24,7 @@ public final class BedrockSwingPlayerAnimations {
         if (itemsUsingJavaSwing.isEmpty()) {
             return;
         }
-        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/player/java_swing.json").getAsJsonObject();
+        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/player/swing.pose.json").getAsJsonObject();
         String setup = firstPersonSwingScript(itemsUsingJavaSwing, source);
         BedrockPlayerAnimationState firstPerson = controller.state("first_person");
         firstPerson.updateCondition("first_person_attack_controller", original -> setup + original + ';');

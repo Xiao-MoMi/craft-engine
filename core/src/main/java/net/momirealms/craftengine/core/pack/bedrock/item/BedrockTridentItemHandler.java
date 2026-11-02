@@ -51,7 +51,7 @@ final class BedrockTridentItemHandler implements BedrockItemHandler {
         JsonArray animate = new JsonArray();
         if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.TRIDENT) {
             // Java 的第一人称举戟动作先于模型 display 变换，在 ce_slot 与 display 骨骼之间应用。
-            JsonObject charge = GsonHelper.readJsonFromResource("/bedrock/trident/charge.json").getAsJsonObject();
+            JsonObject charge = GsonHelper.readJsonFromResource("/bedrock/item/trident/charge.pose.json").getAsJsonObject();
             scripts.addAll(charge.getAsJsonArray("pre_animation"));
             bones = charge.getAsJsonArray("bones");
             animations = charge.getAsJsonObject("animations");

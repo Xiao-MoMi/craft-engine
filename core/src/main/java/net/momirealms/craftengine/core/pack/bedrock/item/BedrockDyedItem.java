@@ -63,7 +63,6 @@ final class BedrockDyedItem {
     private static String handColor(String property) {
         String owner = "context.owning_entity->query.";
         String high = owner + "property('" + property + "_r')";
-        return owner + "has_property('" + property + "_r') && " + high + " >= 0 ? "
-                + high + " * 65536 + " + owner + "property('" + property + "_gb') : -1";
+        return owner + "has_property('" + property + "_r') && " + high + " >= 0 ? " + high + " * 65536 + " + owner + "property('" + property + "_gb') : -1";
     }
 }
