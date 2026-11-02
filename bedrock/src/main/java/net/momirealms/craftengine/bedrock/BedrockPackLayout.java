@@ -17,7 +17,6 @@ public final class BedrockPackLayout {
     public static final String FORMAT_VERSION = "format_version";
     public static final String SOURCE_VERSION = "source_version";
     public static final String ENTRIES = "entries";
-    public static final String DIAGNOSTICS = "diagnostics";
 
     public static final String BEDROCK_IDENTIFIER = "bedrock_identifier";
     public static final String ITEM_TYPE = "item_type";
@@ -41,10 +40,6 @@ public final class BedrockPackLayout {
     public static final String CLIENT_BEHAVIOR = "client_behavior";
     public static final String PLACES_BLOCK = "places_block";
 
-    public static final String SEVERITY = "severity";
-    public static final String CODE = "code";
-    public static final String ITEM_IDS = "item_ids";
-    public static final String DETAILS = "details";
 
     private BedrockPackLayout() {
     }

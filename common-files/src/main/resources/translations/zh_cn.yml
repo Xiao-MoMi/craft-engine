@@ -1,373 +1,410 @@
-command.pack_preference.unchanged: '<red>资源包<arg:0>的偏好没有变化</red>'
-command.pack_preset.unchanged: '<red>资源包偏好已符合预设<arg:0></red>'
-command.admin_pack_preference.unchanged.single: '<red><arg:0>的资源包<arg:1>偏好没有变化</red>'
-command.admin_pack_preference.unchanged.multiple: '<red><arg:0>名玩家的资源包<arg:1>偏好均无变化</red>'
-command.admin_pack_preset.unchanged.single: '<red><arg:0>的资源包偏好已符合预设<arg:1></red>'
-command.admin_pack_preset.unchanged.multiple: '<red><arg:0>名玩家的资源包偏好已符合预设<arg:1></red>'
-command.pack_preference.enabled: '<white>已启用资源包<arg:0></white>'
-command.pack_preference.disabled: '<white>已禁用资源包<arg:0></white>'
-command.pack_preference.reset: '<white>已将资源包<arg:0>恢复为默认设置</white>'
-command.admin_pack_preference.enabled.single: '<white>已为<arg:0>启用资源包<arg:1></white>'
-command.admin_pack_preference.enabled.multiple: '<white>已为<arg:0>名玩家启用资源包<arg:1></white>'
-command.admin_pack_preference.disabled.single: '<white>已为<arg:0>禁用资源包<arg:1></white>'
-command.admin_pack_preference.disabled.multiple: '<white>已为<arg:0>名玩家禁用资源包<arg:1></white>'
-command.admin_pack_preference.reset.single: '<white>已将<arg:0>的资源包<arg:1>恢复为默认设置</white>'
-command.admin_pack_preference.reset.multiple: '<white>已将<arg:0>名玩家的资源包<arg:1>恢复为默认设置</white>'
-command.admin_pack_preference.failure.single: '<red>无法更新<arg:0>的资源包<arg:1>偏好，请查看控制台</red>'
-command.admin_pack_preference.failure.multiple: '<red>已更新<arg:0>名玩家的资源包<arg:1>偏好，<arg:2>名玩家操作失败，请查看控制台</red>'
-command.admin_pack_preset.success.single: '<white>已为<arg:0>应用资源包预设<arg:1></white>'
-command.admin_pack_preset.success.multiple: '<white>已为<arg:0>名玩家应用资源包预设<arg:1></white>'
-command.admin_pack_preset.failure.single: '<red>无法为<arg:0>应用资源包预设<arg:1>，请查看控制台</red>'
-command.admin_pack_preset.failure.multiple: '<red>已为<arg:0>名玩家应用资源包预设<arg:1>，<arg:2>名玩家操作失败，请查看控制台</red>'
-command.pack_preset.unknown: '<red>未知的资源包预设：<arg:0></red>'
-command.pack_preset.no_permission: '<red>你没有使用资源包预设<arg:0>的权限</red>'
-command.pack_preset.success: '<white>已应用资源包预设<arg:0></white>'
-workflow.unknown_type: 未知的资源包工作流类型“<arg:0>”
-resource_pack.unknown_reference: 资源包“<arg:0>”的“<arg:1>”引用了不存在的资源包“<arg:2>”
-resource_pack.circular_dependencies: 资源包存在循环依赖：<arg:0>
-resource_pack.conflicting_dependencies: 资源包“<arg:0>”及其依赖中存在互相冲突的包
-storage.unknown_type: 未知的存储类型“<arg:0>”
-storage.invalid_path: '存储路径无效'
-exception.invalid_syntax: <red>语法错误。正确语法：<white><arg:0></white></red>
-command.pack_preference.no_permission: '<red>你没有管理资源包<arg:0>偏好的权限</red>'
-exception.invalid_argument: <red>参数无效。原因：<white><arg:0></white></red>
-exception.invalid_sender: <red><arg:0>不允许执行此命令。执行者必须是<arg:1></red>
-exception.unexpected: <red>执行此命令时发生内部错误</red>
-exception.no_permission: <red>抱歉，你没有权限执行此命令</red>
-exception.no_such_command: <red>未知的命令</red>
-argument.entity.notfound.player: <red>未找到玩家</red>
 argument.entity.notfound.entity: <red>未找到实体</red>
-argument.parse.failure.time: <red>“<arg:0>”不是有效的时间格式</red>
-argument.parse.failure.material: <red>“<arg:0>”不是有效的材料名称</red>
-argument.parse.failure.enchantment: <red>“<arg:0>”不是有效的魔咒</red>
-argument.parse.failure.offlineplayer: <red>输入的玩家“<arg:0>”已离线</red>
-argument.parse.failure.player: <red>找不到输入的玩家“<arg:0>”</red>
-argument.parse.failure.world: <red>“<arg:0>”不是有效的Minecraft世界</red>
-argument.parse.failure.location.invalid_format: <red>“<arg:0>”不是有效的位置格式。所需格式为“<arg:1> <arg:2> <arg:3>”</red>
-argument.parse.failure.location.mixed_local_absolute: <red>不能混用相对和绝对坐标。（要么所有坐标都使用“^”，要么都不使用）</red>
-argument.parse.failure.namespacedkey.namespace: <red>命名空间“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
-argument.parse.failure.namespacedkey.key: <red>命名空间ID“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
-argument.parse.failure.namespacedkey.need_namespace: <red>输入“<arg:0>”无效，需要显式命名空间</red>
+argument.entity.notfound.player: <red>未找到玩家</red>
+argument.parse.failure.aggregate.failure: <red>无效的“<arg:0>”组件：<arg:1></red>
+argument.parse.failure.aggregate.missing: <red>缺少“<arg:0>”组件</red>
 argument.parse.failure.boolean: <red>无法从“<arg:0>”解析布尔值</red>
-argument.parse.failure.number: <red>“<arg:0>”不在<arg:1>到<arg:2>的范围内</red>
 argument.parse.failure.char: <red>“<arg:0>”不是有效字符</red>
-argument.parse.failure.string: <red>“<arg:0>”不是<arg:1>类型的有效字符串</red>
-argument.parse.failure.uuid: <red>“<arg:0>”不是有效的UUID</red>
-argument.parse.failure.enum: <red>“<arg:0>”不是以下选项之一：<arg:1></red>
-argument.parse.failure.regex: <red>“<arg:0>”与“<arg:1>”不匹配</red>
-argument.parse.failure.flag.unknown: <red>未知的“<arg:0>”标志</red>
-argument.parse.failure.flag.duplicate_flag: <red>重复的“<arg:0>”标志</red>
-argument.parse.failure.flag.no_flag_started: <red>无法识别的短标志组合“<arg:0>”</red>
-argument.parse.failure.flag.missing_argument: <red>缺少“<arg:0>”参数</red>
-argument.parse.failure.flag.no_permission: <red>你没有权限使用“<arg:0>”标志</red>
 argument.parse.failure.color: <red>“<arg:0>”不是有效的颜色</red>
 argument.parse.failure.duration: <red>“<arg:0>”不是时间长度格式</red>
-argument.parse.failure.aggregate.missing: <red>缺少“<arg:0>”组件</red>
-argument.parse.failure.aggregate.failure: <red>无效的“<arg:0>”组件：<arg:1></red>
 argument.parse.failure.either: <red>无法从“<arg:0>”解析出<arg:1>或<arg:2></red>
+argument.parse.failure.enchantment: <red>“<arg:0>”不是有效的魔咒</red>
+argument.parse.failure.enum: <red>“<arg:0>”不是以下选项之一：<arg:1></red>
+argument.parse.failure.flag.duplicate_flag: <red>重复的“<arg:0>”标志</red>
+argument.parse.failure.flag.missing_argument: <red>缺少“<arg:0>”参数</red>
+argument.parse.failure.flag.no_flag_started: <red>无法识别的短标志组合“<arg:0>”</red>
+argument.parse.failure.flag.no_permission: <red>你没有权限使用“<arg:0>”标志</red>
+argument.parse.failure.flag.unknown: <red>未知的“<arg:0>”标志</red>
+argument.parse.failure.location.invalid_format: <red>“<arg:0>”不是有效的位置格式。所需格式为“<arg:1> <arg:2> <arg:3>”</red>
+argument.parse.failure.location.mixed_local_absolute: <red>不能混用相对和绝对坐标。（要么所有坐标都使用“^”，要么都不使用）</red>
+argument.parse.failure.material: <red>“<arg:0>”不是有效的材料名称</red>
 argument.parse.failure.namedtextcolor: <red>“<arg:0>”不是命名的文本颜色</red>
-command.reload.config.failure: <red>无法重新加载配置。请检查控制台日志</red>
-command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>配置文件已重新加载完成</white><gray>（<hover:show_text:'<gray>异步/同步'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover>毫秒）</gray>
-command.reload.config.issues: <#FF5555>⚠ 发现<bold><arg:0></bold>个问题。<gray><italic>（请检查控制台以获取详细信息）</#FF5555>
-command.reload.pack.failure: <red>无法生成资源包。请检查控制台日志</red>
-command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>资源包生成完成</white><gray>（<hover:show_text:"<gray>异步处理"><color:#FFD700><arg:0></color>毫秒</hover>）</gray>
-command.item.get.success: <white>获得<arg:0>个<arg:1></white>
-command.item.get.failure.not_exist: <red>未知的物品“<arg:0>”</red>
-command.item.give.success.single: <white>已将<arg:0>个<arg:1>给予<arg:2></white>
-command.item.give.success.multiple: <white>已将<arg:0>个<arg:1>给予<arg:2>名玩家</white>
-command.item.give.failure.not_exist: <red>未知的物品“<arg:0>”</red>
-command.item.clear.failed.single: <red>未能从玩家<arg:0>找到任何物品</red>
+argument.parse.failure.namespacedkey.key: <red>命名空间ID“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
+argument.parse.failure.namespacedkey.namespace: <red>命名空间“<arg:0>”无效。必须由[a-z0-9._-]组成</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>输入“<arg:0>”无效，需要显式命名空间</red>
+argument.parse.failure.number: <red>“<arg:0>”不在<arg:1>到<arg:2>的范围内</red>
+argument.parse.failure.offlineplayer: <red>输入的玩家“<arg:0>”已离线</red>
+argument.parse.failure.player: <red>找不到输入的玩家“<arg:0>”</red>
+argument.parse.failure.regex: <red>“<arg:0>”与“<arg:1>”不匹配</red>
+argument.parse.failure.string: <red>“<arg:0>”不是<arg:1>类型的有效字符串</red>
+argument.parse.failure.time: <red>“<arg:0>”不是有效的时间格式</red>
+argument.parse.failure.uuid: <red>“<arg:0>”不是有效的UUID</red>
+argument.parse.failure.world: <red>“<arg:0>”不是有效的Minecraft世界</red>
+attribute.base_value_source.unknown_type: 未知的属性基础值来源类型“<arg:0>”
+attribute.damage_effect.unknown_target: 未知的伤害后置效果目标“<arg:0>”
+attribute.damage_effect.unknown_type: 未知的伤害后置效果类型“<arg:0>”
+attribute.damage_formula.unknown_type: 未知的伤害公式类型“<arg:0>”
+attribute.derived.unknown_attribute: 派生表达式“<arg:1>”中引用了未知的属性“<arg:0>”
+attribute.derived.unknown_type: 未知的派生值类型“<arg:0>”
+attribute.sync_value_provider.unknown_type: 未知的同步数值提供器类型“<arg:0>”
+attribute.unknown_operation: 未知的属性运算“<arg:0>”
+attribute.value_transformer.unknown_type: 未知的数值转换器类型“<arg:0>”
+category.source.invalid_regex: 无效的分类源正则表达式“<arg:0>”
+category.source.unknown_type: 未知的分类源类型“<arg:0>”
+command.admin_pack_preference.disabled.multiple: '<white>已为<arg:0>名玩家禁用资源包<arg:1></white>'
+command.admin_pack_preference.disabled.single: '<white>已为<arg:0>禁用资源包<arg:1></white>'
+command.admin_pack_preference.enabled.multiple: '<white>已为<arg:0>名玩家启用资源包<arg:1></white>'
+command.admin_pack_preference.enabled.single: '<white>已为<arg:0>启用资源包<arg:1></white>'
+command.admin_pack_preference.failure.multiple: '<red>已更新<arg:0>名玩家的资源包<arg:1>偏好，<arg:2>名玩家操作失败，请查看控制台</red>'
+command.admin_pack_preference.failure.single: '<red>无法更新<arg:0>的资源包<arg:1>偏好，请查看控制台</red>'
+command.admin_pack_preference.reset.multiple: '<white>已将<arg:0>名玩家的资源包<arg:1>恢复为默认设置</white>'
+command.admin_pack_preference.reset.single: '<white>已将<arg:0>的资源包<arg:1>恢复为默认设置</white>'
+command.admin_pack_preference.unchanged.multiple: '<red><arg:0>名玩家的资源包<arg:1>偏好均无变化</red>'
+command.admin_pack_preference.unchanged.single: '<red><arg:0>的资源包<arg:1>偏好没有变化</red>'
+command.admin_pack_preset.failure.multiple: '<red>已为<arg:0>名玩家应用资源包预设<arg:1>，<arg:2>名玩家操作失败，请查看控制台</red>'
+command.admin_pack_preset.failure.single: '<red>无法为<arg:0>应用资源包预设<arg:1>，请查看控制台</red>'
+command.admin_pack_preset.success.multiple: '<white>已为<arg:0>名玩家应用资源包预设<arg:1></white>'
+command.admin_pack_preset.success.single: '<white>已为<arg:0>应用资源包预设<arg:1></white>'
+command.admin_pack_preset.unchanged.multiple: '<red><arg:0>名玩家的资源包偏好已符合预设<arg:1></red>'
+command.admin_pack_preset.unchanged.single: '<red><arg:0>的资源包偏好已符合预设<arg:1></red>'
+command.chunk.not_loaded: <red>该位置尚未被加载</red>
+command.damage_visibility.set.success: <white>已将<arg:1>的伤害数字可见性设为<arg:0></white>
+command.display_entity_view_distance_scale.set.success: <white>已将<arg:1>的展示实体可见距离百分比设为<arg:0></white>
+command.enchant.failure.entity: '<red><arg:0>不是生物</red>'
+command.enchant.failure.incompatible: '<red>该魔咒无法应用于<arg:0></red>'
+command.enchant.failure.itemless: '<red><arg:0>的选定槽位中没有物品</red>'
+command.enchant.failure.level: '<red>等级<arg:0>超过了最高等级<arg:1></red>'
+command.enchant.failure.no_target: '<red>无法应用任何魔咒</red>'
+command.enchant.failure.not_exist: '<red>未知的魔咒''<arg:0>''</red>'
+command.enchant.success.multiple: '<white>已将<arg:0>应用于<arg:1>个实体</white>'
+command.enchant.success.single: '<white>已将<arg:0>应用于<arg:1></white>'
+command.entity_culling.toggle.success: <white>已将<arg:1>的实体剔除状态设为<arg:0></white>
+command.entity_culling_distance_scale.set.success: <white>已将<arg:1>的实体剔除距离百分比设为<arg:0></white>
+command.item.browser.missing_element: <red>由于缺少GUI元素“<arg:0>”，无法打开物品浏览器</red><gray><i><newline>如果你不清楚自己做了什么导致了此错误，请点击<red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'释放插件内部资源'>这里</hover></click></u></b></red>释放插件的内部资源</i></gray>
 command.item.clear.failed.multiple: <red>未能从<arg:0>名玩家找到任何物品</red>
-command.item.clear.success.single: <white>已移除玩家<arg:1>的<arg:0>个物品</white>
+command.item.clear.failed.single: <red>未能从玩家<arg:0>找到任何物品</red>
 command.item.clear.success.multiple: <white>已移除<arg:1>名玩家的<arg:0>个物品</white>
-command.item.clear.test.single: <white>已在玩家<arg:1>身上找到<arg:0>个匹配的物品</white>
+command.item.clear.success.single: <white>已移除玩家<arg:1>的<arg:0>个物品</white>
 command.item.clear.test.multiple: <white>已在<arg:1>名玩家身上找到<arg:0>个匹配的物品</white>
+command.item.clear.test.single: <white>已在玩家<arg:1>身上找到<arg:0>个匹配的物品</white>
 command.item.component.add: <white>已设置物品的“<arg:0>”组件</white>
+command.item.component.invalid_value: <red>物品组件“<arg:0>”的SNBT值无效：<arg:1></red>
 command.item.component.remove: <white>已将物品的“<arg:0>”组件移除</white>
 command.item.component.reset: <white>已将物品的“<arg:0>”组件恢复为默认值</white>
 command.item.component.unknown: <red>未知的物品组件“<arg:0>”</red>
-command.item.component.invalid_value: <red>物品组件“<arg:0>”的SNBT值无效：<arg:1></red>
-command.item.browser.missing_element: <red>由于缺少GUI元素“<arg:0>”，无法打开物品浏览器</red><gray><i><newline>如果你不清楚自己做了什么导致了此错误，请点击<red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'释放插件内部资源'>这里</hover></click></u></b></red>释放插件的内部资源</i></gray>
-command.search_recipe.not_found: <red>找不到此物品的配方</red>
-command.search_usage.not_found: <red>找不到此物品的用途</red>
-command.search_recipe.no_item: <red>请手持物品后再执行此命令</red>
-command.search_usage.no_item: <red>请手持物品后再执行此命令</red>
-command.totem_animation.failure.not_totem: <red>“<arg:0>”不是不死图腾或者找不到该物品</red>
-command.totem_animation.success.single: <white>已将图腾动画<arg:0>播放给<arg:1></white>
-command.totem_animation.success.multiple: <white>已将图腾动画<arg:0>播放给<arg:1>名玩家</white>
-command.toast.failure.item_not_exist: <red>未知的物品“<arg:0>”</red>
-command.toast.success.single: <white>已将弹窗<arg:0>发送给<arg:1></white>
-command.toast.success.multiple: <white>已将弹窗<arg:0>发送给<arg:1>名玩家</white>
-command.resource.enable.success: <white>已启用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
-command.resource.enable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
-command.resource.disable.success: <white>已禁用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
-command.resource.disable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
-command.resource.list: <white>已启用的资源（<arg:0>）：<green><arg:1></green><newline>已禁用的资源（<arg:2>）：<red><arg:3></red></white>
-command.resource.create.success: <white>已创建名为“<arg:0>”的空资源</white>
-command.resource.create.failure.unknown: <red>无法创建名为“<arg:0>”的资源，错误消息：<arg:1></red>
-command.resource.create.failure.invalid_namespace: <red>无法创建名为“<arg:0>”的资源，命名空间“<arg:1>”中包含无效字符</red>
-command.resource.create.failure.exists: <red>名为“<arg:0>”的资源已经存在</red>
-command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white>
-command.resource.save_default.failure: <red>保存默认资产的时候发生了未知的错误，请查看控制台
-command.resource.search.parser.not_found: <red>没有类型为“<arg:0>”的资源</red>
-command.resource.search.resource.not_found: <red>没有ID为“<arg:0>”的资源</red>
-command.resource.search.success: <white>ID为“<arg:0>”的资源定义文件路径为：<arg:1></white>
-command.send_resource_pack.success.single: <white>已将资源包发送给<arg:0></white>
-command.send_resource_pack.success.multiple: <white>已将资源包发送给<arg:0>名玩家</white>
+command.item.get.failure.not_exist: <red>未知的物品“<arg:0>”</red>
+command.item.get.success: <white>获得<arg:0>个<arg:1></white>
+command.item.give.failure.not_exist: <red>未知的物品“<arg:0>”</red>
+command.item.give.success.multiple: <white>已将<arg:0>个<arg:1>给予<arg:2>名玩家</white>
+command.item.give.success.single: <white>已将<arg:0>个<arg:1>给予<arg:2></white>
 command.locale.set.failure: <red>无效的区域设置格式：<arg:0></red>
 command.locale.set.success: <white>已将<arg:1>选定的区域设置设为<arg:0></white>
 command.locale.unset.success: <white>重置了<arg:0>的区域设置</white>
-command.display_entity_view_distance_scale.set.success: <white>已将<arg:1>的展示实体可见距离百分比设为<arg:0></white>
-command.entity_culling_distance_scale.set.success: <white>已将<arg:1>的实体剔除距离百分比设为<arg:0></white>
-command.entity_culling.toggle.success: <white>已将<arg:1>的实体剔除状态设为<arg:0></white>
-command.damage_visibility.set.success: <white>已将<arg:1>的伤害数字可见性设为<arg:0></white>
+command.pack_preference.disabled: '<white>已禁用资源包<arg:0></white>'
+command.pack_preference.enabled: '<white>已启用资源包<arg:0></white>'
+command.pack_preference.no_permission: '<red>你没有管理资源包<arg:0>偏好的权限</red>'
+command.pack_preference.reset: '<white>已将资源包<arg:0>恢复为默认设置</white>'
+command.pack_preference.unchanged: '<red>资源包<arg:0>的偏好没有变化</red>'
+command.pack_preset.no_permission: '<red>你没有使用资源包预设<arg:0>的权限</red>'
+command.pack_preset.success: '<white>已应用资源包预设<arg:0></white>'
+command.pack_preset.unchanged: '<red>资源包偏好已符合预设<arg:0></red>'
+command.pack_preset.unknown: '<red>未知的资源包预设：<arg:0></red>'
 command.place_feature.failed: <red>放置地物失败</red>
-command.place_feature.success: <white>已在<arg:1>, <arg:2>, <arg:3>处放置“<arg:0>”</white>
 command.place_feature.invalid: <red>没有类型为“<arg:0>”的地物</red>
-command.chunk.not_loaded: <red>该位置尚未被加载</red>
+command.place_feature.success: <white>已在<arg:1>, <arg:2>, <arg:3>处放置“<arg:0>”</white>
 command.player.itemless: <red><arg:0>未手持任何物品</red>
+command.reload.config.failure: <red>无法重新加载配置。请检查控制台日志</red>
+command.reload.config.issues: <#FF5555>⚠ 发现<bold><arg:0></bold>个问题。<gray><italic>（请检查控制台以获取详细信息）</#FF5555>
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>配置文件已重新加载完成</white><gray>（<hover:show_text:'<gray>异步/同步'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover>毫秒）</gray>
+command.reload.pack.failure: <red>无法生成资源包。请检查控制台日志</red>
+command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>资源包生成完成</white><gray>（<hover:show_text:"<gray>异步处理"><color:#FFD700><arg:0></color>毫秒</hover>）</gray>
+command.resource.busy: '<red>重载或资源包工作流正在执行，请等待完成后再试。</red>'
+command.resource.create.failure.exists: <red>名为“<arg:0>”的资源已经存在</red>
+command.resource.create.failure.invalid_namespace: <red>无法创建名为“<arg:0>”的资源，命名空间“<arg:1>”中包含无效字符</red>
+command.resource.create.failure.unknown: <red>无法创建名为“<arg:0>”的资源，错误消息：<arg:1></red>
+command.resource.create.success: <white>已创建名为“<arg:0>”的空资源</white>
+command.resource.disable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
+command.resource.disable.success: <white>已禁用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
+command.resource.enable.failure.unknown: <red>未知的资源 “<arg:0>”</red>
+command.resource.enable.success: <white>已启用资源<arg:0>。运行<click:run_command:/ce reload all><u>/ce reload all</u></click>以应用更改</white>
+command.resource.list: <white>已启用的资源（<arg:0>）：<green><arg:1></green><newline>已禁用的资源（<arg:2>）：<red><arg:3></red></white>
+command.resource.save_default.failure: <red>保存默认资产的时候发生了未知的错误，请查看控制台
+command.resource.save_default.success: <white>已成功将默认资源保存到“<arg:0>”</white>
+command.resource.search.parser.not_found: <red>没有类型为“<arg:0>”的资源</red>
+command.resource.search.resource.not_found: <red>没有ID为“<arg:0>”的资源</red>
+command.resource.search.success: <white>ID为“<arg:0>”的资源定义文件路径为：<arg:1></white>
+command.search_recipe.no_item: <red>请手持物品后再执行此命令</red>
+command.search_recipe.not_found: <red>找不到此物品的配方</red>
+command.search_usage.no_item: <red>请手持物品后再执行此命令</red>
+command.search_usage.not_found: <red>找不到此物品的用途</red>
+command.send_resource_pack.success.multiple: <white>已将资源包发送给<arg:0>名玩家</white>
+command.send_resource_pack.success.single: <white>已将资源包发送给<arg:0></white>
+command.toast.failure.item_not_exist: <red>未知的物品“<arg:0>”</red>
+command.toast.success.multiple: <white>已将弹窗<arg:0>发送给<arg:1>名玩家</white>
+command.toast.success.single: <white>已将弹窗<arg:0>发送给<arg:1></white>
+command.totem_animation.failure.not_totem: <red>“<arg:0>”不是不死图腾或者找不到该物品</red>
+command.totem_animation.success.multiple: <white>已将图腾动画<arg:0>播放给<arg:1>名玩家</white>
+command.totem_animation.success.single: <white>已将图腾动画<arg:0>播放给<arg:1></white>
+command.workflow.failure: '<red>无法执行资源包工作流 <arg:0>。请检查控制台日志</red>'
+command.workflow.started: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>正在执行资源包工作流 <color:#FFD700><arg:0></color>…</white>'
+command.workflow.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>资源包工作流 <color:#FFD700><arg:0></color> 执行完成</white><gray>（<hover:show_text:"<gray>异步处理"><color:#FFD700><arg:1></color>毫秒</hover>）</gray>'
+command.workflow.unknown: '<red>未知的资源包工作流：<arg:0></red>'
+command.world_settings.failure: <red>未知的世界设置<arg:0>
 command.world_settings.get.success: <white>世界设置<arg:0>目前为：<arg:1>
 command.world_settings.set.success: <white>世界设置<arg:0>已被设为：<arg:1>
-command.world_settings.failure: <red>未知的世界设置<arg:0>
-snbt.invalid_syntax.parse_error: <arg:0>，位于第<arg:1>个字符：<arg:2>
-snbt.invalid_syntax.here: <--[此处]
-snbt.parser.expected_string_uuid: 应为表示有效UUID的字符串
-snbt.parser.expected_number_or_boolean: 应为数字或布尔型
-snbt.parser.trailing: 多余的尾随数据
-snbt.parser.expected.compound: 应为复合标签
-snbt.parser.number_parse_failure: 解析数字失败：<arg:0>
-snbt.parser.expected_hex_escape: 字符字面量长度应为<arg:0>
-snbt.parser.invalid_codepoint: 无效的Unicode字符码位：<arg:0>
-snbt.parser.no_such_operation: 不存在的操作：<arg:0>
-snbt.parser.expected_integer_type: 应为整数
-snbt.parser.expected_float_type: 应为浮点数
-snbt.parser.expected_non_negative_number: 应为非负数
-snbt.parser.invalid_character_name: 无效的Unicode字符名称
-snbt.parser.invalid_array_element_type: 无效的数组元素类型
-snbt.parser.invalid_unquoted_start: 无引号字符串不能以数字0-9、+或-开头
-snbt.parser.expected_unquoted_string: 应为有效的无引号字符串
-snbt.parser.invalid_string_contents: 无效的字符串内容
-snbt.parser.expected_binary_numeral: 应为二进制数
-snbt.parser.underscore_not_allowed: 数字的开头和结尾不允许使用下划线字符
-snbt.parser.expected_decimal_numeral: 应为十进制数
-snbt.parser.expected_hex_numeral: 应为十六进制数
-snbt.parser.empty_key: 键不能为空
-snbt.parser.leading_zero_not_allowed: 十进制数不能以0开头
-snbt.parser.infinity_not_allowed: 不允许使用非有限数的数值
-snbt.parser.incorrect: 应为字面量<arg:0>
-yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”
-yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同
-plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
-attribute.damage_formula.unknown_type: 未知的伤害公式类型“<arg:0>”
-attribute.damage_effect.unknown_type: 未知的伤害后置效果类型“<arg:0>”
-attribute.damage_effect.unknown_target: 未知的伤害后置效果目标“<arg:0>”
-damage_indicator.unknown_type: 未知的伤害数字显示类型“<arg:0>”
-attribute.base_value_source.unknown_type: 未知的属性基础值来源类型“<arg:0>”
-attribute.sync_value_provider.unknown_type: 未知的同步数值提供器类型“<arg:0>”
-attribute.value_transformer.unknown_type: 未知的数值转换器类型“<arg:0>”
-attribute.unknown_operation: 未知的属性运算“<arg:0>”
-attribute.derived.unknown_attribute: 派生表达式“<arg:1>”中引用了未知的属性“<arg:0>”
-attribute.derived.unknown_type: 未知的派生值类型“<arg:0>”
-number.unknown_type: 未知的数字类型“<arg:0>”
-number.fixed.invalid_expression: 无效的表达式“<arg:0>”。
-resource.expression.invalid: '无效的表达式“<arg:0>”。详细信息：<arg:1>'
-resource.expression.invalid_syntax: '表达式“<arg:0>”无效，错误位于第<arg:1>个字符附近（标记“<arg:2>”）。'
-resource.expression.invalid_function_argument: '表达式“<arg:0>”无效，错误位于函数的第<arg:3>个参数、第<arg:1>个字符附近（标记“<arg:2>”）。'
-resource.expression.unknown_parameter: '表达式“<arg:1>”中存在未知参数“<arg:0>”。'
-number.greater_than: “<arg:0>”应大于“<arg:1>”
-number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
-number.less_than: “<arg:0>”应小于“<arg:1>”
-number.no_less_than: “<arg:0>”不应小于“<arg:1>”
-condition.unknown_type: 未知的条件类型“<arg:0>”
-category.source.unknown_type: 未知的分类源类型“<arg:0>”
-category.source.invalid_regex: 无效的分类源正则表达式“<arg:0>”
 condition.enchantment.invalid_format: 无效的谓词格式“<arg:0>”。（例如：minecraft:sharpness>=4）
+condition.unknown_type: 未知的条件类型“<arg:0>”
+config.errors_detected: 在config.yml中发现错误 - <arg:0>
+damage_indicator.unknown_type: 未知的伤害数字显示类型“<arg:0>”
+exception.invalid_argument: <red>参数无效。原因：<white><arg:0></white></red>
+exception.invalid_sender: <red><arg:0>不允许执行此命令。执行者必须是<arg:1></red>
+exception.invalid_syntax: <red>语法错误。正确语法：<white><arg:0></white></red>
+exception.no_permission: <red>抱歉，你没有权限执行此命令</red>
+exception.no_such_command: <red>未知的命令</red>
+exception.unexpected: <red>执行此命令时发生内部错误</red>
 function.unknown_type: 未知的函数类型“<arg:0>”
-player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”
-loot.entry.unknown_type: 未知的战利品条目类型“<arg:0>”
-loot.function.unknown_type: 未知的战利品函数类型“<arg:0>”
-loot.function.formula.unknown_type: 未知的公式类型“<arg:0>”
-loot.source.unknown_type: 未知的战利品来源类型“<arg:0>”
-loot.source.unknown_overwrite_mode: 未知的战利品来源覆写模式“<arg:0>”
-loot.source.target_not_allowed: 战利品来源类型“<arg:0>”不支持配置“target”
-loot.source.invalid_target: 无效的战利品来源目标“<arg:0>”
-host.unknown_type: 未知的资源包托管类型“<arg:0>”
-host.missing_environment_variable: 缺少环境变量“<arg:0>”
 host.get_url_failed: 获取玩家<arg:0>的资源包下载链接失败
 host.lobfile.storage_usage: 账号使用情况：<arg:0>/<arg:1> MB | <arg:2>/<arg:3> 个文件
+host.missing_environment_variable: 缺少环境变量“<arg:0>”
 host.self.http_server_started: Netty HTTP服务器已在<arg:0>端口启动
-config.errors_detected: 在config.yml中发现错误 - <arg:0>
-update.available: 新版本<arg:0>已发布：<arg:1>
-update.is_latest: 你正在使用最新版本
+host.unknown_type: 未知的资源包托管类型“<arg:0>”
+host.upload_finished: 资源包上传成功，耗时<arg:0>毫秒
+host.upload_started: 正在上传资源包…
+loot.entry.unknown_type: 未知的战利品条目类型“<arg:0>”
+loot.function.formula.unknown_type: 未知的公式类型“<arg:0>”
+loot.function.unknown_type: 未知的战利品函数类型“<arg:0>”
+loot.source.invalid_target: 无效的战利品来源目标“<arg:0>”
+loot.source.target_not_allowed: 战利品来源类型“<arg:0>”不支持配置“target”
+loot.source.unknown_overwrite_mode: 未知的战利品来源覆写模式“<arg:0>”
+loot.source.unknown_type: 未知的战利品来源类型“<arg:0>”
 mod.clientbound.no_permission: 玩家<arg:0>没有<arg:1>权限接收<arg:2>包，如需授予权限请安装LuckPerms插件并直接赋予即可
 mod.serverbound.no_permission: 玩家<arg:0>没有<arg:1>权限发送<arg:2>包，如需授予权限请安装LuckPerms插件并直接赋予即可
-resource_pack.invalid_overlay_format: 无效的叠加资源包格式“<arg:0>”。叠加资源包格式必须包含占位符“{version}”
-resource_pack.generation_started: 正在生成资源包…
-resource_pack.generation_finished: 资源包生成完成，耗时<arg:0>毫秒
-resource_pack.validation_started_interval: 正在验证资源包…（进度：<arg:0>/<arg:1> | 资源包格式：<arg:2> | 叠加资源包：<arg:3>）
-resource_pack.json_optimization_started: '> 正在优化json文件…'
-resource_pack.texture_optimization_started: '> 正在优化纹理文件…'
-resource_pack.optimization_result: '> □ 优化前/优化后/比率：<arg:0>/<arg:1>/<arg:2>%'
-resource_pack.duplicated_files: 发现重复文件。请通过config.yml文件中的“resource-pack.duplicated-files-handler”部分进行处理
-resource_pack.malformatted_json: Json文件“<arg:0>”的格式不正确
-resource_pack.not_a_json_object: Json文件“<arg:0>”不是一个json对象
-resource_pack.conflict_resolution.unknown_type: 未知的文件冲突解决方案类型“<arg:0>”
-resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
-resource_pack.texture_generation.conflict: 无法生成贴图,因为贴图文件“<arg:0>”已存在
-resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
-resource_pack.missing_font_texture: 字体“<arg:0>”缺少纹理“<arg:1>”
-resource_pack.missing_model_texture: 模型“<arg:0>”缺少纹理“<arg:1>”
-resource_pack.model_uv_out_of_bounds: 模型“<arg:0>”的第<arg:1>个元素在“<arg:2>”面使用了越界UV <arg:3>，纹理为“<arg:4>”。超出[0, 16]的UV可能导致26.1及以上客户端无法烘焙该模型
-resource_pack.model_display_out_of_bounds: '模型“<arg:0>”的显示位置“<arg:1>”中，字段“<arg:2>”的数值<arg:3>越界，允许范围为[-<arg:4>, <arg:4>]'
-resource_pack.missing_equipment_texture: 装备“<arg:0>”缺少纹理“<arg:1>”
-resource_pack.missing_item_model: 物品“<arg:0>”缺少模型文件“<arg:1>”
-resource_pack.missing_block_model: 方块状态“<arg:0>”缺少模型文件“<arg:1>”
-resource_pack.missing_parent_model: 模型“<arg:0>”找不到父模型“<arg:1>”
-resource_pack.missing_sound: 声音事件“<arg:0>”缺少ogg文件“<arg:1>”
-resource_pack.texture_not_in_atlas: 纹理“<arg:0>”未在图集中定义。你需要将纹理路径添加到图集，或在config.yml中启用“fix-atlas”选项
-resource_pack.multiple_atlases: 模型“<arg:0>”使用了多个图集：预期为“<arg:1>”，但发现“<arg:2>”。请确保所有模型纹理来自同一图集
-resource_pack.duplicated_sprite: 无法加载模型“<arg:0>”。图集“<arg:2>”中的精灵图“<arg:1>”重复，它已在图集“<arg:3>”中定义
-resource.argument.type.section: 配置部分
-resource.argument.type.boolean: 布尔值
-resource.argument.type.int: 整数
-resource.argument.type.long: 长整数
-resource.argument.type.float: 单精度浮点数
-resource.argument.type.double: 双精度浮点数
-resource.argument.type.string: 字符串
-resource.argument.type.enum: '[<arg:0>]之一'
-resource.argument.type.vec3: 三维向量
-resource.argument.type.quaternion: 四元数 https://quaternions.online/
-resource.argument.type.aabb: 轴对齐包围盒
-resource.argument.type.snbt: SNBT https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
-resource.argument.type.identifier: 命名空间ID https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
-resource.argument.type.list: 列表
-resource.argument.type.color: 颜色
-resource.argument.type.number: 数值 https://ce.gtemc.cn/zh-Hans/reference/number_format
-resource.argument.type.item_model_definition: 物品模型映射
-resource.argument.type.any: 任意类型
-resource.argument.type.blockstate: 方块状态
-resource.argument.parser.section: 预期为配置部分，但发现了“<arg:0>”
-resource.argument.parser.boolean: 无法将“<arg:0>”解析为布尔值。（允许的值：true/false、yes/no、on/off）
-resource.argument.parser.int: 无法将“<arg:0>”解析为整数。（允许包含“_”的数字，例如1_0000）
-resource.argument.parser.long: 无法将“<arg:0>”解析为长整数。（例如：21_4748_3648）
-resource.argument.parser.float: 无法将“<arg:0>”解析为十进制数。（例如：3.14或1_0000.5）
-resource.argument.parser.double: 无法将“<arg:0>”解析为高精度十进制数。（例如：0.0000001）
-resource.argument.parser.enum: 无效的常量“<arg:0>”。（必须是以下之一：[<arg:1>]）
-resource.argument.parser.vec3: 无法将“<arg:0>”解析为向量。（预期格式为'x,y,z'，例如1.5,22,0）
-resource.argument.parser.quaternion: 无法将“<arg:0>”解析为四元数。（预期格式为'x,y,z,w'，例如0,0,0,1）
-resource.argument.parser.snbt: 无效的SNBT格式“<arg:0>”。详细信息：<arg:1>。指南：https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+number.fixed.invalid_expression: 无效的表达式“<arg:0>”。
+number.greater_than: “<arg:0>”应大于“<arg:1>”
+number.less_than: “<arg:0>”应小于“<arg:1>”
+number.no_greater_than: “<arg:0>”不应大于“<arg:1>”
+number.no_less_than: “<arg:0>”不应小于“<arg:1>”
+number.unknown_type: 未知的数字类型“<arg:0>”
+player_selector.unknown_type: 未知的玩家选择器类型“<arg:0>”
+plugin.compatibility: '[兼容性] 已挂钩 <arg:0>'
 resource.argument.parser.aabb: 无法将“<arg:0>”解析为轴对齐包围盒。（预期为两个点的格式“x1,y1,z1,x2,y2,z2”，例如0,0,0,1,1,1）
 resource.argument.parser.blockstate: 无法将“<arg:0>”解析为方块状态。（例如：minecraft:wheat[age=3]）
-resource.argument.parser.identifier: 无法将“<arg:0>”解析为命名空间ID。指南：https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
-resource.argument.parser.nonempty_list: 预期为非空列表
+resource.argument.parser.boolean: 无法将“<arg:0>”解析为布尔值。（允许的值：true/false、yes/no、on/off）
+resource.argument.parser.double: 无法将“<arg:0>”解析为高精度十进制数。（例如：0.0000001）
+resource.argument.parser.enum: 无效的常量“<arg:0>”。（必须是以下之一：[<arg:1>]）
 resource.argument.parser.fixed_size_list: 预期为包含“<arg:0>”个元素的列表
+resource.argument.parser.float: 无法将“<arg:0>”解析为十进制数。（例如：3.14或1_0000.5）
+resource.argument.parser.identifier: 无法将“<arg:0>”解析为命名空间ID。指南：https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.parser.int: 无法将“<arg:0>”解析为整数。（允许包含“_”的数字，例如1_0000）
+resource.argument.parser.long: 无法将“<arg:0>”解析为长整数。（例如：21_4748_3648）
+resource.argument.parser.nonempty_list: 预期为非空列表
 resource.argument.parser.nonempty_string: 预期为非空字符串
+resource.argument.parser.quaternion: 无法将“<arg:0>”解析为四元数。（预期格式为'x,y,z,w'，例如0,0,0,1）
+resource.argument.parser.section: 预期为配置部分，但发现了“<arg:0>”
+resource.argument.parser.snbt: 无效的SNBT格式“<arg:0>”。详细信息：<arg:1>。指南：https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
 resource.argument.parser.split: 预期拆分为“<arg:0>”个部分，但实际得到“<arg:1>”个部分
 resource.argument.parser.uuid: 无法将“<arg:0>”解析为UUID
-resource.config_loaded: 已加载<arg:0>，耗时<arg:1>毫秒（<arg:2>）
-resource.pack_loaded: 已加载的包：<arg:0>。默认命名空间：<arg:1>
-resource.errors_detected: 在文件“<arg:0>”中发现<arg:1>个问题：
-resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
-resource.unknown_error: 未知错误类型
-resource.duplicated_id: 另一个文件（“<arg:0>”）包含一个具有相同ID的部分
-resource.missing_argument: 缺少必要的参数“<arg:0>”。预期参数为：“<arg:1>”
-resource.placed_feature.invalid_placement: 无效的放置修饰器。输入：“<arg:0>”。原因：“<arg:1>”
-resource.configured_feature.invalid_feature: 无效的已配置的地物。输入：“<arg:0>”。原因：“<arg:1>”
-resource.mapping.conflict: 无法将方块状态“<arg:0>”映射到方块状态“<arg:1>”，因为该状态已被映射到“<arg:2>”
-resource.lang.unknown_locale: 未知语言环境“<arg:0>”。（例如：en、zh_cn）
-resource.image.invalid_grid_size: 无效的网格大小“<arg:0>”。（例如：3,4）
-resource.image.empty_chars: 选项“chars”不能为空
-resource.image.invalid_chars_grid: 第<arg:0>行中的字符数与预期的<arg:1>个不符
-resource.image.codepoint_conflict: 字体“<arg:2>”中的字符“<arg:0>（<arg:1>）”已被另一张图片“<arg:3>”占用
-resource.image.codepoint_exhausted: 字体“<arg:0>”的码位已用尽
-resource.image.height_ascent_conflict: 字高“<arg:0>”不应小于字距“<arg:1>”
-resource.emoji.invalid_image_format: 无效的图像格式“<arg:0>”
-resource.emoji.unknown_image: 未知的图像“<arg:0>”
-resource.equipment.unknown_type: 未知的装备类型“<arg:0>”
-resource.equipment.invalid_sacrificed_armor: 无效的原版盔甲类型“<arg:0>”
-resource.equipment_set.invalid_slot_name: 无效的套装槽位名称“<arg:0>”
-resource.furniture.element.unknown_type: 未知的家具元素类型“<arg:0>”
-resource.furniture.hitbox.unknown_type: 未知的家具判定箱类型“<arg:0>”
-resource.furniture.behavior.unknown_type: 未知的家具行为类型“<arg:0>”
-resource.furniture.hitbox.custom.invalid_entity_type: 无效的实体类型“<arg:0>”
-resource.template.unknown_argument_type: 未知的模板参数类型“<arg:0>”
-resource.template.invalid_template: 无效的模板“<arg:0>”
-resource.template.missing_argument: 缺少模板参数：“<arg:0>”。请通过“arguments”选项提供此参数，或为其设置默认值
+resource.argument.parser.vec3: 无法将“<arg:0>”解析为向量。（预期格式为'x,y,z'，例如1.5,22,0）
+resource.argument.type.aabb: 轴对齐包围盒
+resource.argument.type.any: 任意类型
+resource.argument.type.blockstate: 方块状态
+resource.argument.type.boolean: 布尔值
+resource.argument.type.color: 颜色
+resource.argument.type.double: 双精度浮点数
+resource.argument.type.enum: '[<arg:0>]之一'
+resource.argument.type.float: 单精度浮点数
+resource.argument.type.identifier: 命名空间ID https://zh.minecraft.wiki/w/%E5%91%BD%E5%90%8D%E7%A9%BA%E9%97%B4ID
+resource.argument.type.int: 整数
+resource.argument.type.item_model_definition: 物品模型映射
+resource.argument.type.list: 列表
+resource.argument.type.long: 长整数
+resource.argument.type.number: 数值 https://ce.gtemc.cn/zh-Hans/reference/number_format
+resource.argument.type.quaternion: 四元数 https://quaternions.online/
+resource.argument.type.section: 配置部分
+resource.argument.type.snbt: SNBT https://zh.minecraft.wiki/w/SNBT%E6%A0%BC%E5%BC%8F
+resource.argument.type.string: 字符串
+resource.argument.type.vec3: 三维向量
 resource.block.behavior.missing_property: 该行为需要定义方块状态属性“<arg:0>”。https://ce.gtemc.cn/zh-Hans/configuration/block/states/properties
 resource.block.behavior.property_type_mismatch: 预期属性类型为“<arg:0>”，但实际为“<arg:1>”
 resource.block.behavior.unknown_type: 未知的方块行为类型“<arg:0>”
+resource.block.entity_renderer.tint_source.unknown_type: 未知的方块实体渲染器染色源“<arg:0>”
+resource.block.state.appearance_without_properties: 多个“appearances”需要“properties”来区分方块状态，将只使用第一个外观
+resource.block.state.entity_renderer.unknown_type: 未知的方块实体渲染器类型“<arg:0>”
+resource.block.state.invalid_rotation: 无效的<arg:0>轴旋转度数“<arg:1>”，预期为90的倍数
+resource.block.state.invalid_variant_nbt: 无效的部分方块状态nbt“<arg:0>”
+resource.block.state.model_conflict: 无法将模型“<arg:0>”绑定到方块状态“<arg:1>”，因为该状态已绑定到模型“<arg:2>”
 resource.block.state.property.unknown_type: 未知的属性类型“<arg:0>”
 resource.block.state.real_state_conflict: 无法将“<arg:0>”绑定到实际方块状态“<arg:1>”，因为该状态已被方块“<arg:2>”占用
 resource.block.state.real_state_exhausted: 无法分配足够的服务端方块状态。请考虑在config.yml中增加服务端侧方块的数量
-resource.block.state.visual_state_exhausted: 视觉状态组“<arg:0>”已达到“<arg:1>”个槽位的最大容量，无法为“<arg:2>”分配状态
-resource.block.state.unreleased_state: 无法使用此格式分配方块状态，因为状态“<arg:0>”在方块状态映射中尚未被释放
-resource.block.state.entity_renderer.unknown_type: 未知的方块实体渲染器类型“<arg:0>”
-resource.block.state.invalid_variant_nbt: 无效的部分方块状态nbt“<arg:0>”
 resource.block.state.undefined_appearance: 未定义的方块状态外观“<arg:0>”
-resource.block.state.appearance_without_properties: 多个“appearances”需要“properties”来区分方块状态，将只使用第一个外观
-resource.block.state.model_conflict: 无法将模型“<arg:0>”绑定到方块状态“<arg:1>”，因为该状态已绑定到模型“<arg:2>”
-resource.block.state.invalid_rotation: 无效的<arg:0>轴旋转度数“<arg:1>”，预期为90的倍数
-resource.block.entity_renderer.tint_source.unknown_type: 未知的方块实体渲染器染色源“<arg:0>”
-resource.item.model_definition.unknown_type: 未知的物品模型映射类型“<arg:0>”
+resource.block.state.unreleased_state: 无法使用此格式分配方块状态，因为状态“<arg:0>”在方块状态映射中尚未被释放
+resource.block.state.visual_state_exhausted: 视觉状态组“<arg:0>”已达到“<arg:1>”个槽位的最大容量，无法为“<arg:2>”分配状态
+resource.config_loaded: 已加载<arg:0>，耗时<arg:1>毫秒（<arg:2>）
+resource.configured_feature.invalid_feature: 无效的已配置的地物。输入：“<arg:0>”。原因：“<arg:1>”
+resource.duplicated_id: 另一个文件（“<arg:0>”）包含一个具有相同ID的部分
+resource.emoji.invalid_image_format: 无效的图像格式“<arg:0>”
+resource.emoji.unknown_image: 未知的图像“<arg:0>”
+resource.equipment.invalid_sacrificed_armor: 无效的原版盔甲类型“<arg:0>”
+resource.equipment.unknown_type: 未知的装备类型“<arg:0>”
+resource.equipment_set.invalid_slot_name: 无效的套装槽位名称“<arg:0>”
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.errors_detected: 在文件“<arg:0>”中发现<arg:1>个问题：
+resource.expression.invalid: '无效的表达式“<arg:0>”。详细信息：<arg:1>'
+resource.expression.invalid_function_argument: '表达式“<arg:0>”无效，错误位于函数的第<arg:3>个参数、第<arg:1>个字符附近（标记“<arg:2>”）。'
+resource.expression.invalid_syntax: '表达式“<arg:0>”无效，错误位于第<arg:1>个字符附近（标记“<arg:2>”）。'
+resource.expression.unknown_parameter: '表达式“<arg:1>”中存在未知参数“<arg:0>”。'
+resource.furniture.behavior.unknown_type: 未知的家具行为类型“<arg:0>”
+resource.furniture.element.unknown_type: 未知的家具元素类型“<arg:0>”
+resource.furniture.hitbox.custom.invalid_entity_type: 无效的实体类型“<arg:0>”
+resource.furniture.hitbox.unknown_type: 未知的家具判定箱类型“<arg:0>”
+resource.image.codepoint_conflict: 字体“<arg:2>”中的字符“<arg:0>（<arg:1>）”已被另一张图片“<arg:3>”占用
+resource.image.codepoint_exhausted: 字体“<arg:0>”的码位已用尽
+resource.image.empty_chars: 选项“chars”不能为空
+resource.image.height_ascent_conflict: 字高“<arg:0>”不应小于字距“<arg:1>”
+resource.image.invalid_chars_grid: 第<arg:0>行中的字符数与预期的<arg:1>个不符
+resource.image.invalid_grid_size: 无效的网格大小“<arg:0>”。（例如：3,4）
+resource.item.behavior.unknown_type: 未知的物品行为类型“<arg:0>”
+resource.item.custom_model_data_conflict: 自定义模型数据“<arg:0>”已被物品“<arg:1>”占用
+resource.item.custom_model_data_exhausted: 材料“<arg:0>”的自定义模型数据已用尽
+resource.item.data_component_predicate.unknown_type: '未知的数据组件谓词类型''<arg:0>'''
+resource.item.invalid_material: 无效的物品类型“<arg:0>”
+resource.item.missing_model_id: 缺少“custom_model_data”或“item_model”，导致自定义模型无法正常工作
 resource.item.model_definition.condition.unknown_type: 未知的布尔条件型谓词类型“<arg:0>”
+resource.item.model_definition.downgrade_failure: 无法将1.21.4及以上版本的物品模型映射转换为旧版格式。请手动为该物品配置“legacy_model”：https://ce.gtemc.cn/zh-Hans/configuration/item/models#%E6%97%A7%E7%89%88%E6%A8%A1%E5%9E%8B
 resource.item.model_definition.range_dispatch.unknown_type: 未知的值调配型数值属性类型“<arg:0>”
 resource.item.model_definition.select.unknown_type: 未知的枚举条件型枚举属性类型“<arg:0>”
 resource.item.model_definition.special.unknown_type: 未知的特殊模型类型“<arg:0>”
 resource.item.model_definition.tint.unknown_type: 未知的着色类型“<arg:0>”
-resource.item.model_definition.downgrade_failure: 无法将1.21.4及以上版本的物品模型映射转换为旧版格式。请手动为该物品配置“legacy_model”：https://ce.gtemc.cn/zh-Hans/configuration/item/models#%E6%97%A7%E7%89%88%E6%A8%A1%E5%9E%8B
-resource.item.settings.craft_remainder.unknown_type: 未知的合成剩余物品类型“<arg:0>”
-resource.item.settings.equippable: 该字段应置于“data”部分之下
-resource.item.settings.equipment.invalid_asset_id: 未找到id为“<arg:0>”的装备。如需帮助，请参阅指南：https://ce.gtemc.cn/zh-Hans/configuration/equipment
-resource.item.behavior.unknown_type: 未知的物品行为类型“<arg:0>”
-resource.item.updater.unknown_type: 未知的物品更新器类型“<arg:0>”
-resource.item.custom_model_data_exhausted: 材料“<arg:0>”的自定义模型数据已用尽
-resource.item.custom_model_data_conflict: 自定义模型数据“<arg:0>”已被物品“<arg:1>”占用
-resource.item.missing_model_id: 缺少“custom_model_data”或“item_model”，导致自定义模型无法正常工作
+resource.item.model_definition.unknown_type: 未知的物品模型映射类型“<arg:0>”
 resource.item.occupied_vanilla_item_model: 物品模型“<arg:0>”已被原版物品占用
-resource.item.invalid_material: 无效的物品类型“<arg:0>”
-resource.model.generation.conflict: 无法为“<arg:0>”生成模型，因为有两个或多个配置试图使用相同的路径生成不同的json模型
-resource.texture.generation.conflict: 无法为“<arg:0>”生成贴图,因为有两个或多个配置试图使用相同的路径生成不同的贴图
+resource.item.processor.not_network: "物品处理器 '<arg:0>' 包含不支持客户端数据处理的 '<arg:1>'"
+resource.item.settings.craft_remainder.unknown_type: 未知的合成剩余物品类型“<arg:0>”
+resource.item.settings.equipment.invalid_asset_id: 未找到id为“<arg:0>”的装备。如需帮助，请参阅指南：https://ce.gtemc.cn/zh-Hans/configuration/equipment
+resource.item.settings.equippable: 该字段应置于“data”部分之下
+resource.item.unknown_data_component_type: '未知的数据组件类型''<arg:0>'''
+resource.item.updater.unknown_type: 未知的物品更新器类型“<arg:0>”
+resource.lang.unknown_locale: 未知语言环境“<arg:0>”。（例如：en、zh_cn）
+resource.mapping.conflict: 无法将方块状态“<arg:0>”映射到方块状态“<arg:1>”，因为该状态已被映射到“<arg:2>”
+resource.missing_argument: 缺少必要的参数“<arg:0>”。预期参数为：“<arg:1>”
 resource.model.bbmodel.invalid_file: 无法读取或解析 bbmodel 文件“<arg:0>”
 resource.model.bbmodel.invalid_name: bbmodel 文件名“<arg:0>”不是有效的资源路径,请仅使用小写字母、数字、_、-、.、/ 重命名
-resource.recipe.transform_processor.unknown_type: 未知的锻造配方后处理器类型“<arg:0>”
+resource.model.generation.conflict: 无法为“<arg:0>”生成模型，因为有两个或多个配置试图使用相同的路径生成不同的json模型
+resource.pack_loaded: 已加载的包：<arg:0>。默认命名空间：<arg:1>
+resource.placed_feature.invalid_placement: 无效的放置修饰器。输入：“<arg:0>”。原因：“<arg:1>”
 resource.recipe.ingredient.invalid_tag: 物品标签“<arg:0>”不包含任何物品
 resource.recipe.ingredient.item_not_exist: 原料物品“<arg:0>”不存在
+resource.recipe.post_processor.unknown_type: 未知的配方结果后处理器类型“<arg:0>”
 resource.recipe.result.item_not_exist: 结果物品“<arg:0>”不存在
 resource.recipe.shaped.invalid_pattern: 无效的合成图案“<arg:0>”
 resource.recipe.shaped.invalid_symbol: 无效的合成图案符号“<arg:0>”
 resource.recipe.shaped_transform.ambigious_source: 在有序合成转化配方中发现2个及以上被标记为source的原料：“<arg:0>”，“<arg:1>”
 resource.recipe.shaped_transform.source_not_found: 无法在配方中找到标记为source的原料
-resource.recipe.post_processor.unknown_type: 未知的配方结果后处理器类型“<arg:0>”
-resource.recipe.unknown_type: 未知的配方类型“<arg:0>”
-command.workflow.started: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>正在执行资源包工作流 <color:#FFD700><arg:0></color>…</white>'
-command.workflow.success: '<dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>资源包工作流 <color:#FFD700><arg:0></color> 执行完成</white><gray>（<hover:show_text:"<gray>异步处理"><color:#FFD700><arg:1></color>毫秒</hover>）</gray>'
-command.workflow.failure: '<red>无法执行资源包工作流 <arg:0>。请检查控制台日志</red>'
-command.workflow.unknown: '<red>未知的资源包工作流：<arg:0></red>'
-command.resource.busy: '<red>重载或资源包工作流正在执行，请等待完成后再试。</red>'
-command.enchant.success.single: '<white>已将<arg:0>应用于<arg:1></white>'
-command.enchant.success.multiple: '<white>已将<arg:0>应用于<arg:1>个实体</white>'
-command.enchant.failure.not_exist: '<red>未知的魔咒''<arg:0>''</red>'
-command.enchant.failure.level: '<red>等级<arg:0>超过了最高等级<arg:1></red>'
-command.enchant.failure.incompatible: '<red>该魔咒无法应用于<arg:0></red>'
-command.enchant.failure.itemless: '<red><arg:0>的选定槽位中没有物品</red>'
-command.enchant.failure.entity: '<red><arg:0>不是生物</red>'
-command.enchant.failure.no_target: '<red>无法应用任何魔咒</red>'
-resource.item.unknown_data_component_type: '未知的数据组件类型''<arg:0>'''
-resource.item.data_component_predicate.unknown_type: '未知的数据组件谓词类型''<arg:0>'''
 resource.recipe.shapeless_transform.ambigious_source: '无序转换配方中存在两个或更多标记为来源的材料：''<arg:0>'''
 resource.recipe.shapeless_transform.source_not_found: '配方中找不到标记为来源的材料'
+resource.recipe.transform_processor.unknown_type: 未知的锻造配方后处理器类型“<arg:0>”
+resource.recipe.unknown_type: 未知的配方类型“<arg:0>”
+resource.template.invalid_template: 无效的模板“<arg:0>”
+resource.template.missing_argument: 缺少模板参数：“<arg:0>”。请通过“arguments”选项提供此参数，或为其设置默认值
+resource.template.unknown_argument_type: 未知的模板参数类型“<arg:0>”
+resource.texture.generation.conflict: 无法为“<arg:0>”生成贴图,因为有两个或多个配置试图使用相同的路径生成不同的贴图
+resource.unknown_error: 未知错误类型
 resource_pack.bad_sprite: '方块''<arg:0>''使用的精灵''<arg:1>''应位于图集''<arg:2>''中，但仅在图集''<arg:3>''中定义'
-host.upload_started: 正在上传资源包…
-host.upload_finished: 资源包上传成功，耗时<arg:0>毫秒
-resource_pack.validation_finished: 资源包验证完成，耗时<arg:0>毫秒
-resource_pack.optimization_finished: 资源包优化完成，耗时<arg:0>毫秒
-resource_pack.compression_started: 正在压缩资源包…（如果启用了混淆功能，此过程可能会比较慢）
+resource_pack.bedrock.block.bounds: "形状 <arg:1> 超出基岩版边界（高度上限为 <arg:0>）"
+resource_pack.bedrock.block.collision: "基岩版每个状态最多支持 16 个碰撞箱"
+resource_pack.bedrock.block.conflict: "共用显示状态 <arg:0> 的方块在碰撞、选区、光照或摩擦属性上存在冲突"
+resource_pack.bedrock.block.definition: "<arg:0> 的方块状态定义缺少 variants 或 multipart 字段"
+resource_pack.bedrock.block.friction: "摩擦值超出了基岩版支持的范围"
+resource_pack.bedrock.block.missing: "缺少 <arg:0> 的方块状态定义"
+resource_pack.bedrock.block.model_renderer: "模型 <arg:0> 需要专用渲染器"
+resource_pack.bedrock.block.multiple: "有多个变体匹配 <arg:0>"
+resource_pack.bedrock.block.no_match: "没有匹配 <arg:0> 的变体"
+resource_pack.bedrock.block.no_visual: "已跳过方块 <arg:0> 的状态 <arg:1>，缺少用于显示的方块状态。"
+resource_pack.bedrock.block.property: "未知的 multipart 属性 <arg:0>"
+resource_pack.bedrock.block.renderer: "方块需要专用实体渲染器"
+resource_pack.bedrock.block.rotation: "方块状态的旋转角度必须是 90 度的倍数"
+resource_pack.bedrock.block.skipped: "已跳过方块 <arg:0> 的状态 <arg:1>：<arg:2>"
+resource_pack.bedrock.block.tint: "不支持依赖世界环境的方块着色"
+resource_pack.bedrock.block.uv: "矩形面无法表示该 UV 锁定效果"
+resource_pack.bedrock.block.weighted: "不支持带权重的方块模型"
+resource_pack.bedrock.font.bitmap: "位图 <arg:0> 缺失或无效"
+resource_pack.bedrock.font.capacity: "已跳过字体 <arg:0>，E3–F8 字形页的剩余空间不足。"
+resource_pack.bedrock.font.cell: "位图 <arg:0> 的字格宽度或高度为零"
+resource_pack.bedrock.font.cycle: "对字体 <arg:0> 的引用形成循环"
+resource_pack.bedrock.font.definition: "已跳过 <arg:1> 中的字体 <arg:0>，字体定义必须是包含 providers 数组的对象。"
+resource_pack.bedrock.font.glyph: "已跳过字体 <arg:0> 的字形 U+<arg:1>：<arg:2>"
+resource_pack.bedrock.font.grid: "位图 <arg:0> 的字符网格为空"
+resource_pack.bedrock.font.height: "该位图的高度和上升量仅适用于 GUI 间距"
+resource_pack.bedrock.font.hex: "<arg:0> 中的 unihex 字形数据无效"
+resource_pack.bedrock.font.missing_file: "缺少 unihex 压缩包 <arg:0>"
+resource_pack.bedrock.font.missing_ref: "引用的字体 <arg:0> 不存在"
+resource_pack.bedrock.font.no_hex: "unihex 压缩包中没有 .hex 文件"
+resource_pack.bedrock.font.provider: "已跳过字体 <arg:0> 在 <arg:1> 中的 providers[<arg:2>]：<arg:3>"
+resource_pack.bedrock.font.read: "已跳过字体 <arg:0>，无法读取 <arg:1>：<arg:2>"
+resource_pack.bedrock.font.rows: "位图 <arg:0> 的字符行长度不一致"
+resource_pack.bedrock.font.size: "位图对齐基线后超出 512 像素的字格"
+resource_pack.bedrock.font.space: "字符“<arg:0>”的前进宽度无效"
+resource_pack.bedrock.font.spacing: "不支持空白或小于一个像素的位图间距"
+resource_pack.bedrock.font.unsupported: "字体 <arg:0> 的 providers[<arg:1>] 使用了不支持的 <arg:2>，将跳过后续低优先级的 provider。"
+resource_pack.bedrock.item.binding: "无法为基岩版绑定物品 <arg:0>（材质 <arg:1>）：<arg:2>"
+resource_pack.bedrock.item.failed: "物品绑定失败，已停止生成基岩资源包。请查看上方的警告。"
+resource_pack.circular_dependencies: 资源包存在循环依赖：<arg:0>
 resource_pack.compression_finished: 资源包压缩完成，耗时<arg:0>毫秒
-resource_pack.packsquash_started: '正在使用配置<arg:0>运行PackSquash...'
-resource_pack.packsquash_finished: 'PackSquash处理完成，耗时<arg:0>毫秒'
-resource_pack.zip_loaded: '已加载资源包ZIP <arg:0>，耗时<arg:1>毫秒'
-resource_pack.export_finished: '已导出资源包到<arg:0>，耗时<arg:1>毫秒'
-
-resource.item.processor.not_network: "物品处理器 '<arg:0>' 包含不支持客户端数据处理的 '<arg:1>'"
-resource_pack.missing_texture_reference: "模型“<arg:0>”在 <arg:1> 引用了未定义的纹理槽位：<arg:2>"
+resource_pack.compression_started: 正在压缩资源包…（如果启用了混淆功能，此过程可能会比较慢）
+resource_pack.conflict_resolution.unknown_type: 未知的文件冲突解决方案类型“<arg:0>”
+resource_pack.conflicting_dependencies: 资源包“<arg:0>”及其依赖中存在互相冲突的包
 resource_pack.cyclic_texture_reference: "模型“<arg:0>”在 <arg:1> 存在循环纹理引用：<arg:2>"
+resource_pack.duplicated_files: 发现重复文件。请通过config.yml文件中的“resource-pack.duplicated-files-handler”部分进行处理
+resource_pack.duplicated_sprite: 无法加载模型“<arg:0>”。图集“<arg:2>”中的精灵图“<arg:1>”重复，它已在图集“<arg:3>”中定义
+resource_pack.export_finished: '已导出资源包到<arg:0>，耗时<arg:1>毫秒'
+resource_pack.generation_finished: 资源包生成完成，耗时<arg:0>毫秒
+resource_pack.generation_started: 正在生成资源包…
+resource_pack.invalid_overlay_format: 无效的叠加资源包格式“<arg:0>”。叠加资源包格式必须包含占位符“{version}”
+resource_pack.item_model.conflict: 无法生成物品模型映射“<arg:0>”，因为文件“<arg:1>”已存在
+resource_pack.json_optimization_started: '> 正在优化json文件…'
+resource_pack.malformatted_json: Json文件“<arg:0>”的格式不正确
+resource_pack.missing_block_model: 方块状态“<arg:0>”缺少模型文件“<arg:1>”
+resource_pack.missing_equipment_texture: 装备“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_font_texture: 字体“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_item_model: 物品“<arg:0>”缺少模型文件“<arg:1>”
+resource_pack.missing_model_texture: 模型“<arg:0>”缺少纹理“<arg:1>”
+resource_pack.missing_parent_model: 模型“<arg:0>”找不到父模型“<arg:1>”
+resource_pack.missing_sound: 声音事件“<arg:0>”缺少ogg文件“<arg:1>”
+resource_pack.missing_texture_reference: "模型“<arg:0>”在 <arg:1> 引用了未定义的纹理槽位：<arg:2>"
+resource_pack.model_display_out_of_bounds: '模型“<arg:0>”的显示位置“<arg:1>”中，字段“<arg:2>”的数值<arg:3>越界，允许范围为[-<arg:4>, <arg:4>]'
+resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
+resource_pack.model_uv_out_of_bounds: 模型“<arg:0>”的第<arg:1>个元素在“<arg:2>”面使用了越界UV <arg:3>，纹理为“<arg:4>”。超出[0, 16]的UV可能导致26.1及以上客户端无法烘焙该模型
+resource_pack.multiple_atlases: 模型“<arg:0>”使用了多个图集：预期为“<arg:1>”，但发现“<arg:2>”。请确保所有模型纹理来自同一图集
+resource_pack.not_a_json_object: Json文件“<arg:0>”不是一个json对象
+resource_pack.optimization_finished: 资源包优化完成，耗时<arg:0>毫秒
+resource_pack.optimization_result: '> □ 优化前/优化后/比率：<arg:0>/<arg:1>/<arg:2>%'
+resource_pack.packsquash_finished: 'PackSquash处理完成，耗时<arg:0>毫秒'
+resource_pack.packsquash_started: '正在使用配置<arg:0>运行PackSquash...'
+resource_pack.texture_generation.conflict: 无法生成贴图,因为贴图文件“<arg:0>”已存在
+resource_pack.texture_not_in_atlas: 纹理“<arg:0>”未在图集中定义。你需要将纹理路径添加到图集，或在config.yml中启用“fix-atlas”选项
+resource_pack.texture_optimization_started: '> 正在优化纹理文件…'
+resource_pack.unknown_reference: 资源包“<arg:0>”的“<arg:1>”引用了不存在的资源包“<arg:2>”
+resource_pack.validation_finished: 资源包验证完成，耗时<arg:0>毫秒
+resource_pack.validation_started_interval: 正在验证资源包…（进度：<arg:0>/<arg:1> | 资源包格式：<arg:2> | 叠加资源包：<arg:3>）
+resource_pack.zip_loaded: '已加载资源包ZIP <arg:0>，耗时<arg:1>毫秒'
+snbt.invalid_syntax.here: <--[此处]
+snbt.invalid_syntax.parse_error: <arg:0>，位于第<arg:1>个字符：<arg:2>
+snbt.parser.empty_key: 键不能为空
+snbt.parser.expected.compound: 应为复合标签
+snbt.parser.expected_binary_numeral: 应为二进制数
+snbt.parser.expected_decimal_numeral: 应为十进制数
+snbt.parser.expected_float_type: 应为浮点数
+snbt.parser.expected_hex_escape: 字符字面量长度应为<arg:0>
+snbt.parser.expected_hex_numeral: 应为十六进制数
+snbt.parser.expected_integer_type: 应为整数
+snbt.parser.expected_non_negative_number: 应为非负数
+snbt.parser.expected_number_or_boolean: 应为数字或布尔型
+snbt.parser.expected_string_uuid: 应为表示有效UUID的字符串
+snbt.parser.expected_unquoted_string: 应为有效的无引号字符串
+snbt.parser.incorrect: 应为字面量<arg:0>
+snbt.parser.infinity_not_allowed: 不允许使用非有限数的数值
+snbt.parser.invalid_array_element_type: 无效的数组元素类型
+snbt.parser.invalid_character_name: 无效的Unicode字符名称
+snbt.parser.invalid_codepoint: 无效的Unicode字符码位：<arg:0>
+snbt.parser.invalid_string_contents: 无效的字符串内容
+snbt.parser.invalid_unquoted_start: 无引号字符串不能以数字0-9、+或-开头
+snbt.parser.leading_zero_not_allowed: 十进制数不能以0开头
+snbt.parser.no_such_operation: 不存在的操作：<arg:0>
+snbt.parser.number_parse_failure: 解析数字失败：<arg:0>
+snbt.parser.trailing: 多余的尾随数据
+snbt.parser.underscore_not_allowed: 数字的开头和结尾不允许使用下划线字符
+storage.invalid_path: '存储路径无效'
+storage.unknown_type: 未知的存储类型“<arg:0>”
+update.available: 新版本<arg:0>已发布：<arg:1>
+update.is_latest: 你正在使用最新版本
+workflow.unknown_type: 未知的资源包工作流类型“<arg:0>”
+yaml.duplicated_key: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”
+yaml.inconsistent_value_type: 在文件“<arg:0>”中的第“<arg:2>”行发现发现重复的键“<arg:1>”且值类型不同

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver.Glyph;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,18 +20,20 @@ final class JavaUnihexFont {
     JavaUnihexFont(InputStream input) throws IOException {
         this.dimensions = new Int2IntOpenHashMap();
         try (ZipInputStream archive = new ZipInputStream(input)) {
+            boolean foundHex = false;
             ZipEntry entry;
             while ((entry = archive.getNextEntry()) != null) {
                 if (entry.isDirectory() || !entry.getName().endsWith(".hex")) {
                     continue;
                 }
+                foundHex = true;
                 BufferedReader reader = new BufferedReader(new InputStreamReader(archive, StandardCharsets.US_ASCII));
                 String line;
                 while ((line = reader.readLine()) != null) {
                     int separator = line.indexOf(':');
                     int length = line.length() - separator - 1;
                     if (separator < 4 || separator > 6 || (length != 32 && length != 64 && length != 96 && length != 128)) {
-                        throw new IOException("Invalid unihex glyph in " + entry.getName());
+                        throw new IOException(TranslationManager.message("resource_pack.bedrock.font.hex", entry.getName()));
                     }
                     try {
                         int codepoint = Integer.parseInt(line, 0, separator, 16);
@@ -45,9 +48,12 @@ final class JavaUnihexFont {
                         int right = mask == 0 ? bitWidth : 31 - Integer.numberOfTrailingZeros(mask);
                         this.dimensions.put(codepoint, (left << 8) | right);
                     } catch (NumberFormatException exception) {
-                        throw new IOException("Invalid unihex hex digits in " + entry.getName(), exception);
+                        throw new IOException(TranslationManager.message("resource_pack.bedrock.font.hex", entry.getName()), exception);
                     }
                 }
+            }
+            if (!foundHex) {
+                throw new IOException(TranslationManager.message("resource_pack.bedrock.font.no_hex"));
             }
         }
     }

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntArrays;
@@ -8,6 +7,7 @@ import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver.Glyph;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -20,7 +20,6 @@ import java.util.*;
 
 public final class BedrockFontGenerator {
     private final JavaFontResolver fonts;
-    private final JsonArray diagnostics = new JsonArray();
 
     public BedrockFontGenerator(JavaResourcePack resources) throws IOException {
         this(new JavaFontResolver(resources));
@@ -35,7 +34,7 @@ public final class BedrockFontGenerator {
         JsonObject layoutFonts = new JsonObject();
         Map<Glyph, Integer> allocated = new HashMap<>();
         Map<Glyph, Metrics> metrics = new HashMap<>();
-        Map<Glyph, String> unsupported = new HashMap<>();
+        Set<Glyph> unsupported = new HashSet<>();
         List<Page> pages = new ArrayList<>();
         for (Key font : this.fonts.fonts()) {
             JsonObject characters = new JsonObject();
@@ -43,7 +42,6 @@ public final class BedrockFontGenerator {
             Int2ObjectMap<Glyph> glyphs = this.fonts.resolve(font);
             int[] codepoints = glyphs.keySet().toIntArray();
             IntArrays.quickSort(codepoints);
-            Map<String, Integer> skipped = new LinkedHashMap<>();
             Set<Glyph> pending = new LinkedHashSet<>();
             for (int codepoint : codepoints) {
                 Glyph glyph = glyphs.get(codepoint);
@@ -51,24 +49,21 @@ public final class BedrockFontGenerator {
                 if (glyph == null || glyph.nativeText() || glyph.advanceOnly() || allocated.containsKey(glyph)) {
                     continue;
                 }
-                if (!metrics.containsKey(glyph) && !unsupported.containsKey(glyph)) {
+                if (!metrics.containsKey(glyph) && !unsupported.contains(glyph)) {
                     try {
                         metrics.put(glyph, this.measure(glyph));
                     } catch (UnsupportedOperationException exception) {
-                        unsupported.put(glyph, exception.getMessage());
+                        unsupported.add(glyph);
+                        TranslationManager.warn("resource_pack.bedrock.font.glyph", font.asString(), Integer.toHexString(codepoint), exception.getLocalizedMessage());
                     }
                 }
-                String reason = unsupported.get(glyph);
-                if (reason != null) {
-                    skipped.merge(reason, 1, Integer::sum);
-                } else {
+                if (!unsupported.contains(glyph)) {
                     pending.add(glyph);
                 }
             }
-            skipped.forEach((reason, count) -> this.diagnostics.add(font + ": " + reason + " (" + count + " glyphs)"));
             // Reserve a whole font before writing anything, so a large text font cannot be partially remapped.
             if (!this.fits(pending, metrics, pages)) {
-                this.diagnostics.add(font + ": font exceeds remaining E3..F8 page capacity; entire font skipped");
+                TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
                 continue;
             }
             for (int codepoint : codepoints) {
@@ -91,7 +86,7 @@ public final class BedrockFontGenerator {
                     }
                     continue;
                 }
-                if (unsupported.containsKey(glyph)) {
+                if (unsupported.contains(glyph)) {
                     continue;
                 }
                 Integer target = allocated.get(glyph);
@@ -131,8 +126,6 @@ public final class BedrockFontGenerator {
         result.addProperty(BedrockPackLayout.FORMAT_VERSION, 1);
         result.add("fonts", mappings);
         result.add("metrics", layoutFonts);
-        this.diagnostics.addAll(this.fonts.diagnostics());
-        result.add(BedrockPackLayout.DIAGNOSTICS, this.diagnostics);
         GsonHelper.writeJsonFile(result, root.resolve(BedrockPackLayout.GLYPHS));
     }
 
@@ -149,17 +142,17 @@ public final class BedrockFontGenerator {
 
     private Metrics measure(Glyph glyph) {
         if (glyph.height() <= 0 || glyph.ascent() > glyph.height()) {
-            throw new UnsupportedOperationException("bitmap height/ascent is only supported as GUI spacing");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.height"));
         }
         int actualWidth = glyph.actualWidth();
         int advance = (int) glyph.advance();
         if (actualWidth == 0 || advance <= 1) {
-            throw new UnsupportedOperationException("empty or subpixel bitmap spacing is not supported");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.spacing"));
         }
         int width = advance - 1;
         long required = Math.max(width, Math.max(2L * (glyph.ascent() - 3L), 2L * (glyph.height() + 3L - glyph.ascent())));
         if (required > 512) {
-            throw new UnsupportedOperationException("bitmap exceeds a 512-pixel font cell after baseline compensation");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.size"));
         }
         int size = 8;
         while (size < required) {

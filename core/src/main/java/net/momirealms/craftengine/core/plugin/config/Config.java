@@ -544,13 +544,13 @@ public final class Config {
         this.resource_pack$exclude_core_shaders = config.getBoolean("resource-pack.exclude-core-shaders", false);
         this.resource_pack$overlay_format = config.getString("resource-pack.overlay-format", "overlay_{version}");
         if (!this.resource_pack$overlay_format.contains("{version}")) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+            TranslationManager.warn(
                     "config.errors_detected",
-                    TranslationManager.instance().plainTranslation(
+                    TranslationManager.message(
                             "resource_pack.invalid_overlay_format",
                             this.resource_pack$overlay_format
                     )
-            ));
+            );
             this.resource_pack$overlay_format = "overlay_{version}";
         }
         try {
@@ -561,7 +561,7 @@ public final class Config {
             }
             this.resource_pack$duplicated_files_handler = resolutions;
         } catch (KnownResourceException e) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+            TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
             this.resource_pack$duplicated_files_handler = List.of();
         } catch (Throwable e) {
             this.plugin.logger().warn("Failed to load resource-pack.duplicated-files-handler", e);
@@ -662,13 +662,13 @@ public final class Config {
         // equipment
         this. equipment$sacrificed_vanilla_armor$type = config.getString("equipment.sacrificed-vanilla-armor.type", "chainmail").toLowerCase(Locale.ENGLISH);
         if (!AbstractPackManager.ALLOWED_VANILLA_EQUIPMENT.contains(this.equipment$sacrificed_vanilla_armor$type)) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
+            TranslationManager.warn(
                     "config.errors_detected",
-                    TranslationManager.instance().plainTranslation(
+                    TranslationManager.message(
                             "resource.equipment.invalid_sacrificed_armor",
                             this.equipment$sacrificed_vanilla_armor$type
                     )
-            ));
+            );
             this.equipment$sacrificed_vanilla_armor$type = "chainmail";
         }
 

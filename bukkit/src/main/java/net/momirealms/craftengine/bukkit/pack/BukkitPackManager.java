@@ -109,7 +109,7 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     @Override
     public void sendResourcePack(Player player) {
         sendResourcePackAsync(player).exceptionally(t -> {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("host.get_url_failed", player.name()), t);
+            this.plugin.logger().warn(TranslationManager.message("host.get_url_failed", player.name()), t);
             return null;
         });
     }

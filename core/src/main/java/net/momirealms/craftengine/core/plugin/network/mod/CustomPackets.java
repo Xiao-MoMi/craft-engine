@@ -72,10 +72,10 @@ public final class CustomPackets {
         String permission = "ce.mod." + (toClient ? "clientbound" : "serverbound") + "." + (id.namespace.equals("craftengine") ? id.value : id);
         boolean hasPermission = CraftEngine.instance().compatibilityManager().hasPermission(user, permission);
         if (!hasPermission && Config.modChannelLoggingPermissionDenied()) {
-            CraftEngine.instance().logger().warn(TranslationManager.instance().plainTranslation(
+            TranslationManager.warn(
                     toClient ? "mod.clientbound.no_permission" : "mod.serverbound.no_permission",
                     user.name(), permission, id.asString()
-            ));
+            );
         }
         return hasPermission;
     }

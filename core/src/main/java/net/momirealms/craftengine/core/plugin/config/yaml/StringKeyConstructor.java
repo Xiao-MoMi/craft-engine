@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.plugin.config.yaml;
 
-import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.yaml.constructor.*;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -125,7 +124,7 @@ public final class StringKeyConstructor extends StandardConstructor {
                 continue;
             }
 
-            if (existingValue != null) logWarning("inconsistent_value_type", keyPart, keyNode);
+            if (existingValue != null) logWarning("yaml.inconsistent_value_type", keyPart, keyNode);
 
             Map<Object, Object> newMap = new LinkedHashMap<>();
             currentMap.put(keyPart, newMap);
@@ -150,7 +149,7 @@ public final class StringKeyConstructor extends StandardConstructor {
         } else if (existingValue instanceof Map && newValue instanceof Map) {
             mergeMap((Map<Object, Object>) existingValue, (Map<Object, Object>) newValue, fullKeyPath, keyNode);
         } else {
-            logWarning("duplicated_key", fullKeyPath, keyNode);
+            logWarning("yaml.duplicated_key", fullKeyPath, keyNode);
             targetMap.put(key, newValue);
         }
     }
@@ -168,7 +167,7 @@ public final class StringKeyConstructor extends StandardConstructor {
             } else if (targetValue instanceof Map && sourceValue instanceof Map) {
                 mergeMap((Map<Object, Object>) targetValue, (Map<Object, Object>) sourceValue, currentPath, sourceNode);
             } else {
-                logWarning("duplicated_key", currentPath, sourceNode);
+                logWarning("yaml.duplicated_key", currentPath, sourceNode);
                 target.put(key, sourceValue);
             }
         }
@@ -221,13 +220,13 @@ public final class StringKeyConstructor extends StandardConstructor {
         return matchedValue != null ? matchedValue : fallbackValue;
     }
 
-    private void logWarning(String keyInLocale, String configKey, Node node) {
+    private void logWarning(String translationKey, String configKey, Node node) {
         if (this.path == null) return;
         int line = node.getStartMark().map(m -> m.getLine() + 1).orElse(-1);
-        CraftEngine.instance().logger().warn(TranslationManager.instance().plainTranslation("yaml." + keyInLocale,
+        TranslationManager.warn(translationKey,
                 this.path.toAbsolutePath().toString(),
                 configKey,
                 String.valueOf(line)
-        ));
+        );
     }
 }

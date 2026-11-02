@@ -351,7 +351,7 @@ public final class SelfHostHttpServer {
                 });
         try {
             this.serverChannel = b.bind(this.port).sync().channel();
-            CraftEngine.instance().logger().info(TranslationManager.instance().plainTranslation("host.self.http_server_started", String.valueOf(this.port)));
+            TranslationManager.info("host.self.http_server_started", String.valueOf(this.port));
             this.enabled = true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

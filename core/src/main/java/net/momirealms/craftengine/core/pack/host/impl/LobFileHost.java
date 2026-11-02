@@ -188,7 +188,7 @@ public final class LobFileHost implements ResourcePackHost {
     @Nullable
     public String getSpaceUsageText() {
         if (this.accountInfo == null) return null;
-        return TranslationManager.instance().plainTranslation(
+        return TranslationManager.message(
                 "host.lobfile.storage_usage",
                 String.valueOf(this.accountInfo.account().usage().spaceUsed() / 1_000_000),
                 String.valueOf(this.accountInfo.account().limits().spaceQuota() / 1_000_000),

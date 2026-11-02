@@ -50,22 +50,6 @@ public final class ItemRegistrationPlanWriter {
             entries.add(json); // 加入注册列表
         }
         result.add(ENTRIES, entries); // 全部注册条目
-        JsonArray diagnostics = new JsonArray(); // 诊断列表
-        for (ItemRegistrationPlan.Diagnostic diagnostic : plan.diagnostics()) { // 逐项写入诊断
-            JsonObject json = new JsonObject(); // 当前条目
-            json.addProperty(SEVERITY, diagnostic.severity().name()); // 诊断级别
-            json.addProperty(CODE, diagnostic.code()); // 诊断代码
-            json.addProperty(ITEM_TYPE, diagnostic.javaItemType().asString()); // 基础 Java 物品类型
-            if (diagnostic.definitionId() != null) { // 有模型 ID 时记录
-                json.addProperty(MODEL, diagnostic.definitionId().asString()); // 匹配的 item_model ID
-            }
-            JsonArray items = new JsonArray(); // 涉及的物品列表
-            diagnostic.itemIds().forEach(id -> items.add(id.asString())); // 写入物品 ID
-            json.add(ITEM_IDS, items); // 涉及的 CE 物品 ID
-            json.add(DETAILS, GsonHelper.get().toJsonTree(diagnostic.details())); // 诊断详情
-            diagnostics.add(json); // 加入诊断列表
-        }
-        result.add(DIAGNOSTICS, diagnostics); // 诊断列表
         return GsonHelper.sortObjectKeys(result).getAsJsonObject(); // 排序键以稳定输出
     }
 

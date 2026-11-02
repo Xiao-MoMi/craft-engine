@@ -94,7 +94,7 @@ public final class PackValidator {
                     }
                 }
 
-                this.context.logger().info(TranslationManager.instance().plainTranslation(
+                this.context.logger().info(TranslationManager.message(
                         "resource_pack.validation_started_interval",
                         String.valueOf(i + 1), String.valueOf(size), PackVersion.formatRange(segment.minVersion(), segment.maxVersion()), overlayInOrder.stream().map(Overlay::directory).toList().toString()
                 ));

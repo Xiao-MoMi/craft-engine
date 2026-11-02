@@ -28,8 +28,9 @@ public final class GeyserRegistrationChanges {
         JsonObject after = next.deepCopy();
         JsonArray oldEntries = before.remove(ENTRIES).getAsJsonArray();
         JsonArray newEntries = after.remove(ENTRIES).getAsJsonArray();
-        before.remove(DIAGNOSTICS);
-        after.remove(DIAGNOSTICS);
+        // Older registration plans may contain an extra diagnostics header.
+        before.remove("diagnostics");
+        after.remove("diagnostics");
         String header = difference(before, after, "");
         if (header != null) {
             this.add(type + " plan: " + header);

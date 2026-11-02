@@ -390,7 +390,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     private void logHook(String plugin) {
         if (!this.loggedPlugins.add(plugin)) return;
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("plugin.compatibility", plugin));
+        TranslationManager.info("plugin.compatibility", plugin);
     }
 
     @Override

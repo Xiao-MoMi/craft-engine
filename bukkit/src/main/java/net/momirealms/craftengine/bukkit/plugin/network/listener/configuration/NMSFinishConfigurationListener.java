@@ -76,7 +76,7 @@ public final class NMSFinishConfigurationListener implements NMSPacketListener {
             if (ConnectionProxy.INSTANCE.getPacketListener(user.connection()) != packetListener) return;
             Queue<Object> tasks = ServerConfigurationPacketListenerImplProxy.INSTANCE.getConfigurationTasks(packetListener);
             if (t != null) {
-                CraftEngine.instance().logger().warn(TranslationManager.instance().plainTranslation("host.get_url_failed", user.name()), t);
+                CraftEngine.instance().logger().warn(TranslationManager.message("host.get_url_failed", user.name()), t);
                 user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                 return;
             }

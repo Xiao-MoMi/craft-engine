@@ -31,7 +31,7 @@ public final class KnownResourceException extends ResourceException {
     }
 
     public static KnownResourceException missingArgument(String argumentName, String type) {
-        return new KnownResourceException("resource.missing_argument", argumentName, TranslationManager.instance().plainTranslation(type));
+        return new KnownResourceException("resource.missing_argument", argumentName, TranslationManager.message(type));
     }
 
     public String translationKey() {
@@ -40,7 +40,7 @@ public final class KnownResourceException extends ResourceException {
 
     @Override
     public String getLocalizedMessage() {
-        return TranslationManager.instance().plainTranslation(this.translationKey, this.arguments);
+        return TranslationManager.message(this.translationKey, this.arguments);
     }
 
     @Override

@@ -198,7 +198,7 @@ public abstract class CraftEngine implements Plugin {
         try {
             this.storageManager = new StorageManager(this.scheduler.async(), StorageTypes.fromConfig(settings));
         } catch (KnownResourceException e) {
-            throw new IllegalStateException(TranslationManager.instance().plainTranslation("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
+            throw new IllegalStateException(TranslationManager.message("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize storage", e);
         }
@@ -571,9 +571,9 @@ public abstract class CraftEngine implements Plugin {
             String lv = getLatestVersion();
             if (lv == null) return;
             if (compareVer(lv, pluginVersion())) {
-                this.logger.warn(TranslationManager.instance().plainTranslation("update.available", lv, link));
+                TranslationManager.warn("update.available", lv, link);
             } else {
-                this.logger.info(TranslationManager.instance().plainTranslation("update.is_latest"));
+                TranslationManager.info("update.is_latest");
             }
         } catch (Exception ignored) {
         }

@@ -1,367 +1,410 @@
-command.pack_preference.unchanged: '<red>Deine Einstellung für Ressourcenpaket <arg:0> ist unverändert</red>'
-command.pack_preset.unchanged: '<red>Deine Ressourcenpaket-Einstellungen entsprechen bereits der Voreinstellung <arg:0></red>'
-command.admin_pack_preference.unchanged.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> ist unverändert</red>'
-command.admin_pack_preference.unchanged.multiple: '<red>Die Einstellungen für Ressourcenpaket <arg:1> sind bei <arg:0> Spielern unverändert</red>'
-command.admin_pack_preset.unchanged.single: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> entsprechen bereits der Voreinstellung <arg:1></red>'
-command.admin_pack_preset.unchanged.multiple: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> Spielern entsprechen bereits der Voreinstellung <arg:1></red>'
-command.pack_preference.enabled: '<white>Ressourcenpaket <arg:0> aktiviert</white>'
-command.pack_preference.disabled: '<white>Ressourcenpaket <arg:0> deaktiviert</white>'
-command.pack_preference.reset: '<white>Standardeinstellung für Ressourcenpaket <arg:0> wiederhergestellt</white>'
-command.admin_pack_preference.enabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> aktiviert</white>'
-command.admin_pack_preference.enabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler aktiviert</white>'
-command.admin_pack_preference.disabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> deaktiviert</white>'
-command.admin_pack_preference.disabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler deaktiviert</white>'
-command.admin_pack_preference.reset.single: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> wiederhergestellt</white>'
-command.admin_pack_preference.reset.multiple: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> Spieler wiederhergestellt</white>'
-command.admin_pack_preference.failure.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> konnte nicht aktualisiert werden. Prüfe die Konsole</red>'
-command.admin_pack_preference.failure.multiple: '<red>Einstellungen für Ressourcenpaket <arg:1> für <arg:0> Spieler aktualisiert; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
-command.admin_pack_preset.success.single: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> angewendet</white>'
-command.admin_pack_preset.success.multiple: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet</white>'
-command.admin_pack_preset.failure.single: '<red>Ressourcenpaket-Voreinstellung <arg:1> konnte nicht auf <arg:0> angewendet werden. Prüfe die Konsole</red>'
-command.admin_pack_preset.failure.multiple: '<red>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
-command.pack_preset.unknown: '<red>Unbekannte Ressourcenpaket-Voreinstellung: <arg:0></red>'
-command.pack_preset.no_permission: '<red>Du hast keine Berechtigung, die Ressourcenpaket-Voreinstellung <arg:0> zu verwenden</red>'
-command.pack_preset.success: '<white>Ressourcenpaket-Voreinstellung <arg:0> angewendet</white>'
-exception.invalid_syntax: '<red>Ungültige Syntax. Korrekte Syntax: <white><arg:0></white></red>'
-exception.invalid_argument: '<red>Ungültiges Argument. Grund: <white><arg:0></white></red>'
-exception.invalid_sender: <red><arg:0> darf diesen Befehl nicht ausführen. Muss vom Typ <arg:1> sein</red>
-exception.unexpected: <red>Ein interner Fehler ist beim Versuch aufgetreten, diesen Befehl auszuführen</red>
-exception.no_permission: <red>Entschuldigung, aber du hast keine Berechtigung, diesen Befehl auszuführen</red>
-exception.no_such_command: <red>Unbekannter Befehl.</red>
-argument.entity.notfound.player: <red>Kein Spieler gefunden</red>
 argument.entity.notfound.entity: <red>Keine Entity gefunden</red>
-argument.parse.failure.time: <red>'<arg:0>' ist kein gültiges Zeitformat</red>
-argument.parse.failure.material: <red>'<arg:0>' ist kein gültiger Material-Name</red>
-argument.parse.failure.enchantment: <red>'<arg:0>' ist kein gültiges Enchantment</red>
-argument.parse.failure.offlineplayer: <red>Kein Spieler für die Eingabe '<arg:0>' gefunden</red>
-argument.parse.failure.player: <red>Kein Spieler für die Eingabe '<arg:0>' gefunden</red>
-argument.parse.failure.world: <red>'<arg:0>' ist keine gültige Minecraft-Welt</red>
-argument.parse.failure.location.invalid_format: "<red>'<arg:0>' ist kein gültiger Ort. Erforderliches Format: '<arg:1> <arg:2> <arg:3>'</red>"
-argument.parse.failure.location.mixed_local_absolute: <red>Lokale und absolute Koordinaten können nicht gemischt werden. (entweder nutzen alle Koordinaten '^' oder keine)</red>
-argument.parse.failure.namespacedkey.namespace: <red>Ungültiger Namespace '<arg:0>'. Muss [a-z0-9._-] sein</red>
-argument.parse.failure.namespacedkey.key: <red>Ungültiger Key '<arg:0>'. Muss [a-z0-9/._-] sein</red>
-argument.parse.failure.namespacedkey.need_namespace: <red>Ungültige Eingabe '<arg:0>', erfordert einen expliziten Namespace</red>
+argument.entity.notfound.player: <red>Kein Spieler gefunden</red>
+argument.parse.failure.aggregate.failure: "<red>Ungültige Komponente '<arg:0>': <arg:1></red>"
+argument.parse.failure.aggregate.missing: <red>Fehlende Komponente '<arg:0>'</red>
 argument.parse.failure.boolean: <red>Konnte Boolean aus '<arg:0>' nicht parsen</red>
-argument.parse.failure.number: <red>'<arg:0>' ist keine gültige Zahl im Bereich <arg:1> bis <arg:2></red>
 argument.parse.failure.char: <red>'<arg:0>' ist kein gültiges Zeichen</red>
-argument.parse.failure.string: <red>'<arg:0>' ist kein gültiger String vom Typ <arg:1></red>
-argument.parse.failure.uuid: <red>'<arg:0>' ist keine gültige UUID</red>
-argument.parse.failure.enum: "<red>'<arg:0>' ist nicht einer der folgenden Werte: <arg:1></red>"
-argument.parse.failure.regex: <red>'<arg:0>' entspricht nicht '<arg:1>'</red>
-argument.parse.failure.flag.unknown: <red>Unbekanntes Flag '<arg:0>'</red>
-argument.parse.failure.flag.duplicate_flag: <red>Doppeltes Flag '<arg:0>'</red>
-argument.parse.failure.flag.no_flag_started: <red>Kein Flag gestartet. Ich weiß nicht, was ich mit '<arg:0>' tun soll</red>
-argument.parse.failure.flag.missing_argument: <red>Fehlendes Argument für '<arg:0>'</red>
-argument.parse.failure.flag.no_permission: <red>Du hast keine Berechtigung, '<arg:0>' zu verwenden</red>
 argument.parse.failure.color: <red>'<arg:0>' ist keine gültige Farbe</red>
 argument.parse.failure.duration: <red>'<arg:0>' ist kein Zeitformat</red>
-argument.parse.failure.aggregate.missing: <red>Fehlende Komponente '<arg:0>'</red>
-argument.parse.failure.aggregate.failure: "<red>Ungültige Komponente '<arg:0>': <arg:1></red>"
 argument.parse.failure.either: <red>Konnte <arg:1> oder <arg:2> nicht aus '<arg:0>' auflösen</red>
+argument.parse.failure.enchantment: <red>'<arg:0>' ist kein gültiges Enchantment</red>
+argument.parse.failure.enum: "<red>'<arg:0>' ist nicht einer der folgenden Werte: <arg:1></red>"
+argument.parse.failure.flag.duplicate_flag: <red>Doppeltes Flag '<arg:0>'</red>
+argument.parse.failure.flag.missing_argument: <red>Fehlendes Argument für '<arg:0>'</red>
+argument.parse.failure.flag.no_flag_started: <red>Kein Flag gestartet. Ich weiß nicht, was ich mit '<arg:0>' tun soll</red>
+argument.parse.failure.flag.no_permission: <red>Du hast keine Berechtigung, '<arg:0>' zu verwenden</red>
+argument.parse.failure.flag.unknown: <red>Unbekanntes Flag '<arg:0>'</red>
+argument.parse.failure.location.invalid_format: "<red>'<arg:0>' ist kein gültiger Ort. Erforderliches Format: '<arg:1> <arg:2> <arg:3>'</red>"
+argument.parse.failure.location.mixed_local_absolute: <red>Lokale und absolute Koordinaten können nicht gemischt werden. (entweder nutzen alle Koordinaten '^' oder keine)</red>
+argument.parse.failure.material: <red>'<arg:0>' ist kein gültiger Material-Name</red>
 argument.parse.failure.namedtextcolor: <red>'<arg:0>' ist keine benannte Textfarbe</red>
-command.reload.config.failure: <red>Configs konnten nicht neu geladen werden. Bitte prüfe die Konsolen-Logs</red>
-command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configs neu geladen <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray></white>
-command.reload.config.issues: <#FF5555>⚠ <bold><arg:0></bold> Problem(e) gefunden. <gray><italic>(Details in der Konsole prüfen)</italic></gray>
-command.reload.pack.failure: <red>Fehler beim Generieren des Resource Packs. Bitte prüfe die Konsolen-Logs</red>
-command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Resource Pack generiert <gray>(<hover:show_text:'<gray>Async Prozess'><color:#FFD700><arg:0></color> ms</hover>)</gray></white>
-command.item.get.success: '<white>Erhalten: <arg:0> <arg:1></white>'
-command.item.get.failure.not_exist: <red>Unbekanntes Item '<arg:0>'</red>
-command.item.give.success.single: <white>Gebe <arg:0> <arg:1> an <arg:2></white>
-command.item.give.success.multiple: <white>Gebe <arg:0> <arg:1> an <arg:2> Spieler</white>
-command.item.give.failure.not_exist: <red>Unbekanntes Item '<arg:0>'</red>
-command.item.clear.failed.single: <red>Keine Items auf Spieler <arg:0> gefunden</red>
+argument.parse.failure.namespacedkey.key: <red>Ungültiger Key '<arg:0>'. Muss [a-z0-9/._-] sein</red>
+argument.parse.failure.namespacedkey.namespace: <red>Ungültiger Namespace '<arg:0>'. Muss [a-z0-9._-] sein</red>
+argument.parse.failure.namespacedkey.need_namespace: <red>Ungültige Eingabe '<arg:0>', erfordert einen expliziten Namespace</red>
+argument.parse.failure.number: <red>'<arg:0>' ist keine gültige Zahl im Bereich <arg:1> bis <arg:2></red>
+argument.parse.failure.offlineplayer: <red>Kein Spieler für die Eingabe '<arg:0>' gefunden</red>
+argument.parse.failure.player: <red>Kein Spieler für die Eingabe '<arg:0>' gefunden</red>
+argument.parse.failure.regex: <red>'<arg:0>' entspricht nicht '<arg:1>'</red>
+argument.parse.failure.string: <red>'<arg:0>' ist kein gültiger String vom Typ <arg:1></red>
+argument.parse.failure.time: <red>'<arg:0>' ist kein gültiges Zeitformat</red>
+argument.parse.failure.uuid: <red>'<arg:0>' ist keine gültige UUID</red>
+argument.parse.failure.world: <red>'<arg:0>' ist keine gültige Minecraft-Welt</red>
+attribute.base_value_source.unknown_type: 'Unbekannter Basiswertquellentyp ''<arg:0>'''
+attribute.damage_effect.unknown_target: 'Unbekanntes Ziel für Effekt nach Schaden ''<arg:0>'''
+attribute.damage_effect.unknown_type: 'Unbekannter Effekttyp nach Schaden ''<arg:0>'''
+attribute.damage_formula.unknown_type: 'Unbekannter Schadensformeltyp ''<arg:0>'''
+attribute.derived.unknown_attribute: 'Unbekanntes Attribut ''<arg:0>'' im abgeleiteten Ausdruck ''<arg:1>'''
+attribute.derived.unknown_type: 'Unbekannter Typ für abgeleiteten Wert ''<arg:0>'''
+attribute.sync_value_provider.unknown_type: 'Unbekannter Synchronisierungswertanbietertyp ''<arg:0>'''
+attribute.unknown_operation: 'Unbekannte Attributoperation ''<arg:0>'''
+attribute.value_transformer.unknown_type: 'Unbekannter Wertumwandlertyp ''<arg:0>'''
+category.source.invalid_regex: 'Ungültiger regulärer Ausdruck für Kategoriequelle ''<arg:0>'''
+category.source.unknown_type: 'Unbekannter Kategoriequellentyp ''<arg:0>'''
+command.admin_pack_preference.disabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler deaktiviert</white>'
+command.admin_pack_preference.disabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> deaktiviert</white>'
+command.admin_pack_preference.enabled.multiple: '<white>Ressourcenpaket <arg:1> für <arg:0> Spieler aktiviert</white>'
+command.admin_pack_preference.enabled.single: '<white>Ressourcenpaket <arg:1> für <arg:0> aktiviert</white>'
+command.admin_pack_preference.failure.multiple: '<red>Einstellungen für Ressourcenpaket <arg:1> für <arg:0> Spieler aktualisiert; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
+command.admin_pack_preference.failure.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> konnte nicht aktualisiert werden. Prüfe die Konsole</red>'
+command.admin_pack_preference.reset.multiple: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> Spieler wiederhergestellt</white>'
+command.admin_pack_preference.reset.single: '<white>Standardeinstellung für Ressourcenpaket <arg:1> für <arg:0> wiederhergestellt</white>'
+command.admin_pack_preference.unchanged.multiple: '<red>Die Einstellungen für Ressourcenpaket <arg:1> sind bei <arg:0> Spielern unverändert</red>'
+command.admin_pack_preference.unchanged.single: '<red>Die Einstellung für Ressourcenpaket <arg:1> für <arg:0> ist unverändert</red>'
+command.admin_pack_preset.failure.multiple: '<red>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet; bei <arg:2> Spielern fehlgeschlagen. Prüfe die Konsole</red>'
+command.admin_pack_preset.failure.single: '<red>Ressourcenpaket-Voreinstellung <arg:1> konnte nicht auf <arg:0> angewendet werden. Prüfe die Konsole</red>'
+command.admin_pack_preset.success.multiple: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> Spieler angewendet</white>'
+command.admin_pack_preset.success.single: '<white>Ressourcenpaket-Voreinstellung <arg:1> auf <arg:0> angewendet</white>'
+command.admin_pack_preset.unchanged.multiple: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> Spielern entsprechen bereits der Voreinstellung <arg:1></red>'
+command.admin_pack_preset.unchanged.single: '<red>Die Ressourcenpaket-Einstellungen von <arg:0> entsprechen bereits der Voreinstellung <arg:1></red>'
+command.chunk.not_loaded: <red>Diese Position ist nicht geladen</red>
+command.damage_visibility.set.success: <white>Schadenszahlen-Sichtbarkeit auf <arg:0> für <arg:1> aktualisiert</white>
+command.display_entity_view_distance_scale.set.success: <white>Display Entity View Distance Scale auf <arg:0> für <arg:1> aktualisiert</white>
+command.enchant.failure.entity: '<red><arg:0> ist kein Lebewesen</red>'
+command.enchant.failure.incompatible: '<red>Die Verzauberung kann nicht auf <arg:0> angewendet werden</red>'
+command.enchant.failure.itemless: '<red><arg:0> hält keinen Gegenstand im ausgewählten Slot</red>'
+command.enchant.failure.level: '<red>Stufe <arg:0> überschreitet die Höchststufe <arg:1></red>'
+command.enchant.failure.no_target: '<red>Es konnten keine Verzauberungen angewendet werden</red>'
+command.enchant.failure.not_exist: '<red>Unbekannte Verzauberung ''<arg:0>''</red>'
+command.enchant.success.multiple: '<white><arg:0> auf <arg:1> Wesen angewendet</white>'
+command.enchant.success.single: '<white><arg:0> auf <arg:1> angewendet</white>'
+command.entity_culling.toggle.success: <white>Entity Culling Status auf <arg:0> für <arg:1> aktualisiert</white>
+command.entity_culling_distance_scale.set.success: <white>Entity Culling Distance Scale auf <arg:0> für <arg:1> aktualisiert</white>
+command.item.browser.missing_element: <red>Item-Browser kann aufgrund eines fehlenden GUI-Elements '<arg:0>' nicht geöffnet werden</red><gray><i><newline>Falls du nicht weißt, was diesen Fehler verursacht hat, klicke bitte <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Plugin-interne Assets freigeben'>HIER</hover></click></u></b></red>, um die internen Assets des Plugins freizugeben</i></gray>
 command.item.clear.failed.multiple: <red>Keine Items auf <arg:0> Spielern gefunden</red>
-command.item.clear.success.single: <white><arg:0> Item(s) von Spieler <arg:1> entfernt</white>
+command.item.clear.failed.single: <red>Keine Items auf Spieler <arg:0> gefunden</red>
 command.item.clear.success.multiple: <white><arg:0> Item(s) von <arg:1> Spielern entfernt</white>
-command.item.clear.test.single: <white><arg:0> passendes Item auf Spieler <arg:1> gefunden</white>
+command.item.clear.success.single: <white><arg:0> Item(s) von Spieler <arg:1> entfernt</white>
 command.item.clear.test.multiple: <white><arg:0> passendes Item auf <arg:1> Spielern gefunden</white>
+command.item.clear.test.single: <white><arg:0> passendes Item auf Spieler <arg:1> gefunden</white>
 command.item.component.add: <white>Item-Komponente '<arg:0>' gesetzt</white>
+command.item.component.invalid_value: '<red>Ungültiger SNBT-Wert für Item-Komponente ''<arg:0>'': <arg:1></red>'
 command.item.component.remove: <white>Item-Komponente '<arg:0>' entfernt</white>
 command.item.component.reset: <white>Item-Komponente '<arg:0>' auf den Standardwert zurückgesetzt</white>
 command.item.component.unknown: <red>Unbekannte Item-Komponente '<arg:0>'</red>
-command.item.component.invalid_value: '<red>Ungültiger SNBT-Wert für Item-Komponente ''<arg:0>'': <arg:1></red>'
-command.item.browser.missing_element: <red>Item-Browser kann aufgrund eines fehlenden GUI-Elements '<arg:0>' nicht geöffnet werden</red><gray><i><newline>Falls du nicht weißt, was diesen Fehler verursacht hat, klicke bitte <red><b><u><click:run_command:'/ce resource save-default /internal'><hover:show_text:'Plugin-interne Assets freigeben'>HIER</hover></click></u></b></red>, um die internen Assets des Plugins freizugeben</i></gray>
-command.search_recipe.not_found: <red>Kein Rezept für dieses Item gefunden</red>
-command.search_usage.not_found: <red>Keine Verwendung für dieses Item gefunden</red>
-command.search_recipe.no_item: <red>Bitte halte ein Item, bevor du diesen Befehl ausführst</red>
-command.search_usage.no_item: <red>Bitte halte ein Item, bevor du diesen Befehl ausführst</red>
-command.totem_animation.failure.not_totem: <red>Item '<arg:0>' ist kein minecraft:totem_of_undying</red>
-command.totem_animation.success.single: <white>Totem-Animation <arg:0> an <arg:1> abgespielt</white>
-command.totem_animation.success.multiple: <white>Totem-Animation <arg:0> an <arg:1> Spieler abgespielt</white>
-command.toast.failure.item_not_exist: <red>Item '<arg:0>' existiert nicht</red>
-command.toast.success.single: <white>Toast <arg:0> an <arg:1> gesendet</white>
-command.toast.success.multiple: <white>Toast <arg:0> an <arg:1> Spieler gesendet</white>
-command.resource.enable.success: <white>Ressource <arg:0> aktiviert. Führe <click:run_command:/ce reload all><u>/ce reload all</u></click> aus, um Änderungen anzuwenden</white>
-command.resource.enable.failure.unknown: <red>Unbekannte Ressource <arg:0></red>
-command.resource.disable.success: <white>Ressource <arg:0> deaktiviert. Führe <click:run_command:/ce reload all><u>/ce reload all</u></click> aus, um Änderungen anzuwenden</white>
-command.resource.disable.failure.unknown: <red>Unbekannte Ressource <arg:0></red>
-command.resource.list: '<white>Aktivierte Ressourcen(<arg:0>): <green><arg:1></green><newline>Deaktivierte Ressourcen(<arg:2>): <red><arg:3></red></white>'
-command.resource.create.success: <white>Ressource <arg:0> erstellt.</white>
-command.resource.create.failure.unknown: '<red>Fehler beim Erstellen der Ressource <arg:0>, Fehler: <arg:1></red>'
-command.resource.create.failure.invalid_namespace: <red>Fehler beim Erstellen der Ressource <arg:0>, der Namespace <arg:1> ist ungültig.</red>
-command.resource.create.failure.exists: <red>Ressource <arg:0> existiert bereits.</red>
-command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white>
-command.resource.save_default.failure: <red>Ein unbekannter Fehler ist beim Speichern der Standard-Assets aufgetreten. Bitte prüfe die Konsole</red>
-command.send_resource_pack.success.single: <white>Resource Pack an <arg:0> gesendet.</white>
-command.send_resource_pack.success.multiple: <white>Resource Packs an <arg:0> Spieler gesendet</white>
+command.item.get.failure.not_exist: <red>Unbekanntes Item '<arg:0>'</red>
+command.item.get.success: '<white>Erhalten: <arg:0> <arg:1></white>'
+command.item.give.failure.not_exist: <red>Unbekanntes Item '<arg:0>'</red>
+command.item.give.success.multiple: <white>Gebe <arg:0> <arg:1> an <arg:2> Spieler</white>
+command.item.give.success.single: <white>Gebe <arg:0> <arg:1> an <arg:2></white>
 command.locale.set.failure: '<red>Ungültiges Locale-Format: <arg:0></red>'
 command.locale.set.success: <white>Ausgewählte Sprache auf <arg:0> für <arg:1> gesetzt</white>
 command.locale.unset.success: <white>Ausgewählte Sprache für <arg:0> zurückgesetzt</white>
-command.display_entity_view_distance_scale.set.success: <white>Display Entity View Distance Scale auf <arg:0> für <arg:1> aktualisiert</white>
-command.entity_culling_distance_scale.set.success: <white>Entity Culling Distance Scale auf <arg:0> für <arg:1> aktualisiert</white>
-command.entity_culling.toggle.success: <white>Entity Culling Status auf <arg:0> für <arg:1> aktualisiert</white>
-command.damage_visibility.set.success: <white>Schadenszahlen-Sichtbarkeit auf <arg:0> für <arg:1> aktualisiert</white>
+command.pack_preference.disabled: '<white>Ressourcenpaket <arg:0> deaktiviert</white>'
+command.pack_preference.enabled: '<white>Ressourcenpaket <arg:0> aktiviert</white>'
+command.pack_preference.no_permission: '<red>Du hast keine Berechtigung, die Einstellungen für das Ressourcenpaket <arg:0> zu ändern</red>'
+command.pack_preference.reset: '<white>Standardeinstellung für Ressourcenpaket <arg:0> wiederhergestellt</white>'
+command.pack_preference.unchanged: '<red>Deine Einstellung für Ressourcenpaket <arg:0> ist unverändert</red>'
+command.pack_preset.no_permission: '<red>Du hast keine Berechtigung, die Ressourcenpaket-Voreinstellung <arg:0> zu verwenden</red>'
+command.pack_preset.success: '<white>Ressourcenpaket-Voreinstellung <arg:0> angewendet</white>'
+command.pack_preset.unchanged: '<red>Deine Ressourcenpaket-Einstellungen entsprechen bereits der Voreinstellung <arg:0></red>'
+command.pack_preset.unknown: '<red>Unbekannte Ressourcenpaket-Voreinstellung: <arg:0></red>'
 command.place_feature.failed: <red>Feature konnte nicht platziert werden</red>
-command.place_feature.success: <white>"<arg:0>" platziert an <arg:1>, <arg:2>, <arg:3></white>
 command.place_feature.invalid: <red>Es gibt kein Feature vom Typ "<arg:0>"</red>
-command.chunk.not_loaded: <red>Diese Position ist nicht geladen</red>
+command.place_feature.success: <white>"<arg:0>" platziert an <arg:1>, <arg:2>, <arg:3></white>
 command.player.itemless: <red><arg:0> hält kein Item</red>
+command.reload.config.failure: <red>Configs konnten nicht neu geladen werden. Bitte prüfe die Konsolen-Logs</red>
+command.reload.config.issues: <#FF5555>⚠ <bold><arg:0></bold> Problem(e) gefunden. <gray><italic>(Details in der Konsole prüfen)</italic></gray>
+command.reload.config.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Configs neu geladen <gray>(<hover:show_text:'<gray>Async/Sync'><color:#FFD700><arg:1></color>/<color:#F4A460><arg:2></color></hover> ms)</gray></white>
+command.reload.pack.failure: <red>Fehler beim Generieren des Resource Packs. Bitte prüfe die Konsolen-Logs</red>
+command.reload.pack.success: <dark_gray>» </dark_gray><gradient:#F4A460:#FFD700><b>CraftEngine</b></gradient> <gray>•</gray> <white>Resource Pack generiert <gray>(<hover:show_text:'<gray>Async Prozess'><color:#FFD700><arg:0></color> ms</hover>)</gray></white>
+command.resource.busy: "<red>Ein Neuladevorgang oder ein Ressourcenpaket-Workflow läuft bereits. Bitte warte, bis er abgeschlossen ist.</red>"
+command.resource.create.failure.exists: <red>Ressource <arg:0> existiert bereits.</red>
+command.resource.create.failure.invalid_namespace: <red>Fehler beim Erstellen der Ressource <arg:0>, der Namespace <arg:1> ist ungültig.</red>
+command.resource.create.failure.unknown: '<red>Fehler beim Erstellen der Ressource <arg:0>, Fehler: <arg:1></red>'
+command.resource.create.success: <white>Ressource <arg:0> erstellt.</white>
+command.resource.disable.failure.unknown: <red>Unbekannte Ressource <arg:0></red>
+command.resource.disable.success: <white>Ressource <arg:0> deaktiviert. Führe <click:run_command:/ce reload all><u>/ce reload all</u></click> aus, um Änderungen anzuwenden</white>
+command.resource.enable.failure.unknown: <red>Unbekannte Ressource <arg:0></red>
+command.resource.enable.success: <white>Ressource <arg:0> aktiviert. Führe <click:run_command:/ce reload all><u>/ce reload all</u></click> aus, um Änderungen anzuwenden</white>
+command.resource.list: '<white>Aktivierte Ressourcen(<arg:0>): <green><arg:1></green><newline>Deaktivierte Ressourcen(<arg:2>): <red><arg:3></red></white>'
+command.resource.save_default.failure: <red>Ein unbekannter Fehler ist beim Speichern der Standard-Assets aufgetreten. Bitte prüfe die Konsole</red>
+command.resource.save_default.success: <white>Standard-Assets aus '<arg:0>' erfolgreich gespeichert</white>
+command.resource.search.parser.not_found: '<red>Konfigurationstyp ''<arg:0>'' nicht gefunden</red>'
+command.resource.search.resource.not_found: '<red>Keine Ressource mit der ID ''<arg:0>'' gefunden</red>'
+command.resource.search.success: '<white>Der Pfad von ''<arg:0>'' ist <arg:1></white>'
+command.search_recipe.no_item: <red>Bitte halte ein Item, bevor du diesen Befehl ausführst</red>
+command.search_recipe.not_found: <red>Kein Rezept für dieses Item gefunden</red>
+command.search_usage.no_item: <red>Bitte halte ein Item, bevor du diesen Befehl ausführst</red>
+command.search_usage.not_found: <red>Keine Verwendung für dieses Item gefunden</red>
+command.send_resource_pack.success.multiple: <white>Resource Packs an <arg:0> Spieler gesendet</white>
+command.send_resource_pack.success.single: <white>Resource Pack an <arg:0> gesendet.</white>
+command.toast.failure.item_not_exist: <red>Item '<arg:0>' existiert nicht</red>
+command.toast.success.multiple: <white>Toast <arg:0> an <arg:1> Spieler gesendet</white>
+command.toast.success.single: <white>Toast <arg:0> an <arg:1> gesendet</white>
+command.totem_animation.failure.not_totem: <red>Item '<arg:0>' ist kein minecraft:totem_of_undying</red>
+command.totem_animation.success.multiple: <white>Totem-Animation <arg:0> an <arg:1> Spieler abgespielt</white>
+command.totem_animation.success.single: <white>Totem-Animation <arg:0> an <arg:1> abgespielt</white>
+command.workflow.failure: '<red>Ressourcenpaket-Workflow <arg:0> konnte nicht ausgeführt werden. Siehe Konsole</red>'
+command.workflow.started: '<white>Ressourcenpaket-Workflow <arg:0> wird ausgeführt</white>'
+command.workflow.success: '<white>Ressourcenpaket-Workflow <arg:0> abgeschlossen (<arg:1> ms)</white>'
+command.workflow.unknown: '<red>Unbekannter Ressourcenpaket-Workflow: <arg:0></red>'
+command.world_settings.failure: <red>World Setting <arg:0> nicht gefunden</red>
 command.world_settings.get.success: '<white>World Setting <arg:0> ist aktuell eingestellt auf: <arg:1></white>'
 command.world_settings.set.success: '<white>World Setting <arg:0> wurde eingestellt auf: <arg:1></white>'
-command.world_settings.failure: <red>World Setting <arg:0> nicht gefunden</red>
-snbt.invalid_syntax.parse_error: '<arg:0> an Position <arg:1>: <arg:2>'
-snbt.invalid_syntax.here: <--[HIER]
-snbt.parser.expected_string_uuid: String erwartet, der eine gültige UUID repräsentiert
-snbt.parser.expected_number_or_boolean: Zahl oder Boolean erwartet
-snbt.parser.trailing: Unerwartete nachfolgende Daten
-snbt.parser.expected.compound: Compound Tag erwartet
-snbt.parser.number_parse_failure: 'Fehler beim Parsen der Zahl: <arg:0>'
-snbt.parser.expected_hex_escape: Zeichen-Literal der Länge <arg:0> erwartet
-snbt.parser.invalid_codepoint: 'Ungültiger Unicode-Zeichenwert: <arg:0>'
-snbt.parser.no_such_operation: 'Operation nicht vorhanden: <arg:0>'
-snbt.parser.expected_integer_type: Ganzzahl (Integer) erwartet
-snbt.parser.expected_float_type: Fließkommazahl (Float) erwartet
-snbt.parser.expected_non_negative_number: Nicht-negative Zahl erwartet
-snbt.parser.invalid_character_name: Ungültiger Unicode-Zeichenname
-snbt.parser.invalid_array_element_type: Ungültiger Array-Elementtyp
-snbt.parser.invalid_unquoted_start: Nicht in Anführungszeichen gesetzte Strings können nicht mit Ziffern 0-9, + oder - beginnen
-snbt.parser.expected_unquoted_string: Gültigen, nicht in Anführungszeichen gesetzten String erwartet
-snbt.parser.invalid_string_contents: Ungültiger String-Inhalt
-snbt.parser.expected_binary_numeral: Binärzahl erwartet
-snbt.parser.underscore_not_allowed: Unterstriche sind in Binärzahlen nicht erlaubt
-snbt.parser.expected_decimal_numeral: Dezimalzahl erwartet
-snbt.parser.expected_hex_numeral: Hexadezimalzahl erwartet
-snbt.parser.empty_key: Key darf nicht leer sein
-snbt.parser.leading_zero_not_allowed: Dezimalzahlen dürfen nicht mit 0 beginnen
-snbt.parser.infinity_not_allowed: Unendliche Werte sind nicht erlaubt
-snbt.parser.incorrect: Literal <arg:0> erwartet
-yaml.duplicated_key: "Doppelter Key '<arg:1>' in Zeile <arg:2> in Datei <arg:0> gefunden"
-yaml.inconsistent_value_type: "Doppelter Key '<arg:1>' in Zeile <arg:2> mit unterschiedlichen Value-Typen in Datei <arg:0> gefunden"
-plugin.compatibility: "[Kompatibilität] <arg:0> hooked"
-number.unknown_type: Unbekannter Zahlentyp '<arg:0>'
-number.fixed.invalid_expression: Ungültiger Ausdruck '<arg:0>'.
-resource.expression.invalid: 'Ungültiger Ausdruck „<arg:0>“. Details: <arg:1>'
-resource.expression.invalid_syntax: 'Ungültiger Ausdruck „<arg:0>“ nahe Zeichen <arg:1> (Token „<arg:2>“).'
-resource.expression.invalid_function_argument: 'Ungültiger Ausdruck „<arg:0>“ im Funktionsargument <arg:3>, nahe Zeichen <arg:1> (Token „<arg:2>“).'
-resource.expression.unknown_parameter: 'Unbekannter Parameter „<arg:0>“ im Ausdruck „<arg:1>“.'
-number.greater_than: "'<arg:0>' sollte größer sein als '<arg:1>'"
-number.no_greater_than: "'<arg:0>' sollte nicht größer sein als '<arg:1>'"
-number.less_than: "'<arg:0>' sollte kleiner sein als '<arg:1>'"
-number.no_less_than: "'<arg:0>' sollte nicht kleiner sein als '<arg:1>'"
-condition.unknown_type: Unbekannter Condition-Typ '<arg:0>'
 condition.enchantment.invalid_format: Ungültiges Prädikat-Format '<arg:0>'. (z.B. minecraft:sharpness>=4)
+condition.unknown_type: Unbekannter Condition-Typ '<arg:0>'
+config.errors_detected: Fehler in config.yml gefunden - <arg:0>
+damage_indicator.unknown_type: 'Unbekannter Schadensanzeigetyp ''<arg:0>'''
+exception.invalid_argument: '<red>Ungültiges Argument. Grund: <white><arg:0></white></red>'
+exception.invalid_sender: <red><arg:0> darf diesen Befehl nicht ausführen. Muss vom Typ <arg:1> sein</red>
+exception.invalid_syntax: '<red>Ungültige Syntax. Korrekte Syntax: <white><arg:0></white></red>'
+exception.no_permission: <red>Entschuldigung, aber du hast keine Berechtigung, diesen Befehl auszuführen</red>
+exception.no_such_command: <red>Unbekannter Befehl.</red>
+exception.unexpected: <red>Ein interner Fehler ist beim Versuch aufgetreten, diesen Befehl auszuführen</red>
 function.unknown_type: Unbekannter Function-Typ '<arg:0>'
-player_selector.unknown_type: Unbekannter Player-Selector-Typ '<arg:0>'
-loot.entry.unknown_type: Unbekannter Loot-Entry-Typ '<arg:0>'
-loot.function.unknown_type: Unbekannter Loot-Function-Typ '<arg:0>'
-loot.function.formula.unknown_type: Unbekannter Formula-Typ '<arg:0>'
-host.unknown_type: Unbekannter Resource-Pack-Host-Typ '<arg:0>'
-host.missing_environment_variable: Fehlende Umgebungsvariable '<arg:0>'
 host.get_url_failed: "Fehler beim Abrufen der Download-URL für das Resource Pack für Spieler <arg:0>"
 host.lobfile.storage_usage: "Speichernutzung: <arg:0>/<arg:1> MB | <arg:2>/<arg:3> Dateien"
+host.missing_environment_variable: Fehlende Umgebungsvariable '<arg:0>'
 host.self.http_server_started: "Netty HTTP-Server gestartet auf Port: <arg:0>"
-config.errors_detected: Fehler in config.yml gefunden - <arg:0>
-update.available: 'Neue Version <arg:0> ist verfügbar: <arg:1>'
-update.is_latest: Du verwendest die aktuellste Version
+host.unknown_type: Unbekannter Resource-Pack-Host-Typ '<arg:0>'
+host.upload_finished: "Resource Pack erfolgreich hochgeladen in <arg:0> ms"
+host.upload_started: "Initialisiere Upload des Resource Packs..."
+loot.entry.unknown_type: Unbekannter Loot-Entry-Typ '<arg:0>'
+loot.function.formula.unknown_type: Unbekannter Formula-Typ '<arg:0>'
+loot.function.unknown_type: Unbekannter Loot-Function-Typ '<arg:0>'
+loot.source.invalid_target: 'Ungültiges Beutequellenziel ''<arg:0>'''
+loot.source.target_not_allowed: 'Beutequellentyp ''<arg:0>'' unterstützt ''target'' nicht'
+loot.source.unknown_overwrite_mode: 'Unbekannter Überschreibmodus für Beutequelle ''<arg:0>'''
+loot.source.unknown_type: 'Unbekannter Beutequellentyp ''<arg:0>'''
 mod.clientbound.no_permission: Spieler <arg:0> hat keine Berechtigung <arg:1>, um das Paket <arg:2> zu empfangen. Um diese Berechtigung zuzuweisen, installiere bitte das LuckPerms Plugin und weise sie direkt zu
 mod.serverbound.no_permission: Spieler <arg:0> hat keine Berechtigung <arg:1>, um das Paket <arg:2> zu senden. Um diese Berechtigung zuzuweisen, installiere bitte das LuckPerms Plugin und weise sie direkt zu
-resource_pack.invalid_overlay_format: Ungültiges Overlay-Format '<arg:0>'. Overlay-Format muss den Placeholder '{version}' enthalten
-resource_pack.generation_started: Generiere Resource Pack...
-resource_pack.generation_finished: Resource Pack in <arg:0>ms generiert
-resource_pack.validation_started_interval: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
-resource_pack.json_optimization_started: '> Optimiere JSON-Dateien...'
-resource_pack.texture_optimization_started: '> Optimiere Textur-Dateien...'
-resource_pack.optimization_result: '> □ Vor/Nach/Verhältnis: <arg:0>/<arg:1>/<arg:2>%'
-resource_pack.duplicated_files: Doppelte Dateien gefunden. Bitte löse diese über die 'resource-pack.duplicated-files-handler' Sektion in der config.yml
-resource_pack.malformatted_json: JSON-Datei '<arg:0>' ist fehlerhaft formatiert
-resource_pack.not_a_json_object: JSON-Datei '<arg:0>' ist kein JSON-Objekt
-resource_pack.conflict_resolution.unknown_type: Unbekannter Konflikt-Lösungstyp '<arg:0>'
-resource_pack.model_generation.conflict: Modell konnte nicht generiert werden, da die Modelldatei '<arg:0>' bereits existiert
-resource_pack.texture_generation.conflict: Textur konnte nicht generiert werden, da die Texturdatei '<arg:0>' bereits existiert
-resource_pack.item_model.conflict: Item-Modell '<arg:0>' konnte nicht generiert werden, da die Datei '<arg:1>' bereits existiert
-resource_pack.missing_font_texture: "Font '<arg:0>' fehlt die Textur '<arg:1>'"
-resource_pack.missing_model_texture: "Modell '<arg:0>' fehlt die Textur '<arg:1>'"
-resource_pack.missing_equipment_texture: "Equipment '<arg:0>' fehlt die Textur '<arg:1>'"
-resource_pack.missing_item_model: "Item '<arg:0>' fehlt die Modelldatei '<arg:1>'"
-resource_pack.missing_block_model: "Block State '<arg:0>' fehlt die Modelldatei '<arg:1>'"
-resource_pack.missing_parent_model: "Modell '<arg:0>' kann das Parent-Modell '<arg:1>' nicht finden"
-resource_pack.missing_sound: "Sound Event '<arg:0>' fehlt die OGG-Datei '<arg:1>'"
-resource_pack.texture_not_in_atlas: "Textur '<arg:0>' ist nicht im Atlas definiert. Du musst den Texturpfad zum Atlas hinzufügen oder die Option 'fix-atlas' in der config.yml aktivieren"
-resource_pack.multiple_atlases: "Modell '<arg:0>' verwendet mehrere Atlanten: erwartet '<arg:1>', aber gefunden '<arg:2>'. Stelle sicher, dass alle Modelltexturen vom selben Atlas stammen"
-resource_pack.duplicated_sprite: "Modell '<arg:0>' kann nicht geladen werden. Doppeltes Sprite '<arg:1>' aus Atlas '<arg:2>', bereits definiert in Atlas '<arg:3>'"
-resource.argument.type.section: Konfigurations-Sektion
-resource.argument.type.boolean: Boolean
-resource.argument.type.int: Integer
-resource.argument.type.long: Long
-resource.argument.type.float: Float
-resource.argument.type.double: Double
-resource.argument.type.string: String
-resource.argument.type.enum: Einer von [<arg:0>]
-resource.argument.type.vec3: Vector3
-resource.argument.type.quaternion: Quaternion https://quaternions.online/
-resource.argument.type.aabb: Axis-aligned Bounding Box
-resource.argument.type.snbt: SNBT https://minecraft.wiki/w/NBT_format#SNBT_format
-resource.argument.type.identifier: Identifier https://minecraft.wiki/w/Identifier
-resource.argument.type.list: Liste
-resource.argument.type.color: Farbe
-resource.argument.type.number: Zahl https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
-resource.argument.type.item_model_definition: Item-Modell-Definition
-resource.argument.type.any: Beliebig
-resource.argument.type.blockstate: Block State
-resource.argument.parser.section: Konfigurations-Sektion erwartet, gefunden '<arg:0>'
-resource.argument.parser.boolean: 'Kann ''<arg:0>'' nicht als Boolean parsen. (Erlaubte Werte: true/false, yes/no, on/off)'
-resource.argument.parser.int: Kann '<arg:0>' nicht als Integer parsen. (Zahlen mit '_' sind erlaubt, z.B. 1_000)
-resource.argument.parser.long: Kann '<arg:0>' nicht als Long-Integer parsen. (z.B. 2_147_483_648)
-resource.argument.parser.float: Kann '<arg:0>' nicht als Dezimalzahl parsen. (z.B. 3.14 oder 1_000.5)
-resource.argument.parser.double: Kann '<arg:0>' nicht als hochpräzise Dezimalzahl parsen. (z.B. 0.0000001)
-resource.argument.parser.enum: 'Ungültige Konstante ''<arg:0>''. (Muss einer der folgenden Werte sein: [<arg:1>])'
-resource.argument.parser.vec3: Kann '<arg:0>' nicht als Vektor parsen. (Erwartetes Format 'x,y,z', z.B. 1.5,22,0)
-resource.argument.parser.quaternion: Kann '<arg:0>' nicht als Quaternion parsen. (Erwartetes Format 'x,y,z,w', z.B. 0,0,0,1)
-resource.argument.parser.snbt: 'Ungültiges SNBT-Format ''<arg:0>''. Details: <arg:1>. Guide: https://minecraft.wiki/w/NBT_format#SNBT_format'
+number.fixed.invalid_expression: Ungültiger Ausdruck '<arg:0>'.
+number.greater_than: "'<arg:0>' sollte größer sein als '<arg:1>'"
+number.less_than: "'<arg:0>' sollte kleiner sein als '<arg:1>'"
+number.no_greater_than: "'<arg:0>' sollte nicht größer sein als '<arg:1>'"
+number.no_less_than: "'<arg:0>' sollte nicht kleiner sein als '<arg:1>'"
+number.unknown_type: Unbekannter Zahlentyp '<arg:0>'
+player_selector.unknown_type: Unbekannter Player-Selector-Typ '<arg:0>'
+plugin.compatibility: "[Kompatibilität] <arg:0> hooked"
 resource.argument.parser.aabb: Kann '<arg:0>' nicht als AABB parsen. (Erwartetes Format für zwei Punkte 'x1,y1,z1,x2,y2,z2', z.B. 0,0,0,1,1,1)
 resource.argument.parser.blockstate: Kann '<arg:0>' nicht als Block State parsen. (z.B. minecraft:wheat[age=3])
-resource.argument.parser.identifier: 'Kann ''<arg:0>'' nicht als Identifier parsen. Guide: https://minecraft.wiki/w/Identifier#Legal_characters'
-resource.argument.parser.nonempty_list: Nicht-leere Liste erwartet
+resource.argument.parser.boolean: 'Kann ''<arg:0>'' nicht als Boolean parsen. (Erlaubte Werte: true/false, yes/no, on/off)'
+resource.argument.parser.double: Kann '<arg:0>' nicht als hochpräzise Dezimalzahl parsen. (z.B. 0.0000001)
+resource.argument.parser.enum: 'Ungültige Konstante ''<arg:0>''. (Muss einer der folgenden Werte sein: [<arg:1>])'
 resource.argument.parser.fixed_size_list: Liste mit '<arg:0>' Element(en) erwartet
+resource.argument.parser.float: Kann '<arg:0>' nicht als Dezimalzahl parsen. (z.B. 3.14 oder 1_000.5)
+resource.argument.parser.identifier: 'Kann ''<arg:0>'' nicht als Identifier parsen. Guide: https://minecraft.wiki/w/Identifier#Legal_characters'
+resource.argument.parser.int: Kann '<arg:0>' nicht als Integer parsen. (Zahlen mit '_' sind erlaubt, z.B. 1_000)
+resource.argument.parser.long: Kann '<arg:0>' nicht als Long-Integer parsen. (z.B. 2_147_483_648)
+resource.argument.parser.nonempty_list: Nicht-leere Liste erwartet
 resource.argument.parser.nonempty_string: Nicht-leerer String erwartet
+resource.argument.parser.quaternion: Kann '<arg:0>' nicht als Quaternion parsen. (Erwartetes Format 'x,y,z,w', z.B. 0,0,0,1)
+resource.argument.parser.section: Konfigurations-Sektion erwartet, gefunden '<arg:0>'
+resource.argument.parser.snbt: 'Ungültiges SNBT-Format ''<arg:0>''. Details: <arg:1>. Guide: https://minecraft.wiki/w/NBT_format#SNBT_format'
 resource.argument.parser.split: Aufteilung in '<arg:0>' Teile erwartet, aber '<arg:1>' erhalten
 resource.argument.parser.uuid: Kann '<arg:0>' nicht als UUID parsen.
-resource.config_loaded: <arg:0> geladen in <arg:1>ms (<arg:2>)
-resource.pack_loaded: 'Pack geladen: <arg:0>. Default Namespace: <arg:1>'
-resource.errors_detected: '<arg:1> Problem(e) in Datei ''<arg:0>'' gefunden:'
-resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
-resource.unknown_error: "Unbekannter Fehler-Typ"
-resource.duplicated_id: Eine andere Datei ('<arg:0>') enthält eine Sektion mit derselben ID
-resource.missing_argument: 'Erforderliches Argument ''<arg:0>'' fehlt. Erwartet: ''<arg:1>'''
-resource.placed_feature.invalid_placement: 'Ungültiger Placement-Modifikator. Eingabe: ''<arg:0>''. Ursache: ''<arg:1>'''
-resource.configured_feature.invalid_feature: 'Ungültiges Configured-Feature. Eingabe: ''<arg:0>''. Ursache: ''<arg:1>'''
-resource.mapping.conflict: Kann Block State '<arg:0>' nicht auf '<arg:1>' mappen, da der State bereits auf '<arg:2>' gemappt wurde
-resource.lang.unknown_locale: Unbekanntes Locale '<arg:0>'. (z.B. en, zh_cn)
-resource.image.invalid_grid_size: Ungültige Rastergröße '<arg:0>'. (z.B. 3,4)
-resource.image.empty_chars: Option 'chars' darf nicht leer sein
-resource.image.invalid_chars_grid: Die Anzahl der Zeichen in Zeile <arg:0> entspricht nicht den erwarteten <arg:1>
-resource.image.codepoint_conflict: Zeichen '<arg:0>(<arg:1>)' in Font '<arg:2>' wurde bereits von einem anderen Bild '<arg:3>' belegt
-resource.image.codepoint_exhausted: Codepoints für Font '<arg:0>' sind bereits erschöpft
-resource.image.height_ascent_conflict: Höhe '<arg:0>' sollte nicht niedriger als der Ascent '<arg:1>' sein
-resource.emoji.invalid_image_format: Ungültiges Bildformat '<arg:0>'
-resource.emoji.unknown_image: Unbekanntes Bild '<arg:0>'
-resource.equipment.unknown_type: Unbekannter Equipment-Typ '<arg:0>'
-resource.equipment.invalid_sacrificed_armor: Ungültiger Vanilla-Rüstungstyp '<arg:0>'
-resource.equipment_set.invalid_slot_name: Ungültiger Equipment-Set-Slot-Name '<arg:0>'
-resource.furniture.element.unknown_type: Unbekannter Möbel-Elementtyp '<arg:0>'
-resource.furniture.hitbox.unknown_type: Unbekannter Hitbox-Typ für Möbel '<arg:0>'
-resource.furniture.behavior.unknown_type: Unbekannter Behavior-Typ für Möbel '<arg:0>'
-resource.furniture.hitbox.custom.invalid_entity_type: Ungültiger Entity-Typ '<arg:0>'
-resource.template.unknown_argument_type: Unbekannter Vorlagen-Argumenttyp '<arg:0>'
-resource.template.invalid_template: Ungültige Vorlage '<arg:0>'
-resource.template.missing_argument: 'Fehlendes Vorlagen-Argument: ''<arg:0>''. Bitte gib dieses Argument über die ''arguments'' Option an oder setze einen Standardwert dafür'
+resource.argument.parser.vec3: Kann '<arg:0>' nicht als Vektor parsen. (Erwartetes Format 'x,y,z', z.B. 1.5,22,0)
+resource.argument.type.aabb: Axis-aligned Bounding Box
+resource.argument.type.any: Beliebig
+resource.argument.type.blockstate: Block State
+resource.argument.type.boolean: Boolean
+resource.argument.type.color: Farbe
+resource.argument.type.double: Double
+resource.argument.type.enum: Einer von [<arg:0>]
+resource.argument.type.float: Float
+resource.argument.type.identifier: Identifier https://minecraft.wiki/w/Identifier
+resource.argument.type.int: Integer
+resource.argument.type.item_model_definition: Item-Modell-Definition
+resource.argument.type.list: Liste
+resource.argument.type.long: Long
+resource.argument.type.number: Zahl https://xiao-momi.github.io/craft-engine-wiki/reference/number_format
+resource.argument.type.quaternion: Quaternion https://quaternions.online/
+resource.argument.type.section: Konfigurations-Sektion
+resource.argument.type.snbt: SNBT https://minecraft.wiki/w/NBT_format#SNBT_format
+resource.argument.type.string: String
+resource.argument.type.vec3: Vector3
 resource.block.behavior.missing_property: Behavior erfordert, dass die Block-State-Property '<arg:0>' definiert ist. https://xiao-momi.github.io/craft-engine-wiki/configuration/block/states/properties
 resource.block.behavior.property_type_mismatch: Property vom Typ '<arg:0>' erwartet, aber '<arg:1>' erhalten
 resource.block.behavior.unknown_type: Unbekannter Block-Behavior-Typ '<arg:0>'
+resource.block.entity_renderer.tint_source.unknown_type: Unbekannter Tint-Source-Typ für Block-Entity-Renderer '<arg:0>'
+resource.block.state.appearance_without_properties: Mehrere 'appearances'-Einträge benötigen 'properties' zur Unterscheidung der Blockzustände, nur das erste Erscheinungsbild wird verwendet
+resource.block.state.entity_renderer.unknown_type: Unbekannter Block-Entity-Renderer-Typ '<arg:0>'
+resource.block.state.invalid_rotation: 'Ungültige Drehung ''<arg:1>'' auf der <arg:0>-Achse; erwartet wird ein Vielfaches von 90 Grad'
+resource.block.state.invalid_variant_nbt: Ungültiger partieller Block-State-NBT '<arg:0>'
+resource.block.state.model_conflict: Bindung von Modell '<arg:0>' an Block State '<arg:1>' fehlgeschlagen, der bereits mit Modell '<arg:2>' verknüpft ist
 resource.block.state.property.unknown_type: Unbekannter Property-Typ '<arg:0>'
 resource.block.state.real_state_conflict: Bindung von '<arg:0>' an realen Block State '<arg:1>' fehlgeschlagen, da dieser bereits durch Block '<arg:2>' belegt ist
 resource.block.state.real_state_exhausted: Es können nicht genug reale Block States zugewiesen werden. Erwäge, die Anzahl der serverseitigen Blöcke in der config.yml zu erhöhen
-resource.block.state.visual_state_exhausted: Die Visual-State-Gruppe '<arg:0>' hat ihre maximale Kapazität von '<arg:1>' Slots erreicht und kann keinen State für '<arg:2>' zuweisen
-resource.block.state.unreleased_state: Du kannst diesen Block State nicht in diesem Format zuweisen, da State '<arg:0>' in den Block-State-Mappings nicht released wurde.
-resource.block.state.entity_renderer.unknown_type: Unbekannter Block-Entity-Renderer-Typ '<arg:0>'
-resource.block.state.invalid_variant_nbt: Ungültiger partieller Block-State-NBT '<arg:0>'
 resource.block.state.undefined_appearance: Undefiniertes Block-State-Erscheinungsbild '<arg:0>'
-resource.block.state.appearance_without_properties: Mehrere 'appearances'-Einträge benötigen 'properties' zur Unterscheidung der Blockzustände, nur das erste Erscheinungsbild wird verwendet
-resource.block.state.model_conflict: Bindung von Modell '<arg:0>' an Block State '<arg:1>' fehlgeschlagen, der bereits mit Modell '<arg:2>' verknüpft ist
-resource.block.entity_renderer.tint_source.unknown_type: Unbekannter Tint-Source-Typ für Block-Entity-Renderer '<arg:0>'
-resource.item.model_definition.unknown_type: Unbekannter Item-Modell-Definitionstyp '<arg:0>'
+resource.block.state.unreleased_state: Du kannst diesen Block State nicht in diesem Format zuweisen, da State '<arg:0>' in den Block-State-Mappings nicht released wurde.
+resource.block.state.visual_state_exhausted: Die Visual-State-Gruppe '<arg:0>' hat ihre maximale Kapazität von '<arg:1>' Slots erreicht und kann keinen State für '<arg:2>' zuweisen
+resource.config_loaded: <arg:0> geladen in <arg:1>ms (<arg:2>)
+resource.configured_feature.invalid_feature: 'Ungültiges Configured-Feature. Eingabe: ''<arg:0>''. Ursache: ''<arg:1>'''
+resource.duplicated_id: Eine andere Datei ('<arg:0>') enthält eine Sektion mit derselben ID
+resource.emoji.invalid_image_format: Ungültiges Bildformat '<arg:0>'
+resource.emoji.unknown_image: Unbekanntes Bild '<arg:0>'
+resource.equipment.invalid_sacrificed_armor: Ungültiger Vanilla-Rüstungstyp '<arg:0>'
+resource.equipment.unknown_type: Unbekannter Equipment-Typ '<arg:0>'
+resource.equipment_set.invalid_slot_name: Ungültiger Equipment-Set-Slot-Name '<arg:0>'
+resource.errors_detail: '[<arg:0>] <arg:1> - <arg:2>'
+resource.errors_detected: '<arg:1> Problem(e) in Datei ''<arg:0>'' gefunden:'
+resource.expression.invalid: 'Ungültiger Ausdruck „<arg:0>“. Details: <arg:1>'
+resource.expression.invalid_function_argument: 'Ungültiger Ausdruck „<arg:0>“ im Funktionsargument <arg:3>, nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.invalid_syntax: 'Ungültiger Ausdruck „<arg:0>“ nahe Zeichen <arg:1> (Token „<arg:2>“).'
+resource.expression.unknown_parameter: 'Unbekannter Parameter „<arg:0>“ im Ausdruck „<arg:1>“.'
+resource.furniture.behavior.unknown_type: Unbekannter Behavior-Typ für Möbel '<arg:0>'
+resource.furniture.element.unknown_type: Unbekannter Möbel-Elementtyp '<arg:0>'
+resource.furniture.hitbox.custom.invalid_entity_type: Ungültiger Entity-Typ '<arg:0>'
+resource.furniture.hitbox.unknown_type: Unbekannter Hitbox-Typ für Möbel '<arg:0>'
+resource.image.codepoint_conflict: Zeichen '<arg:0>(<arg:1>)' in Font '<arg:2>' wurde bereits von einem anderen Bild '<arg:3>' belegt
+resource.image.codepoint_exhausted: Codepoints für Font '<arg:0>' sind bereits erschöpft
+resource.image.empty_chars: Option 'chars' darf nicht leer sein
+resource.image.height_ascent_conflict: Höhe '<arg:0>' sollte nicht niedriger als der Ascent '<arg:1>' sein
+resource.image.invalid_chars_grid: Die Anzahl der Zeichen in Zeile <arg:0> entspricht nicht den erwarteten <arg:1>
+resource.image.invalid_grid_size: Ungültige Rastergröße '<arg:0>'. (z.B. 3,4)
+resource.item.behavior.unknown_type: Unbekannter Item-Behavior-Typ '<arg:0>'
+resource.item.custom_model_data_conflict: CustomModelData '<arg:0>' wurde bereits durch Item '<arg:1>' belegt
+resource.item.custom_model_data_exhausted: CustomModelData für Material '<arg:0>' ist bereits erschöpft
+resource.item.data_component_predicate.unknown_type: 'Unbekannter Datenkomponenten-Prädikattyp ''<arg:0>'''
+resource.item.invalid_material: Ungültiger Material-Typ '<arg:0>'
+resource.item.missing_model_id: "'custom_model_data' oder 'item_model' für benutzerdefiniertes Modell erforderlich"
 resource.item.model_definition.condition.unknown_type: Unbekannter Condition-Property-Typ '<arg:0>'
+resource.item.model_definition.downgrade_failure: 'Konvertierung einer 1.21.4+ Item-Modell-Definition in das Legacy-Format nicht möglich. Bitte konfiguriere ''legacy_model'' für dieses Item manuell: https://xiao-momi.github.io/craft-engine-wiki/configuration/item/models#legacy-model'
 resource.item.model_definition.range_dispatch.unknown_type: Unbekannter Range-Dispatch-Property-Typ '<arg:0>'
 resource.item.model_definition.select.unknown_type: Unbekannter Select-Property-Typ '<arg:0>'
 resource.item.model_definition.special.unknown_type: Unbekannter Special-Modell-Typ '<arg:0>'
 resource.item.model_definition.tint.unknown_type: Unbekannter Tint-Typ '<arg:0>'
-resource.item.model_definition.downgrade_failure: 'Konvertierung einer 1.21.4+ Item-Modell-Definition in das Legacy-Format nicht möglich. Bitte konfiguriere ''legacy_model'' für dieses Item manuell: https://xiao-momi.github.io/craft-engine-wiki/configuration/item/models#legacy-model'
-resource.item.settings.craft_remainder.unknown_type: Unbekannter Craft-Remainder-Typ '<arg:0>'
-resource.item.settings.equippable: Dieses Feld sollte unter der 'data' Sektion platziert werden
-resource.item.settings.equipment.invalid_asset_id: 'Equipment mit ID ''<arg:0>'' nicht gefunden. Für Unterstützung siehe Guide: https://xiao-momi.github.io/craft-engine-wiki/configuration/equipment'
-resource.item.behavior.unknown_type: Unbekannter Item-Behavior-Typ '<arg:0>'
-resource.item.updater.unknown_type: Unbekannter Item-Updater-Typ '<arg:0>'
-resource.item.custom_model_data_exhausted: CustomModelData für Material '<arg:0>' ist bereits erschöpft
-resource.item.custom_model_data_conflict: CustomModelData '<arg:0>' wurde bereits durch Item '<arg:1>' belegt
-resource.item.missing_model_id: "'custom_model_data' oder 'item_model' für benutzerdefiniertes Modell erforderlich"
+resource.item.model_definition.unknown_type: Unbekannter Item-Modell-Definitionstyp '<arg:0>'
 resource.item.occupied_vanilla_item_model: Item-Modell '<arg:0>' wurde bereits von einem Vanilla-Item belegt
-resource.item.invalid_material: Ungültiger Material-Typ '<arg:0>'
-resource.model.generation.conflict: Modell für '<arg:0>' konnte nicht generiert werden, da zwei oder mehr Konfigurationen versuchen, verschiedene JSON-Modelle mit demselben Pfad zu generieren
-resource.texture.generation.conflict: Textur für '<arg:0>' konnte nicht generiert werden, da zwei oder mehr Konfigurationen versuchen, verschiedene Texturen mit demselben Pfad zu generieren
+resource.item.processor.not_network: "Der Item-Prozessor „<arg:0>“ enthält „<arg:1>“, das keine Verarbeitung von Daten für den Client unterstützt"
+resource.item.settings.craft_remainder.unknown_type: Unbekannter Craft-Remainder-Typ '<arg:0>'
+resource.item.settings.equipment.invalid_asset_id: 'Equipment mit ID ''<arg:0>'' nicht gefunden. Für Unterstützung siehe Guide: https://xiao-momi.github.io/craft-engine-wiki/configuration/equipment'
+resource.item.settings.equippable: Dieses Feld sollte unter der 'data' Sektion platziert werden
+resource.item.unknown_data_component_type: 'Unbekannter Datenkomponententyp ''<arg:0>'''
+resource.item.updater.unknown_type: Unbekannter Item-Updater-Typ '<arg:0>'
+resource.lang.unknown_locale: Unbekanntes Locale '<arg:0>'. (z.B. en, zh_cn)
+resource.mapping.conflict: Kann Block State '<arg:0>' nicht auf '<arg:1>' mappen, da der State bereits auf '<arg:2>' gemappt wurde
+resource.missing_argument: 'Erforderliches Argument ''<arg:0>'' fehlt. Erwartet: ''<arg:1>'''
 resource.model.bbmodel.invalid_file: bbmodel-Datei '<arg:0>' konnte nicht gelesen oder geparst werden
 resource.model.bbmodel.invalid_name: bbmodel-Dateiname '<arg:0>' ist kein gültiger Ressourcenpfad, bitte nur Kleinbuchstaben, Ziffern, '_', '-', '.', '/' verwenden
-resource.recipe.transform_processor.unknown_type: Unbekannter Smithing-Transform-Post-Processor-Typ '<arg:0>'
+resource.model.generation.conflict: Modell für '<arg:0>' konnte nicht generiert werden, da zwei oder mehr Konfigurationen versuchen, verschiedene JSON-Modelle mit demselben Pfad zu generieren
+resource.pack_loaded: 'Pack geladen: <arg:0>. Default Namespace: <arg:1>'
+resource.placed_feature.invalid_placement: 'Ungültiger Placement-Modifikator. Eingabe: ''<arg:0>''. Ursache: ''<arg:1>'''
 resource.recipe.ingredient.invalid_tag: Item-Tag '<arg:0>' enthält kein Item
 resource.recipe.ingredient.item_not_exist: Ingredient-Item '<arg:0>' existiert nicht
+resource.recipe.post_processor.unknown_type: Unbekannter Recipe-Post-Processor-Typ '<arg:0>'
 resource.recipe.result.item_not_exist: Result-Item '<arg:0>' existiert nicht
 resource.recipe.shaped.invalid_pattern: Ungültiges Pattern '<arg:0>'
 resource.recipe.shaped.invalid_symbol: Ungültiges Symbol '<arg:0>'
-resource.recipe.post_processor.unknown_type: Unbekannter Recipe-Post-Processor-Typ '<arg:0>'
-resource.recipe.unknown_type: Unbekannter Recipe-Typ '<arg:0>'
-workflow.unknown_type: 'Unbekannter Ressourcenpaket-Workflow-Typ ''<arg:0>'''
-storage.unknown_type: 'Unbekannter Speichertyp ''<arg:0>'''
-storage.invalid_path: 'Ungültiger Speicherpfad'
-command.workflow.started: '<white>Ressourcenpaket-Workflow <arg:0> wird ausgeführt</white>'
-command.pack_preference.no_permission: '<red>Du hast keine Berechtigung, die Einstellungen für das Ressourcenpaket <arg:0> zu ändern</red>'
-command.workflow.success: '<white>Ressourcenpaket-Workflow <arg:0> abgeschlossen (<arg:1> ms)</white>'
-command.workflow.failure: '<red>Ressourcenpaket-Workflow <arg:0> konnte nicht ausgeführt werden. Siehe Konsole</red>'
-command.workflow.unknown: '<red>Unbekannter Ressourcenpaket-Workflow: <arg:0></red>'
-command.enchant.success.single: '<white><arg:0> auf <arg:1> angewendet</white>'
-command.enchant.success.multiple: '<white><arg:0> auf <arg:1> Wesen angewendet</white>'
-command.enchant.failure.not_exist: '<red>Unbekannte Verzauberung ''<arg:0>''</red>'
-command.enchant.failure.level: '<red>Stufe <arg:0> überschreitet die Höchststufe <arg:1></red>'
-command.enchant.failure.incompatible: '<red>Die Verzauberung kann nicht auf <arg:0> angewendet werden</red>'
-command.enchant.failure.itemless: '<red><arg:0> hält keinen Gegenstand im ausgewählten Slot</red>'
-command.enchant.failure.entity: '<red><arg:0> ist kein Lebewesen</red>'
-command.enchant.failure.no_target: '<red>Es konnten keine Verzauberungen angewendet werden</red>'
-command.resource.search.parser.not_found: '<red>Konfigurationstyp ''<arg:0>'' nicht gefunden</red>'
-command.resource.search.resource.not_found: '<red>Keine Ressource mit der ID ''<arg:0>'' gefunden</red>'
-command.resource.search.success: '<white>Der Pfad von ''<arg:0>'' ist <arg:1></white>'
-attribute.damage_formula.unknown_type: 'Unbekannter Schadensformeltyp ''<arg:0>'''
-attribute.damage_effect.unknown_type: 'Unbekannter Effekttyp nach Schaden ''<arg:0>'''
-attribute.damage_effect.unknown_target: 'Unbekanntes Ziel für Effekt nach Schaden ''<arg:0>'''
-damage_indicator.unknown_type: 'Unbekannter Schadensanzeigetyp ''<arg:0>'''
-attribute.base_value_source.unknown_type: 'Unbekannter Basiswertquellentyp ''<arg:0>'''
-attribute.sync_value_provider.unknown_type: 'Unbekannter Synchronisierungswertanbietertyp ''<arg:0>'''
-attribute.value_transformer.unknown_type: 'Unbekannter Wertumwandlertyp ''<arg:0>'''
-attribute.unknown_operation: 'Unbekannte Attributoperation ''<arg:0>'''
-attribute.derived.unknown_attribute: 'Unbekanntes Attribut ''<arg:0>'' im abgeleiteten Ausdruck ''<arg:1>'''
-attribute.derived.unknown_type: 'Unbekannter Typ für abgeleiteten Wert ''<arg:0>'''
-category.source.unknown_type: 'Unbekannter Kategoriequellentyp ''<arg:0>'''
-category.source.invalid_regex: 'Ungültiger regulärer Ausdruck für Kategoriequelle ''<arg:0>'''
-loot.source.unknown_type: 'Unbekannter Beutequellentyp ''<arg:0>'''
-loot.source.unknown_overwrite_mode: 'Unbekannter Überschreibmodus für Beutequelle ''<arg:0>'''
-loot.source.target_not_allowed: 'Beutequellentyp ''<arg:0>'' unterstützt ''target'' nicht'
-loot.source.invalid_target: 'Ungültiges Beutequellenziel ''<arg:0>'''
-resource_pack.model_uv_out_of_bounds: 'Modell ''<arg:0>'', Element <arg:1>, Seite ''<arg:2>'' verwendet UV <arg:3> außerhalb des gültigen Bereichs mit Textur ''<arg:4>''. UV-Werte außerhalb von [0, 16] können die Modellverarbeitung auf Clients ab 26.1 verhindern'
-resource_pack.model_display_out_of_bounds: 'Modell <arg:0>, Anzeigeposition <arg:1>, Feld <arg:2> enthält Werte <arg:3> außerhalb des gültigen Bereichs [-<arg:4>, <arg:4>]'
-resource.block.state.invalid_rotation: 'Ungültige Drehung ''<arg:1>'' auf der <arg:0>-Achse; erwartet wird ein Vielfaches von 90 Grad'
-resource.item.unknown_data_component_type: 'Unbekannter Datenkomponententyp ''<arg:0>'''
-resource.item.data_component_predicate.unknown_type: 'Unbekannter Datenkomponenten-Prädikattyp ''<arg:0>'''
 resource.recipe.shaped_transform.ambigious_source: 'Mindestens zwei als Quelle markierte Zutaten im geformten Umwandlungsrezept gefunden: ''<arg:0>'', ''<arg:1>'''
 resource.recipe.shaped_transform.source_not_found: 'Keine als Quelle markierte Zutat im Rezept gefunden'
 resource.recipe.shapeless_transform.ambigious_source: 'Mindestens zwei als Quelle markierte Zutaten im formlosen Umwandlungsrezept gefunden: ''<arg:0>'''
 resource.recipe.shapeless_transform.source_not_found: 'Keine als Quelle markierte Zutat im Rezept gefunden'
+resource.recipe.transform_processor.unknown_type: Unbekannter Smithing-Transform-Post-Processor-Typ '<arg:0>'
+resource.recipe.unknown_type: Unbekannter Recipe-Typ '<arg:0>'
+resource.template.invalid_template: Ungültige Vorlage '<arg:0>'
+resource.template.missing_argument: 'Fehlendes Vorlagen-Argument: ''<arg:0>''. Bitte gib dieses Argument über die ''arguments'' Option an oder setze einen Standardwert dafür'
+resource.template.unknown_argument_type: Unbekannter Vorlagen-Argumenttyp '<arg:0>'
+resource.texture.generation.conflict: Textur für '<arg:0>' konnte nicht generiert werden, da zwei oder mehr Konfigurationen versuchen, verschiedene Texturen mit demselben Pfad zu generieren
+resource.unknown_error: "Unbekannter Fehler-Typ"
 resource_pack.bad_sprite: 'Block ''<arg:0>'' verwendet Sprite ''<arg:1>'', das im Atlas ''<arg:2>'' sein sollte, aber nur im Atlas ''<arg:3>'' definiert ist'
-host.upload_started: "Initialisiere Upload des Resource Packs..."
-host.upload_finished: "Resource Pack erfolgreich hochgeladen in <arg:0> ms"
-resource_pack.validation_finished: Resource Pack in <arg:0>ms validiert
-resource_pack.optimization_finished: Resource Pack in <arg:0>ms optimiert
-resource_pack.compression_started: Komprimiere Resource Pack...(Dieser Vorgang kann länger dauern, falls Obfuscation aktiviert ist)
+resource_pack.bedrock.block.bounds: "Form <arg:1> überschreitet die Bedrock-Grenzen (maximale Höhe <arg:0>)"
+resource_pack.bedrock.block.collision: "Bedrock unterstützt höchstens 16 Kollisionsboxen pro Zustand"
+resource_pack.bedrock.block.conflict: "Zustände mit derselben Darstellung <arg:0> unterscheiden sich bei Kollision, Auswahl, Licht oder Reibung"
+resource_pack.bedrock.block.definition: "Die Blockzustandsdefinition für <arg:0> enthält weder variants noch multipart"
+resource_pack.bedrock.block.friction: "Der Reibungswert liegt außerhalb des von Bedrock unterstützten Bereichs"
+resource_pack.bedrock.block.missing: "Blockzustandsdefinition für <arg:0> fehlt"
+resource_pack.bedrock.block.model_renderer: "Modell <arg:0> erfordert einen speziellen Renderer"
+resource_pack.bedrock.block.multiple: "Mehrere Varianten passen zu <arg:0>"
+resource_pack.bedrock.block.no_match: "Keine Variante passt zu <arg:0>"
+resource_pack.bedrock.block.no_visual: "Block <arg:0>, Zustand <arg:1> übersprungen: Kein visueller Blockzustand vorhanden."
+resource_pack.bedrock.block.property: "Unbekannte multipart-Eigenschaft <arg:0>"
+resource_pack.bedrock.block.renderer: "Der Block erfordert einen speziellen Entity-Renderer"
+resource_pack.bedrock.block.rotation: "Blockzustände benötigen Drehwinkel in 90-Grad-Schritten"
+resource_pack.bedrock.block.skipped: "Block <arg:0>, Zustand <arg:1> übersprungen: <arg:2>"
+resource_pack.bedrock.block.tint: "Weltabhängige Blockfärbung wird nicht unterstützt"
+resource_pack.bedrock.block.uv: "Die UV-Sperre lässt sich nicht durch eine rechteckige Fläche darstellen"
+resource_pack.bedrock.block.weighted: "Gewichtete Blockmodelle werden nicht unterstützt"
+resource_pack.bedrock.font.bitmap: "Bitmap <arg:0> fehlt oder ist ungültig"
+resource_pack.bedrock.font.capacity: "Schrift <arg:0> übersprungen. Der freie Platz auf den Seiten E3–F8 reicht nicht aus."
+resource_pack.bedrock.font.cell: "Bitmap <arg:0> hat eine Zelle mit Breite oder Höhe null"
+resource_pack.bedrock.font.cycle: "Zyklischer Verweis auf Schrift <arg:0>"
+resource_pack.bedrock.font.definition: "Schrift <arg:0> in <arg:1> übersprungen. Erwartet wurde ein Objekt mit einem providers-Array."
+resource_pack.bedrock.font.glyph: "Glyphe U+<arg:1> in Schrift <arg:0> übersprungen: <arg:2>"
+resource_pack.bedrock.font.grid: "Leeres Zeichenraster für Bitmap <arg:0>"
+resource_pack.bedrock.font.height: "Diese Bitmap-Höhe und Oberlänge sind nur für GUI-Abstände geeignet"
+resource_pack.bedrock.font.hex: "Ungültige Unihex-Glyphe in <arg:0>"
+resource_pack.bedrock.font.missing_file: "Unihex-Archiv <arg:0> fehlt"
+resource_pack.bedrock.font.missing_ref: "Die referenzierte Schrift <arg:0> fehlt"
+resource_pack.bedrock.font.no_hex: "Das Unihex-Archiv enthält keine .hex-Datei"
+resource_pack.bedrock.font.provider: "Schrift <arg:0>: providers[<arg:2>] in <arg:1> übersprungen: <arg:3>"
+resource_pack.bedrock.font.read: "Schrift <arg:0> übersprungen. <arg:1> konnte nicht gelesen werden: <arg:2>"
+resource_pack.bedrock.font.rows: "Die Zeichenzeilen von Bitmap <arg:0> sind unterschiedlich lang"
+resource_pack.bedrock.font.size: "Die Bitmap überschreitet nach der Grundlinienausrichtung die Zellgröße von 512 Pixeln"
+resource_pack.bedrock.font.space: "Ungültige Vorschubbreite für Zeichen „<arg:0>“"
+resource_pack.bedrock.font.spacing: "Leere oder unterpixelgroße Bitmap-Abstände werden nicht unterstützt"
+resource_pack.bedrock.font.unsupported: "Schrift <arg:0>, providers[<arg:1>]: <arg:2> wird nicht unterstützt. Nachrangige Provider werden übersprungen."
+resource_pack.bedrock.item.binding: "Bedrock-Bindung für Item <arg:0> (Material <arg:1>) fehlgeschlagen: <arg:2>"
+resource_pack.bedrock.item.failed: "Die Erstellung des Bedrock-Pakets wurde wegen fehlgeschlagener Item-Bindungen abgebrochen. Siehe die vorherigen Warnungen."
+resource_pack.circular_dependencies: "Zyklische Abhängigkeiten zwischen Ressourcenpaketen: <arg:0>"
 resource_pack.compression_finished: Resource Pack in <arg:0>ms komprimiert
-resource_pack.packsquash_started: 'PackSquash wird mit Konfiguration <arg:0> ausgeführt...'
-resource_pack.packsquash_finished: 'PackSquash in <arg:0>ms abgeschlossen'
-resource_pack.zip_loaded: 'Ressourcenpaket-ZIP <arg:0> in <arg:1>ms geladen'
-resource_pack.export_finished: 'Ressourcenpaket in <arg:1>ms nach <arg:0> exportiert'
-resource_pack.missing_texture_reference: "Modell '<arg:0>' verweist bei <arg:1> auf einen undefinierten Texturplatz: <arg:2>"
+resource_pack.compression_started: Komprimiere Resource Pack...(Dieser Vorgang kann länger dauern, falls Obfuscation aktiviert ist)
+resource_pack.conflict_resolution.unknown_type: Unbekannter Konflikt-Lösungstyp '<arg:0>'
+resource_pack.conflicting_dependencies: "Das Ressourcenpaket „<arg:0>“ und seine Abhängigkeiten enthalten miteinander in Konflikt stehende Pakete"
 resource_pack.cyclic_texture_reference: "Modell '<arg:0>' enthält bei <arg:1> einen zyklischen Texturverweis: <arg:2>"
+resource_pack.duplicated_files: Doppelte Dateien gefunden. Bitte löse diese über die 'resource-pack.duplicated-files-handler' Sektion in der config.yml
+resource_pack.duplicated_sprite: "Modell '<arg:0>' kann nicht geladen werden. Doppeltes Sprite '<arg:1>' aus Atlas '<arg:2>', bereits definiert in Atlas '<arg:3>'"
+resource_pack.export_finished: 'Ressourcenpaket in <arg:1>ms nach <arg:0> exportiert'
+resource_pack.generation_finished: Resource Pack in <arg:0>ms generiert
+resource_pack.generation_started: Generiere Resource Pack...
+resource_pack.invalid_overlay_format: Ungültiges Overlay-Format '<arg:0>'. Overlay-Format muss den Placeholder '{version}' enthalten
+resource_pack.item_model.conflict: Item-Modell '<arg:0>' konnte nicht generiert werden, da die Datei '<arg:1>' bereits existiert
+resource_pack.json_optimization_started: '> Optimiere JSON-Dateien...'
+resource_pack.malformatted_json: JSON-Datei '<arg:0>' ist fehlerhaft formatiert
+resource_pack.missing_block_model: "Block State '<arg:0>' fehlt die Modelldatei '<arg:1>'"
+resource_pack.missing_equipment_texture: "Equipment '<arg:0>' fehlt die Textur '<arg:1>'"
+resource_pack.missing_font_texture: "Font '<arg:0>' fehlt die Textur '<arg:1>'"
+resource_pack.missing_item_model: "Item '<arg:0>' fehlt die Modelldatei '<arg:1>'"
+resource_pack.missing_model_texture: "Modell '<arg:0>' fehlt die Textur '<arg:1>'"
+resource_pack.missing_parent_model: "Modell '<arg:0>' kann das Parent-Modell '<arg:1>' nicht finden"
+resource_pack.missing_sound: "Sound Event '<arg:0>' fehlt die OGG-Datei '<arg:1>'"
+resource_pack.missing_texture_reference: "Modell '<arg:0>' verweist bei <arg:1> auf einen undefinierten Texturplatz: <arg:2>"
+resource_pack.model_display_out_of_bounds: 'Modell <arg:0>, Anzeigeposition <arg:1>, Feld <arg:2> enthält Werte <arg:3> außerhalb des gültigen Bereichs [-<arg:4>, <arg:4>]'
+resource_pack.model_generation.conflict: Modell konnte nicht generiert werden, da die Modelldatei '<arg:0>' bereits existiert
+resource_pack.model_uv_out_of_bounds: 'Modell ''<arg:0>'', Element <arg:1>, Seite ''<arg:2>'' verwendet UV <arg:3> außerhalb des gültigen Bereichs mit Textur ''<arg:4>''. UV-Werte außerhalb von [0, 16] können die Modellverarbeitung auf Clients ab 26.1 verhindern'
+resource_pack.multiple_atlases: "Modell '<arg:0>' verwendet mehrere Atlanten: erwartet '<arg:1>', aber gefunden '<arg:2>'. Stelle sicher, dass alle Modelltexturen vom selben Atlas stammen"
+resource_pack.not_a_json_object: JSON-Datei '<arg:0>' ist kein JSON-Objekt
+resource_pack.optimization_finished: Resource Pack in <arg:0>ms optimiert
+resource_pack.optimization_result: '> □ Vor/Nach/Verhältnis: <arg:0>/<arg:1>/<arg:2>%'
+resource_pack.packsquash_finished: 'PackSquash in <arg:0>ms abgeschlossen'
+resource_pack.packsquash_started: 'PackSquash wird mit Konfiguration <arg:0> ausgeführt...'
+resource_pack.texture_generation.conflict: Textur konnte nicht generiert werden, da die Texturdatei '<arg:0>' bereits existiert
+resource_pack.texture_not_in_atlas: "Textur '<arg:0>' ist nicht im Atlas definiert. Du musst den Texturpfad zum Atlas hinzufügen oder die Option 'fix-atlas' in der config.yml aktivieren"
+resource_pack.texture_optimization_started: '> Optimiere Textur-Dateien...'
+resource_pack.unknown_reference: "Das Ressourcenpaket „<arg:0>“ verweist in „<arg:1>“ auf das unbekannte Paket „<arg:2>“"
+resource_pack.validation_finished: Resource Pack in <arg:0>ms validiert
+resource_pack.validation_started_interval: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
+resource_pack.zip_loaded: 'Ressourcenpaket-ZIP <arg:0> in <arg:1>ms geladen'
+snbt.invalid_syntax.here: <--[HIER]
+snbt.invalid_syntax.parse_error: '<arg:0> an Position <arg:1>: <arg:2>'
+snbt.parser.empty_key: Key darf nicht leer sein
+snbt.parser.expected.compound: Compound Tag erwartet
+snbt.parser.expected_binary_numeral: Binärzahl erwartet
+snbt.parser.expected_decimal_numeral: Dezimalzahl erwartet
+snbt.parser.expected_float_type: Fließkommazahl (Float) erwartet
+snbt.parser.expected_hex_escape: Zeichen-Literal der Länge <arg:0> erwartet
+snbt.parser.expected_hex_numeral: Hexadezimalzahl erwartet
+snbt.parser.expected_integer_type: Ganzzahl (Integer) erwartet
+snbt.parser.expected_non_negative_number: Nicht-negative Zahl erwartet
+snbt.parser.expected_number_or_boolean: Zahl oder Boolean erwartet
+snbt.parser.expected_string_uuid: String erwartet, der eine gültige UUID repräsentiert
+snbt.parser.expected_unquoted_string: Gültigen, nicht in Anführungszeichen gesetzten String erwartet
+snbt.parser.incorrect: Literal <arg:0> erwartet
+snbt.parser.infinity_not_allowed: Unendliche Werte sind nicht erlaubt
+snbt.parser.invalid_array_element_type: Ungültiger Array-Elementtyp
+snbt.parser.invalid_character_name: Ungültiger Unicode-Zeichenname
+snbt.parser.invalid_codepoint: 'Ungültiger Unicode-Zeichenwert: <arg:0>'
+snbt.parser.invalid_string_contents: Ungültiger String-Inhalt
+snbt.parser.invalid_unquoted_start: Nicht in Anführungszeichen gesetzte Strings können nicht mit Ziffern 0-9, + oder - beginnen
+snbt.parser.leading_zero_not_allowed: Dezimalzahlen dürfen nicht mit 0 beginnen
+snbt.parser.no_such_operation: 'Operation nicht vorhanden: <arg:0>'
+snbt.parser.number_parse_failure: 'Fehler beim Parsen der Zahl: <arg:0>'
+snbt.parser.trailing: Unerwartete nachfolgende Daten
+snbt.parser.underscore_not_allowed: Unterstriche sind in Binärzahlen nicht erlaubt
+storage.invalid_path: 'Ungültiger Speicherpfad'
+storage.unknown_type: 'Unbekannter Speichertyp ''<arg:0>'''
+update.available: 'Neue Version <arg:0> ist verfügbar: <arg:1>'
+update.is_latest: Du verwendest die aktuellste Version
+workflow.unknown_type: 'Unbekannter Ressourcenpaket-Workflow-Typ ''<arg:0>'''
+yaml.duplicated_key: "Doppelter Key '<arg:1>' in Zeile <arg:2> in Datei <arg:0> gefunden"
+yaml.inconsistent_value_type: "Doppelter Key '<arg:1>' in Zeile <arg:2> mit unterschiedlichen Value-Typen in Datei <arg:0> gefunden"

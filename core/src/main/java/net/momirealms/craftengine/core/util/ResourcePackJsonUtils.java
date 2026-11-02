@@ -25,11 +25,11 @@ public final class ResourcePackJsonUtils {
         try {
             JsonObject jsonObject = GsonHelper.readJsonObjectFromFile(path);
             if (jsonObject == null) {
-                logger.warn(TranslationManager.instance().plainTranslation("resource_pack.not_a_json_object", path.toString()));
+                logger.warn(TranslationManager.message("resource_pack.not_a_json_object", path.toString()));
             }
             return jsonObject;
         } catch (IOException | JsonParseException | IllegalStateException e) {
-            logger.warn(TranslationManager.instance().plainTranslation("resource_pack.malformatted_json", path.toString()));
+            logger.warn(TranslationManager.message("resource_pack.malformatted_json", path.toString()));
         }
         return null;
     }
@@ -48,7 +48,7 @@ public final class ResourcePackJsonUtils {
                 if (!element.isJsonNull() && reader.peek() != JsonToken.END_DOCUMENT) {
                     throw new JsonParseException("Trailing JSON content");
                 }
-                logger.warn(TranslationManager.instance().plainTranslation("resource_pack.not_a_json_object", path.toString()));
+                logger.warn(TranslationManager.message("resource_pack.not_a_json_object", path.toString()));
                 return null;
             }
             T result = objectReader.read(reader);
@@ -58,9 +58,9 @@ public final class ResourcePackJsonUtils {
             }
             return result;
         } catch (EOFException e) {
-            logger.warn(TranslationManager.instance().plainTranslation(empty ? "resource_pack.not_a_json_object" : "resource_pack.malformatted_json", path.toString()));
+            logger.warn(TranslationManager.message(empty ? "resource_pack.not_a_json_object" : "resource_pack.malformatted_json", path.toString()));
         } catch (IOException | JsonParseException | IllegalStateException e) {
-            logger.warn(TranslationManager.instance().plainTranslation("resource_pack.malformatted_json", path.toString()));
+            logger.warn(TranslationManager.message("resource_pack.malformatted_json", path.toString()));
         }
         return null;
     }

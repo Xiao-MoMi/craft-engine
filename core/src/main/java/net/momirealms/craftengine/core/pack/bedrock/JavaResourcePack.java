@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -7,6 +8,7 @@ import com.google.gson.JsonParser;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +209,16 @@ public final class JavaResourcePack {
                     for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
                         String path = CharacterUtils.replaceBackslashWithSlash(directory.relativize(file).toString());
                         Key id = Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5));
-                        fonts.computeIfAbsent(id, key -> new ObjectArrayList<>(2)).add(new FontResource(readJson(file), custom));
+                        try {
+                            JsonObject definition = readJson(file);
+                            if (definition == null || !(definition.get("providers") instanceof JsonArray)) {
+                                TranslationManager.warn("resource_pack.bedrock.font.definition", id.asString(), file.toString());
+                                continue;
+                            }
+                            fonts.computeIfAbsent(id, key -> new ObjectArrayList<>(2)).add(new FontResource(definition, custom));
+                        } catch (IOException | JsonParseException exception) {
+                            TranslationManager.warn("resource_pack.bedrock.font.read", id.asString(), file.toString(), exception.toString());
+                        }
                     }
                 }
             }
@@ -224,8 +235,7 @@ public final class JavaResourcePack {
             return translations;
         }
         try (Stream<Path> namespaces = Files.list(assets)) {
-            List<Path> sorted = namespaces.filter(Files::isDirectory)
-                    .sorted(Comparator.comparing(path -> path.getFileName().toString())).toList();
+            List<Path> sorted = namespaces.filter(Files::isDirectory).sorted(Comparator.comparing(path -> path.getFileName().toString())).toList();
             for (Path namespace : sorted) {
                 Path directory = namespace.resolve("lang");
                 if (!Files.isDirectory(directory)) {

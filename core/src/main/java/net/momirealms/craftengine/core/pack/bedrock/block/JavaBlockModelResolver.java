@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import org.joml.Matrix4f;
@@ -28,7 +29,7 @@ public final class JavaBlockModelResolver {
         Key block = state.ownerId();
         JsonObject definition = this.resources.readJson("assets/" + block.namespace() + "/blockstates/" + block.value() + ".json");
         if (definition == null) {
-            throw new UnsupportedOperationException("Missing blockstates definition: " + block);
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.missing", block.asString()));
         }
         Map<String, String> properties = new HashMap<>();
         String identifier = state.getAsString();
@@ -54,13 +55,13 @@ public final class JavaBlockModelResolver {
                 }
                 if (matches) {
                     if (!parts.isEmpty()) {
-                        throw new UnsupportedOperationException("Multiple matching block variants: " + identifier);
+                        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.multiple", identifier));
                     }
                     parts.add(this.part(variant.getValue()));
                 }
             }
             if (parts.isEmpty()) {
-                throw new UnsupportedOperationException("No matching block variant: " + identifier);
+                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.no_match", identifier));
             }
         } else if (definition.has("multipart")) {
             for (JsonElement value : definition.getAsJsonArray("multipart")) {
@@ -70,7 +71,7 @@ public final class JavaBlockModelResolver {
                 }
             }
         } else {
-            throw new UnsupportedOperationException("Blockstates definition has neither variants nor multipart: " + block);
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.definition", block.asString()));
         }
         return parts;
     }
@@ -93,7 +94,7 @@ public final class JavaBlockModelResolver {
             } else {
                 String actual = properties.get(entry.getKey());
                 if (actual == null) {
-                    throw new UnsupportedOperationException("Unknown multipart property: " + entry.getKey());
+                    throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.property", entry.getKey()));
                 }
                 String expected = entry.getValue().getAsString();
                 boolean negate = expected.startsWith("!");
@@ -115,7 +116,7 @@ public final class JavaBlockModelResolver {
     private Part part(JsonElement value) throws IOException {
         if (value.isJsonArray()) {
             if (value.getAsJsonArray().size() != 1) {
-                throw new UnsupportedOperationException("Weighted block models are not supported yet");
+                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.weighted"));
             }
             value = value.getAsJsonArray().get(0);
         }
@@ -124,12 +125,12 @@ public final class JavaBlockModelResolver {
         int y = selected.has("y") ? selected.get("y").getAsInt() : 0;
         int z = selected.has("z") ? selected.get("z").getAsInt() : 0;
         if (x % 90 != 0 || y % 90 != 0 || z % 90 != 0) {
-            throw new UnsupportedOperationException("Blockstate rotations must be quarter turns");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.rotation"));
         }
         Matrix4f rotation = new Matrix4f().rotationZYX((float) Math.toRadians(-z), (float) Math.toRadians(-y), (float) Math.toRadians(-x));
         JavaModel model = this.models.resolve(Key.of(selected.get("model").getAsString()));
         if (model.kind() != JavaModel.GeometryKind.ELEMENTS) {
-            throw new UnsupportedOperationException("Block model requires a specialized renderer: " + model.id());
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.model_renderer", model.id().asString()));
         }
         boolean uvLock = selected.has("uvlock") && selected.get("uvlock").getAsBoolean();
         List<JavaModel.Element> elements = uvLock ? new ArrayList<>(model.elements().size()) : model.elements();
@@ -138,7 +139,7 @@ public final class JavaBlockModelResolver {
             for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
                 JavaModel.Face face = entry.getValue();
                 if (face.tintIndex() >= 0) {
-                    throw new UnsupportedOperationException("World-dependent block tint is not supported yet");
+                    throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.tint"));
                 }
                 if (uvLock) {
                     faces.put(entry.getKey(), lockUv(face, entry.getKey(), rotation));
@@ -177,7 +178,7 @@ public final class JavaBlockModelResolver {
                 return new JavaModel.Face(face.texture(), new JavaModel.Uv(first.x, first.y, opposite.x, opposite.y), quadrant * 90, face.tintIndex());
             }
         }
-        throw new UnsupportedOperationException("UV lock cannot be represented as a rectangular face");
+        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.uv"));
     }
 
     private static Matrix4f faceFrame(Direction side) {

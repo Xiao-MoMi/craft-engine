@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.plugin.locale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.translation.Translator;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.text.minimessage.IndexedArgumentTag;
@@ -16,6 +17,22 @@ public interface TranslationManager extends Manageable {
 
     static TranslationManager instance() {
         return TranslationManagerImpl.instance;
+    }
+
+    static String message(String key, String... arguments) {
+        return TranslationManager.instance().plainTranslation(key, arguments);
+    }
+
+    static void info(String key, String... arguments) {
+        CraftEngine.instance().logger().info(TranslationManager.message(key, arguments));
+    }
+
+    static void warn(String key, String... arguments) {
+        CraftEngine.instance().logger().warn(TranslationManager.message(key, arguments));
+    }
+
+    static void error(String key, String... arguments) {
+        CraftEngine.instance().logger().error(TranslationManager.message(key, arguments));
     }
 
     ConfigParser[] parsers();

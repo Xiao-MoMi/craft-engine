@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -37,13 +38,12 @@ public final class BedrockWorldBlocks {
         this.models = new JavaBlockModelResolver(resources, new JavaModelResolver(resources, this.textures));
     }
 
-    public Result write(List<WorldBlockSource> sources, Path root) throws IOException {
+    public JsonArray write(List<WorldBlockSource> sources, Path root) throws IOException {
         JsonArray entries = new JsonArray();
-        JsonArray diagnostics = new JsonArray();
         Map<String, List<WorldBlockSource>> groups = new LinkedHashMap<>();
         for (WorldBlockSource source : sources) {
             if (source.visual() == null) {
-                diagnose(source, "No visual block state", diagnostics);
+                TranslationManager.warn("resource_pack.bedrock.block.no_visual", source.id().asString(), Integer.toString(source.stateIndex()));
             } else {
                 groups.computeIfAbsent(source.visual().getAsString(), ignored -> new ArrayList<>()).add(source);
             }
@@ -57,10 +57,10 @@ public final class BedrockWorldBlocks {
                 JsonObject properties = components(first);
                 for (WorldBlockSource source : group.getValue()) {
                     if (source.entityRenderer()) {
-                        throw new UnsupportedOperationException("Block requires a specialized entity renderer");
+                        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.renderer"));
                     }
                     if (source != first && !properties.equals(components(source))) {
-                        throw new UnsupportedOperationException("Shared visual state has conflicting collision, selection, light or friction: " + group.getKey());
+                        throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.conflict", group.getKey()));
                     }
                 }
                 List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
@@ -87,7 +87,7 @@ public final class BedrockWorldBlocks {
             } catch (UnsupportedOperationException exception) {
                 // A visual state has one client definition; rejecting the entire group avoids applying the first state's shape to the others.
                 for (WorldBlockSource source : group.getValue()) {
-                    diagnose(source, exception.getMessage(), diagnostics);
+                    TranslationManager.warn("resource_pack.bedrock.block.skipped", source.id().asString(), Integer.toString(source.stateIndex()), exception.getLocalizedMessage());
                 }
             }
         }
@@ -96,27 +96,19 @@ public final class BedrockWorldBlocks {
             GsonHelper.writeJsonFile(blocks, blockFile);
             this.atlas.finish(root);
         }
-        return new Result(entries, diagnostics);
-    }
-
-    private static void diagnose(WorldBlockSource source, String reason, JsonArray diagnostics) {
-        JsonObject diagnostic = new JsonObject();
-        diagnostic.addProperty("block_id", source.id().asString());
-        diagnostic.addProperty("state_index", source.stateIndex());
-        diagnostic.addProperty("reason", reason);
-        diagnostics.add(diagnostic);
+        return entries;
     }
 
     private static JsonObject components(WorldBlockSource source) {
         if (source.collisionBoxes().size() > 16) {
-            throw new UnsupportedOperationException("Bedrock supports at most 16 collision boxes per state");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.collision"));
         }
         JsonObject properties = new JsonObject();
         properties.addProperty("light_emission", source.lightEmission());
         properties.addProperty("light_dampening", source.lightDampening());
         float friction = 1 - source.friction();
         if (!Float.isFinite(friction) || friction < 0 || friction > 0.9f) {
-            throw new UnsupportedOperationException("Block friction is outside Bedrock's supported range");
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.friction"));
         }
         properties.addProperty("friction", friction);
         JsonArray collision = new JsonArray();
@@ -130,7 +122,7 @@ public final class BedrockWorldBlocks {
 
     private static JsonObject box(AABB box, double maxHeight) {
         if (box.minX < 0 || box.minY < 0 || box.minZ < 0 || box.maxX > 1 || box.maxY > maxHeight || box.maxZ > 1) {
-            throw new UnsupportedOperationException("Block shape exceeds Bedrock's bounds (height limit " + maxHeight + "): " + box);
+            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.bounds", Double.toString(maxHeight), box.toString()));
         }
         JsonObject result = new JsonObject();
         result.add("origin", VectorUtils.toJson((float) (8 - box.maxX * 16), (float) (box.minY * 16), (float) (box.minZ * 16 - 8)));
@@ -202,8 +194,5 @@ public final class BedrockWorldBlocks {
         entry.addProperty(GEOMETRY, id);
         entry.add(MATERIALS, materials);
         return entry;
-    }
-
-    public record Result(JsonArray entries, JsonArray diagnostics) {
     }
 }

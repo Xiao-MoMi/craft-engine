@@ -100,13 +100,13 @@ final class AtlasValidation {
                                 // 不修复就骂你
                                 if (status.inItemAtlas()) {
                                     if (status.inBlockAtlas()) {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.duplicated_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
                                                 "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png")
                                         );
                                     } else {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.bad_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
                                                 "minecraft:textures/atlas/blocks.png", "minecraft:textures/atlas/items.png"
@@ -114,7 +114,7 @@ final class AtlasValidation {
                                     }
                                 } else {
                                     if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.texture_not_in_atlas",
                                                 spritePath.asString()
                                         ));
@@ -171,13 +171,13 @@ final class AtlasValidation {
                                 // 不修复就骂你
                                 if (status.inItemAtlas()) {
                                     if (status.inBlockAtlas()) {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.duplicated_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
                                                 "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
                                         ));
                                     } else if (finalHasBlockAtlas) {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.multiple_atlases",
                                                 entry.getKey().asString(),
                                                 "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
@@ -185,7 +185,7 @@ final class AtlasValidation {
                                     }
                                 } else {
                                     if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                                        this.context.logger().warn(TranslationManager.message(
                                                 "resource_pack.texture_not_in_atlas",
                                                 spritePath.asString()
                                         ));
@@ -389,7 +389,7 @@ final class AtlasValidation {
                 } else {
                     // 骂死你臭杂鱼
                     for (Key spritePath : blockAtlasToAdd) {
-                        this.context.logger().warn(TranslationManager.instance().plainTranslation(
+                        this.context.logger().warn(TranslationManager.message(
                                 "resource_pack.texture_not_in_atlas",
                                 spritePath.asString()
                         ));

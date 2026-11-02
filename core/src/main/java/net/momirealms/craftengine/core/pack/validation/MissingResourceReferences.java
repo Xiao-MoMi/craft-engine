@@ -45,7 +45,7 @@ final class MissingResourceReferences {
 
     void report(PluginLogger logger, String translationKey) {
         for (Map.Entry<Key, Collection<Key>> entry : this.missing.asMap().entrySet()) {
-            logger.warn(TranslationManager.instance().plainTranslation(translationKey, entry.getValue().toString(), path(entry.getKey())));
+            logger.warn(TranslationManager.message(translationKey, entry.getValue().toString(), path(entry.getKey())));
         }
     }
 

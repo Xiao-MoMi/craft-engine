@@ -59,11 +59,10 @@ public final class PackWorkflowValidation {
         Path sourcePath = resolvePath(input);
         Path outputPath = resolvePath(output);
         Path dataPath = this.resolvePath(dataOutput);
-        Path reportPath = outputPath.resolveSibling(outputPath.getFileName() + ".report.json");
-        if (sourcePath.equals(outputPath) || sourcePath.equals(reportPath) || sourcePath.equals(dataPath)) {
-            throw new IllegalArgumentException("Bedrock pack, extension data and diagnostic report must not overwrite the input Java resource pack");
+        if (sourcePath.equals(outputPath) || sourcePath.equals(dataPath)) {
+            throw new IllegalArgumentException("Bedrock pack and extension data must not overwrite the input Java resource pack");
         }
-        if (dataPath.equals(outputPath) || dataPath.equals(reportPath)) {
+        if (dataPath.equals(outputPath)) {
             throw new IllegalArgumentException("Bedrock extension data must have a separate output file");
         }
         if (!dataPath.equals(BedrockPackFiles.data(outputPath, dataPath.getParent()))) {

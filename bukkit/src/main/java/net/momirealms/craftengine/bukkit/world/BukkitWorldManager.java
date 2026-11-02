@@ -934,7 +934,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                 }
             }
             if (configuredFeature == null) {
-                throw new KnownResourceException("resource.missing_argument", section.path(), "feature", TranslationManager.instance().plainTranslation(ConfigConstants.ARGUMENT_SECTION));
+                throw new KnownResourceException("resource.missing_argument", section.path(), "feature", TranslationManager.message(ConfigConstants.ARGUMENT_SECTION));
             }
 
             // 解析 placements
@@ -957,7 +957,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                 }
             }));
             if (placements.isEmpty()) {
-                throw new KnownResourceException("resource.missing_argument", section.path(), "placement", TranslationManager.instance().plainTranslation(ConfigConstants.ARGUMENT_SECTION));
+                throw new KnownResourceException("resource.missing_argument", section.path(), "placement", TranslationManager.message(ConfigConstants.ARGUMENT_SECTION));
             }
 
             // 构造 placed feature 实例

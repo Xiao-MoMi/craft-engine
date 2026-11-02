@@ -79,7 +79,7 @@ public final class ValidationModelResolver {
             }
             if (parentModel == TexturedModel.EMPTY) {
                 String parentModelStringPath = "assets/" + parentRL.namespace() + "/models/" + parentRL.value() + ".json";
-                this.logger.warn(TranslationManager.instance().plainTranslation(
+                this.logger.warn(TranslationManager.message(
                         "resource_pack.missing_parent_model",
                         currentRL.asString(), parentModelStringPath
                 ));

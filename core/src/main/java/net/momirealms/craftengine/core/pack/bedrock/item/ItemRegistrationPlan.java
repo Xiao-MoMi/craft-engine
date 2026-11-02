@@ -1,19 +1,13 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnostics) {
+public record ItemRegistrationPlan(List<Entry> entries, boolean hasErrors) {
 
     public ItemRegistrationPlan {
         entries = List.copyOf(entries);
-        diagnostics = List.copyOf(diagnostics);
-    }
-
-    public boolean hasErrors() {
-        return this.diagnostics.stream().anyMatch(diagnostic -> diagnostic.severity() == Severity.ERROR);
     }
 
     public record Entry(Key bedrockId,  // craftengine:原始命名空间/物品路径
@@ -22,22 +16,5 @@ public record ItemRegistrationPlan(List<Entry> entries, List<Diagnostic> diagnos
                         ItemDefinitionBinding definition,
                         ItemRegistrationProperties properties,
                         ResolvedItemBinding source) {
-    }
-
-    public record Diagnostic(Severity severity,
-                             String code,
-                             Key javaItemType,
-                             @Nullable Key definitionId,
-                             List<Key> itemIds,
-                             List<String> details) {
-
-        public Diagnostic {
-            itemIds = List.copyOf(itemIds);
-            details = List.copyOf(details);
-        }
-    }
-
-    public enum Severity {
-        INFO, WARNING, ERROR
     }
 }

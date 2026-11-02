@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan.Entry;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ public final class ItemRegistrationPlanGenerator {
         Map<Key, ItemDefinitionBinding> definitions = ItemBindingCompiler.compile(pack);
         ItemBindingResolver resolver = new ItemBindingResolver(definitions, behaviorReader, registrationReader);
         List<Entry> entries = new ObjectArrayList<>(items.size());
-        List<ItemRegistrationPlan.Diagnostic> failures = new ObjectArrayList<>();
+        boolean hasErrors = false;
         List<ItemDefinition> orderedItems = new ObjectArrayList<>(items);
         orderedItems.sort(Comparator.comparing(item -> item.id().asString()));
         for (ItemDefinition definition : orderedItems) {
@@ -39,17 +40,11 @@ public final class ItemRegistrationPlanGenerator {
                 }
                 entries.add(createEntry(binding));
             } catch (Throwable t) {
-                failures.add(new ItemRegistrationPlan.Diagnostic(
-                        ItemRegistrationPlan.Severity.ERROR,
-                        "ITEM_BINDING_FAILED",
-                        definition.material(),
-                        null,
-                        List.of(definition.id()),
-                        List.of(t.toString())
-                ));
+                hasErrors = true;
+                TranslationManager.warn("resource_pack.bedrock.item.binding", definition.id().asString(), definition.material().asString(), t.toString());
             }
         }
-        return new ItemRegistrationPlan(entries, failures);
+        return new ItemRegistrationPlan(entries, hasErrors);
     }
 
     @SuppressWarnings("all")

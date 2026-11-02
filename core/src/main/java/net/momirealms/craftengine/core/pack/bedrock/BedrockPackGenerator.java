@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ZipUtils;
 
@@ -27,8 +28,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 public final class BedrockPackGenerator {
@@ -37,53 +36,58 @@ public final class BedrockPackGenerator {
         this.generate(resources, plan, List.of(), output, dataOutput);
     }
 
-    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path output, Path dataOutput) throws IOException {
-        Path destination = output.toAbsolutePath().normalize();
+    public void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path packOutput, Path dataOutput) throws IOException {
+        Path packDestination = packOutput.toAbsolutePath().normalize();
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
-        Files.createDirectories(destination.getParent());
+        Files.createDirectories(packDestination.getParent());
         Files.createDirectories(dataDestination.getParent());
         if (plan.hasErrors()) {
-            Path report = destination.resolveSibling(destination.getFileName() + ".report.json");
-            ItemRegistrationPlanWriter.write(plan, report, new BedrockItemIcons.Result(Set.of(), Map.of(), Map.of(), Set.of()));
-            throw new IOException("Bedrock item plan contains errors; the existing pack was not replaced. Report: " + report);
+            throw new IOException(TranslationManager.message("resource_pack.bedrock.item.failed"));
         }
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();
             Path metadata = root.resolve(RegistrationPlanKind.ITEM.file());
             Files.createDirectories(metadata.getParent());
+
             BedrockItemIcons.Result generated = new BedrockItemIcons(resources).write(plan, root);
             ItemRegistrationPlanWriter.write(plan, metadata, generated);
-            BedrockWorldBlocks.Result worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
+            JsonArray worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
             BlockRegistrationPlanWriter.write(generated, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
+            // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
+
             JavaFontResolver fonts = new JavaFontResolver(resources);
             new BedrockFontGenerator(fonts).write(root);
             new BedrockGuiGenerator(resources).write(root);
+
             JsonObject manifest = this.manifest();
             GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
+
+            // 复制 pack 图标
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {
                     Files.copy(icon, root.resolve("pack_icon.png"));
                 }
             }
-            Path temporary = Files.createTempFile(destination.getParent(), "bedrock-pack-", ".tmp");
-            Path dataTemporary = Files.createTempFile(dataDestination.getParent(), "bedrock-data-", ".tmp");
+
+            Path temporaryPack = Files.createTempFile(packDestination.getParent(), "bedrock-pack-", ".tmp");
+            Path temporaryData = Files.createTempFile(dataDestination.getParent(), "bedrock-data-", ".tmp");
             try {
+                // 将扩展数据复制到新文件夹打包
                 Path data = fileSystem.getPath("extension-data").toAbsolutePath();
                 for (String file : BedrockPackFiles.SERVER_FILES) {
                     Path target = data.resolve(file);
                     Files.createDirectories(target.getParent());
                     Files.move(root.resolve(file), target);
                 }
-                // Matching manifests let the extension reject a pair observed halfway through publication.
                 GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
-                ZipUtils.compress(root, temporary);
-                ZipUtils.compress(data, dataTemporary);
-                Files.move(temporary, destination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                Files.move(dataTemporary, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                ZipUtils.compress(root, temporaryPack);
+                ZipUtils.compress(data, temporaryData);
+                Files.move(temporaryPack, packDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(temporaryData, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } finally {
-                Files.deleteIfExists(temporary);
-                Files.deleteIfExists(dataTemporary);
+                Files.deleteIfExists(temporaryPack);
+                Files.deleteIfExists(temporaryData);
             }
         }
     }
