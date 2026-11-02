@@ -18,10 +18,10 @@ public sealed interface ItemRenderTarget {
     record Special(Key base, SpecialModel model) implements ItemRenderTarget {
     }
 
-    record Composite(List<ItemBindingRule> children) implements ItemRenderTarget {
+    record Composite(List<ItemBindingRule> parts) implements ItemRenderTarget {
 
         public Composite {
-            children = List.copyOf(children);
+            parts = List.copyOf(parts);
         }
     }
 

@@ -3,11 +3,13 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
+import org.joml.Matrix4fc;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,7 +30,18 @@ final class BedrockWeaponGeometry {
         this.textures = textures;
     }
 
-    JsonArray geometry(JavaModel model, ItemRenderTarget.Model target) throws IOException {
+    Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition) throws IOException {
+        Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
+        BedrockModelTransform.uniformScale(transformation);
+        ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
+        JavaModel model = this.models.resolve(target.model());
+        JsonArray cubes = this.geometry(model, target);
+        // 将规则的局部变换烘焙进几何，模型的手持 display 由挂点骨骼应用。
+        BedrockModelTransform.apply(cubes, transformation, 1);
+        return new Bedrock3DItemAttachables.Stage(model, cubes, condition);
+    }
+
+    private JsonArray geometry(JavaModel model, ItemRenderTarget.Model target) throws IOException {
         if (model.kind() == JavaModel.GeometryKind.GENERATED) {
             JsonArray cubes = new JsonArray();
             List<JavaModel.Texture> layers = this.models.resolveLayers(model);

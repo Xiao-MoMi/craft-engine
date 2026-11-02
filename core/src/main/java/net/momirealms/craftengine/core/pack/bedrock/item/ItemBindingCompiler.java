@@ -76,19 +76,24 @@ public final class ItemBindingCompiler {
                 }
                 case SelectItemModel select -> this.select(select, path);
                 case RangeDispatchItemModel range -> this.range(range, path);
-                case CompositeItemModel composite -> {
-                    Builder children = new Builder();
-                    for (int i = 0; i < composite.models().size(); i++) {
-                        children.visit(composite.models().get(i), path + ".models[" + i + "]");
-                    }
-                    this.emit(new ItemRenderTarget.Composite(children.rules), path);
-                }
+                case CompositeItemModel composite -> this.composite(composite, path);
                 default ->
                         throw new IllegalArgumentException("Unsupported item model at " + path + ": " + model.getClass().getName());
             }
             if (transformation != null) {
                 this.transformations.removeLast();
             }
+        }
+
+        private void composite(CompositeItemModel composite, String path) {
+            List<List<ItemBindingRule>> layers = new ObjectArrayList<>(composite.models().size());
+            for (int i = 0; i < composite.models().size(); i++) {
+                Builder layer = new Builder();
+                layer.transformations.addAll(this.transformations);
+                layer.visit(composite.models().get(i), path + ".models[" + i + "]");
+                layers.add(layer.rules);
+            }
+            new CompositeItemVariants(layers, path, this.rules).expand(this.conditions);
         }
 
         private void select(SelectItemModel select, String path) {

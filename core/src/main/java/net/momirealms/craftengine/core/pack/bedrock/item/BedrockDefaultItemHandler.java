@@ -1,19 +1,17 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons.Variant;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
-import net.momirealms.craftengine.core.pack.model.definition.Transformation;
+import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     private final JavaModelResolver models;
@@ -27,109 +25,106 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public boolean write(ItemRegistrationPlan.Entry entry,
-                         BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         List<ItemBindingRule> rules = entry.definition().rules();
         JavaModelResolver.RenderType type = this.models.classify(entry.definition());
-        List<Variant> branches = new ObjectArrayList<>(rules.size());
-        context.variants().put(entry.bedrockId(), branches);
+        List<GeneratedItemVariant> variants = new ObjectArrayList<>(rules.size());
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);
-            Key id;
-            if (rules.size() == 1) { // 单分支复用物品 ID，多分支分别分配资源名
-                id = entry.bedrockId();
-            } else {
-                id = Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_variant_" + i);
+            Key id = rules.size() == 1 ? entry.bedrockId()
+                    : Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_variant_" + i);
+            try {
+                variants.add(this.writeVariant(entry, context, id, rule, type));
+            } catch (UnsupportedOperationException exception) {
+                // 注册计划保留这个分支及跳过原因，后面的分支仍可生成。
+                variants.add(GeneratedItemVariant.skipped(id, rule, exception.getMessage()));
             }
-            branches.add(new Variant(id, rule, null)); // 先保留规则，未生成资源的分支也会写入计划
+        }
+        return variants;
+    }
 
-            // TODO 特殊的模型类型
-            if (!(rule.target() instanceof ItemRenderTarget.Model) && !(rule.target() instanceof ItemRenderTarget.Composite)) {
+    private GeneratedItemVariant writeVariant(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
+                                               ItemBindingRule rule, JavaModelResolver.RenderType type) throws IOException {
+        List<ItemBindingRule> parts;
+        if (rule.target() instanceof ItemRenderTarget.Model) {
+            parts = List.of(rule);
+        } else if (rule.target() instanceof ItemRenderTarget.Composite composite) {
+            parts = composite.parts();
+        } else {
+            return GeneratedItemVariant.skipped(id, rule, null);
+        }
+        List<JavaModel> models = new ObjectArrayList<>(parts.size());
+        boolean separateHandPoses = false;
+        for (ItemBindingRule part : parts) {
+            if (!(part.target() instanceof ItemRenderTarget.Model target)) {
+                throw new UnsupportedOperationException("Unsupported composite child: " + part.sourcePath());
+            }
+            JavaModel model = this.models.resolve(target.model());
+            if (!models.isEmpty() && !model.display().equals(models.getFirst().display())) {
+                validateDisplay(models.getFirst(), model, type);
+                separateHandPoses = true;
+            }
+            models.add(model);
+        }
+        if (type == JavaModelResolver.RenderType.BLOCK) {
+            return this.writeDisplayBlock(entry, context, id, rule, parts);
+        }
+        if (type == JavaModelResolver.RenderType.ITEM) {
+            return this.writeIcon(context, id, rule, parts, models, separateHandPoses);
+        }
+        return GeneratedItemVariant.skipped(id, rule, null);
+    }
+
+    private static void validateDisplay(JavaModel first, JavaModel model, JavaModelResolver.RenderType type) {
+        for (DisplayPosition view : DisplayPosition.values()) {
+            if (first.display().get(view).equals(model.display().get(view))) {
                 continue;
             }
-            try {
-                List<ItemBindingRule> parts;
-                if (rule.target() instanceof ItemRenderTarget.Composite) {
-                    parts = new ObjectArrayList<>();
-                    this.collectModels(rule, new ObjectArrayList<>(), parts);
-                } else {
-                    parts = List.of(rule);
-                }
-                JavaModel displayModel = this.sharedDisplayModel(parts);
-                if (type == JavaModelResolver.RenderType.BLOCK) {
-                    context.displays().put(id, context.blocks().write(id, parts, this.models, this.textures, context.root()));
-                    if (BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.models, this.textures, context.root())) {
-                        context.attachables().add(id);
-                        ItemBehaviorDescription behavior = entry.source().clientBehavior();
-                        if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.NONE &&
-                                behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.WHACK &&
-                                behavior.interact().animation() == ItemBehaviorDescription.SwingAnimation.WHACK) {
-                            context.javaSwings().add(id);
-                        }
-                    }
-                    continue;
-                }
-                if (type == JavaModelResolver.RenderType.ITEM) { // 无法确定渲染方式时不生成二维图标
-                    List<BufferedImage> images = new ObjectArrayList<>(parts.size());
-                    for (ItemBindingRule part : parts) {
-                        BufferedImage image = this.renderer.render((ItemRenderTarget.Model) part.target());
-                        if (image == null) {
-                            throw new UnsupportedOperationException("Model cannot be rendered as a static icon: " + part.sourcePath());
-                        }
-                        images.add(image);
-                    }
-                    BufferedImage image = ImageUtils.composite(images);
-                    String path = "textures/" + id.namespace() + '/' + id.value() + "/icon";
-                    ImageUtils.writePng(image, context.root().resolve(path + ".png"));
-                    JsonObject icon = new JsonObject();
-                    icon.addProperty("textures", path); // 基岩图集路径不带 .png 后缀
-                    context.icons().add(id.asString(), icon);
-                    if (displayModel != null && this.models.needsHandheldAttachable(displayModel)) {
-                        BedrockItemAttachables.write(id, displayModel, image, path, context.root());
-                        context.attachables().add(id);
-                    }
-                }
-            } catch (UnsupportedOperationException exception) { // 不支持的转换只记录当前分支的跳过原因
-                branches.set(i, new Variant(id, rule, exception.getMessage()));
+            boolean handheld = switch (view) {
+                case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> true;
+                default -> false;
+            };
+            if (!handheld || type != JavaModelResolver.RenderType.ITEM) {
+                throw new UnsupportedOperationException("Composite models have different " + view.name().toLowerCase(Locale.ROOT)
+                        + " display transforms: " + first.id() + " and " + model.id());
             }
-        }
-        return true;
-    }
-
-    private void collectModels(ItemBindingRule rule, List<Transformation> transformations, List<ItemBindingRule> parts) {
-        int size = transformations.size();
-        transformations.addAll(rule.transformations());
-        switch (rule.target()) {
-            case ItemRenderTarget.Model model -> parts.add(new ItemBindingRule(List.of(), model, transformations, rule.sourcePath()));
-            case ItemRenderTarget.Composite composite -> {
-                for (ItemBindingRule child : composite.children()) {
-                    if (!child.conditions().isEmpty()) {
-                        throw new UnsupportedOperationException("Conditions inside composite are not supported: " + child.sourcePath());
-                    }
-                    this.collectModels(child, transformations, parts);
-                }
-            }
-            case ItemRenderTarget.Builtin builtin when builtin == ItemRenderTarget.Builtin.EMPTY -> {
-            }
-            default -> throw new UnsupportedOperationException("Unsupported composite child: " + rule.sourcePath());
-        }
-        // 只保留当前路径的父子变换，不能把前一个子模型的变换带入后一个。
-        while (transformations.size() > size) {
-            transformations.removeLast();
         }
     }
 
-    @Nullable
-    private JavaModel sharedDisplayModel(List<ItemBindingRule> parts) throws IOException {
-        JavaModel first = null;
+    private GeneratedItemVariant writeDisplayBlock(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
+                                                    ItemBindingRule rule, List<ItemBindingRule> parts) throws IOException {
+        BedrockItemBlocks.DisplayBlock display = context.blocks().write(id, parts, this.models, this.textures, context.root());
+        if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.models, this.textures, context.root())) {
+            return GeneratedItemVariant.block(id, rule, display, false);
+        }
+        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+        if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.NONE
+                && behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.WHACK
+                && behavior.interact().animation() == ItemBehaviorDescription.SwingAnimation.WHACK) {
+            context.javaSwings().add(id);
+        }
+        return GeneratedItemVariant.block(id, rule, display, true);
+    }
+
+    private GeneratedItemVariant writeIcon(BedrockItemGenerationContext context, Key id, ItemBindingRule rule, List<ItemBindingRule> parts,
+                                           List<JavaModel> models, boolean separateHandPoses) throws IOException {
+        List<BufferedImage> images = new ObjectArrayList<>(parts.size());
         for (ItemBindingRule part : parts) {
-            JavaModel model = this.models.resolve(((ItemRenderTarget.Model) part.target()).model());
-            if (first == null) {
-                first = model;
-            } else if (!first.display().equals(model.display())) {
-                throw new UnsupportedOperationException("Composite models have different display transforms: " + first.id() + " and " + model.id());
+            BufferedImage image = this.renderer.render((ItemRenderTarget.Model) part.target());
+            if (image == null) {
+                throw new UnsupportedOperationException("Model cannot be rendered as a static icon: " + part.sourcePath());
             }
+            images.add(image);
         }
-        return first;
+        BufferedImage icon = ImageUtils.composite(images);
+        String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
+        ImageUtils.writePng(icon, context.root().resolve(texture + ".png"));
+        boolean attachable = separateHandPoses || (!models.isEmpty() && this.models.needsHandheldAttachable(models.getFirst()));
+        if (separateHandPoses) {
+            BedrockItemAttachables.writeComposite(id, models, images, context.root());
+        } else if (attachable) {
+            BedrockItemAttachables.write(id, models.getFirst(), icon, texture, context.root());
+        }
+        return GeneratedItemVariant.icon(id, rule, texture, attachable);
     }
 }

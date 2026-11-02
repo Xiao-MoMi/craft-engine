@@ -1,11 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonArray;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
-import org.joml.Matrix4fc;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,10 +17,10 @@ public final class Bedrock3DSpearItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public boolean write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         BedrockSpearModels selected = BedrockSpearModels.collect(entry);
         if (selected == null) {
-            return false;
+            return null;
         }
         BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(this.models, this.textures);
         List<Bedrock3DItemAttachables.Stage> stages = new ArrayList<>();
@@ -32,23 +28,14 @@ public final class Bedrock3DSpearItemHandler implements BedrockItemHandler {
         try {
             for (int i = 0; i < selected.hands().size(); i++) {
                 ItemBindingRule rule = selected.hands().get(i);
-                Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
-                BedrockModelTransform.uniformScale(transformation);
-                ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-                JavaModel model = this.models.resolve(target.model());
-                JsonArray cubes = geometry.geometry(model, target);
-                BedrockModelTransform.apply(cubes, transformation, 1);
-                stages.add(new Bedrock3DItemAttachables.Stage(model, cubes, selected.condition(i)));
+                stages.add(geometry.createStage(rule, selected.condition(i)));
             }
             display = context.blocks().write(entry.bedrockId(), List.of(selected.inventory()), this.models, this.textures, context.root());
         } catch (UnsupportedOperationException exception) {
-            return false;
+            return null;
         }
         Bedrock3DSpearAttachables.write(entry, selected, stages, geometry.materials(), context.root());
-        context.displays().put(entry.bedrockId(), display);
-        context.attachables().add(entry.bedrockId());
         context.javaSpears().put(entry.bedrockId(), entry);
-        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), selected.registration(), null)));
-        return true;
+        return List.of(GeneratedItemVariant.block(entry.bedrockId(), selected.registration(), display, true));
     }
 }

@@ -81,7 +81,7 @@ public final class JavaModelResolver {
                 }
                 case ItemRenderTarget.Special ignored -> block = true;
                 case ItemRenderTarget.Composite composite -> {
-                    RenderType type = this.classify(composite.children());
+                    RenderType type = this.classify(composite.parts());
                     block |= type == RenderType.BLOCK;
                     unknown |= type == RenderType.UNKNOWN;
                 }

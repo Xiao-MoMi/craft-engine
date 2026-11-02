@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.ImageUtils;
 
 import java.awt.image.BufferedImage;
@@ -16,36 +15,31 @@ public final class Bedrock2DSpearItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public boolean write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         BedrockSpearModels models = BedrockSpearModels.collect(entry);
         if (models == null) {
-            return false;
+            return null;
         }
         for (ItemBindingRule rule : entry.definition().rules()) {
             if (!rule.transformations().isEmpty()) {
-                return false;
+                return null;
             }
         }
         BufferedImage iconImage = this.renderer.render((ItemRenderTarget.Model) models.inventory().target());
         if (iconImage == null) {
-            return false;
+            return null;
         }
         List<BufferedImage> hands = new ArrayList<>();
         for (ItemBindingRule rule : models.hands()) {
             BufferedImage image = this.renderer.render((ItemRenderTarget.Model) rule.target());
             if (image == null) {
-                return false;
+                return null;
             }
             hands.add(image);
         }
         String path = "textures/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "/icon";
         ImageUtils.writePng(iconImage, context.root().resolve(path + ".png"));
-        JsonObject icon = new JsonObject();
-        icon.addProperty("textures", path);
-        context.icons().add(entry.bedrockId().asString(), icon);
         Bedrock2DSpearAttachables.write(entry, models, hands, context.root());
-        context.variants().put(entry.bedrockId(), List.of(new BedrockItemIcons.Variant(entry.bedrockId(), models.registration(), null)));
-        context.attachables().add(entry.bedrockId());
-        return true;
+        return List.of(GeneratedItemVariant.icon(entry.bedrockId(), models.registration(), path, true));
     }
 }

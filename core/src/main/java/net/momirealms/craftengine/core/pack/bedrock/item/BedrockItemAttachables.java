@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
@@ -10,6 +11,7 @@ import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItem
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
@@ -21,7 +23,6 @@ import org.joml.Vector3f;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -42,11 +43,68 @@ public final class BedrockItemAttachables {
     }
 
     public static void write(Key id, JavaModel model, BufferedImage image, String texture, Path root) throws IOException {
-        write(id, List.of(new Stage(model, image, texture, "1", new Matrix4f())), null, -1, root);
+        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
+        addStaticPart(attachment, model, image, texture, -1);
+        attachment.showInHand("controller.render.item_default");
+        attachment.write(root, null);
+    }
+
+    static void writeComposite(Key id, List<JavaModel> models, List<BufferedImage> images, Path root) throws IOException {
+        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
+        JsonObject controllers = new JsonObject();
+        for (int i = 0; i < models.size(); i++) {
+            String alias = "part_" + i;
+            String texture = "textures/" + id.namespace() + '/' + id.value() + "/" + alias;
+            BufferedImage image = images.get(i);
+            ImageUtils.writePng(image, root.resolve(texture + ".png"));
+            addStaticPart(attachment, models.get(i), image, texture, i);
+            // 所有部件同时可见，各自的动画只作用于本部件的骨骼。
+            String controller = "controller.render." + attachment.prefix + "." + alias;
+            controllers.add(controller, renderController("Geometry." + alias, "Texture." + alias));
+            attachment.showInHand(controller);
+        }
+        writeControllers(controllers, attachment.controllerPath(root));
+        attachment.write(root, null);
+    }
+
+    private static void addStaticPart(BedrockItemAttachment attachment, JavaModel model, BufferedImage image, String texture, int layer) {
+        String alias = layer < 0 ? "default" : "part_" + layer;
+        String prefix = layer < 0 ? attachment.prefix : attachment.prefix + "_" + alias;
+        String bonePrefix = layer < 0 ? "" : alias + "_";
+        String geometryId = "geometry." + prefix;
+        JsonArray cubes = new JsonArray();
+        BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, Math.max(0, layer), image.getWidth(), image.getHeight());
+        displayAnimations(model, "animation." + prefix + '.', -1, bonePrefix, attachment.animations, attachment.animationNames, attachment.animate);
+        attachment.addGeometry(alias, geometryId, texture, displayGeometry(model, cubes, geometryId, MODEL_RADIUS, bonePrefix));
     }
 
     public static void writeBow(Key id, List<Stage> stages, int idleStage, int maximumUseTicks, Path root) throws IOException {
-        write(id, stages, bowScripts(stages.stream().map(Stage::condition).toList(), maximumUseTicks), idleStage, root);
+        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
+        JsonArray geometryFrames = new JsonArray();
+        JsonArray textureFrames = new JsonArray();
+        int pullingStages = 0;
+        for (int i = 0; i < stages.size(); i++) {
+            Stage stage = stages.get(i);
+            String alias = "stage_" + i;
+            String geometryId = "geometry." + attachment.prefix + "_v" + i;
+            // 沿用原版闲置、初拉、后续拉弓的局部位置。
+            float x = 2;
+            float z = -2;
+            if (i != idleStage) {
+                z = -1;
+                if (pullingStages++ > 0) {
+                    x = 2.01f;
+                }
+            }
+            attachment.addGeometry(alias, geometryId, stage.texture(), bowGeometry(geometryId, alias, x, z, stage.transformation()));
+            geometryFrames.add("Geometry." + alias);
+            textureFrames.add("Texture." + alias);
+        }
+        bowAnimations(id, attachment.animations, attachment.animationNames, attachment.animate);
+        String controller = "controller.render." + attachment.prefix;
+        writeController(controller, geometryFrames, textureFrames, attachment.controllerPath(root));
+        attachment.controllers.add(GsonHelper.createObject(controller, new JsonPrimitive("(" + BedrockItemAttachment.IN_HAND + ") && variable.ce_stage >= 0")));
+        attachment.write(root, bowScripts(stages.stream().map(Stage::condition).toList(), maximumUseTicks));
     }
 
     static JsonArray bowScripts(List<String> conditions, int maximumUseTicks) {
@@ -126,100 +184,6 @@ public final class BedrockItemAttachables {
         return expression.toString();
     }
 
-    private static void write(Key id, List<Stage> stages, @Nullable JsonArray preAnimation, int idleStage, Path root) throws IOException {
-        String resource = id.namespace() + '/' + id.value();
-        String prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
-        JsonObject animations = new JsonObject();
-        JsonObject animationNames = new JsonObject();
-        JsonArray animate = new JsonArray();
-        JsonObject textures = new JsonObject();
-        textures.addProperty("enchanted", "textures/misc/enchanted_item_glint");
-        JsonObject geometryNames = new JsonObject();
-        JsonArray geometries = new JsonArray();
-        JsonArray geometryFrames = new JsonArray();
-        JsonArray textureFrames = new JsonArray();
-        int pullingStages = 0;
-        for (int i = 0; i < stages.size(); i++) {
-            Stage stage = stages.get(i);
-            String alias = "default";
-            String suffix = "";
-            if (preAnimation != null) {
-                alias = "stage_" + i;
-                suffix = "_v" + i;
-            }
-            String geometryId = "geometry." + prefix + suffix;
-            if (preAnimation == null) {
-                String animationPrefix = "animation." + prefix + suffix + '.';
-                geometries.add(geometry(stage, geometryId, animationPrefix, animations, animationNames, animate));
-            } else {
-                // 沿用原版闲置、初拉、后续拉弓的局部位置；阶段选择仍由 Java 条件决定。
-                float x = 2;
-                float z = -2;
-                if (i != idleStage) {
-                    z = -1;
-                    if (pullingStages++ > 0) {
-                        x = 2.01f;
-                    }
-                }
-                geometries.add(bowGeometry(geometryId, alias, x, z, stage.transformation()));
-            }
-            geometryNames.addProperty(alias, geometryId);
-            textures.addProperty(alias, stage.texture());
-            geometryFrames.add("Geometry." + alias);
-            textureFrames.add("Texture." + alias);
-        }
-        if (preAnimation != null) {
-            bowAnimations(id, animations, animationNames, animate);
-        }
-        JsonObject geometryFile = new JsonObject();
-        geometryFile.addProperty(FORMAT_VERSION, "1.16.0");
-        geometryFile.add("minecraft:geometry", geometries);
-        writeJson(geometryFile, root.resolve("models/entity/" + resource + ".geo.json"));
-
-        JsonObject animationFile = new JsonObject();
-        animationFile.addProperty(FORMAT_VERSION, preAnimation == null ? "1.8.0" : "1.10.0");
-        animationFile.add("animations", animations);
-        writeJson(animationFile, root.resolve("animations/" + resource + ".animation.json"));
-
-        JsonObject attachment = new JsonObject();
-        attachment.addProperty("identifier", id.asString());
-        JsonObject materials = new JsonObject();
-        if (preAnimation == null) {
-            materials.addProperty("default", "entity_alphatest_one_sided");
-        } else {
-            materials.addProperty("default", "entity_alphatest");
-        }
-        materials.addProperty("enchanted", "entity_alphatest_glint");
-        attachment.add("materials", materials);
-        attachment.add("textures", textures);
-        attachment.add("geometry", geometryNames);
-        attachment.add("animations", animationNames);
-        JsonObject scripts = new JsonObject();
-        scripts.add("animate", animate);
-        if (preAnimation != null) {
-            scripts.add("pre_animation", preAnimation);
-        }
-        attachment.add("scripts", scripts);
-        String controllerId = "controller.render.item_default";
-        String visible = "context.item_slot == 'main_hand' || context.item_slot == 'off_hand'";
-        if (preAnimation != null) {
-            controllerId = "controller.render." + prefix;
-            visible = "(" + visible + ") && variable.ce_stage >= 0";
-            writeController(controllerId, geometryFrames, textureFrames, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
-        }
-        JsonArray controllers = new JsonArray();
-        JsonObject controller = new JsonObject();
-        controller.addProperty(controllerId, visible);
-        controllers.add(controller);
-        attachment.add("render_controllers", controllers);
-        JsonObject attachable = new JsonObject();
-        attachable.add("description", attachment);
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.10.0");
-        file.add("minecraft:attachable", attachable);
-        writeJson(file, root.resolve("attachables/" + resource + ".attachable.json"));
-    }
-
     static void writeController(String id, JsonArray geometryFrames, JsonArray textureFrames, Path path) throws IOException {
         JsonObject controller = new JsonObject();
         JsonObject arrays = new JsonObject();
@@ -230,45 +194,53 @@ public final class BedrockItemAttachables {
         textureArray.add("array.stage_textures", textureFrames);
         arrays.add("textures", textureArray);
         controller.add("arrays", arrays);
-        controller.addProperty("geometry", "array.stage_geometries[variable.ce_stage]");
+        addRenderBindings(controller, "array.stage_geometries[variable.ce_stage]", "array.stage_textures[variable.ce_stage]");
+        JsonObject definitions = new JsonObject();
+        definitions.add(id, controller);
+        writeControllers(definitions, path);
+    }
+
+    private static JsonObject renderController(String geometry, String texture) {
+        JsonObject controller = new JsonObject();
+        addRenderBindings(controller, geometry, texture);
+        return controller;
+    }
+
+    private static void addRenderBindings(JsonObject controller, String geometry, String texture) {
+        controller.addProperty("geometry", geometry);
         JsonArray materials = new JsonArray();
         JsonObject material = new JsonObject();
         material.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
         materials.add(material);
         controller.add("materials", materials);
         JsonArray textures = new JsonArray();
-        textures.add("array.stage_textures[variable.ce_stage]");
+        textures.add(texture);
         textures.add("Texture.enchanted");
         controller.add("textures", textures);
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.10.0");
-        JsonObject definitions = new JsonObject();
-        definitions.add(id, controller);
-        file.add("render_controllers", definitions);
-        writeJson(file, path);
     }
 
-    private static JsonObject geometry(Stage stage, String geometryId, String animationPrefix,
-                                       JsonObject animations, JsonObject animationNames, JsonArray animate) {
-        JavaModel model = stage.model();
-        BufferedImage image = stage.image();
-        JsonArray cubes = new JsonArray();
-        // 静态图层已完成染色与合成，共用图标 PNG，避免叠层共面闪烁。
-        BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, 0, image.getWidth(), image.getHeight());
-        displayAnimations(model, animationPrefix, -1, animations, animationNames, animate);
-        return displayGeometry(model, cubes, geometryId, MODEL_RADIUS);
+    private static void writeControllers(JsonObject definitions, Path path) throws IOException {
+        JsonObject file = new JsonObject();
+        file.addProperty(FORMAT_VERSION, "1.10.0");
+        file.add("render_controllers", definitions);
+        BedrockItemAttachment.writeJson(file, path);
     }
 
     static void displayAnimations(JavaModel model, String prefix, int stage, JsonObject animations, JsonObject names, JsonArray animate) {
+        displayAnimations(model, prefix, stage, "", animations, names, animate);
+    }
+
+    private static void displayAnimations(JavaModel model, String prefix, int stage, String bonePrefix,
+                                          JsonObject animations, JsonObject names, JsonArray animate) {
         for (View view : VIEWS) {
             JavaModel.Transform source = model.display().getOrDefault(view.position, JavaModel.Transform.IDENTITY);
-            String name = view.animation;
+            String name = bonePrefix + view.animation;
             String expression = view.condition;
             if (stage >= 0) {
                 name = "stage_" + stage + '_' + name;
                 expression = "(" + expression + ") && variable.ce_stage == " + stage;
             }
-            animations.add(prefix + name, animation(view, source));
+            animations.add(prefix + name, animation(view, source, bonePrefix));
             names.addProperty(name, prefix + name);
             JsonObject condition = new JsonObject();
             condition.addProperty(name, expression);
@@ -277,18 +249,22 @@ public final class BedrockItemAttachables {
     }
 
     static JsonObject displayGeometry(JavaModel model, JsonArray cubes, String geometryId, float modelRadius) {
-        JsonObject binding = bone(BINDING, null);
+        return displayGeometry(model, cubes, geometryId, modelRadius, "");
+    }
+
+    private static JsonObject displayGeometry(JavaModel model, JsonArray cubes, String geometryId, float modelRadius, String bonePrefix) {
+        JsonObject binding = bone(bonePrefix + BINDING, null);
         // 绑定骨骼保持恒等变换，避免多材质绘制时在缓存矩阵上重复叠加姿态。
         binding.add("pivot", VectorUtils.toJson(0, 24, 0));
         binding.addProperty("binding", "query.item_slot_to_bone_name(context.item_slot)");
-        JsonObject slot = bone(SLOT, BINDING);
-        JsonObject mesh = bone(Z, Y);
+        JsonObject slot = bone(bonePrefix + SLOT, bonePrefix + BINDING);
+        JsonObject mesh = bone(bonePrefix + Z, bonePrefix + Y);
         mesh.add("cubes", cubes);
         JsonArray bones = new JsonArray();
         bones.add(binding);
         bones.add(slot);
-        bones.add(bone(X, SLOT));
-        bones.add(bone(Y, X));
+        bones.add(bone(bonePrefix + X, bonePrefix + SLOT));
+        bones.add(bone(bonePrefix + Y, bonePrefix + X));
         bones.add(mesh);
 
         float radius = 0;
@@ -376,7 +352,7 @@ public final class BedrockItemAttachables {
         return bone;
     }
 
-    private static JsonObject animation(View view, JavaModel.Transform source) {
+    private static JsonObject animation(View view, JavaModel.Transform source, String bonePrefix) {
         float side = view.leftHand ? -1 : 1;
         JsonObject slot = new JsonObject();
         slot.add("rotation", VectorUtils.toJson(view.pose.rotation));
@@ -392,10 +368,10 @@ public final class BedrockItemAttachables {
         z.add("rotation", VectorUtils.toJson(0, 0, source.rotation().z * side));
         z.add("scale", VectorUtils.toJson(source.scale()));
         JsonObject bones = new JsonObject();
-        bones.add(SLOT, slot);
-        bones.add(X, x);
-        bones.add(Y, y);
-        bones.add(Z, z);
+        bones.add(bonePrefix + SLOT, slot);
+        bones.add(bonePrefix + X, x);
+        bones.add(bonePrefix + Y, y);
+        bones.add(bonePrefix + Z, z);
         JsonObject animation = new JsonObject();
         animation.addProperty("loop", true);
         animation.add("bones", bones);
@@ -433,11 +409,6 @@ public final class BedrockItemAttachables {
         animation.addProperty("loop", true);
         animation.add("bones", bones);
         return animation;
-    }
-
-    private static void writeJson(JsonObject json, Path path) throws IOException {
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(json, path);
     }
 
     static Matrix4f firstPersonSlotMatrix() {

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import org.joml.Matrix4f;
@@ -20,10 +19,10 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public boolean write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         List<BedrockCrossbowStates.State> states = BedrockCrossbowStates.collect(entry);
         if (states.isEmpty() || entry.source().clientBehavior().use().chargeDuration() == null) {
-            return false;
+            return null;
         }
         List<List<BedrockItemAttachables.Stage>> prepared = new ArrayList<>(states.size());
         for (BedrockCrossbowStates.State state : states) {
@@ -31,19 +30,19 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
             for (int i = 0; i < state.rules().size(); i++) {
                 ItemBindingRule rule = state.rules().get(i);
                 if (!rule.transformations().isEmpty()) {
-                    return false;
+                    return null;
                 }
                 ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
                 BufferedImage image = this.renderer.render(target);
                 if (image == null) {
-                    return false;
+                    return null;
                 }
                 String texture = "textures/" + state.id().namespace() + '/' + state.id().value() + "/stage_" + i;
                 stages.add(new BedrockItemAttachables.Stage(this.models.resolve(target.model()), image, texture, BedrockCrossbowStates.condition(rule), new Matrix4f()));
             }
             prepared.add(stages);
         }
-        List<BedrockItemIcons.Variant> variants = new ArrayList<>(states.size());
+        List<GeneratedItemVariant> variants = new ArrayList<>(states.size());
         for (int i = 0; i < states.size(); i++) {
             BedrockCrossbowStates.State state = states.get(i);
             List<BedrockItemAttachables.Stage> stages = prepared.get(i);
@@ -51,14 +50,9 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
                 ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));
             }
             Bedrock2DCrossbowAttachables.write(state, stages, entry.source().clientBehavior().use(), context.root());
-            JsonObject icon = new JsonObject();
-            icon.addProperty("textures", stages.get(state.idle()).texture());
-            context.icons().add(state.id().asString(), icon);
-            variants.add(new BedrockItemIcons.Variant(state.id(), state.registration(), null));
-            context.attachables().add(state.id());
+            variants.add(GeneratedItemVariant.icon(state.id(), state.registration(), stages.get(state.idle()).texture(), true));
             context.crossbowPlayerAnimations().register(state.id(), state.charged(), entry.source().clientBehavior().use().chargeDuration().value(), false);
         }
-        context.variants().put(entry.bedrockId(), variants);
-        return true;
+        return variants;
     }
 }

@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons.Variant;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.ImageUtils;
@@ -22,17 +20,17 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public boolean write(ItemRegistrationPlan.Entry entry,
+    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry,
                          BedrockItemGenerationContext context) throws IOException {
         List<ItemBindingRule> rules = entry.definition().rules();
         int idle = BedrockItemAttachables.findBowIdle(rules);
         if (idle == -1) {
-            return false;
+            return null;
         }
         ItemBindingRule idleRule = rules.get(idle);
         // 待机变换也影响背包和掉落显示，交给默认方块路径，不能只改手持模型。
         if (!idleRule.transformations().isEmpty()) {
-            return false;
+            return null;
         }
         List<ItemBindingCondition> registrationConditions = idleRule
                 .conditions()
@@ -46,12 +44,12 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
             try {
                 BedrockModelTransform.uniformScale(transformation);
             } catch (UnsupportedOperationException exception) {
-                return false;
+                return null;
             }
             ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
             BufferedImage image = this.renderer.render(target);
             if (image == null) {
-                return false;
+                return null;
             }
             String texture = "textures/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "/stage_" + i;
             stages.add(new BedrockItemAttachables.Stage(this.models.resolve(target.model()), image, texture, BedrockItemAttachables.bowCondition(rule), transformation));
@@ -61,13 +59,8 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
             ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));
         }
         BedrockItemAttachables.writeBow(entry.bedrockId(), stages, idle, entry.source().clientBehavior().use().maximumDuration().value(), context.root());
-        JsonObject icon = new JsonObject();
-        icon.addProperty("textures", stages.get(idle).texture());
-        context.icons().add(entry.bedrockId().asString(), icon);
         ItemBindingRule registrationRule = new ItemBindingRule(registrationConditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
-        context.variants().put(entry.bedrockId(), List.of(new Variant(entry.bedrockId(), registrationRule, null)));
-        context.attachables().add(entry.bedrockId());
         context.bows().add(entry.bedrockId());
-        return true;
+        return List.of(GeneratedItemVariant.icon(entry.bedrockId(), registrationRule, stages.get(idle).texture(), true));
     }
 }

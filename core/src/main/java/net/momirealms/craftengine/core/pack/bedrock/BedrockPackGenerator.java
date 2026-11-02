@@ -12,7 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanW
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -45,13 +45,15 @@ public final class BedrockPackGenerator {
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();
-            Path metadata = root.resolve(RegistrationPlanKind.ITEM.file());
-            Files.createDirectories(metadata.getParent());
+            Path itemPlanPath = root.resolve(RegistrationPlanKind.ITEM.file());
+            Files.createDirectories(itemPlanPath.getParent());
 
-            BedrockItemIcons.Result generated = BedrockItemIcons.write(resources, plan, root);
-            ItemRegistrationPlanWriter.write(plan, metadata, generated);
+            // 物品
+            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(resources, plan, root);
+            ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems);
+            // 方块
             JsonArray worldBlocks = new BedrockWorldBlocks(resources).write(blocks, root);
-            BlockRegistrationPlanWriter.write(generated, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
+            BlockRegistrationPlanWriter.write(generatedItems, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             // 字体文件
