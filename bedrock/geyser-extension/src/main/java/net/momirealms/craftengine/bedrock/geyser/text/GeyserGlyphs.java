@@ -24,7 +24,6 @@ public final class GeyserGlyphs {
     }
 
     public static GeyserTextData read(List<Path> packs) throws IOException {
-        Map<String, Map<Integer, Integer>> fonts = new HashMap<>();
         Map<String, Map<Integer, FontGlyph>> metrics = new HashMap<>();
         for (Path pack : packs) {
             try (ZipFile archive = new ZipFile(pack.toFile())) {
@@ -33,16 +32,15 @@ public final class GeyserGlyphs {
                     continue;
                 }
                 try (Reader reader = new InputStreamReader(archive.getInputStream(file), StandardCharsets.UTF_8)) {
-                    readMappings(JsonParser.parseReader(reader).getAsJsonObject(), fonts, metrics);
+                    readMetrics(JsonParser.parseReader(reader).getAsJsonObject(), metrics);
                 }
             }
         }
-        return new GeyserTextData(fonts, metrics.isEmpty() ? null : new ContainerTitleLayout(metrics),
+        return new GeyserTextData(replacements(metrics), metrics.isEmpty() ? null : new ContainerTitleLayout(metrics),
                 GeyserTranslations.read(packs));
     }
 
-    private static void readMappings(JsonObject root, Map<String, Map<Integer, Integer>> fonts,
-                                     Map<String, Map<Integer, FontGlyph>> metrics) throws IOException {
+    private static void readMetrics(JsonObject root, Map<String, Map<Integer, FontGlyph>> metrics) throws IOException {
         if (!(root.get("metrics") instanceof JsonObject layouts)) {
             throw new IOException("Missing glyph metrics");
         }
@@ -58,11 +56,18 @@ public final class GeyserGlyphs {
                         data.get("bearing").getAsInt()
                 );
                 glyphs.put(codepoint, glyph);
-                // 图集字形有一像素的左边距。即使分配到原码位，也要覆盖低优先级包中的替换。
-                if (glyph.visible() && (glyph.character() != codepoint || glyph.bearing() == 1)) {
-                    fonts.computeIfAbsent(font.getKey(), key -> new HashMap<>()).put(codepoint, glyph.character());
-                }
             }
         }
+    }
+
+    private static Map<String, Map<Integer, Integer>> replacements(Map<String, Map<Integer, FontGlyph>> metrics) {
+        Map<String, Map<Integer, Integer>> fonts = new HashMap<>();
+        // 从各包合并后的字形建立替换表，高优先级包恢复的原生字符不会继承旧替换。
+        metrics.forEach((font, glyphs) -> glyphs.forEach((codepoint, glyph) -> {
+            if (glyph.visible() && glyph.character() != codepoint) {
+                fonts.computeIfAbsent(font, key -> new HashMap<>()).put(codepoint, glyph.character());
+            }
+        }));
+        return fonts;
     }
 }

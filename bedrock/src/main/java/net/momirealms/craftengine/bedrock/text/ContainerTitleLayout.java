@@ -11,6 +11,8 @@ public final class ContainerTitleLayout {
     public static final String MARKER = "craftengine:layout/";
     public static final int SPACER_FIRST = 0xE200;
     public static final int MAX_SPACER = 33;
+    private static final int SPACER_BYTES = 3;
+    private static final int RESET_PREFIX_BYTES = 3;
     private final Map<String, Map<Integer, FontGlyph>> fonts;
 
     public ContainerTitleLayout(Map<String, Map<Integer, FontGlyph>> fonts) {
@@ -22,6 +24,7 @@ public final class ContainerTitleLayout {
             return List.of();
         }
         List<Layer> layers = new ArrayList<>();
+        int remainingBytes = ContainerTitleCodec.MAX_BYTES;
         double cursor = ORIGIN;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
@@ -69,10 +72,21 @@ public final class ContainerTitleLayout {
                     }
                     selected = new Layer();
                     layers.add(selected);
+                    remainingBytes -= ContainerTitleCodec.ENTRY_BYTES;
                 }
                 int gap = (int) (position - selected.cursor);
+                int spacerCount = Math.ceilDiv(gap, MAX_SPACER);
+                // 每个可见字符至少占一字节；间距段的 §r 前缀和每个 E2 字符各占三个 UTF-8 字节。
+                // 先扣除确定的开销再展开间距，格式化后的实际字节数由编码器校验。
+                remainingBytes--;
+                if (spacerCount > 0) {
+                    remainingBytes -= RESET_PREFIX_BYTES + spacerCount * SPACER_BYTES;
+                }
+                if (remainingBytes < 0) {
+                    throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
+                }
                 if (gap > 0) {
-                    StringBuilder spaces = new StringBuilder();
+                    StringBuilder spaces = new StringBuilder(spacerCount);
                     while (gap > 0) {
                         int step = Math.min(gap, MAX_SPACER);
                         if (gap - step == 1) {

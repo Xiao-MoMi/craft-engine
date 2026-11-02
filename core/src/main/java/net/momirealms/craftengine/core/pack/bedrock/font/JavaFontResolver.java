@@ -120,6 +120,11 @@ public final class JavaFontResolver {
     }
 
     private Int2ObjectMap<Glyph> bitmap(JsonObject provider, boolean custom) throws IOException {
+        int height = provider.has("height") ? provider.get("height").getAsInt() : 8;
+        int ascent = provider.get("ascent").getAsInt();
+        if (ascent > height) {
+            throw new IOException(TranslationManager.message("resource.image.height_ascent_conflict", Integer.toString(height), Integer.toString(ascent)));
+        }
         Key texture = Key.of(provider.get("file").getAsString());
         String path = "assets/" + texture.namespace() + "/textures/" + texture.value();
         JsonArray rows = provider.getAsJsonArray("chars");
@@ -132,8 +137,6 @@ public final class JavaFontResolver {
         }
         Int2ObjectMap<Glyph> glyphs = new Int2ObjectOpenHashMap<>();
         boolean convert = custom || this.resources.hasCustomResource(path);
-        int height = provider.has("height") ? provider.get("height").getAsInt() : 8;
-        int ascent = provider.get("ascent").getAsInt();
         BufferedImage image = this.images.get(path);
         if (image == null) {
             try (InputStream input = this.resources.openResource(path)) {

@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 record GlyphMetrics(int width, int advance, int cellSize) {
 
     static GlyphMetrics measure(Glyph glyph) {
-        if (glyph.height() <= 0 || glyph.ascent() > glyph.height()) {
+        if (glyph.height() <= 0) {
             throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.height"));
         }
         int advance = (int) glyph.advance();
