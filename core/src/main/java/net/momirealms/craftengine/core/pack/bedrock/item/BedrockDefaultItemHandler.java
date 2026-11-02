@@ -96,15 +96,15 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
                 return dyed;
             }
         }
-        BedrockItemBlocks.DisplayBlock display = context.blocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
+        BedrockItemBlocks.DisplayBlock display = context.itemDisplayBlocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
         if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.resources.models(), this.resources.textures(), context.root())) {
             return GeneratedItemVariant.block(id, rule, display, false);
         }
-        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+        ItemBehaviorDescription behavior = entry.clientBehavior();
         if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.NONE
                 && behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.WHACK
                 && behavior.interact().animation() == ItemBehaviorDescription.SwingAnimation.WHACK) {
-            context.javaSwings().add(id);
+            context.playerAnimations().registerItemUsingJavaSwing(id);
         }
         return GeneratedItemVariant.block(id, rule, display, true);
     }

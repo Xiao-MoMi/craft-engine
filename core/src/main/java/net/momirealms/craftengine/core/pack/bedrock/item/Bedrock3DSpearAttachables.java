@@ -28,7 +28,7 @@ public final class Bedrock3DSpearAttachables {
             bones.add(bone);
             parent = "ce_spear_" + name;
         }
-        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+        ItemBehaviorDescription behavior = entry.clientBehavior();
         JsonArray scripts = models.scripts(behavior);
         // 挥手进度属于玩家实体，attachable 需从持有者读取。
         scripts.add("variable.attack_time = context.owning_entity->variable.attack_time;");
@@ -45,7 +45,7 @@ public final class Bedrock3DSpearAttachables {
 
     static JsonArray parameters(ItemRegistrationPlan.Entry entry) {
         JsonArray scripts = new JsonArray();
-        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+        ItemBehaviorDescription behavior = entry.clientBehavior();
         JsonElement component = entry.properties().components().get(DataComponentKeys.KINETIC_WEAPON);
         JsonObject kinetic = component == null || component.isJsonNull() ? null : component.getAsJsonObject();
         scripts.add("variable.ce_spear_delay = " + (kinetic == null || !kinetic.has("delay_ticks") ? 0 : kinetic.get("delay_ticks").getAsInt()) + ";");

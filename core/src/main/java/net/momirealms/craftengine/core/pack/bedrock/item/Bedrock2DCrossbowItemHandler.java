@@ -21,7 +21,8 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         List<BedrockCrossbowStates.State> states = BedrockCrossbowStates.collect(entry);
-        if (states.isEmpty() || entry.source().clientBehavior().use().chargeDuration() == null) {
+        ItemBehaviorDescription.Ticks chargeDuration = entry.chargeDuration();
+        if (states.isEmpty() || chargeDuration == null) {
             return null;
         }
         List<List<BedrockItemAttachables.Stage>> prepared = new ArrayList<>(states.size());
@@ -49,9 +50,9 @@ public final class Bedrock2DCrossbowItemHandler implements BedrockItemHandler {
             for (BedrockItemAttachables.Stage stage : stages) {
                 ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));
             }
-            Bedrock2DCrossbowAttachables.write(state, stages, entry.source().clientBehavior().use(), context.root());
+            Bedrock2DCrossbowAttachables.write(state, stages, entry.useBehavior(), context.root());
             variants.add(GeneratedItemVariant.icon(state.id(), state.registration(), stages.get(state.idle()).texture(), true));
-            context.crossbowPlayerAnimations().register(state.id(), state.charged(), entry.source().clientBehavior().use().chargeDuration().value(), false);
+            context.playerAnimations().register2DCrossbow(state, chargeDuration.value());
         }
         return variants;
     }

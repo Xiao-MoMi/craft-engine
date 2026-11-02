@@ -19,7 +19,15 @@ public final class ItemRegistrationPlanWriter {
     }
 
     public static void write(ItemRegistrationPlan plan, Path itemPlanPath, BedrockItemResourceGenerator.Result generatedItems) throws IOException {
-        Files.writeString(itemPlanPath, toJson(plan, generatedItems).toString());
+        write(plan, itemPlanPath, generatedItems, new JsonObject());
+    }
+
+    public static void write(ItemRegistrationPlan plan, Path itemPlanPath, BedrockItemResourceGenerator.Result generatedItems, JsonObject itemDisplays) throws IOException {
+        JsonObject json = toJson(plan, generatedItems);
+        if (!itemDisplays.isEmpty()) {
+            json.add("item_displays", itemDisplays);
+        }
+        Files.writeString(itemPlanPath, json.toString());
     }
 
     public static JsonObject toJson(ItemRegistrationPlan plan, BedrockItemResourceGenerator.Result generatedItems) {
@@ -60,7 +68,7 @@ public final class ItemRegistrationPlanWriter {
         json.add(VARIANTS, branches);
 
         JsonObject behavior = new JsonObject();
-        behavior.add("use", GsonHelper.get().toJsonTree(binding.clientBehavior().use()));
+        behavior.add("use", GsonHelper.get().toJsonTree(entry.useBehavior()));
         if (binding.placesBlock()) {
             behavior.addProperty(PLACES_BLOCK, true);
         }

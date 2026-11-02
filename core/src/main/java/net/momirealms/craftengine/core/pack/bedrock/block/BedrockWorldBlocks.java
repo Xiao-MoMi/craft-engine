@@ -22,11 +22,7 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 

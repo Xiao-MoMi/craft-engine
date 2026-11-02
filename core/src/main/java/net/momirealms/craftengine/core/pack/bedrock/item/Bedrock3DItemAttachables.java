@@ -25,8 +25,14 @@ public final class Bedrock3DItemAttachables {
     private Bedrock3DItemAttachables() {
     }
 
-    static void write(Key id, List<Stage> stages, List<Material> materials, JsonArray preAnimation,
-                      JsonArray poseBones, JsonObject poseAnimations, JsonArray poseAnimate, Path root) throws IOException {
+    static void write(Key id,
+                      List<Stage> stages,
+                      List<Material> materials,
+                      JsonArray preAnimation,
+                      JsonArray poseBones,
+                      JsonObject poseAnimations,
+                      JsonArray poseAnimate,
+                      Path root) throws IOException {
         String resource = id.namespace() + '/' + id.value();
         String prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
         JsonObject textureNames = new JsonObject();
@@ -147,7 +153,7 @@ public final class Bedrock3DItemAttachables {
         return color;
     }
 
-    private static JsonArray select(JsonArray source, String material) {
+    static JsonArray select(JsonArray source, String material) {
         JsonArray cubes = new JsonArray();
         for (JsonElement value : source) {
             JsonObject original = value.getAsJsonObject();

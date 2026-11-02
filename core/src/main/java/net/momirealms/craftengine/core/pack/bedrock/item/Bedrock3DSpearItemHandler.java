@@ -30,12 +30,12 @@ public final class Bedrock3DSpearItemHandler implements BedrockItemHandler {
                 ItemBindingRule rule = selected.hands().get(i);
                 stages.add(geometry.createStage(rule, selected.condition(i)));
             }
-            display = context.blocks().write(entry.bedrockId(), List.of(selected.inventory()), this.models, this.textures, context.root());
+            display = context.itemDisplayBlocks().write(entry.bedrockId(), List.of(selected.inventory()), this.models, this.textures, context.root());
         } catch (UnsupportedOperationException exception) {
             return null;
         }
         Bedrock3DSpearAttachables.write(entry, selected, stages, geometry.materials(), context.root());
-        context.javaSpears().put(entry.bedrockId(), entry);
+        context.playerAnimations().registerSpearUsingJavaPose(entry);
         return List.of(GeneratedItemVariant.block(entry.bedrockId(), selected.registration(), display, true));
     }
 }

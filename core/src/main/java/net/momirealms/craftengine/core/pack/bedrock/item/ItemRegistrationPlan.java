@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -16,5 +17,18 @@ public record ItemRegistrationPlan(List<Entry> entries) {
                         ItemDefinitionBinding definition,
                         ItemRegistrationProperties properties,
                         ResolvedItemBinding source) {
+
+        public ItemBehaviorDescription clientBehavior() {
+            return this.source.clientBehavior();
+        }
+
+        public ItemBehaviorDescription.Use useBehavior() {
+            return this.clientBehavior().use();
+        }
+
+        @Nullable
+        public ItemBehaviorDescription.Ticks chargeDuration() {
+            return this.useBehavior().chargeDuration();
+        }
     }
 }

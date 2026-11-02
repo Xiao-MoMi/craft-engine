@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanW
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemDisplays;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
@@ -48,7 +49,8 @@ public final class BedrockPackGenerator {
             JavaModelResources modelResources = new JavaModelResources(resources);
             // 物品
             BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root);
-            ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems);
+            JsonObject itemDisplays = BedrockItemDisplays.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
+            ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems, itemDisplays);
             // 方块
             Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
             JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root);

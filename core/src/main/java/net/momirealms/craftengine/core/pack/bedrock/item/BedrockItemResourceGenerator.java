@@ -59,21 +59,8 @@ public final class BedrockItemResourceGenerator {
         writeItemAtlas(root, items);
         // 有物品使用展示方块时，写入 blocks.json，并将方块贴图和动画播放配置分别登记到
         // textures/terrain_texture.json 和 textures/flipbook_textures.json。
-        context.blocks().finish(root);
-
-        // 各写入器按需修改同一份玩家控制器，所有物品处理完毕后再写盘。
-        BedrockPlayerAnimationController controller = new BedrockPlayerAnimationController(root);
-        // 弩：按装填时长生成装填和持弩动作，写入 crossbow_player.animation.json 及素材来源声明。
-        context.crossbowPlayerAnimations().write(controller, root);
-        // 矛：为使用 Java 持矛姿态的物品写入 spear_player.animation.json。
-        BedrockSpearPlayerAnimations.write(context.javaSpears(), controller, root);
-        // 盾：为使用 Java 手持姿态的盾写入主手和副手的格挡动作 shield_player.animation.json。
-        BedrockShieldPlayerAnimations.write(context.javaShields(), controller, root);
-        // 弓：所有自定义弓都加入举弓条件，只有使用 Java 手持姿态的弓才需要 bow_player.animation.json。
-        BedrockBowPlayerAnimations.write(context.bows(), context.javaBows(), controller, root);
-        // 挥动：为需要 Java 攻击动作的物品写入 swing_player.animation.json。
-        BedrockSwingPlayerAnimations.write(context.javaSwings(), controller, root);
-        controller.write();
+        context.itemDisplayBlocks().finish(root);
+        context.playerAnimations().write(root);
     }
 
     private static void writeItemAtlas(Path root, Map<Key, List<GeneratedItemVariant>> items) throws IOException {

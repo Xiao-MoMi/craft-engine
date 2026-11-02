@@ -333,6 +333,7 @@ resource_pack.bedrock.font.skipped_provider: "Se omitió el proveedor no compati
 resource_pack.bedrock.font.space: "El avance del carácter «<arg:0>» no es válido"
 resource_pack.bedrock.font.spacing: "No se admite el espaciado vacío o inferior a un píxel en mapas de bits"
 resource_pack.bedrock.item.binding: "No se pudo vincular el objeto <arg:0> (material <arg:1>) para Bedrock: <arg:2>"
+resource_pack.bedrock.item.display_skipped: "Se omitió el modelo de visualización de Bedrock para <arg:0> en el contexto <arg:1>: <arg:2>"
 resource_pack.bedrock.workflow.data_filename: "data_output apunta a «<arg:0>». Usa «<arg:1>» para que el nombre coincida con el del paquete de recursos."
 resource_pack.bedrock.workflow.finished: "Se generó el paquete de recursos de Bedrock en «<arg:0>» y se guardaron los datos de la extensión en «<arg:1>». Tiempo total: <arg:2> ms."
 resource_pack.bedrock.workflow.input_conflict: "Ni pack_output ni data_output pueden apuntar al paquete de recursos Java de entrada «<arg:0>»."

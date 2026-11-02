@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockBreakHandler;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockPlacementHandler;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
+import net.momirealms.craftengine.bedrock.geyser.display.GeyserItemDisplays;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
@@ -28,6 +29,7 @@ import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
+import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.api.event.lifecycle.*;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
@@ -40,9 +42,11 @@ import java.util.*;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
+@SuppressWarnings("UnstableApiUsage")
 public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final GeyserWorldBlocks worldBlocks = new GeyserWorldBlocks();
+    private final GeyserItemDisplays itemDisplays = new GeyserItemDisplays();
     private final Set<String> blockItems = new HashSet<>();
     private GeyserBlockPlacementHandler placementHandler;
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
@@ -88,12 +92,18 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
+        this.itemDisplays.install();
         this.worldBlocks.install();
         GeyserGuiMenus.install(this.logger(), () -> this.packs.text(GeyserTextContext.session()).layout());
         this.placementHandler = GeyserBlockPlacementHandler.install(this.blockItems);
         this.logger().info("Enabled Java placement repeat interval for " + this.blockItems.size() + " CE block item variants.");
         GeyserTextContext.install();
         this.packs.start();
+    }
+
+    @Subscribe
+    public void onFurnitureShulkerSpawn(ServerSpawnEntityEvent event) {
+        GeyserFurnitureHitboxes.onSpawn(event, this.itemDisplays);
     }
 
     @Subscribe
@@ -116,6 +126,7 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.packs.close();
         }
         GeyserTextContext.uninstall();
+        this.itemDisplays.uninstall();
         if (this.placementHandler != null) {
             this.placementHandler.uninstall();
         }
@@ -138,7 +149,22 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
+    public void onDefineEntities(GeyserDefineEntitiesEvent event) {
+        for (Path path : this.packFiles()) {
+            try {
+                JsonObject plan = GeyserRegistrationPlanReader.readPack(path, RegistrationPlanKind.ITEM);
+                if (plan != null) {
+                    this.itemDisplays.define(plan, event);
+                }
+            } catch (IOException | RuntimeException exception) {
+                this.logger().error("Failed to load item display mappings from " + path, exception);
+            }
+        }
+    }
+
+    @Subscribe
     public void onDefineEntityProperties(GeyserDefineEntityPropertiesEvent event) {
+        this.itemDisplays.properties(event);
         if (this.hasDyedItems) {
             this.mainHandDye = GeyserHeldDye.HandProperties.register(event, false);
             this.offHandDye = GeyserHeldDye.HandProperties.register(event, true);

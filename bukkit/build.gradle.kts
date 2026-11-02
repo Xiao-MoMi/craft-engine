@@ -15,6 +15,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project(":bedrock"))
     compileOnly(project(":core"))
     compileOnly(project(":bukkit:legacy"))
     compileOnly(project(":bukkit:proxy"))

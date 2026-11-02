@@ -33,17 +33,16 @@ public final class Bedrock3DBowItemHandler implements BedrockItemHandler {
                 stages.add(geometry.createStage(rule, BedrockItemAttachables.useCondition(rule)));
             }
             // 背包和掉落使用待机 display，手持几何不缩到方块范围。
-            display = context.blocks().write(entry.bedrockId(), List.of(idleRule), this.models, this.textures, context.root());
+            display = context.itemDisplayBlocks().write(entry.bedrockId(), List.of(idleRule), this.models, this.textures, context.root());
         } catch (UnsupportedOperationException exception) {
             return null;
         }
         Bedrock3DBowAttachables.write(entry.bedrockId(), stages, geometry.materials(),
-                entry.source().clientBehavior().use().maximumDuration().value(), context.root());
+                entry.useBehavior().maximumDuration().value(), context.root());
         List<ItemBindingCondition> conditions = idleRule.conditions().stream()
                 .filter(condition -> !BedrockItemAttachables.isUseCondition(condition)).toList();
         ItemBindingRule registration = new ItemBindingRule(conditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
-        context.bows().add(entry.bedrockId());
-        context.javaBows().add(entry.bedrockId());
+        context.playerAnimations().registerBowUsingJavaPose(entry.bedrockId());
         return List.of(GeneratedItemVariant.block(entry.bedrockId(), registration, display, true));
     }
 

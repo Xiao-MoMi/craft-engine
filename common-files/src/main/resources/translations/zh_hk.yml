@@ -333,6 +333,7 @@ resource_pack.bedrock.font.skipped_provider: "字型 <arg:0> 的 providers[<arg:
 resource_pack.bedrock.font.space: "字元「<arg:0>」的前進寬度無效"
 resource_pack.bedrock.font.spacing: "不支援空白或小於一個像素的點陣圖間距"
 resource_pack.bedrock.item.binding: "無法為基岩版綁定物品 <arg:0>（材質 <arg:1>）：<arg:2>"
+resource_pack.bedrock.item.display_skipped: "已略過物品 <arg:0> 在 <arg:1> 情境中的基岩版展示模型：<arg:2>"
 resource_pack.bedrock.workflow.data_filename: "data_output 目前為「<arg:0>」。請使用「<arg:1>」，使擴充資料與資源包的檔案名稱相符。"
 resource_pack.bedrock.workflow.finished: "已生成基岩版資源包「<arg:0>」及擴充資料「<arg:1>」，耗時 <arg:2> 毫秒。"
 resource_pack.bedrock.workflow.input_conflict: "pack_output 和 data_output 都不能指向輸入的 Java 資源包「<arg:0>」。"

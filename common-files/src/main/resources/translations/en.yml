@@ -333,6 +333,7 @@ resource_pack.bedrock.font.skipped_provider: "Skipped unsupported provider <arg:
 resource_pack.bedrock.font.space: "Invalid advance for character '<arg:0>'"
 resource_pack.bedrock.font.spacing: "Empty or subpixel bitmap spacing is unsupported"
 resource_pack.bedrock.item.binding: "Could not bind item <arg:0> (material <arg:1>) for Bedrock: <arg:2>"
+resource_pack.bedrock.item.display_skipped: "Skipped the Bedrock display model for <arg:0> in context <arg:1>: <arg:2>"
 resource_pack.bedrock.workflow.data_filename: "data_output is set to <arg:0>. Use <arg:1> to match the resource pack filename."
 resource_pack.bedrock.workflow.finished: "Generated the Bedrock resource pack at <arg:0> and its extension data at <arg:1> in <arg:2> ms."
 resource_pack.bedrock.workflow.input_conflict: "pack_output and data_output must both differ from the input Java resource pack path <arg:0>."

@@ -64,7 +64,7 @@ public final class Bedrock2DSpearAttachables {
         JsonArray animate = new JsonArray();
         animate.add("held");
         animate.add("hit_controller");
-        JsonArray preAnimation = models.scripts(entry.source().clientBehavior());
+        JsonArray preAnimation = models.scripts(entry.clientBehavior());
         JsonObject scripts = new JsonObject();
         scripts.add("pre_animation", preAnimation);
         scripts.add("animate", animate);

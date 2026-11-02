@@ -44,7 +44,7 @@ final class BedrockTridentItemHandler implements BedrockItemHandler {
         Key id = entry.bedrockId();
         String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
         ImageUtils.writePng(icon, context.root().resolve(texture + ".png"));
-        ItemBehaviorDescription behavior = entry.source().clientBehavior();
+        ItemBehaviorDescription behavior = entry.clientBehavior();
         JsonArray scripts = models.scripts(behavior);
         JsonArray bones = new JsonArray();
         JsonObject animations = new JsonObject();

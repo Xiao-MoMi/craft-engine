@@ -19,7 +19,8 @@ public final class Bedrock3DCrossbowItemHandler implements BedrockItemHandler {
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
         List<BedrockCrossbowStates.State> states = BedrockCrossbowStates.collect(entry);
-        if (states.isEmpty() || entry.source().clientBehavior().use().chargeDuration() == null) {
+        ItemBehaviorDescription.Ticks chargeDuration = entry.chargeDuration();
+        if (states.isEmpty() || chargeDuration == null) {
             return null;
         }
         BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(this.models, this.textures);
@@ -34,7 +35,7 @@ public final class Bedrock3DCrossbowItemHandler implements BedrockItemHandler {
                 prepared.add(stages);
             }
             for (BedrockCrossbowStates.State state : states) {
-                displays.add(context.blocks().write(state.id(), List.of(state.rules().get(state.idle())), this.models, this.textures, context.root()));
+                displays.add(context.itemDisplayBlocks().write(state.id(), List.of(state.rules().get(state.idle())), this.models, this.textures, context.root()));
             }
         } catch (UnsupportedOperationException exception) {
             return null;
@@ -42,9 +43,9 @@ public final class Bedrock3DCrossbowItemHandler implements BedrockItemHandler {
         List<GeneratedItemVariant> variants = new ArrayList<>(states.size());
         for (int i = 0; i < states.size(); i++) {
             BedrockCrossbowStates.State state = states.get(i);
-            Bedrock3DCrossbowAttachables.write(state.id(), prepared.get(i), geometry.materials(), state, entry.source().clientBehavior().use(), context.root());
+            Bedrock3DCrossbowAttachables.write(state.id(), prepared.get(i), geometry.materials(), state, entry.useBehavior(), context.root());
             variants.add(GeneratedItemVariant.block(state.id(), state.registration(), displays.get(i), true));
-            context.crossbowPlayerAnimations().register(state.id(), state.charged(), entry.source().clientBehavior().use().chargeDuration().value(), true);
+            context.playerAnimations().register3DCrossbow(state, chargeDuration.value());
         }
         return variants;
     }

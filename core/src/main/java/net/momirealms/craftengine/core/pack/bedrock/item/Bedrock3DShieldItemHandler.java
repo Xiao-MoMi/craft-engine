@@ -52,7 +52,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
                 }
                 stages.add(geometry.createStage(rule, condition.toString()));
             }
-            display = context.blocks().write(entry.bedrockId(), List.of(idle), this.resources.models(), this.resources.textures(), context.root());
+            display = context.itemDisplayBlocks().write(entry.bedrockId(), List.of(idle), this.resources.models(), this.resources.textures(), context.root());
         } catch (UnsupportedOperationException exception) {
             return null;
         }
@@ -68,7 +68,7 @@ public final class Bedrock3DShieldItemHandler implements BedrockItemHandler {
         Bedrock3DItemAttachables.write(entry.bedrockId(), stages, geometry.materials(), scripts,
                 new JsonArray(), new JsonObject(), new JsonArray(), context.root());
         ItemBindingRule registration = new ItemBindingRule(conditions, idle.target(), idle.transformations(), idle.sourcePath());
-        context.javaShields().add(entry.bedrockId());
+        context.playerAnimations().registerShieldUsingJavaPose(entry.bedrockId());
         return List.of(GeneratedItemVariant.block(entry.bedrockId(), registration, display, true));
     }
 

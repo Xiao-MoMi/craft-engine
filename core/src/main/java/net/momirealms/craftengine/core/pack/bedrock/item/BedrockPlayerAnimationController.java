@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
@@ -18,17 +17,14 @@ final class BedrockPlayerAnimationController {
         this.path = root.resolve(PLAYER_ANIMATION_CONTROLLER);
     }
 
-    JsonObject state(String name) throws IOException {
+    BedrockPlayerAnimationState state(String name) throws IOException {
         if (this.file == null) {
             this.file = Files.exists(this.path) ? GsonHelper.readJsonObjectFromFile(this.path)
                     : GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
         }
-        return this.file.getAsJsonObject("animation_controllers").getAsJsonObject("controller.animation.player.root")
-                .getAsJsonObject("states").getAsJsonObject(name);
-    }
-
-    JsonArray animations(String state) throws IOException {
-        return this.state(state).getAsJsonArray("animations");
+        JsonObject states = this.file.getAsJsonObject("animation_controllers").getAsJsonObject("controller.animation.player.root")
+                .getAsJsonObject("states");
+        return new BedrockPlayerAnimationState(states.getAsJsonObject(name));
     }
 
     void write() throws IOException {

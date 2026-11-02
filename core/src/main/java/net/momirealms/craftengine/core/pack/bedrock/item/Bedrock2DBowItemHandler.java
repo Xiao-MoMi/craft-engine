@@ -58,9 +58,9 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
         for (BedrockItemAttachables.Stage stage : stages) {
             ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));
         }
-        BedrockItemAttachables.writeBow(entry.bedrockId(), stages, idle, entry.source().clientBehavior().use().maximumDuration().value(), context.root());
+        BedrockItemAttachables.writeBow(entry.bedrockId(), stages, idle, entry.useBehavior().maximumDuration().value(), context.root());
         ItemBindingRule registrationRule = new ItemBindingRule(registrationConditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
-        context.bows().add(entry.bedrockId());
+        context.playerAnimations().registerBow(entry.bedrockId());
         return List.of(GeneratedItemVariant.icon(entry.bedrockId(), registrationRule, stages.get(idle).texture(), true));
     }
 }
