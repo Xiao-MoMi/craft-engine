@@ -26,7 +26,7 @@ enum ItemRenderType {
             block |= !rule.transformations().isEmpty();
             switch (rule.target()) {
                 case ItemRenderTarget.Model model -> {
-                    JavaModel resolved = resources.models().resolve(model.model());
+                    JavaModel resolved = model.resolve(resources.models());
                     if (resolved.kind() != GeometryKind.GENERATED) {
                         block = true;
                     } else {

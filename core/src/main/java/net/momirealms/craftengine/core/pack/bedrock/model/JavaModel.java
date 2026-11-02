@@ -29,7 +29,11 @@ public record JavaModel(Key id,
     public record Face(Texture texture, Uv uv, int rotation, int tintIndex) {
     }
 
-    public record Texture(Key sprite, boolean forceTranslucent) {
+    public record Texture(Key sprite, boolean forceTranslucent, boolean skin) {
+
+        public Texture(Key sprite, boolean forceTranslucent) {
+            this(sprite, forceTranslucent, false);
+        }
     }
 
     public record Uv(float u1, float v1, float u2, float v2) {

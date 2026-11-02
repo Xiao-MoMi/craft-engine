@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.definition.Transformation;
 import net.momirealms.craftengine.core.util.VectorUtils;
+import org.joml.Matrix3d;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Quaternionf;
@@ -65,6 +66,7 @@ public final class BedrockModelTransform {
                 .scale(-16 * geometryScale, 16 * geometryScale, 16 * geometryScale);
         Matrix4f matrix = new Matrix4f(coordinates).mul(transformation).mul(new Matrix4f(coordinates).invert());
         Quaternionf rotation = matrix.getUnnormalizedRotation(new Quaternionf());
+        Matrix3d cubeRotation = new Matrix3d();
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
             Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
@@ -80,11 +82,27 @@ public final class BedrockModelTransform {
             }
             matrix.transformPosition(center);
             size.mul(scale);
-            Vector3f angles = new Quaternionf(rotation).mul(local).getEulerAnglesZYX(new Vector3f()).div(RADIANS).mul(-1, 1, -1);
+            Vector3f angles = bedrockAngles(cubeRotation.rotation(rotation.mul(local, local)));
             cube.add("origin", VectorUtils.toJson(new Vector3f(center).sub(new Vector3f(size).mul(0.5f))));
             cube.add("size", VectorUtils.toJson(size));
             cube.add("pivot", VectorUtils.toJson(center));
             cube.add("rotation", VectorUtils.toJson(angles));
         }
+    }
+
+    private static Vector3f bedrockAngles(Matrix3d rotation) {
+        double cosY = Math.hypot(rotation.m00(), rotation.m01());
+        double y = Math.atan2(-rotation.m02(), cosY);
+        double x;
+        double z;
+        if (cosY < 1e-6) {
+            // Y 为 ±90° 时 X、Z 轴重合。固定 Z 为零，从第二列和第三列保留两者合成的旋转。
+            x = Math.atan2(-rotation.m21(), rotation.m11());
+            z = 0;
+        } else {
+            x = Math.atan2(rotation.m12(), rotation.m22());
+            z = Math.atan2(rotation.m01(), rotation.m00());
+        }
+        return new Vector3f((float) -Math.toDegrees(x), (float) Math.toDegrees(y), (float) -Math.toDegrees(z));
     }
 }

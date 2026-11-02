@@ -41,7 +41,7 @@ public final class BedrockItemBlocks {
         JavaModel displayModel = null;
         for (ItemBindingRule rule : models) {
             ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-            JavaModel model = resolver.resolve(target.model());
+            JavaModel model = target.resolve(resolver);
             if (displayModel == null) {
                 displayModel = model;
             } else if (view != null && !Objects.equals(model.display().get(view), displayModel.display().get(view))) {

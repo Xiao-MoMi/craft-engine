@@ -31,7 +31,7 @@ final class BedrockWeaponGeometry {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
         BedrockModelTransform.uniformScale(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-        JavaModel model = this.models.resolve(target.model());
+        JavaModel model = target.resolve(this.models);
         JsonArray cubes = this.geometry(model, target, false);
         // 将规则的局部变换烘焙进几何，模型的手持 display 由挂点骨骼应用。
         BedrockModelTransform.apply(cubes, transformation, 1);

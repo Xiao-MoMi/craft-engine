@@ -37,7 +37,7 @@ public final class BedrockItemIconRenderer {
 
     @Nullable
     public BufferedImage render(ItemRenderTarget.Model target) throws IOException {
-        JavaModel model = this.models.resolve(target.model());
+        JavaModel model = target.resolve(this.models);
         List<Texture> textures = this.resolveIconLayers(model);
         if (textures == null || textures.isEmpty()) {
             return null;

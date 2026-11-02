@@ -35,6 +35,7 @@ public final class JavaPackTextureSource {
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
     private final Map<Key, BufferedImage> paletteImages = new HashMap<>();
+    private final Map<Key, TextureData> headSkins = new HashMap<>();
     private final Map<Key, Map<Key, Int2IntMap>> palettes = new HashMap<>();
     private BufferedImage grassColormap;
 
@@ -93,6 +94,9 @@ public final class JavaPackTextureSource {
     }
 
     public TextureData read(Texture texture, TextureUsage usage) throws IOException {
+        if (texture.skin()) {
+            return this.readHeadSkin(texture.sprite());
+        }
         if (usage == TextureUsage.ITEM && this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11)) {
             TextureData data = this.readFromAtlas(texture, ITEMS);
             if (data != null) {
@@ -104,6 +108,27 @@ public final class JavaPackTextureSource {
             throw new IOException("No successfully loaded sprite " + texture.sprite() + " for " + usage);
         }
         return data;
+    }
+
+    private TextureData readHeadSkin(Key skin) throws IOException {
+        TextureData cached = this.headSkins.get(skin);
+        if (cached != null) {
+            return cached;
+        }
+        try (InputStream input = this.pack.openResource(ResourcePackUtils.texturePath(skin))) {
+            BufferedImage image = input == null ? null : ClientPngReader.read(input);
+            if (image == null || (image.getWidth() != image.getHeight() && image.getWidth() != 2 * image.getHeight())) {
+                throw new UnsupportedOperationException("Missing or invalid player head texture: " + skin);
+            }
+            if (image.getWidth() != image.getHeight()) {
+                BufferedImage square = new BufferedImage(image.getWidth(), image.getWidth(), BufferedImage.TYPE_INT_ARGB);
+                square.setRGB(0, 0, image.getWidth(), image.getHeight(), image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth()), 0, image.getWidth());
+                image = square;
+            }
+            TextureData data = new TextureData(image, null);
+            this.headSkins.put(skin, data);
+            return data;
+        }
     }
 
     @Nullable

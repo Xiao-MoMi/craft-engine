@@ -153,7 +153,7 @@ public final class BedrockItemDisplays {
             }
             JavaModel model;
             try {
-                model = resources.models().resolve(target.model());
+                model = target.resolve(resources.models());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

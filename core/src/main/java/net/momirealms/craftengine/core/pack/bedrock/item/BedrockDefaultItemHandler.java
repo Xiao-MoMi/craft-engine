@@ -62,7 +62,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
             if (!(part.target() instanceof ItemRenderTarget.Model target)) {
                 throw new UnsupportedOperationException("Unsupported composite child: " + part.sourcePath());
             }
-            JavaModel model = this.resources.models().resolve(target.model());
+            JavaModel model = target.resolve(this.resources.models());
             if (!models.isEmpty() && !model.display().equals(models.getFirst().display())) {
                 validateDisplay(models.getFirst(), model, type);
                 separateHandPoses = true;

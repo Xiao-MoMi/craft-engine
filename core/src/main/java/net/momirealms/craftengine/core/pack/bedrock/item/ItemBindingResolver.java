@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class ItemBindingResolver {
+    private static final Key DEFAULT_HEAD_TEXTURE = Key.minecraft("entity/player/wide/steve");
     private final Map<Key, ItemDefinitionBinding> definitions;
     private final ItemBehaviorReader behaviorReader;
     private final ItemRegistrationReader registrationReader;
@@ -35,6 +36,9 @@ public final class ItemBindingResolver {
         ItemDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
         ItemBehaviorDescription behavior = this.behaviorReader.read(clientItem);
         ItemRegistrationProperties properties = this.registrationReader.read(clientItem, behavior);
+        if (definition != null) {
+            definition = definition.withHeadSkin(properties.headTexture() != null ? properties.headTexture() : DEFAULT_HEAD_TEXTURE);
+        }
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),

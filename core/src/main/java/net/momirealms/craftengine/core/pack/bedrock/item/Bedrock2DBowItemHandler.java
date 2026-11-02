@@ -52,7 +52,7 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
                 return null;
             }
             String texture = "textures/" + entry.bedrockId().namespace() + '/' + entry.bedrockId().value() + "/stage_" + i;
-            stages.add(new BedrockItemAttachables.Stage(this.models.resolve(target.model()), image, texture, BedrockItemAttachables.useCondition(rule), transformation));
+            stages.add(new BedrockItemAttachables.Stage(target.resolve(this.models), image, texture, BedrockItemAttachables.useCondition(rule), transformation));
         }
         // 全部阶段准备好以后才写入资源和单条注册映射，避免生成半套弓。
         for (BedrockItemAttachables.Stage stage : stages) {

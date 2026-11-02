@@ -35,7 +35,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         if (!rule.transformations().isEmpty() || !(rule.target() instanceof ItemRenderTarget.Model target)) {
             return false;
         }
-        JavaModel model = models.resolve(target.model());
+        JavaModel model = target.resolve(models);
         if (model.kind() != JavaModel.GeometryKind.GENERATED) {
             return false;
         }

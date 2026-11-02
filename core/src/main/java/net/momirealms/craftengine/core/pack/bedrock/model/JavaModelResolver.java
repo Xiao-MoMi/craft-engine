@@ -46,6 +46,10 @@ public final class JavaModelResolver {
         return this.resolve(model, true);
     }
 
+    public JavaModel resolvePlayerHead(Key base, Key skin) throws IOException {
+        return JavaPlayerHeadModel.create(this.resolve(base), skin, this.pack.version().isBelow(MinecraftVersion.V26_1));
+    }
+
     private JavaModel resolve(Key model, boolean vanilla) throws IOException {
         InheritedModel inherited = this.inherit(model, vanilla, new HashSet<>(4));
         List<Element> elements = new ArrayList<>(inherited.elements().size());

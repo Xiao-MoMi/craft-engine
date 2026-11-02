@@ -24,7 +24,7 @@ final class BedrockDyedItem {
         if (target.tints().stream().noneMatch(tint -> textures.dyeColor(tint) != null)) {
             return null;
         }
-        JavaModel model = models.resolve(target.model());
+        JavaModel model = target.resolve(models);
         if (model.kind() != JavaModel.GeometryKind.ELEMENTS) {
             return null;
         }

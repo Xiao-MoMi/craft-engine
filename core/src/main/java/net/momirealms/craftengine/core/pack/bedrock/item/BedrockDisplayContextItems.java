@@ -28,7 +28,8 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
 
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
-        if (!DisplayContextVariants.usesDisplayContext(entry)) {
+        if (!DisplayContextVariants.usesDisplayContext(entry)
+                && entry.definition().rules().stream().noneMatch(rule -> rule.target().hasPlayerHead())) {
             return null;
         }
         List<DisplayContextVariants.Variant> variants = DisplayContextVariants.collect(entry);

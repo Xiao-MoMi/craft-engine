@@ -66,6 +66,8 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
             }
             components.put(entry.getKey(), effective == null ? JsonNull.INSTANCE : effective);
         }
-        return new ItemRegistrationProperties(components);
+        JsonElement profile = DataComponentTypes.PROFILE == null ? null : item.getComponentAsJson(DataComponentTypes.PROFILE);
+        JsonElement texture = profile != null && profile.isJsonObject() ? profile.getAsJsonObject().get("texture") : null;
+        return new ItemRegistrationProperties(components, texture != null && texture.isJsonPrimitive() ? Key.of(texture.getAsString()) : null);
     }
 }
