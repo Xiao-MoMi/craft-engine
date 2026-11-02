@@ -16,7 +16,6 @@ import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGene
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ZipUtils;
 
@@ -39,9 +38,6 @@ public final class BedrockPackGenerator {
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
         Files.createDirectories(packDestination.getParent());
         Files.createDirectories(dataDestination.getParent());
-        if (plan.hasErrors()) {
-            throw new IOException(TranslationManager.message("resource_pack.bedrock.item.failed"));
-        }
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();

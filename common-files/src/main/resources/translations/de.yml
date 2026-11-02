@@ -332,7 +332,6 @@ resource_pack.bedrock.font.skipped_provider: "Schrift <arg:0>: Der nicht unterst
 resource_pack.bedrock.font.space: "Ungültige Vorschubbreite für Zeichen „<arg:0>“"
 resource_pack.bedrock.font.spacing: "Leere oder unterpixelgroße Bitmap-Abstände werden nicht unterstützt"
 resource_pack.bedrock.item.binding: "Bedrock-Bindung für Item <arg:0> (Material <arg:1>) fehlgeschlagen: <arg:2>"
-resource_pack.bedrock.item.failed: "Die Erstellung des Bedrock-Pakets wurde wegen fehlgeschlagener Item-Bindungen abgebrochen. Siehe die vorherigen Warnungen."
 resource_pack.bedrock.workflow.data_filename: "data_output ist auf „<arg:0>“ gesetzt. Verwende „<arg:1>“, damit der Dateiname zum Ressourcenpaket passt."
 resource_pack.bedrock.workflow.finished: "Das Bedrock-Ressourcenpaket wurde unter „<arg:0>“ und die Erweiterungsdaten unter „<arg:1>“ erstellt. Dauer: <arg:2> ms."
 resource_pack.bedrock.workflow.input_conflict: "Weder pack_output noch data_output darf auf das Java-Eingabepaket „<arg:0>“ verweisen."

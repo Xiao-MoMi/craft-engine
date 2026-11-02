@@ -4,7 +4,7 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.util.List;
 
-public record ItemRegistrationPlan(List<Entry> entries, boolean hasErrors) {
+public record ItemRegistrationPlan(List<Entry> entries) {
 
     public ItemRegistrationPlan {
         entries = List.copyOf(entries);

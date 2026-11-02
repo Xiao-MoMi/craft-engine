@@ -28,7 +28,6 @@ public final class ItemRegistrationPlanGenerator {
         Map<Key, ItemDefinitionBinding> definitions = ItemBindingCompiler.compile(pack);
         ItemBindingResolver resolver = new ItemBindingResolver(definitions, behaviorReader, registrationReader);
         List<Entry> entries = new ObjectArrayList<>(items.size());
-        boolean hasErrors = false;
         List<ItemDefinition> orderedItems = new ObjectArrayList<>(items);
         orderedItems.sort(Comparator.comparing(item -> item.id().asString()));
         for (ItemDefinition definition : orderedItems) {
@@ -40,11 +39,10 @@ public final class ItemRegistrationPlanGenerator {
                 }
                 entries.add(createEntry(binding));
             } catch (Throwable t) {
-                hasErrors = true;
                 TranslationManager.warn("resource_pack.bedrock.item.binding", definition.id().asString(), definition.material().asString(), t.toString());
             }
         }
-        return new ItemRegistrationPlan(entries, hasErrors);
+        return new ItemRegistrationPlan(entries);
     }
 
     private static Entry createEntry(ResolvedItemBinding binding) {
