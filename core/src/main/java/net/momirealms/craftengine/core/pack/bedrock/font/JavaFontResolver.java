@@ -20,7 +20,6 @@ import java.util.*;
 public final class JavaFontResolver {
     private final JavaResourcePack resources;
     private final Map<String, BufferedImage> images = new HashMap<>();
-    private final Map<String, JavaUnihexFont> unihexFonts = new HashMap<>();
     private final Map<Key, Int2ObjectMap<Glyph>> resolved = new HashMap<>();
     private final Set<Key> resolving = new HashSet<>();
     private int circularReferences;
@@ -49,7 +48,6 @@ public final class JavaFontResolver {
         try {
             Int2ObjectMap<Glyph> glyphs = new Int2ObjectOpenHashMap<>();
             // 高优先级包先提供字形，缺少的字符继续向低优先级包查找
-            definitions:
             for (JavaResourcePack.FontResource resource : definitions) {
                 JsonArray providers = resource.definition().getAsJsonArray("providers");
                 for (int index = 0; index < providers.size(); index++) {
@@ -58,11 +56,14 @@ public final class JavaFontResolver {
                         loaded = this.loadProvider(providers.get(index).getAsJsonObject(), resource.custom(), font, index);
                     } catch (IOException | RuntimeException exception) {
                         String source = resource.custom() ? "resource_pack" : "vanilla";
-                        TranslationManager.warn("resource_pack.bedrock.font.provider", font.asString(), source, Integer.toString(index), Objects.toString(exception.getLocalizedMessage(), exception.getClass().getSimpleName()));
+                        TranslationManager.warn(
+                                "resource_pack.bedrock.font.provider",
+                                font.asString(),
+                                source,
+                                Integer.toString(index),
+                                Objects.toString(exception.getLocalizedMessage(), exception.getClass().getSimpleName())
+                        );
                         continue;
-                    }
-                    if (loaded == null) {
-                        break definitions;
                     }
                     Int2ObjectMaps.fastForEach(loaded, entry -> glyphs.putIfAbsent(entry.getIntKey(), entry.getValue()));
                 }
@@ -77,7 +78,6 @@ public final class JavaFontResolver {
         }
     }
 
-    @Nullable
     private Int2ObjectMap<Glyph> loadProvider(JsonObject provider, boolean custom, Key font, int index) throws IOException {
         if (provider.has("filter") && provider.getAsJsonObject("filter").entrySet().stream().anyMatch(entry -> entry.getValue().getAsBoolean())) {
             return Int2ObjectMaps.emptyMap();
@@ -110,34 +110,12 @@ public final class JavaFontResolver {
                 }
                 yield spaces;
             }
-            case "unihex" -> {
-                Key file = Key.of(provider.get("hex_file").getAsString());
-                String path = "assets/" + file.namespace() + "/" + file.value();
-                JavaUnihexFont unihex = this.unihexFonts.get(path);
-                if (unihex == null) {
-                    InputStream input = this.resources.openResource(path);
-                    if (input == null) {
-                        throw new IOException(TranslationManager.message("resource_pack.bedrock.font.missing_file", path));
-                    }
-                    try {
-                        unihex = new JavaUnihexFont(input);
-                    } catch (IOException exception) {
-                        throw new IOException(path + ": " + exception.getMessage(), exception);
-                    }
-                    this.unihexFonts.put(path, unihex);
-                }
-                if (custom || this.resources.hasCustomResource(path)) {
-                    TranslationManager.warn("resource_pack.bedrock.font.unsupported", font.asString(), Integer.toString(index), "unihex (" + path + ")");
-                    yield null;
-                }
-                yield unihex.glyphs(provider.getAsJsonArray("size_overrides"));
-            }
+            // TODO TTF/UNIHEX
             default -> {
-                // Unknown coverage must not expose a lower-priority bitmap as an effective glyph.
                 if (custom) {
-                    TranslationManager.warn("resource_pack.bedrock.font.unsupported", font.asString(), Integer.toString(index), type.asString());
+                    TranslationManager.warn("resource_pack.bedrock.font.skipped_provider", font.asString(), Integer.toString(index), type.asString());
                 }
-                yield null;
+                yield Int2ObjectMaps.emptyMap();
             }
         };
     }

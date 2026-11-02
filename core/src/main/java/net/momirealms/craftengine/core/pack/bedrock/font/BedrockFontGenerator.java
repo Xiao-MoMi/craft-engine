@@ -73,9 +73,7 @@ public final class BedrockFontGenerator {
                 }
                 String key = Integer.toHexString(codepoint);
                 if (glyph.nativeText()) {
-                    // 原版 unihex 仅有 Java 度量，不能作为基岩实际字宽。
-                    int renderedAdvance = glyph.image() == null ? -1 : (int) glyph.advance();
-                    layout.add(key, this.layoutGlyph(codepoint, glyph.advance(), renderedAdvance, 0));
+                    layout.add(key, this.layoutGlyph(codepoint, glyph.advance(), (int) glyph.advance(), 0));
                     continue;
                 }
                 if (glyph.advanceOnly()) {

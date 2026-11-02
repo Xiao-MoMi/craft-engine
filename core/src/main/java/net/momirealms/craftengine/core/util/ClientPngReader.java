@@ -25,8 +25,6 @@ public final class ClientPngReader {
         try {
             image = PngOptimizer.readPng(new ByteArrayInputStream(png));
         } catch (IOException exception) {
-            // The client's PNG decoder tolerates the CRC/Adler corruption used by pack protection.
-            // Restore only checksums in our private copy, leaving pixel data and the source ZIP untouched.
             restoreChecksums(png);
             image = PngOptimizer.readPng(new ByteArrayInputStream(png));
         }
