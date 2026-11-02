@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FLIPBOOK_TEXTURES;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.TERRAIN_TEXTURE_ATLAS;
 
 public final class BedrockTerrainAtlas {
     private JsonObject terrain = new JsonObject();

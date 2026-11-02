@@ -7,9 +7,9 @@ import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 
-import java.util.Map;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 public final class GeyserTextContext {

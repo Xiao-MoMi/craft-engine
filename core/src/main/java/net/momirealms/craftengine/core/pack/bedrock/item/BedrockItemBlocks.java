@@ -4,12 +4,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
+import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
+import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
@@ -18,7 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockItemBlocks {

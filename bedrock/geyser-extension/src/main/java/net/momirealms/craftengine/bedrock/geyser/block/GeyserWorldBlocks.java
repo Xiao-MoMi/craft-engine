@@ -11,18 +11,14 @@ import net.momirealms.craftengine.bedrock.geyser.proxy.GeyserBootstrapProxy;
 import org.geysermc.geyser.GeyserBootstrap;
 import org.geysermc.geyser.GeyserImpl;
 import org.geysermc.geyser.level.WorldManager;
-import org.geysermc.geyser.registry.BlockRegistries;
 import org.geysermc.geyser.level.physics.BoundingBox;
+import org.geysermc.geyser.registry.BlockRegistries;
 import org.geysermc.geyser.translator.collision.BlockCollision;
 import org.geysermc.geyser.translator.collision.OtherCollision;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class GeyserWorldBlocks {
     private final List<JsonObject> definitions = new ArrayList<>();

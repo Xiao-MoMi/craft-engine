@@ -13,11 +13,7 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class JavaBlockModelResolver {
     private final JavaResourcePack resources;

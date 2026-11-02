@@ -4,18 +4,10 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.geysermc.geyser.api.block.custom.CustomBlockData;
-import org.geysermc.geyser.api.block.custom.component.CustomBlockComponents;
-import org.geysermc.geyser.api.block.custom.component.BoxComponent;
-import org.geysermc.geyser.api.block.custom.component.GeometryComponent;
-import org.geysermc.geyser.api.block.custom.component.MaterialInstance;
-import org.geysermc.geyser.api.block.custom.component.PlacementConditions;
+import org.geysermc.geyser.api.block.custom.component.*;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 

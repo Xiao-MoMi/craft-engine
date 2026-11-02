@@ -6,7 +6,10 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
-import net.momirealms.craftengine.core.util.*;
+import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
+import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Vector3f;
 
 import java.io.IOException;
