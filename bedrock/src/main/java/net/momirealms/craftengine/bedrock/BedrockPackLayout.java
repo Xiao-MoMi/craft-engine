@@ -22,6 +22,7 @@ public final class BedrockPackLayout {
     public static final String ENTRIES = "entries";
 
     public static final String BEDROCK_IDENTIFIER = "bedrock_identifier";
+    public static final String HEAD_IDENTIFIER = "head_identifier";
     public static final String ITEM_TYPE = "item_type";
     public static final String MODEL = "model";
     public static final String COMPONENTS = "components";

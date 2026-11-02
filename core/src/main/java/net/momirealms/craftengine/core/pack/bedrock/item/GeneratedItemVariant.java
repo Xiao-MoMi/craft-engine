@@ -1,11 +1,31 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
-public record GeneratedItemVariant(Key id, ItemBindingRule rule, @Nullable String iconTexture,
-                                   @Nullable BedrockItemBlocks.DisplayBlock displayBlock, boolean attachable,
-                                   @Nullable Integer dyeColor, @Nullable String unsupportedReason) {
+import java.util.Map;
+
+public record GeneratedItemVariant(Key id,
+                                   ItemBindingRule rule,
+                                   @Nullable String iconTexture,
+                                   @Nullable BedrockItemBlocks.DisplayBlock displayBlock,
+                                   boolean attachable,
+                                   @Nullable Integer dyeColor,
+                                   @Nullable String unsupportedReason,
+                                   Map<ItemDisplayContext, ItemBindingRule> displayModels,
+                                   @Nullable ItemDisplayContext worldView,
+                                   @Nullable Key headId) {
+
+    public GeneratedItemVariant(Key id,
+                                ItemBindingRule rule,
+                                @Nullable String iconTexture,
+                                @Nullable BedrockItemBlocks.DisplayBlock displayBlock,
+                                boolean attachable,
+                                @Nullable Integer dyeColor,
+                                @Nullable String unsupportedReason) {
+        this(id, rule, iconTexture, displayBlock, attachable, dyeColor, unsupportedReason, Map.of(), null, null);
+    }
 
     static GeneratedItemVariant icon(Key id, ItemBindingRule rule, String texture, boolean attachable) {
         return new GeneratedItemVariant(id, rule, texture, null, attachable, null, null);

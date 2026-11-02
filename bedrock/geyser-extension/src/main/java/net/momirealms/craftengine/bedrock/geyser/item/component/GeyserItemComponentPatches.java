@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.item.component;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import org.cloudburstmc.nbt.NbtMap;
 import org.geysermc.geyser.registry.type.ItemMappings;
@@ -78,6 +79,10 @@ public final class GeyserItemComponentPatches {
             return first;
         }
         return (data, mappings) -> second.apply(first.apply(data, mappings), mappings);
+    }
+
+    public static GeyserItemComponentPatch withoutWearable(@Nullable GeyserItemComponentPatch patch) {
+        return combine(patch, GeyserItemComponents.equippable(JsonNull.INSTANCE));
     }
 
     @Nullable

@@ -79,6 +79,12 @@ public final class ItemRegistrationPlanWriter {
     private static JsonObject variantToJson(GeneratedItemVariant variant) {
         JsonObject json = new JsonObject();
         json.addProperty(BEDROCK_IDENTIFIER, variant.id().asString());
+        if (variant.headId() != null) {
+            json.addProperty(HEAD_IDENTIFIER, variant.headId().asString());
+        }
+        if (variant.worldView() != null) {
+            json.addProperty("world_view", variant.worldView().name());
+        }
         List<ItemBindingCondition> conditions = variant.rule().conditions();
         JsonArray matches = new JsonArray(conditions.size());
         for (ItemBindingCondition condition : conditions) {

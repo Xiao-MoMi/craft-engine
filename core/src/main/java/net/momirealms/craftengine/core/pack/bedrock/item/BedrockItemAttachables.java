@@ -33,7 +33,7 @@ public final class BedrockItemAttachables {
     private static final String X = "ce_display_x";
     private static final String Y = "ce_display_y";
     private static final String Z = "ce_display_z";
-    private static final View[] VIEWS = View.values();
+    private static final View[] VIEWS = { View.FIRST_RIGHT, View.FIRST_LEFT, View.THIRD_RIGHT, View.THIRD_LEFT };
 
     private BedrockItemAttachables() {
     }
@@ -248,7 +248,17 @@ public final class BedrockItemAttachables {
         return displayGeometry(model, cubes, geometryId, modelRadius, "");
     }
 
-    private static JsonObject displayGeometry(JavaModel model, JsonArray cubes, String geometryId, float modelRadius, String bonePrefix) {
+    static void contextAnimation(View view, JavaModel model, String animationPrefix, String bonePrefix, String active, JsonObject animations, JsonObject names, JsonArray animate) {
+        String alias = bonePrefix + view.animation;
+        String name = animationPrefix + alias;
+        animations.add(name, animation(view, model.display().getOrDefault(view.position, JavaModel.Transform.IDENTITY), bonePrefix));
+        names.addProperty(alias, name);
+        JsonObject condition = new JsonObject();
+        condition.addProperty(alias, active);
+        animate.add(condition);
+    }
+
+    static JsonObject displayGeometry(JavaModel model, JsonArray cubes, String geometryId, float modelRadius, String bonePrefix) {
         JsonObject binding = bone(bonePrefix + BINDING, null);
         // 绑定骨骼保持恒等变换，避免多材质绘制时在缓存矩阵上重复叠加姿态。
         binding.add("pivot", VectorUtils.toJson(0, 24, 0));
@@ -267,7 +277,7 @@ public final class BedrockItemAttachables {
         description.addProperty("identifier", geometryId);
         description.addProperty("texture_width", 16);
         description.addProperty("texture_height", 16);
-        expandDisplayBounds(description, model, modelRadius);
+        expandDisplayBounds(description, model, modelRadius, bonePrefix.isEmpty() ? VIEWS : View.values());
         description.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);
@@ -276,8 +286,12 @@ public final class BedrockItemAttachables {
     }
 
     static void expandDisplayBounds(JsonObject description, JavaModel model, float modelRadius) {
+        expandDisplayBounds(description, model, modelRadius, VIEWS);
+    }
+
+    private static void expandDisplayBounds(JsonObject description, JavaModel model, float modelRadius, View[] views) {
         float radius = 0;
-        for (View view : VIEWS) {
+        for (View view : views) {
             JavaModel.Transform source = model.display().getOrDefault(view.position, JavaModel.Transform.IDENTITY);
             float scale = Math.max(Math.abs(source.scale().x), Math.max(Math.abs(source.scale().y), Math.abs(source.scale().z)));
             radius = Math.max(radius, (modelRadius * scale + source.translation().length()) * view.pose.scale + view.pose.translation.length() + 8);
@@ -446,17 +460,18 @@ public final class BedrockItemAttachables {
         }
     }
 
-    private enum View {
+    enum View {
         FIRST_RIGHT(DisplayPosition.FIRSTPERSON_RIGHTHAND, false, SlotPose.firstPerson(false), "firstperson_righthand", "context.is_first_person && context.item_slot == 'main_hand'"),
         FIRST_LEFT(DisplayPosition.FIRSTPERSON_LEFTHAND, true, SlotPose.firstPerson(true), "firstperson_lefthand", "context.is_first_person && context.item_slot == 'off_hand'"),
         THIRD_RIGHT(DisplayPosition.THIRDPERSON_RIGHTHAND, false, SlotPose.THIRD_PERSON, "thirdperson_righthand", "!context.is_first_person && context.item_slot == 'main_hand'"),
-        THIRD_LEFT(DisplayPosition.THIRDPERSON_LEFTHAND, true, SlotPose.THIRD_PERSON, "thirdperson_lefthand", "!context.is_first_person && context.item_slot == 'off_hand'");
+        THIRD_LEFT(DisplayPosition.THIRDPERSON_LEFTHAND, true, SlotPose.THIRD_PERSON, "thirdperson_lefthand", "!context.is_first_person && context.item_slot == 'off_hand'"),
+        HEAD(DisplayPosition.HEAD, false, new SlotPose(new Vector3f(0, 180, 0), new Vector3f(0, 16, 0), 0.625f), "head", "context.item_slot == 'head'");
 
         private final DisplayPosition position;
         private final boolean leftHand;
         private final SlotPose pose;
         private final String animation;
-        private final String condition;
+        final String condition;
 
         View(DisplayPosition position, boolean leftHand, SlotPose pose, String animation, String condition) {
             this.position = position;

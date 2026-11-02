@@ -14,6 +14,7 @@ import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserWorldItemViews;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
@@ -47,9 +48,11 @@ public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final GeyserWorldBlocks worldBlocks = new GeyserWorldBlocks();
     private final GeyserItemDisplays itemDisplays = new GeyserItemDisplays();
+    private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
     private final Set<String> blockItems = new HashSet<>();
     private GeyserBlockPlacementHandler placementHandler;
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
+    private final Map<String, String> headIdentifiers = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
     private GeyserHeldDye.HandProperties mainHandDye;
     private GeyserHeldDye.HandProperties offHandDye;
@@ -93,6 +96,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
         this.itemDisplays.install();
+        this.worldItemViews.install();
         this.worldBlocks.install();
         GeyserGuiMenus.install(this.logger(), () -> this.packs.text(GeyserTextContext.session()).layout());
         this.placementHandler = GeyserBlockPlacementHandler.install(this.blockItems);
@@ -126,6 +130,7 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.packs.close();
         }
         GeyserTextContext.uninstall();
+        this.worldItemViews.uninstall();
         this.itemDisplays.uninstall();
         if (this.placementHandler != null) {
             this.placementHandler.uninstall();
@@ -174,6 +179,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         this.contextualItems.clear();
+        this.headIdentifiers.clear();
         this.blockItems.clear();
         this.hasDyedItems = false;
         Map<String, GeyserItemComponentPatch> componentPatches = new HashMap<>();
@@ -266,8 +272,14 @@ public final class CraftEngineGeyserExtension implements Extension {
                     if (placesBlock) {
                         this.blockItems.add(definition.bedrockIdentifier().toString());
                     }
-                    if (converted.componentPatch() != null) {
-                        componentPatches.put(definition.bedrockIdentifier().toString(), converted.componentPatch());
+                    String id = definition.bedrockIdentifier().toString();
+                    GeyserItemComponentPatch patch = converted.componentPatch();
+                    if (converted.headIdentifiers().containsKey(id)) {
+                        patch = GeyserItemComponentPatches.withoutWearable(patch);
+                        this.headIdentifiers.put(id, converted.headIdentifiers().get(id));
+                    }
+                    if (patch != null) {
+                        componentPatches.put(id, patch);
                     }
                 }
                 if (converted.contextual()) {
@@ -299,8 +311,8 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (!this.componentPatches.isEmpty()) {
             GeyserItemComponentPatcher.install((GeyserSession) event.connection(), this.componentPatches);
         }
-        if (!this.contextualItems.isEmpty()) {
-            GeyserItemRuntime.install((GeyserSession) event.connection(), this.contextualItems);
+        if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty()) {
+            GeyserItemRuntime.install((GeyserSession) event.connection(), this.contextualItems, this.headIdentifiers);
         }
     }
 }

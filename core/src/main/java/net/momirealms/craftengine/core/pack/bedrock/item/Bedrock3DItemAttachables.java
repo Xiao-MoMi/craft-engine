@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -36,6 +37,7 @@ public final class Bedrock3DItemAttachables {
     private final JsonObject renderControllers = new JsonObject();
     private final JsonArray activeControllers = new JsonArray();
     private final JsonArray animate = new JsonArray();
+    private List<BedrockItemAttachables.View> contextViews;
 
     private Bedrock3DItemAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
         this.id = id;
@@ -67,8 +69,37 @@ public final class Bedrock3DItemAttachables {
         for (int layer = 0; layer < this.materials.size(); layer++) {
             this.writeMaterialLayer(layer, this.materials.get(layer));
         }
+        if (this.contextViews != null && this.activeControllers.isEmpty()) {
+            // An item can have a GUI icon and an explicit empty model in every equipment slot.
+            String mesh = "geometry." + this.prefix + ".empty";
+            JsonObject geometry = new JsonObject();
+            geometry.add("description", GsonHelper.createObject("identifier", new JsonPrimitive(mesh)));
+            JsonArray bones = new JsonArray();
+            bones.add(GsonHelper.createObject("name", new JsonPrimitive("root")));
+            geometry.add("bones", bones);
+            this.geometries.add(geometry);
+            this.geometryNames.addProperty("empty", mesh);
+            JsonObject controller = new JsonObject();
+            controller.addProperty("geometry", "Geometry.empty");
+            String name = "controller.render." + this.prefix + ".empty";
+            this.renderControllers.add(name, controller);
+            this.activeControllers.add(name);
+        }
         writeFile("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
         writeFile("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
+    }
+
+    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<BedrockItemAttachables.View> views, List<Material> materials, JsonArray preAnimation, Path root) throws IOException {
+        Bedrock3DItemAttachables writer = new Bedrock3DItemAttachables(id, root, stages, materials, new JsonArray());
+        writer.contextViews = views;
+        writer.writeMaterialLayers();
+        writer.writeAnimations(new JsonObject(), new JsonArray());
+        JsonObject attachable = writer.writeAttachable(preAnimation);
+        if (headId != null) {
+            // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
+            attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
+            writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
+        }
     }
 
     private void writeMaterialLayer(int layer, Material material) throws IOException {
@@ -93,11 +124,18 @@ public final class Bedrock3DItemAttachables {
                 continue;
             }
             String alias = "stage_" + index + '_' + layerName;
-            this.registerGeometry(alias, cubes, stage.model(), layerGeometries);
+            if (this.contextViews != null) {
+                // Composite parts can have different display transforms and be visible simultaneously.
+                String geometryId = "geometry." + this.prefix + '.' + alias;
+                this.geometries.add(BedrockItemAttachables.displayGeometry(stage.model(), cubes, geometryId, modelRadius(cubes), "p" + index + "_"));
+                this.geometryNames.addProperty(alias, geometryId);
+            } else {
+                this.registerGeometry(alias, cubes, stage.model(), layerGeometries);
+            }
             String controllerId = "controller.render." + this.prefix + '.' + alias;
             this.renderControllers.add(controllerId, renderController(alias, material.data().animation(), frames, defaultFrames));
             JsonObject active = new JsonObject();
-            active.addProperty(controllerId, "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + index);
+            active.addProperty(controllerId, this.contextViews != null ? stage.condition() : "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + index);
             this.activeControllers.add(active);
         }
     }
@@ -154,7 +192,12 @@ public final class Bedrock3DItemAttachables {
         String animationPrefix = "animation." + this.prefix + '.';
         // 先登记各阶段的 Java display 变换，再把拉弓、格挡等物品专属动作追加到播放列表。
         for (int index = 0; index < this.stages.size(); index++) {
-            BedrockItemAttachables.displayAnimations(this.stages.get(index).model(), animationPrefix, index, animations, this.animationNames, this.animate);
+            Stage stage = this.stages.get(index);
+            if (this.contextViews != null) {
+                BedrockItemAttachables.contextAnimation(this.contextViews.get(index), stage.model(), animationPrefix, "p" + index + "_", stage.condition(), animations, this.animationNames, this.animate);
+            } else {
+                BedrockItemAttachables.displayAnimations(stage.model(), animationPrefix, index, animations, this.animationNames, this.animate);
+            }
         }
         for (Map.Entry<String, JsonElement> pose : poseAnimations.entrySet()) {
             String name = animationPrefix + pose.getKey();
@@ -165,7 +208,7 @@ public final class Bedrock3DItemAttachables {
         writeFile("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
     }
 
-    private void writeAttachable(JsonArray preAnimation) throws IOException {
+    private JsonObject writeAttachable(JsonArray preAnimation) throws IOException {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", this.id.asString());
         JsonObject renderMaterials = new JsonObject();
@@ -186,6 +229,7 @@ public final class Bedrock3DItemAttachables {
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);
         writeFile("1.10.0", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
+        return attachable;
     }
 
     private static JsonObject handColor() {

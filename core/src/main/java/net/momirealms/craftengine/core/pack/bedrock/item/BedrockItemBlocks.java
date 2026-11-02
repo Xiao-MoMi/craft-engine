@@ -29,6 +29,11 @@ public final class BedrockItemBlocks {
     private final JsonObject blocks = new JsonObject();
 
     public DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root) throws IOException {
+        return this.write(item, models, resolver, textures, root, null);
+    }
+
+    DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root,
+                       DisplayPosition view) throws IOException {
         String name = item.namespace() + '/' + item.value();
         Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
         List<TextureData> images = new ArrayList<>();
@@ -39,6 +44,8 @@ public final class BedrockItemBlocks {
             JavaModel model = resolver.resolve(target.model());
             if (displayModel == null) {
                 displayModel = model;
+            } else if (view != null && !Objects.equals(model.display().get(view), displayModel.display().get(view))) {
+                throw new UnsupportedOperationException("Composite parts have different " + view + " transforms");
             }
             Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
             BedrockModelTransform.uniformScale(transformation);
@@ -70,7 +77,7 @@ public final class BedrockItemBlocks {
         }
         // 合并后统一缩小，避免各子模型分别适配尺寸而改变相对位置。
         float geometryScale = BedrockElementGeometry.fit(cubes).scale();
-        JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, geometryScale);
+        JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, geometryScale, view);
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
         for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
@@ -139,10 +146,10 @@ public final class BedrockItemBlocks {
         return new DisplayBlock(name, identifier, materials);
     }
 
-    private JsonObject displayTransforms(JavaModel model, float geometryScale) {
+    private JsonObject displayTransforms(JavaModel model, float geometryScale, DisplayPosition view) {
         JsonObject transforms = new JsonObject();
         for (DisplayPosition position : DisplayPosition.values()) {
-            if (position == DisplayPosition.ON_SHELF) {
+            if (view == null ? position == DisplayPosition.ON_SHELF : position != view) {
                 continue;
             }
             JavaModel.Transform transform = model.display().getOrDefault(position, JavaModel.Transform.IDENTITY);
@@ -159,7 +166,8 @@ public final class BedrockItemBlocks {
             if (position == DisplayPosition.GUI) {
                 display.addProperty("fit_to_frame", false);
             }
-            transforms.add(position.name().toLowerCase(Locale.ROOT), display);
+            // In geometry 1.21.0 the shelf inherits fixed. Its visual-only item can use that slot independently.
+            transforms.add(position == DisplayPosition.ON_SHELF ? "fixed" : position.name().toLowerCase(Locale.ROOT), display);
         }
         return transforms;
     }

@@ -17,6 +17,7 @@ import org.geysermc.geyser.api.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,8 @@ public final class GeyserItemRegistrationAdapter {
     public ConvertedItem convert(JsonObject entry, Map<String, String> displayBlocks) {
         JsonArray variants = entry.getAsJsonArray(VARIANTS);
         List<CustomItemDefinition> definitions = new ArrayList<>(variants.size());
+        Map<String, String> headIdentifiers = new HashMap<>();
+        int priority = variants.size();
         // 先转换整组；任一条件不受支持时跳过整组，避免 fallback 错误覆盖。
         for (JsonElement branch : variants) {
             JsonObject variant = branch.getAsJsonObject();
@@ -46,12 +49,19 @@ public final class GeyserItemRegistrationAdapter {
             if (!resources.has(GENERATED) || !resources.get(GENERATED).getAsBoolean()) {
                 throw new UnsupportedOperationException("A model branch has no generated render resource");
             }
-            definitions.add(this.convertVariant(entry, variant, displayBlocks, variants.size() - definitions.size()));
+            Identifier id = Identifier.of(variant.get(BEDROCK_IDENTIFIER).getAsString());
+            definitions.add(this.convertVariant(entry, variant, id, id, displayBlocks, priority--));
+            if (variant.has(HEAD_IDENTIFIER)) {
+                Identifier head = Identifier.of(variant.get(HEAD_IDENTIFIER).getAsString());
+                definitions.add(this.convertVariant(entry, variant, head, id, displayBlocks, 0));
+                headIdentifiers.put(id.toString(), head.toString());
+            }
         }
         return new ConvertedItem(
                 definitions,
                 definitions.stream().anyMatch(definition -> definition.predicates().stream().anyMatch(GeyserItemPredicates::requiresSession)),
-                GeyserItemComponentPatches.read(entry, this.sourceVersion)
+                GeyserItemComponentPatches.read(entry, this.sourceVersion),
+                headIdentifiers
         );
     }
 
@@ -71,13 +81,20 @@ public final class GeyserItemRegistrationAdapter {
      *   }]
      * }
      */
-    private CustomItemDefinition convertVariant(JsonObject entry, JsonObject variant, Map<String, String> displayBlocks, int priority) {
-        Identifier bedrockId = Identifier.of(variant.get(BEDROCK_IDENTIFIER).getAsString());
+    private CustomItemDefinition convertVariant(JsonObject entry, JsonObject variant, Identifier bedrockId, Identifier iconId, Map<String, String> displayBlocks, int priority) {
         Identifier model = Identifier.of(entry.get(MODEL).getAsString());
         CustomItemDefinition.Builder builder = CustomItemDefinition.builder(bedrockId, model);
         builder.priority(priority);
         applyConditions(builder, variant.getAsJsonArray(CONDITIONS));
-        applyResources(builder, bedrockId, variant.getAsJsonObject(RESOURCES), displayBlocks);
+        if (!bedrockId.equals(iconId)) {
+            // 先让 Geyser 匹配耐久等条件；只有已选中的物品进入头槽时才替换其显示 ID。
+            builder.predicate(context -> false);
+        }
+        if (variant.has("world_view")) {
+            String view = variant.get("world_view").getAsString();
+            builder.predicate(context -> GeyserWorldItemViews.matches(view));
+        }
+        applyResources(builder, iconId, variant.getAsJsonObject(RESOURCES), displayBlocks);
         return builder.build();
     }
 
@@ -114,6 +131,7 @@ public final class GeyserItemRegistrationAdapter {
         );
     }
 
-    public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual, @Nullable GeyserItemComponentPatch componentPatch) {
+    public record ConvertedItem(List<CustomItemDefinition> definitions, boolean contextual, @Nullable GeyserItemComponentPatch componentPatch,
+                                Map<String, String> headIdentifiers) {
     }
 }

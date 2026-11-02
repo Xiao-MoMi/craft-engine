@@ -15,14 +15,20 @@ import java.util.Locale;
 public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     private final JavaModelResources resources;
     private final BedrockItemIconRenderer renderer;
+    private final BedrockDisplayContextItems contextItems;
 
     public BedrockDefaultItemHandler(JavaModelResources resources, BedrockItemIconRenderer renderer) {
         this.resources = resources;
         this.renderer = renderer;
+        this.contextItems = new BedrockDisplayContextItems(resources, renderer);
     }
 
     @Override
     public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+        List<GeneratedItemVariant> contextual = this.contextItems.write(entry, context);
+        if (contextual != null) {
+            return contextual;
+        }
         List<ItemBindingRule> rules = entry.definition().rules();
         ItemRenderType type = ItemRenderType.classify(entry.definition(), this.resources);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(rules.size());

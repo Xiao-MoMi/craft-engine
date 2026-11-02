@@ -31,7 +31,7 @@ public final class GeyserItemRuntime {
         this.selectedItems = selectedItems;
     }
 
-    public static void install(GeyserSession session, Map<String, CustomItemDefinition> definitions) {
+    public static void install(GeyserSession session, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers) {
         Set<String> selectedModels = new HashSet<>();
         for (CustomItemDefinition definition : definitions.values()) {
             if (definition.predicates().stream().anyMatch(GeyserItemPredicates::usesSelection)) {
@@ -45,8 +45,11 @@ public final class GeyserItemRuntime {
             }
         }
         GeyserItemRuntime runtime = new GeyserItemRuntime(session, selectedItems);
-        session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
-        GeyserSelectedItemHandler.install(session, runtime);
+        if (!definitions.isEmpty()) {
+            session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
+        }
+        GeyserHeadItemViews heads = new GeyserHeadItemViews(session.getItemMappings(), headIdentifiers);
+        GeyserSelectedItemHandler.install(session, runtime, heads, !definitions.isEmpty());
     }
 
     ItemMappings bindMappings(ItemMappings original, Map<String, CustomItemDefinition> definitions) {

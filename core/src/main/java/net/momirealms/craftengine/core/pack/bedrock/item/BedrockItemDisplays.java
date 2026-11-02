@@ -35,7 +35,7 @@ public final class BedrockItemDisplays {
         JsonObject items = new JsonObject();
         for (ItemRegistrationPlan.Entry entry : plan.entries()) {
             for (GeneratedItemVariant variant : generated.variants().getOrDefault(entry.bedrockId(), List.of())) {
-                if (!variant.generated()) {
+                if (!variant.generated() || variant.worldView() != null) {
                     continue;
                 }
                 JsonArray contexts = new JsonArray();
@@ -109,6 +109,9 @@ public final class BedrockItemDisplays {
 
     @Nullable
     private static ItemBindingRule select(ItemRegistrationPlan.Entry entry, GeneratedItemVariant variant, ItemDisplayContext context) {
+        if (!variant.displayModels().isEmpty()) {
+            return variant.displayModels().get(context);
+        }
         JsonPrimitive view = new JsonPrimitive(viewName(context));
         for (ItemBindingRule rule : entry.definition().rules()) {
             if (!BedrockItemAttachables.matchesIdle(rule)) {
@@ -130,7 +133,7 @@ public final class BedrockItemDisplays {
         return null;
     }
 
-    private static String viewName(ItemDisplayContext context) {
+    static String viewName(ItemDisplayContext context) {
         return switch (context) {
             case THIRD_PERSON_LEFT_HAND -> "thirdperson_lefthand";
             case THIRD_PERSON_RIGHT_HAND -> "thirdperson_righthand";

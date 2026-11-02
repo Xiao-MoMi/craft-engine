@@ -25,22 +25,26 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     private static final String HANDLER_NAME = "craftengine-selected-items";
     private final GeyserSession session;
     private final GeyserItemRuntime runtime;
+    private final GeyserHeadItemViews heads;
     private final Map<Integer, Replacement> originals = new HashMap<>();
     private int selectedSlot;
     private String dimension;
 
-    GeyserSelectedItemHandler(GeyserSession session, GeyserItemRuntime runtime) {
+    GeyserSelectedItemHandler(GeyserSession session, GeyserItemRuntime runtime, GeyserHeadItemViews heads) {
         this.session = session;
         this.runtime = runtime;
+        this.heads = heads;
         this.selectedSlot = session.getPlayerInventory().getHeldItemSlot();
     }
 
-    public static void install(GeyserSession session, GeyserItemRuntime runtime) {
-        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(session, runtime);
+    static void install(GeyserSession session, GeyserItemRuntime runtime, GeyserHeadItemViews heads, boolean pollSelection) {
+        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(session, runtime, heads);
         Channel channel = session.getUpstream().getSession().getPeer().getChannel();
         // 匹配与槽位读取均在 Geyser 事件循环执行，不能在网络线程临时修改匹配上下文。
         channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME, handler);
-        session.executeInEventLoop(handler::poll);
+        if (pollSelection) {
+            session.executeInEventLoop(handler::poll);
+        }
     }
 
     private void poll() {
@@ -124,7 +128,8 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     private void renderOutgoing(BedrockPacket packet) {
         switch (packet) {
             case InventoryContentPacket inventory -> this.renderInventory(inventory);
-            case InventorySlotPacket inventory -> inventory.setItem(this.render(inventory.getItem(), inventory.getContainerId() == ContainerId.INVENTORY && inventory.getSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
+            case InventorySlotPacket inventory -> inventory.setItem(this.renderSlot(inventory.getItem(), inventory.getContainerId(), inventory.getSlot()));
+            case MobArmorEquipmentPacket armor -> armor.setHelmet(this.heads.equipped(armor.getHelmet()));
             case MobEquipmentPacket equipment -> {
                 boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
                 boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
@@ -140,7 +145,7 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         List<ItemData> contents = inventory.getContents();
         List<ItemData> changed = null;
         for (int i = 0; i < contents.size(); i++) {
-            ItemData item = this.render(contents.get(i), inventory.getContainerId() == ContainerId.INVENTORY && i == this.session.getPlayerInventory().getHeldItemSlot());
+            ItemData item = this.renderSlot(contents.get(i), inventory.getContainerId(), i);
             if (item != contents.get(i)) {
                 if (changed == null) {
                     changed = new ArrayList<>(contents);
@@ -151,6 +156,13 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         if (changed != null) {
             inventory.setContents(changed);
         }
+    }
+
+    private ItemData renderSlot(ItemData item, int container, int slot) {
+        if (container == ContainerId.ARMOR && slot == 0) {
+            return this.heads.equipped(item);
+        }
+        return this.render(item, container == ContainerId.INVENTORY && slot == this.session.getPlayerInventory().getHeldItemSlot());
     }
 
     private void refresh(int previous) {
@@ -208,6 +220,7 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
 
     @Nullable
     ItemData restore(@Nullable ItemData item, int slotNetId) {
+        item = this.heads.unequipped(item);
         if (item == null || !this.runtime.hasSelected(item)) {
             return item;
         }
