@@ -6,128 +6,103 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
-import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver.Glyph;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.nio.file.StandardCopyOption;
 
+/**
+ * 生成基岩字形图集，并将字符映射和容器标题的布局度量写入 {@code craftengine/glyphs.json}。
+ * {@code metrics} 先按字体 ID，再按 Java 字符码位的小写十六进制字符串索引。
+ * 普通文本从字形的 {@code character} 读取替换码位；容器标题还使用同一条记录里的布局度量。
+ * <pre>{@code
+ * {
+ *   "metrics": {
+ *     "test:ref": {
+ *       "21": { "character": -1,    "advance": -2.0, "rendered_advance": 0, "bearing": 0 },
+ *       "4e": { "character": 78,    "advance":  9.0, "rendered_advance": 9, "bearing": 0 },
+ *       "5a": { "character": 58112, "advance":  8.0, "rendered_advance": 8, "bearing": 1 }
+ *     }
+ *   }
+ * }
+ * }</pre>
+ * {@code character} 是基岩输出的码位，-1 表示只移动光标。{@code advance} 是 Java 布局的光标位移，
+ * {@code rendered_advance} 是基岩绘制字符后的前进宽度，{@code bearing} 是从绘制起点到字形左缘的水平偏移。
+ *
+ * <p>以上例中的普通字重标题 {@code Z!N} 为例：Z 映射到 U+E300，光标前进 8 像素；
+ * ! 不绘制，光标回退 2 像素；N 沿用原生码位，从距起点 6 像素处开始绘制。</p>
+ */
 public final class BedrockFontGenerator {
-    private final JavaFontResolver fonts;
+    private static final int SPACER_PAGE = ContainerTitleLayout.SPACER_FIRST >>> 8;
 
-    public BedrockFontGenerator(JavaResourcePack resources) throws IOException {
-        this(new JavaFontResolver(resources));
+    private BedrockFontGenerator() {
     }
 
-    public BedrockFontGenerator(JavaFontResolver fonts) {
-        this.fonts = fonts;
-    }
+    public static void write(JavaResourcePack resources, Path root) throws IOException {
+        JavaFontResolver fonts = new JavaFontResolver(resources);
+        // 所有字体共用的位图页和码位
+        GlyphAtlas atlas = new GlyphAtlas();
 
-    public void write(Path root) throws IOException {
-        JsonObject mappings = new JsonObject();
-        JsonObject layoutFonts = new JsonObject();
-        Map<Glyph, Integer> allocated = new HashMap<>();
-        Map<Glyph, Metrics> metrics = new HashMap<>();
-        Set<Glyph> unsupported = new HashSet<>();
-        List<Page> pages = new ArrayList<>();
-        for (Key font : this.fonts.fonts()) {
-            JsonObject characters = new JsonObject();
-            JsonObject layout = new JsonObject();
-            Int2ObjectMap<Glyph> glyphs = this.fonts.resolve(font);
-            int[] codepoints = glyphs.keySet().toIntArray();
-            IntArrays.quickSort(codepoints);
-            Set<Glyph> pending = new LinkedHashSet<>();
-            for (int codepoint : codepoints) {
-                Glyph glyph = glyphs.get(codepoint);
-                // 无需新增图片字形空间，后续仍会导出有效字形的映射或度量
-                if (glyph == null || glyph.nativeText() || glyph.advanceOnly() || allocated.containsKey(glyph)) {
-                    continue;
-                }
-                if (!metrics.containsKey(glyph) && !unsupported.contains(glyph)) {
-                    try {
-                        metrics.put(glyph, this.measure(glyph));
-                    } catch (UnsupportedOperationException exception) {
-                        unsupported.add(glyph);
-                        TranslationManager.warn("resource_pack.bedrock.font.glyph", font.asString(), Integer.toHexString(codepoint), exception.getLocalizedMessage());
-                    }
-                }
-                if (!unsupported.contains(glyph)) {
-                    pending.add(glyph);
-                }
-            }
-            // Reserve a whole font before writing anything, so a large text font cannot be partially remapped.
-            if (!this.fits(pending, metrics, pages)) {
-                TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
-                continue;
-            }
-            for (int codepoint : codepoints) {
-                Glyph glyph = glyphs.get(codepoint);
-                if (glyph == null) {
-                    continue;
-                }
-                String key = Integer.toHexString(codepoint);
-                if (glyph.nativeText()) {
-                    layout.add(key, this.layoutGlyph(codepoint, glyph.advance(), (int) glyph.advance(), 0));
-                    continue;
-                }
-                if (glyph.advanceOnly()) {
-                    if (codepoint == ' ' && glyph.advance() == 4) {
-                        layout.add(key, this.layoutGlyph(' ', 4, 4, 0));
-                    } else {
-                        layout.add(key, this.layoutGlyph(-1, glyph.advance(), 0, 0));
-                    }
-                    continue;
-                }
-                if (unsupported.contains(glyph)) {
-                    continue;
-                }
-                Integer target = allocated.get(glyph);
-                if (target == null) {
-                    target = this.allocate(glyph, metrics.get(glyph), pages);
-                    allocated.put(glyph, target);
-                }
-                characters.addProperty(key, target);
-                layout.add(key, this.layoutGlyph(target, glyph.advance(), metrics.get(glyph).advance, 1));
-            }
-            if (!characters.isEmpty()) {
-                mappings.add(font.asString(), characters);
-            }
-            if (!layout.isEmpty()) {
-                layoutFonts.add(font.asString(), layout);
-            }
+        JsonObject layouts = new JsonObject();
+        for (Key font : fonts.fonts()) {
+            addFont(font, fonts.resolve(font), atlas, layouts);
         }
-        Path directory = root.resolve("font");
-        Files.createDirectories(directory);
-        for (Page page : pages) {
-            Path file = directory.resolve("glyph_" + Integer.toHexString(page.index).toUpperCase(Locale.ROOT) + ".png");
-            ImageUtils.writePng(page.image, file);
-        }
-        // E2 is reserved for invisible positive advances; negative advances are consumed by the title layout.
-        int spacerSize = 32;
-        BufferedImage spacers = new BufferedImage(spacerSize * 16, spacerSize * 16, BufferedImage.TYPE_INT_ARGB);
-        for (int advance = 2; advance <= ContainerTitleLayout.MAX_SPACER; advance++) {
-            int slot = advance - 2;
-            int x = slot % 16 * spacerSize + (spacerSize - (advance - 1)) / 2;
-            int y = slot / 16 * spacerSize + spacerSize / 2;
-            for (int column = 0; column < advance - 1; column++) {
-                spacers.setRGB(x + column, y, 0x01000000);
-            }
-        }
-        ImageUtils.writePng(spacers, directory.resolve("glyph_E2.png"));
+
+        Path directory = Files.createDirectories(root.resolve("font"));
+        atlas.writePages(directory);
+        copySpacerPage(directory);
+
+        // 写入扩展所需数据
         JsonObject result = new JsonObject();
-        result.addProperty(BedrockPackLayout.FORMAT_VERSION, 1);
-        result.add("fonts", mappings);
-        result.add("metrics", layoutFonts);
+        result.add("metrics", layouts);
         GsonHelper.writeJsonFile(result, root.resolve(BedrockPackLayout.GLYPHS));
     }
 
-    private JsonObject layoutGlyph(int character, float advance, int renderedAdvance, int bearing) {
+    private static void addFont(Key font, Int2ObjectMap<Glyph> glyphs, GlyphAtlas atlas, JsonObject layouts) {
+        int[] codepoints = glyphs.keySet().toIntArray();
+        IntArrays.quickSort(codepoints);
+
+        // 先检查整套字体所需的槽位。容量不足时整套跳过，以免生成一半映射后才用完码位。
+        if (!atlas.canFitFont(font, codepoints, glyphs)) {
+            TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
+            return;
+        }
+
+        JsonObject layout = new JsonObject();
+        for (int codepoint : codepoints) {
+            Glyph glyph = glyphs.get(codepoint);
+            if (glyph == null) {
+                continue;
+            }
+            String key = Integer.toHexString(codepoint);
+            if (glyph.nativeText()) {
+                // 基岩原生字符沿用原码位，只记录标题布局所需的字宽。
+                float advance = glyph.advance();
+                layout.add(key, layoutGlyph(codepoint, advance, (int) advance, 0));
+            } else if (glyph.advanceOnly()) {
+                // 普通空格可直接显示；其余间距只移动布局光标，-1 表示不输出字符。
+                float advance = glyph.advance();
+                boolean ordinarySpace = codepoint == ' ' && advance == 4;
+                layout.add(key, layoutGlyph(ordinarySpace ? ' ' : -1, advance, ordinarySpace ? 4 : 0, 0));
+            } else {
+                GlyphMetrics metrics = atlas.metricsFor(glyph);
+                if (metrics != null) {
+                    int target = atlas.codepointFor(glyph, metrics);
+                    layout.add(key, layoutGlyph(target, glyph.advance(), metrics.advance(), 1));
+                }
+            }
+        }
+        if (!layout.isEmpty()) {
+            layouts.add(font.asString(), layout);
+        }
+    }
+
+    private static JsonObject layoutGlyph(int character, float advance, int renderedAdvance, int bearing) {
         JsonObject glyph = new JsonObject();
         glyph.addProperty("character", character);
         glyph.addProperty("advance", advance);
@@ -138,104 +113,14 @@ public final class BedrockFontGenerator {
         return glyph;
     }
 
-    private Metrics measure(Glyph glyph) {
-        if (glyph.height() <= 0 || glyph.ascent() > glyph.height()) {
-            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.height"));
-        }
-        int actualWidth = glyph.actualWidth();
-        int advance = (int) glyph.advance();
-        if (actualWidth == 0 || advance <= 1) {
-            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.spacing"));
-        }
-        int width = advance - 1;
-        long required = Math.max(width, Math.max(2L * (glyph.ascent() - 3L), 2L * (glyph.height() + 3L - glyph.ascent())));
-        if (required > 512) {
-            throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.font.size"));
-        }
-        int size = 8;
-        while (size < required) {
-            size *= 2;
-        }
-        return new Metrics(width, advance, size);
-    }
-
-    private boolean fits(Set<Glyph> glyphs, Map<Glyph, Metrics> metrics, List<Page> pages) {
-        Map<Integer, Integer> available = new HashMap<>();
-        for (Page page : pages) {
-            available.merge(page.size, 256 - page.count, Integer::sum);
-        }
-        int count = pages.size();
-        for (Glyph glyph : glyphs) {
-            int size = metrics.get(glyph).size;
-            int remaining = available.getOrDefault(size, 0);
-            if (remaining == 0) {
-                if (++count > 22) {
-                    return false;
-                }
-                remaining = 256;
+    private static void copySpacerPage(Path directory) throws IOException {
+        // 容器标题的正间距字形固定为 2–33 像素，所有资源包共用同一张 E2 页。
+        String resource = "/bedrock/font/glyph_E2.png";
+        try (InputStream input = BedrockFontGenerator.class.getResourceAsStream(resource)) {
+            if (input == null) {
+                throw new IOException("Missing bundled spacer page " + resource);
             }
-            available.put(size, remaining - 1);
-        }
-        return true;
-    }
-
-    private int allocate(Glyph glyph, Metrics metrics, List<Page> pages) {
-        int width = metrics.width;
-        int advance = metrics.advance;
-        int size = metrics.size;
-        Page page = null;
-        for (Page candidate : pages) {
-            if (candidate.size == size && candidate.count < 256) {
-                page = candidate;
-                break;
-            }
-        }
-        if (page == null) {
-            page = new Page(0xE3 + pages.size(), size);
-            pages.add(page);
-        }
-        int slot = page.count++;
-        int originX = slot % 16 * size + (size - width) / 2;
-        // Measured Bedrock cell baseline: cell/2 + 3; Java's bitmap top is determined by ascent.
-        int originY = slot / 16 * size + size / 2 + 3 - glyph.ascent();
-        int markerY = -1;
-        float scale = (float) glyph.height() / glyph.sourceHeight();
-        for (int y = 0; y < glyph.height(); y++) {
-            int sourceY = Math.min(glyph.sourceHeight() - 1, (int) ((y + 0.5) * glyph.sourceHeight() / glyph.height()));
-            for (int x = 0; x < width; x++) {
-                int sourceX = Math.min(glyph.width() - 1, (int) ((x + 0.5) / scale));
-                int pixel = glyph.image().getRGB(glyph.x() + sourceX, glyph.y() + sourceY);
-                if ((pixel >>> 24) != 0 && markerY < 0) {
-                    markerY = y;
-                }
-                page.image.setRGB(originX + x, originY + y, pixel);
-            }
-        }
-        if (markerY < 0) {
-            markerY = 0;
-        }
-        // A minimal-alpha edge survives Bedrock's horizontal trim and retains Java's bearing/advance.
-        for (int x : new int[]{0, advance - 2}) {
-            if ((page.image.getRGB(originX + x, originY + markerY) >>> 24) == 0) {
-                page.image.setRGB(originX + x, originY + markerY, 0x01000000);
-            }
-        }
-        return page.index * 256 + slot;
-    }
-
-    private record Metrics(int width, int advance, int size) {
-    }
-
-    private static final class Page {
-        private final int index;
-        private final int size;
-        private final BufferedImage image;
-        private int count;
-
-        private Page(int index, int size) {
-            this.index = index;
-            this.size = size;
-            this.image = new BufferedImage(size * 16, size * 16, BufferedImage.TYPE_INT_ARGB);
+            Files.copy(input, GlyphPage.file(directory, SPACER_PAGE), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 }

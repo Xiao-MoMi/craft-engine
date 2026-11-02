@@ -10,7 +10,6 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -166,46 +165,5 @@ public final class JavaFontResolver {
             }
         }
         return glyphs;
-    }
-
-    public record Glyph(@Nullable BufferedImage image,
-                        int x,
-                        int y,
-                        int width,
-                        int sourceHeight,
-                        int height,
-                        int ascent,
-                        float spacing,
-                        boolean nativeText) { // 未覆写的原版字形，仅导出度量，保留字符交给基岩原生字体绘制
-
-        public Glyph(BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing) {
-            this(image, x, y, width, sourceHeight, height, ascent, spacing, false);
-        }
-
-        private static Glyph space(float advance) {
-            return new Glyph(null, 0, 0, 0, 0, 0, 0, advance);
-        }
-
-        public boolean advanceOnly() {
-            return this.image == null || this.height <= 0 || this.ascent < -2048 || this.actualWidth() == 0;
-        }
-
-        public int actualWidth() {
-            for (int column = this.width - 1; column >= 0; column--) {
-                for (int row = 0; row < this.sourceHeight; row++) {
-                    if ((this.image.getRGB(this.x + column, this.y + row) >>> 24) != 0) {
-                        return column + 1;
-                    }
-                }
-            }
-            return 0;
-        }
-
-        public float advance() {
-            if (this.image == null) {
-                return this.spacing;
-            }
-            return (int) (0.5 + this.actualWidth() * ((float) this.height / this.sourceHeight)) + 1;
-        }
     }
 }

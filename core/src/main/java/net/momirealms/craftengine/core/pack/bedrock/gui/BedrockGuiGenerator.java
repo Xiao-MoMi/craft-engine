@@ -12,19 +12,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class BedrockGuiGenerator {
-    private final JavaResourcePack resources;
-
-    public BedrockGuiGenerator(JavaResourcePack resources) {
-        this.resources = resources;
+    private BedrockGuiGenerator() {
     }
 
-    public void write(Path root) throws IOException {
+    public static void write(JavaResourcePack resources, Path root) throws IOException {
         BedrockGuiWriter ui = new BedrockGuiWriter();
         for (int rows = 1; rows <= 6; rows++) {
             BufferedImage image = new BufferedImage(176, 114 + rows * 18, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = image.createGraphics();
             try {
-                this.drawContainer(graphics, rows);
+                drawContainer(resources, graphics, rows);
             } finally {
                 graphics.dispose();
             }
@@ -37,8 +34,8 @@ public final class BedrockGuiGenerator {
         ui.write(root);
     }
 
-    private void drawContainer(Graphics2D graphics, int rows) throws IOException {
-        try (InputStream input = this.resources.openResource("assets/minecraft/textures/gui/container/generic_54.png")) {
+    private static void drawContainer(JavaResourcePack resources, Graphics2D graphics, int rows) throws IOException {
+        try (InputStream input = resources.openResource("assets/minecraft/textures/gui/container/generic_54.png")) {
             if (input == null) {
                 throw new IOException("Missing Java container background generic_54.png");
             }

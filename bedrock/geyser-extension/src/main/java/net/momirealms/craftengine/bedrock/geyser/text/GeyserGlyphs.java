@@ -33,37 +33,36 @@ public final class GeyserGlyphs {
                     continue;
                 }
                 try (Reader reader = new InputStreamReader(archive.getInputStream(file), StandardCharsets.UTF_8)) {
-                    JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-                    if (root.get(BedrockPackLayout.FORMAT_VERSION).getAsInt() != 1) {
-                        throw new IOException("Unsupported glyph mapping format");
-                    }
-                    if (root.has("metrics")) {
-                        for (Map.Entry<String, JsonElement> font : root.getAsJsonObject("metrics").entrySet()) {
-                            Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new HashMap<>());
-                            for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {
-                                JsonObject glyph = value.getValue().getAsJsonObject();
-                                glyphs.put(
-                                        Integer.parseInt(value.getKey(), 16),
-                                        new FontGlyph(
-                                                glyph.get("character").getAsInt(),
-                                                glyph.get("advance").getAsFloat(),
-                                                glyph.has("rendered_advance") ? glyph.get("rendered_advance").getAsInt() : -1,
-                                                glyph.get("bearing").getAsInt()
-                                        )
-                                );
-                            }
-                        }
-                    }
-                    for (Map.Entry<String, JsonElement> font : root.getAsJsonObject("fonts").entrySet()) {
-                        Map<Integer, Integer> glyphs = fonts.computeIfAbsent(font.getKey(), key -> new HashMap<>());
-                        for (Map.Entry<String, JsonElement> glyph : font.getValue().getAsJsonObject().entrySet()) {
-                            glyphs.put(Integer.parseInt(glyph.getKey(), 16), glyph.getValue().getAsInt());
-                        }
-                    }
+                    readMappings(JsonParser.parseReader(reader).getAsJsonObject(), fonts, metrics);
                 }
             }
         }
         return new GeyserTextData(fonts, metrics.isEmpty() ? null : new ContainerTitleLayout(metrics),
                 GeyserTranslations.read(packs));
+    }
+
+    private static void readMappings(JsonObject root, Map<String, Map<Integer, Integer>> fonts,
+                                     Map<String, Map<Integer, FontGlyph>> metrics) throws IOException {
+        if (!(root.get("metrics") instanceof JsonObject layouts)) {
+            throw new IOException("Missing glyph metrics");
+        }
+        for (Map.Entry<String, JsonElement> font : layouts.entrySet()) {
+            Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new HashMap<>());
+            for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {
+                int codepoint = Integer.parseInt(value.getKey(), 16);
+                JsonObject data = value.getValue().getAsJsonObject();
+                FontGlyph glyph = new FontGlyph(
+                        data.get("character").getAsInt(),
+                        data.get("advance").getAsFloat(),
+                        data.has("rendered_advance") ? data.get("rendered_advance").getAsInt() : -1,
+                        data.get("bearing").getAsInt()
+                );
+                glyphs.put(codepoint, glyph);
+                // 图集字形有一像素的左边距。即使分配到原码位，也要覆盖低优先级包中的替换。
+                if (glyph.visible() && (glyph.character() != codepoint || glyph.bearing() == 1)) {
+                    fonts.computeIfAbsent(font.getKey(), key -> new HashMap<>()).put(codepoint, glyph.character());
+                }
+            }
+        }
     }
 }

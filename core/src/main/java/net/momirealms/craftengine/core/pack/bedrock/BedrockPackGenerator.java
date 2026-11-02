@@ -11,7 +11,6 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BedrockWorldBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
-import net.momirealms.craftengine.core.pack.bedrock.font.JavaFontResolver;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemIcons;
 import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
@@ -44,6 +43,7 @@ public final class BedrockPackGenerator {
         if (plan.hasErrors()) {
             throw new IOException(TranslationManager.message("resource_pack.bedrock.item.failed"));
         }
+
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path root = fileSystem.getPath("bedrock").toAbsolutePath();
             Path metadata = root.resolve(RegistrationPlanKind.ITEM.file());
@@ -55,11 +55,12 @@ public final class BedrockPackGenerator {
             BlockRegistrationPlanWriter.write(generated, worldBlocks, root.resolve(RegistrationPlanKind.BLOCK.file()));
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
+            // 字体文件
+            BedrockFontGenerator.write(resources, root);
+            // 容器
+            BedrockGuiGenerator.write(resources, root);
 
-            JavaFontResolver fonts = new JavaFontResolver(resources);
-            new BedrockFontGenerator(fonts).write(root);
-            new BedrockGuiGenerator(resources).write(root);
-
+            // 元数据
             JsonObject manifest = this.manifest();
             GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
 
@@ -70,6 +71,7 @@ public final class BedrockPackGenerator {
                 }
             }
 
+            // 最终打包
             Path temporaryPack = Files.createTempFile(packDestination.getParent(), "bedrock-pack-", ".tmp");
             Path temporaryData = Files.createTempFile(dataDestination.getParent(), "bedrock-data-", ".tmp");
             try {
