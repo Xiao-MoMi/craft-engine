@@ -74,6 +74,11 @@ public final class BedrockItemResourceGenerator {
                     JsonObject icon = new JsonObject();
                     icon.addProperty("textures", variant.iconTexture());
                     icons.add(variant.id().asString(), icon);
+                    if (variant.dyeColor() != null) {
+                        JsonObject mask = new JsonObject();
+                        mask.addProperty("textures", variant.iconTexture() + "_dyed.tga");
+                        icons.add(BedrockPackLayout.dyedIconKey(variant.id().asString()), mask);
+                    }
                 }
             }
         }

@@ -39,6 +39,8 @@ public final class Bedrock3DItemAttachables {
             String name = "layer" + layer;
             String path = "textures/" + resource + "/hand/layer_" + layer;
             JsonArray frames = BedrockItemTextures.writeFrames(material.data(), material.color(), name, path, textureNames, root);
+            JsonArray defaults = material.dyeColor() == null ? null : BedrockItemTextures.writeFrames(
+                    material.data(), material.dyeColor(), name + "_default", path + "_default", textureNames, root);
             for (int stage = 0; stage < stages.size(); stage++) {
                 JsonArray cubes = select(stages.get(stage).cubes(), name);
                 if (cubes.isEmpty()) {
@@ -52,23 +54,30 @@ public final class Bedrock3DItemAttachables {
                 controller.addProperty("geometry", "Geometry." + alias);
                 JsonObject textureArrays = new JsonObject();
                 textureArrays.add("array.frames", frames);
+                if (defaults != null) {
+                    textureArrays.add("array.defaults", defaults);
+                }
                 JsonObject arrays = new JsonObject();
                 arrays.add("textures", textureArrays);
                 controller.add("arrays", arrays);
                 JsonArray textures = new JsonArray();
                 TextureAnimation animation = material.data().animation();
-                if (animation == null) {
-                    textures.add("array.frames[0]");
-                } else {
-                    // 各材质按自身时长播放，切换拉弓阶段时不重置贴图动画。
-                    textures.add("array.frames[math.floor(math.mod(query.life_time * 20, "
-                            + animation.duration() + ") / " + animation.sampleInterval() + ")]");
-                }
+                String frame = animation == null ? "0" : "math.floor(math.mod(query.life_time * 20, "
+                        + animation.duration() + ") / " + animation.sampleInterval() + ")";
+                String original = "array.frames[" + frame + "]";
+                // 未染色时直接使用烘焙了默认色的贴图；只有实际染色的实例需要动态材质。
+                textures.add(defaults == null ? original : "variable.ce_hand_dye < 0 ? array.defaults[" + frame + "] : " + original);
                 textures.add("Texture.enchanted");
                 controller.add("textures", textures);
                 JsonArray renderMaterials = new JsonArray();
                 JsonObject renderMaterial = new JsonObject();
-                renderMaterial.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
+                if (material.dyeColor() == null) {
+                    renderMaterial.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
+                } else {
+                    renderMaterial.addProperty("*", "variable.ce_hand_dye < 0 ? (variable.is_enchanted ? Material.enchanted : Material.default)"
+                            + " : (variable.is_enchanted ? Material.dyed_enchanted : Material.dyed)");
+                    controller.add("color", handColor());
+                }
                 renderMaterials.add(renderMaterial);
                 controller.add("materials", renderMaterials);
                 String controllerId = "controller.render." + prefix + '.' + alias;
@@ -99,6 +108,10 @@ public final class Bedrock3DItemAttachables {
         JsonObject renderMaterials = new JsonObject();
         renderMaterials.addProperty("default", "entity_alphatest");
         renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
+        if (materials.stream().anyMatch(material -> material.dyeColor() != null)) {
+            renderMaterials.addProperty("dyed", "entity_alphatest_change_color");
+            renderMaterials.addProperty("dyed_enchanted", "entity_alphatest_change_color_glint");
+        }
         description.add("materials", renderMaterials);
         description.add("textures", textureNames);
         description.add("geometry", geometryNames);
@@ -111,6 +124,16 @@ public final class Bedrock3DItemAttachables {
         JsonObject attachable = new JsonObject();
         attachable.add("description", description);
         writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
+    }
+
+    private static JsonObject handColor() {
+        JsonObject color = new JsonObject();
+        String rgb = "(variable.ce_hand_dye < 0 ? 16777215 : variable.ce_hand_dye)";
+        color.addProperty("r", "math.floor(" + rgb + " / 65536) / 255");
+        color.addProperty("g", "math.mod(math.floor(" + rgb + " / 256), 256) / 255");
+        color.addProperty("b", "math.mod(" + rgb + ", 256) / 255");
+        color.addProperty("a", 1);
+        return color;
     }
 
     private static JsonArray select(JsonArray source, String material) {
@@ -176,6 +199,9 @@ public final class Bedrock3DItemAttachables {
     public record Stage(JavaModel model, JsonArray cubes, String condition) {
     }
 
-    public record Material(TextureData data, int color) {
+    public record Material(TextureData data, int color, Integer dyeColor) {
+        public Material(TextureData data, int color) {
+            this(data, color, null);
+        }
     }
 }

@@ -5,6 +5,9 @@ public final class BedrockPackLayout {
     public static final String GLYPHS = "craftengine/glyphs.json";
     public static final String TERRAIN_TEXTURE_ATLAS = "textures/terrain_texture.json";
     public static final String FLIPBOOK_TEXTURES = "textures/flipbook_textures.json";
+    public static final String DYE_COLOR = "dye_color";
+    public static final String MAIN_HAND_DYE = "craftengine:main_hand_dye";
+    public static final String OFF_HAND_DYE = "craftengine:off_hand_dye";
     public static final String DISPLAY_BLOCK = "display_block";
     public static final String NAME = "name";
     public static final String GEOMETRY = "geometry";
@@ -42,5 +45,9 @@ public final class BedrockPackLayout {
 
 
     private BedrockPackLayout() {
+    }
+
+    public static String dyedIconKey(String identifier) {
+        return "craftengine_dye:" + identifier.replace(':', '/');
     }
 }

@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockRegistrationAd
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
@@ -46,6 +47,9 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserBlockPlacementHandler placementHandler;
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
+    private GeyserHeldDye.HandProperties mainHandDye;
+    private GeyserHeldDye.HandProperties offHandDye;
+    private boolean hasDyedItems;
     private GeyserLivePacks packs;
     private Object originalSerializer;
     private Map<String, Map<String, String>> originalTranslations;
@@ -134,9 +138,18 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
+    public void onDefineEntityProperties(GeyserDefineEntityPropertiesEvent event) {
+        if (this.hasDyedItems) {
+            this.mainHandDye = GeyserHeldDye.HandProperties.register(event, false);
+            this.offHandDye = GeyserHeldDye.HandProperties.register(event, true);
+        }
+    }
+
+    @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
         this.contextualItems.clear();
         this.blockItems.clear();
+        this.hasDyedItems = false;
         Map<String, GeyserItemComponentPatch> componentPatches = new HashMap<>();
         for (Path path : this.packFiles()) {
             this.registerItems(path, event, componentPatches);
@@ -222,6 +235,7 @@ public final class CraftEngineGeyserExtension implements Extension {
                 boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
                 for (CustomItemDefinition definition : converted.definitions()) {
                     event.register(identifier, definition);
+                    this.hasDyedItems |= definition.bedrockOptions().defaultDyeableColor() != null;
                     registered++;
                     if (placesBlock) {
                         this.blockItems.add(definition.bedrockIdentifier().toString());
@@ -250,6 +264,9 @@ public final class CraftEngineGeyserExtension implements Extension {
     public void onSessionInitialize(SessionInitializeEvent event) {
         if (!this.worldBlocks.isEmpty()) {
             ((GeyserSession) event.connection()).setBlockBreakHandler(new GeyserBlockBreakHandler((GeyserSession) event.connection(), this.worldBlocks));
+        }
+        if (this.hasDyedItems) {
+            GeyserHeldDye.install((GeyserSession) event.connection(), this.mainHandDye, this.offHandDye);
         }
         GeyserTextContext.install((GeyserSession) event.connection());
         GeyserContainerCloseHandler.install((GeyserSession) event.connection());

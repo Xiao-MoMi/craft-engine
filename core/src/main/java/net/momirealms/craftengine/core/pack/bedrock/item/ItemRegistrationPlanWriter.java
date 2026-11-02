@@ -114,6 +114,9 @@ public final class ItemRegistrationPlanWriter {
         if (variant.displayBlock() != null) {
             resources.addProperty(DISPLAY_BLOCK, variant.displayBlock().name());
         }
+        if (variant.dyeColor() != null) {
+            resources.addProperty(DYE_COLOR, variant.dyeColor());
+        }
         resources.addProperty(ATTACHABLE, variant.attachable());
         resources.addProperty(GENERATED, variant.generated());
         if (variant.unsupportedReason() != null) {

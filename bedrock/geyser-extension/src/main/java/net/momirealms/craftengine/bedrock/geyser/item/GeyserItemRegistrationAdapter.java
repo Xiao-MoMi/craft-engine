@@ -89,12 +89,17 @@ public final class GeyserItemRegistrationAdapter {
     }
 
     private static void applyResources(CustomItemDefinition.Builder builder, Identifier bedrockId, JsonObject resources, Map<String, String> displayBlocks) {
-        if (!resources.has(DISPLAY_BLOCK)) {
-            CustomItemIcons icons = CustomItemIcons.builder()
-                    .defaultIcon(bedrockId.toString())
-                    .build();
-            builder.bedrockOptions(CustomItemBedrockOptions.builder().icons(icons));
-            return;
+        if (!resources.has(DISPLAY_BLOCK) || resources.has(DYE_COLOR)) {
+            CustomItemIcons.Builder icons = CustomItemIcons.builder().defaultIcon(bedrockId.toString());
+            CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder();
+            if (resources.has(DYE_COLOR)) {
+                icons.dyedIcon(dyedIconKey(bedrockId.toString()));
+                options.dyeable(resources.get(DYE_COLOR).getAsInt());
+            }
+            builder.bedrockOptions(options.icons(icons.build()));
+            if (!resources.has(DISPLAY_BLOCK)) {
+                return;
+            }
         }
         String name = resources.get(DISPLAY_BLOCK).getAsString();
         String block = displayBlocks.get(name);
@@ -105,7 +110,7 @@ public final class GeyserItemRegistrationAdapter {
         GeyserCustomItemDefinitionBuilderProxy.INSTANCE.geyserComponent(
                 builder,
                 GeyserItemDataComponents.BLOCK_PLACER,
-                GeyserBlockPlacer.of(Identifier.of(block), true)
+                GeyserBlockPlacer.of(Identifier.of(block), !resources.has(DYE_COLOR))
         );
     }
 

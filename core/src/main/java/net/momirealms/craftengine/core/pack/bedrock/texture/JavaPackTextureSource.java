@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.momirealms.craftengine.core.pack.atlas.Atlas;
@@ -10,6 +11,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.GrassTint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.Key;
@@ -21,12 +23,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class JavaPackTextureSource {
     public static final Integer WHITE = 0xffffff;
     private static final Key ITEMS = Key.minecraft("items");
     private static final Key BLOCKS = Key.minecraft("blocks");
+    private static final Key DYE = Key.minecraft("dye");
     private final JavaResourcePack pack;
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
@@ -40,10 +44,11 @@ public final class JavaPackTextureSource {
 
     public Integer resolveTint(Tint tint) throws IOException {
         if (tint instanceof ConstantTint constant) {
-            return constant.value().map(
-                    value -> value & 0xffffff,
-                    value -> ((int) (value.get(0) * 255) << 16) | ((int) (value.get(1) * 255) << 8) | (int) (value.get(2) * 255)
-            );
+            return rgb(constant.value());
+        }
+        Integer dye = this.dyeColor(tint);
+        if (dye != null) {
+            return dye;
         }
         if (tint instanceof GrassTint grass) {
             double temperature = grass.temperature();
@@ -66,6 +71,19 @@ public final class JavaPackTextureSource {
             return this.grassColormap.getRGB(x, y) & 0xffffff;
         }
         return WHITE;
+    }
+
+    @Nullable
+    public Integer dyeColor(Tint tint) {
+        if (tint instanceof SimpleDefaultTint dye && DYE.equals(dye.type())) {
+            return dye.defaultValue() == null ? WHITE : rgb(dye.defaultValue());
+        }
+        return null;
+    }
+
+    private static int rgb(Either<Integer, List<Float>> color) {
+        return color.map(value -> value & 0xffffff, channels ->
+                ((int) (channels.get(0) * 255) << 16) | ((int) (channels.get(1) * 255) << 8) | (int) (channels.get(2) * 255));
     }
 
     @Nullable

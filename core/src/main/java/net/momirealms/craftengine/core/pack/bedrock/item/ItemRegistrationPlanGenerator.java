@@ -47,7 +47,6 @@ public final class ItemRegistrationPlanGenerator {
         return new ItemRegistrationPlan(entries, hasErrors);
     }
 
-    @SuppressWarnings("all")
     private static Entry createEntry(ResolvedItemBinding binding) {
         // 使用原始物品 ID，避免 Java 模型混淆改变基岩资源名称。
         Key itemId = binding.itemId();

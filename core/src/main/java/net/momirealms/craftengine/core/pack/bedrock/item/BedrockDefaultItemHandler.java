@@ -93,6 +93,12 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
 
     private GeneratedItemVariant writeDisplayBlock(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
                                                     ItemBindingRule rule, List<ItemBindingRule> parts) throws IOException {
+        if (rule.target() instanceof ItemRenderTarget.Model target && !target.tints().isEmpty() && rule.transformations().isEmpty()) {
+            GeneratedItemVariant dyed = BedrockDyedItem.write(entry, id, rule, target, this.models, this.textures, context);
+            if (dyed != null) {
+                return dyed;
+            }
+        }
         BedrockItemBlocks.DisplayBlock display = context.blocks().write(id, parts, this.models, this.textures, context.root());
         if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.models, this.textures, context.root())) {
             return GeneratedItemVariant.block(id, rule, display, false);
