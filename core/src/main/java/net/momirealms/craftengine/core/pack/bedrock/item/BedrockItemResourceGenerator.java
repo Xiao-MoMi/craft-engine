@@ -32,6 +32,7 @@ public final class BedrockItemResourceGenerator {
         for (ItemRegistrationPlan.Entry entry : plan.entries()) {
             items.put(entry.bedrockId(), writeItem(entry, context, handlers.getOrDefault(entry.javaItemType(), List.of()), defaultHandler));
         }
+
         writeSharedResources(context, items);
         return new Result(items);
     }
@@ -57,8 +58,6 @@ public final class BedrockItemResourceGenerator {
         Path root = context.root();
         // 所有变体生成后，将图标及其染色遮罩的纹理路径汇总到 textures/item_texture.json。
         writeItemAtlas(root, items);
-        // 有物品使用展示方块时，写入 blocks.json，并将方块贴图和动画播放配置分别登记到
-        // textures/terrain_texture.json 和 textures/flipbook_textures.json。
         context.itemDisplayBlocks().finish(root);
         context.playerAnimations().write(root);
     }

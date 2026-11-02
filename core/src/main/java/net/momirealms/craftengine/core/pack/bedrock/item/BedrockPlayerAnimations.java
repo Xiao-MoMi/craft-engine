@@ -1,20 +1,23 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class BedrockPlayerAnimations {
-    private final Map<Key, ItemRegistrationPlan.Entry> spearsUsingJavaPose = new LinkedHashMap<>();
-    private final Set<Key> shieldsUsingJavaPose = new HashSet<>();
-    private final Set<Key> bows = new HashSet<>();
-    private final Set<Key> bowsUsingJavaPose = new HashSet<>();
-    private final Set<Key> itemsUsingJavaSwing = new HashSet<>();
+    private final SortedMap<Key, List<String>> spearPoseScriptsByItem = new TreeMap<>(Comparator.comparing(Key::asString));
+    private final Set<Key> shieldsUsingJavaPose = new ObjectOpenHashSet<>();
+    private final Set<Key> bows = new ObjectOpenHashSet<>();
+    private final Set<Key> bowsUsingJavaPose = new ObjectOpenHashSet<>();
+    private final Set<Key> itemsUsingJavaSwing = new ObjectOpenHashSet<>();
     private final BedrockCrossbowPlayerAnimations crossbows = new BedrockCrossbowPlayerAnimations();
 
     void registerBow(Key id) {
@@ -26,8 +29,8 @@ public class BedrockPlayerAnimations {
         this.bowsUsingJavaPose.add(id);
     }
 
-    void registerSpearUsingJavaPose(ItemRegistrationPlan.Entry entry) {
-        this.spearsUsingJavaPose.put(entry.bedrockId(), entry);
+    void registerSpearUsingJavaPose(Key id, List<String> poseScripts) {
+        this.spearPoseScriptsByItem.put(id, List.copyOf(poseScripts));
     }
 
     void registerShieldUsingJavaPose(Key id) {
@@ -49,7 +52,7 @@ public class BedrockPlayerAnimations {
     void write(Path root) throws IOException {
         BedrockPlayerAnimationController controller = new BedrockPlayerAnimationController(root);
         this.crossbows.write(controller, root);
-        BedrockSpearPlayerAnimations.write(this.spearsUsingJavaPose, controller, root);
+        BedrockSpearPlayerAnimations.write(this.spearPoseScriptsByItem, controller, root);
         BedrockShieldPlayerAnimations.write(this.shieldsUsingJavaPose, controller, root);
         BedrockBowPlayerAnimations.write(this.bows, this.bowsUsingJavaPose, controller, root);
         BedrockSwingPlayerAnimations.write(this.itemsUsingJavaSwing, controller, root);

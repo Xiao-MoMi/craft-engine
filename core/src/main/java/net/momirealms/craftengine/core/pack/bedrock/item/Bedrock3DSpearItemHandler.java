@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 
@@ -34,8 +37,28 @@ public final class Bedrock3DSpearItemHandler implements BedrockItemHandler {
         } catch (UnsupportedOperationException exception) {
             return null;
         }
-        Bedrock3DSpearAttachables.write(entry, selected, stages, geometry.materials(), context.root());
-        context.playerAnimations().registerSpearUsingJavaPose(entry);
+        List<String> poseScripts = poseScripts(entry);
+        Bedrock3DSpearAttachables.write(entry, selected, stages, geometry.materials(), poseScripts, context.root());
+        context.playerAnimations().registerSpearUsingJavaPose(entry.bedrockId(), poseScripts);
         return List.of(GeneratedItemVariant.block(entry.bedrockId(), selected.registration(), display, true));
+    }
+
+    private static List<String> poseScripts(ItemRegistrationPlan.Entry entry) {
+        List<String> scripts = new ArrayList<>(7);
+        ItemBehaviorDescription behavior = entry.clientBehavior();
+        JsonElement component = entry.properties().components().get(DataComponentKeys.KINETIC_WEAPON);
+        JsonObject kinetic = component == null || component.isJsonNull() ? null : component.getAsJsonObject();
+        scripts.add("variable.ce_spear_delay = " + (kinetic == null || !kinetic.has("delay_ticks") ? 0 : kinetic.get("delay_ticks").getAsInt()) + ";");
+        for (String phase : List.of("dismount", "knockback", "damage")) {
+            int duration = 0;
+            if (kinetic != null && kinetic.has(phase + "_conditions")) {
+                duration = kinetic.getAsJsonObject(phase + "_conditions").get("max_duration_ticks").getAsInt();
+            }
+            scripts.add("variable.ce_spear_" + phase + " = " + duration + ";");
+        }
+        scripts.add("variable.ce_spear_forward = " + (kinetic == null || !kinetic.has("forward_movement") ? 0 : kinetic.get("forward_movement").getAsFloat()) + ";");
+        scripts.add("variable.ce_spear_use = " + (kinetic != null && behavior.use().animation() == ItemBehaviorDescription.UseAnimation.SPEAR ? "variable.ce_using_item" : "0") + ";");
+        scripts.add("variable.ce_spear_attack = " + (behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.STAB ? "variable.attack_time > 0" : "0") + ";");
+        return scripts;
     }
 }

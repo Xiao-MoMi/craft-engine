@@ -15,7 +15,6 @@ public final class BedrockPackLayout {
     public static final String TINT_METHODS = "tint_methods";
     public static final String ITEM_TEXTURE_ATLAS = "textures/item_texture.json";
     public static final String PLAYER_ANIMATION_CONTROLLER = "animation_controllers/craftengine/shared/player.animation_controllers.json";
-    public static final String PLAYER_ANIMATION_NOTICE = "craftengine/player_animation_NOTICE.txt";
 
     public static final String KIND = "kind";
     public static final String FORMAT_VERSION = "format_version";

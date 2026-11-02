@@ -7,16 +7,12 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_NOTICE;
 
 public final class BedrockCrossbowPlayerAnimations {
     private static final String USING_MAIN_HAND = "query.is_using_item && query.main_hand_item_use_duration > 0";
@@ -48,7 +44,6 @@ public final class BedrockCrossbowPlayerAnimations {
         this.updateFirstPersonController(controller.state("first_person"));
         this.updateThirdPersonController(controller.state("third_person"));
         writePlayerAnimationFile(root);
-        copyAnimationNotice(root);
     }
 
     private void updateFirstPersonController(BedrockPlayerAnimationState state) {
@@ -96,14 +91,6 @@ public final class BedrockCrossbowPlayerAnimations {
         Path animationPath = root.resolve("animations/craftengine/shared/crossbow_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
-    }
-
-    private static void copyAnimationNotice(Path root) throws IOException {
-        try (InputStream notice = BedrockCrossbowPlayerAnimations.class.getResourceAsStream("/bedrock/player/NOTICE.txt")) {
-            Path noticePath = root.resolve(PLAYER_ANIMATION_NOTICE);
-            Files.createDirectories(noticePath.getParent());
-            Files.copy(notice, noticePath, StandardCopyOption.REPLACE_EXISTING);
-        }
     }
 
     private String loadingVariables(Set<Key> excludedCrossbows) {

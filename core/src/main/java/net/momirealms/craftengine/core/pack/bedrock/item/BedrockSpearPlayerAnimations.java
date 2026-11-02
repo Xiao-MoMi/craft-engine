@@ -10,49 +10,45 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.stream.Collectors;
 
 public final class BedrockSpearPlayerAnimations {
     private BedrockSpearPlayerAnimations() {
     }
 
-    static void write(Map<Key, ItemRegistrationPlan.Entry> spearsUsingJavaPose, BedrockPlayerAnimationController controller, Path root) throws IOException {
-        if (spearsUsingJavaPose.isEmpty()) {
+    static void write(SortedMap<Key, List<String>> spearPoseScriptsByItem, BedrockPlayerAnimationController controller, Path root) throws IOException {
+        if (spearPoseScriptsByItem.isEmpty()) {
             return;
         }
-        List<ItemRegistrationPlan.Entry> entries = spearsUsingJavaPose.values().stream()
-                .sorted(Comparator.comparing(entry -> entry.bedrockId().asString()))
-                .toList();
         JsonObject player = GsonHelper.readJsonFromResource("/bedrock/spear/java_player.json").getAsJsonObject();
-        updateFirstPersonController(controller.state("first_person"), entries);
-        updateThirdPersonController(controller.state("third_person"), entries, player);
+        updateFirstPersonController(controller.state("first_person"), spearPoseScriptsByItem.keySet());
+        updateThirdPersonController(controller.state("third_person"), spearPoseScriptsByItem, player);
         writeHoldAnimation(player, root);
     }
 
-    private static void updateFirstPersonController(BedrockPlayerAnimationState state, List<ItemRegistrationPlan.Entry> entries) {
-        String firstPersonCondition = entries.stream()
-                .map(entry -> "'" + entry.bedrockId().asString() + "'")
+    private static void updateFirstPersonController(BedrockPlayerAnimationState state, Set<Key> spearIds) {
+        String firstPersonCondition = spearIds.stream()
+                .map(id -> "'" + id.asString() + "'")
                 .collect(Collectors.joining(", ", "query.is_item_name_any('slot.weapon.mainhand', ", ")"));
         state.updateCondition("first_person_melee_spear_controller", original -> "(" + original + ") && !(" + firstPersonCondition + ")");
     }
 
-    private static void updateThirdPersonController(BedrockPlayerAnimationState state, List<ItemRegistrationPlan.Entry> entries,
+    private static void updateThirdPersonController(BedrockPlayerAnimationState state, Map<Key, List<String>> spearPoseScriptsByItem,
                                                     JsonObject player) throws IOException {
-        String setup = thirdPersonSetup(entries, player);
+        String setup = thirdPersonSetup(spearPoseScriptsByItem, player);
         state.updateCondition("third_person_melee_spear_controller",
                 original -> setup + "return (" + original + ") && !variable.ce_java_spear;");
         // 绕过原版 hold/use/attack 互斥状态，使突刺余下的动作能与举矛叠加。
         state.appendAnimation("third_person_melee_spear_hold", "variable.ce_java_spear");
     }
 
-    private static String thirdPersonSetup(List<ItemRegistrationPlan.Entry> entries, JsonObject player) throws IOException {
+    private static String thirdPersonSetup(Map<Key, List<String>> spearPoseScriptsByItem, JsonObject player) throws IOException {
         StringBuilder scripts = new StringBuilder("variable.ce_java_spear = 0; variable.ce_using_item = query.is_using_item && query.main_hand_item_use_duration > 0; ");
-        for (ItemRegistrationPlan.Entry entry : entries) {
-            appendSpearParameters(scripts, entry);
-        }
+        spearPoseScriptsByItem.forEach((id, poseScripts) -> appendSpearParameters(scripts, id, poseScripts));
         JsonObject pose = GsonHelper.readJsonFromResource("/bedrock/spear/java_spear.json").getAsJsonObject();
         // 第三人称 getTicksUsingItem(partialTicks) 不减一；手臂和物品复用同一组阶段公式。
         scripts.append("variable.ce_java_spear ? { variable.ce_spear_time = variable.ce_spear_use ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration + query.frame_alpha) : 0; ")
@@ -67,12 +63,12 @@ public final class BedrockSpearPlayerAnimations {
         return scripts.append("}; ").toString();
     }
 
-    private static void appendSpearParameters(StringBuilder scripts, ItemRegistrationPlan.Entry entry) {
+    private static void appendSpearParameters(StringBuilder scripts, Key id, List<String> poseScripts) {
         scripts.append("query.is_item_name_any('slot.weapon.mainhand', '")
-                .append(entry.bedrockId().asString())
+                .append(id.asString())
                 .append("') ? { variable.ce_java_spear = 1; ");
-        for (JsonElement parameter : Bedrock3DSpearAttachables.parameters(entry)) {
-            scripts.append(parameter.getAsString()).append(' ');
+        for (String parameter : poseScripts) {
+            scripts.append(parameter).append(' ');
         }
         scripts.append("}; ");
     }

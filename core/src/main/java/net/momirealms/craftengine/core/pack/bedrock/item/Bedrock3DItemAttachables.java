@@ -22,7 +22,29 @@ import java.util.Map;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 
 public final class Bedrock3DItemAttachables {
-    private Bedrock3DItemAttachables() {
+    private final Key id;
+    private final Path root;
+    private final String resource;
+    private final String prefix;
+    private final List<Stage> stages;
+    private final List<Material> materials;
+    private final JsonArray poseBones;
+    private final JsonObject textureNames = new JsonObject();
+    private final JsonObject geometryNames = new JsonObject();
+    private final JsonObject animationNames = new JsonObject();
+    private final JsonArray geometries = new JsonArray();
+    private final JsonObject renderControllers = new JsonObject();
+    private final JsonArray activeControllers = new JsonArray();
+    private final JsonArray animate = new JsonArray();
+
+    private Bedrock3DItemAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
+        this.id = id;
+        this.root = root;
+        this.resource = id.namespace() + '/' + id.value();
+        this.prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
+        this.stages = stages;
+        this.materials = materials;
+        this.poseBones = poseBones;
     }
 
     static void write(Key id,
@@ -33,118 +55,142 @@ public final class Bedrock3DItemAttachables {
                       JsonObject poseAnimations,
                       JsonArray poseAnimate,
                       Path root) throws IOException {
-        String resource = id.namespace() + '/' + id.value();
-        String prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
-        JsonObject textureNames = new JsonObject();
-        textureNames.addProperty("enchanted", "textures/misc/enchanted_item_glint");
-        JsonObject geometryNames = new JsonObject();
-        JsonArray geometries = new JsonArray();
-        JsonObject controllers = new JsonObject();
-        JsonArray activeControllers = new JsonArray();
-        for (int layer = 0; layer < materials.size(); layer++) {
-            Material material = materials.get(layer);
-            String name = "layer" + layer;
-            String path = "textures/" + resource + "/hand/layer_" + layer;
-            JsonArray frames = BedrockItemTextures.writeFrames(material.data(), material.color(), name, path, textureNames, root);
-            JsonArray defaults = material.dyeColor() == null ? null : BedrockItemTextures.writeFrames(
-                    material.data(), material.dyeColor(), name + "_default", path + "_default", textureNames, root);
-            Map<JsonArray, JsonObject> layerGeometries = new HashMap<>();
-            for (int stage = 0; stage < stages.size(); stage++) {
-                JsonArray cubes = select(stages.get(stage).cubes(), name);
-                if (cubes.isEmpty()) {
-                    continue;
-                }
-                String alias = "stage_" + stage + '_' + name;
-                JsonObject geometry = layerGeometries.get(cubes);
-                JavaModel model = stages.get(stage).model();
-                float radius = modelRadius(cubes);
-                if (geometry == null) {
-                    geometry = geometry("geometry." + prefix + '.' + alias, cubes, model, radius, poseBones);
-                    layerGeometries.put(cubes, geometry);
-                    geometries.add(geometry);
-                } else {
-                    // 同一组面可用于不同的手持姿态，裁剪范围要覆盖每个阶段的 display。
-                    BedrockItemAttachables.expandDisplayBounds(geometry.getAsJsonObject("description"), model, radius);
-                }
-                geometryNames.addProperty(alias, geometry.getAsJsonObject("description").get("identifier").getAsString());
-                JsonObject controller = new JsonObject();
-                controller.addProperty("geometry", "Geometry." + alias);
-                JsonObject textureArrays = new JsonObject();
-                textureArrays.add("array.frames", frames);
-                if (defaults != null) {
-                    textureArrays.add("array.defaults", defaults);
-                }
-                JsonObject arrays = new JsonObject();
-                arrays.add("textures", textureArrays);
-                controller.add("arrays", arrays);
-                JsonArray textures = new JsonArray();
-                TextureAnimation animation = material.data().animation();
-                String frame = animation == null ? "0" : "math.floor(math.mod(query.life_time * 20, "
-                        + animation.duration() + ") / " + animation.sampleInterval() + ")";
-                String original = "array.frames[" + frame + "]";
-                // 未染色时直接使用烘焙了默认色的贴图；只有实际染色的实例需要动态材质。
-                textures.add(defaults == null ? original : "variable.ce_hand_dye < 0 ? array.defaults[" + frame + "] : " + original);
-                textures.add("Texture.enchanted");
-                controller.add("textures", textures);
-                JsonArray renderMaterials = new JsonArray();
-                JsonObject renderMaterial = new JsonObject();
-                if (material.dyeColor() == null) {
-                    renderMaterial.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
-                } else {
-                    renderMaterial.addProperty("*", "variable.ce_hand_dye < 0 ? (variable.is_enchanted ? Material.enchanted : Material.default)"
-                            + " : (variable.is_enchanted ? Material.dyed_enchanted : Material.dyed)");
-                    controller.add("color", handColor());
-                }
-                renderMaterials.add(renderMaterial);
-                controller.add("materials", renderMaterials);
-                String controllerId = "controller.render." + prefix + '.' + alias;
-                controllers.add(controllerId, controller);
-                JsonObject active = new JsonObject();
-                active.addProperty(controllerId, "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + stage);
-                activeControllers.add(active);
-            }
-        }
-        writeFile("1.21.0", "minecraft:geometry", geometries, root.resolve("models/entity/" + resource + ".geo.json"));
-        writeFile("1.10.0", "render_controllers", controllers, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
+        Bedrock3DItemAttachables writer = new Bedrock3DItemAttachables(id, root, stages, materials, poseBones);
+        writer.writeMaterialLayers();
+        writer.writeAnimations(poseAnimations, poseAnimate);
+        writer.writeAttachable(preAnimation);
+    }
 
+    // 逐层写出贴图，再将各层的几何和渲染控制器分别汇总到该物品的 .geo.json 和 .render_controllers.json 文件中
+    private void writeMaterialLayers() throws IOException {
+        this.textureNames.addProperty("enchanted", "textures/misc/enchanted_item_glint");
+        for (int layer = 0; layer < this.materials.size(); layer++) {
+            this.writeMaterialLayer(layer, this.materials.get(layer));
+        }
+        writeFile("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
+        writeFile("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
+    }
+
+    private void writeMaterialLayer(int layer, Material material) throws IOException {
+        String layerName = "layer" + layer;
+        String texturePath = "textures/" + this.resource + "/hand/layer_" + layer;
+        JsonArray frames = BedrockItemTextures.writeFrames(material.data(), material.color(), layerName, texturePath, this.textureNames, this.root);
+        JsonArray defaultFrames = material.dyeColor() == null ? null : BedrockItemTextures.writeFrames(
+                material.data(),
+                material.dyeColor(),
+                layerName + "_default",
+                texturePath + "_default",
+                this.textureNames,
+                this.root
+        );
+
+        // 各阶段共用这一层的贴图。每个有可见面的阶段各自注册控制器，由 ce_stage 选中当前阶段。
+        Map<JsonArray, JsonObject> layerGeometries = new HashMap<>();
+        for (int index = 0; index < this.stages.size(); index++) {
+            Stage stage = this.stages.get(index);
+            JsonArray cubes = selectMaterialFaces(stage.cubes(), layerName);
+            if (cubes.isEmpty()) {
+                continue;
+            }
+            String alias = "stage_" + index + '_' + layerName;
+            this.registerGeometry(alias, cubes, stage.model(), layerGeometries);
+            String controllerId = "controller.render." + this.prefix + '.' + alias;
+            this.renderControllers.add(controllerId, renderController(alias, material.data().animation(), frames, defaultFrames));
+            JsonObject active = new JsonObject();
+            active.addProperty(controllerId, "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + index);
+            this.activeControllers.add(active);
+        }
+    }
+
+    private void registerGeometry(String alias, JsonArray cubes, JavaModel model, Map<JsonArray, JsonObject> layerGeometries) {
+        float radius = modelRadius(cubes);
+        JsonObject geometry = layerGeometries.get(cubes);
+        if (geometry == null) {
+            geometry = createGeometry("geometry." + this.prefix + '.' + alias, cubes, model, radius, this.poseBones);
+            layerGeometries.put(cubes, geometry);
+            this.geometries.add(geometry);
+        } else {
+            // 同一组面可用于不同的手持姿态，裁剪范围要覆盖每个阶段的 display。
+            BedrockItemAttachables.expandDisplayBounds(geometry.getAsJsonObject("description"), model, radius);
+        }
+        // 控制器按阶段别名引用几何；不同阶段的别名可以指向同一个几何 ID。
+        this.geometryNames.addProperty(alias, geometry.getAsJsonObject("description").get("identifier").getAsString());
+    }
+
+    private static JsonObject renderController(String alias, TextureAnimation animation, JsonArray frames, JsonArray defaultFrames) {
+        JsonObject controller = new JsonObject();
+        controller.addProperty("geometry", "Geometry." + alias);
+
+        JsonObject textureArrays = GsonHelper.createObject("array.frames", frames);
+        if (defaultFrames != null) {
+            textureArrays.add("array.defaults", defaultFrames);
+        }
+        controller.add("arrays", GsonHelper.createObject("textures", textureArrays));
+
+        // 将运行秒数换算为 tick，按动画总时长循环，再用采样间隔换算成贴图帧索引。
+        String frame = animation == null ? "0" : "math.floor(math.mod(query.life_time * 20, " + animation.duration() + ") / " + animation.sampleInterval() + ")";
+        String texture = "array.frames[" + frame + "]";
+        JsonArray textures = new JsonArray();
+        // 未染色时直接使用烘焙了默认色的贴图；只有实际染色的实例需要动态材质。
+        textures.add(defaultFrames == null ? texture : "variable.ce_hand_dye < 0 ? array.defaults[" + frame + "] : " + texture);
+        textures.add("Texture.enchanted");
+        controller.add("textures", textures);
+
+        JsonObject material = new JsonObject();
+        if (defaultFrames == null) {
+            material.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
+        } else {
+            material.addProperty("*", "variable.ce_hand_dye < 0 ? (variable.is_enchanted ? Material.enchanted : Material.default)" + " : (variable.is_enchanted ? Material.dyed_enchanted : Material.dyed)");
+            controller.add("color", handColor());
+        }
+        JsonArray materials = new JsonArray();
+        materials.add(material);
+        controller.add("materials", materials);
+        return controller;
+    }
+
+    private void writeAnimations(JsonObject poseAnimations, JsonArray poseAnimate) throws IOException {
         JsonObject animations = new JsonObject();
-        JsonObject names = new JsonObject();
-        JsonArray animate = new JsonArray();
-        for (int stage = 0; stage < stages.size(); stage++) {
-            BedrockItemAttachables.displayAnimations(stages.get(stage).model(), "animation." + prefix + '.', stage, animations, names, animate);
+        String animationPrefix = "animation." + this.prefix + '.';
+        // 先登记各阶段的 Java display 变换，再把拉弓、格挡等物品专属动作追加到播放列表。
+        for (int index = 0; index < this.stages.size(); index++) {
+            BedrockItemAttachables.displayAnimations(this.stages.get(index).model(), animationPrefix, index, animations, this.animationNames, this.animate);
         }
         for (Map.Entry<String, JsonElement> pose : poseAnimations.entrySet()) {
-            String name = "animation." + prefix + '.' + pose.getKey();
+            String name = animationPrefix + pose.getKey();
             animations.add(name, pose.getValue());
-            names.addProperty(pose.getKey(), name);
+            this.animationNames.addProperty(pose.getKey(), name);
         }
-        animate.addAll(poseAnimate);
-        writeFile("1.10.0", "animations", animations, root.resolve("animations/" + resource + ".animation.json"));
+        this.animate.addAll(poseAnimate);
+        writeFile("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
+    }
+
+    private void writeAttachable(JsonArray preAnimation) throws IOException {
         JsonObject description = new JsonObject();
-        description.addProperty("identifier", id.asString());
+        description.addProperty("identifier", this.id.asString());
         JsonObject renderMaterials = new JsonObject();
         renderMaterials.addProperty("default", "entity_alphatest");
         renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
-        if (materials.stream().anyMatch(material -> material.dyeColor() != null)) {
+        if (this.materials.stream().anyMatch(material -> material.dyeColor() != null)) {
             renderMaterials.addProperty("dyed", "entity_alphatest_change_color");
             renderMaterials.addProperty("dyed_enchanted", "entity_alphatest_change_color_glint");
         }
         description.add("materials", renderMaterials);
-        description.add("textures", textureNames);
-        description.add("geometry", geometryNames);
-        description.add("animations", names);
-        JsonObject scripts = new JsonObject();
-        scripts.add("animate", animate);
+        description.add("textures", this.textureNames);
+        description.add("geometry", this.geometryNames);
+        description.add("animations", this.animationNames);
+        // pre_animation 先计算 ce_stage 等变量，动画和渲染控制器再用这些值选择当前姿态与几何。
+        JsonObject scripts = GsonHelper.createObject("animate", this.animate);
         scripts.add("pre_animation", preAnimation);
         description.add("scripts", scripts);
-        description.add("render_controllers", activeControllers);
-        JsonObject attachable = new JsonObject();
-        attachable.add("description", description);
-        writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
+        description.add("render_controllers", this.activeControllers);
+        JsonObject attachable = GsonHelper.createObject("description", description);
+        writeFile("1.10.0", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
     }
 
     private static JsonObject handColor() {
         JsonObject color = new JsonObject();
+        // ce_hand_dye 保存 0xRRGGBB 整数，材质需要拆成三个 0～1 的颜色通道。
         String rgb = "(variable.ce_hand_dye < 0 ? 16777215 : variable.ce_hand_dye)";
         color.addProperty("r", "math.floor(" + rgb + " / 65536) / 255");
         color.addProperty("g", "math.mod(math.floor(" + rgb + " / 256), 256) / 255");
@@ -153,7 +199,8 @@ public final class Bedrock3DItemAttachables {
         return color;
     }
 
-    static JsonArray select(JsonArray source, String material) {
+    static JsonArray selectMaterialFaces(JsonArray source, String material) {
+        // 一个立方体的不同面可能属于不同材质层，只复制当前层的面，原始几何留给后续层使用。
         JsonArray cubes = new JsonArray();
         for (JsonElement value : source) {
             JsonObject original = value.getAsJsonObject();
@@ -192,8 +239,9 @@ public final class Bedrock3DItemAttachables {
         return radius;
     }
 
-    private static JsonObject geometry(String identifier, JsonArray cubes, JavaModel model, float radius, JsonArray poseBones) {
+    private static JsonObject createGeometry(String identifier, JsonArray cubes, JavaModel model, float radius, JsonArray poseBones) {
         JsonObject geometry = BedrockItemAttachables.displayGeometry(model, cubes, identifier, radius);
+        // 把姿态骨骼插在手持挂点 ce_slot 与原有子骨骼之间，使整个模型继承物品的姿态变换。
         JsonArray bones = new JsonArray();
         for (JsonElement value : geometry.getAsJsonArray("bones")) {
             JsonObject bone = value.getAsJsonObject();

@@ -62,7 +62,7 @@ final class BedrockDisplayAssets {
             String geometry = "geometry." + this.name + "." + alias;
             JsonArray bones = rig();
             for (int i = 0; i < parts.size(); i++) {
-                JsonArray cubes = Bedrock3DItemAttachables.select(partsCubes.get(i), "layer" + layer);
+                JsonArray cubes = Bedrock3DItemAttachables.selectMaterialFaces(partsCubes.get(i), "layer" + layer);
                 if (!cubes.isEmpty()) {
                     addPart(bones, channels, i, parts.get(i), cubes);
                 }

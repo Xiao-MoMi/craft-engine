@@ -19,10 +19,11 @@ final class BedrockPlayerAnimationController {
 
     BedrockPlayerAnimationState state(String name) throws IOException {
         if (this.file == null) {
-            this.file = Files.exists(this.path) ? GsonHelper.readJsonObjectFromFile(this.path)
-                    : GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
+            this.file = Files.exists(this.path) ? GsonHelper.readJsonObjectFromFile(this.path) : GsonHelper.readJsonFromResource("/bedrock/player/root.animation_controllers.json").getAsJsonObject();
         }
-        JsonObject states = this.file.getAsJsonObject("animation_controllers").getAsJsonObject("controller.animation.player.root")
+        assert this.file != null;
+        JsonObject states = this.file.getAsJsonObject("animation_controllers")
+                .getAsJsonObject("controller.animation.player.root")
                 .getAsJsonObject("states");
         return new BedrockPlayerAnimationState(states.getAsJsonObject(name));
     }

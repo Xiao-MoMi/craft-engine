@@ -37,13 +37,11 @@ public final class Bedrock3DBowItemHandler implements BedrockItemHandler {
         } catch (UnsupportedOperationException exception) {
             return null;
         }
-        Bedrock3DBowAttachables.write(entry.bedrockId(), stages, geometry.materials(),
-                entry.useBehavior().maximumDuration().value(), context.root());
+        Bedrock3DBowAttachables.write(entry.bedrockId(), stages, geometry.materials(), entry.useBehavior().maximumDuration().value(), context.root());
         List<ItemBindingCondition> conditions = idleRule.conditions().stream()
                 .filter(condition -> !BedrockItemAttachables.isUseCondition(condition)).toList();
         ItemBindingRule registration = new ItemBindingRule(conditions, idleRule.target(), idleRule.transformations(), idleRule.sourcePath());
         context.playerAnimations().registerBowUsingJavaPose(entry.bedrockId());
         return List.of(GeneratedItemVariant.block(entry.bedrockId(), registration, display, true));
     }
-
 }
