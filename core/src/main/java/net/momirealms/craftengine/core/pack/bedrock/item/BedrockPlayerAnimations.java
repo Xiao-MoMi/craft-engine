@@ -5,8 +5,8 @@ import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
@@ -19,6 +19,20 @@ public class BedrockPlayerAnimations {
     private final Set<Key> bowsUsingJavaPose = new ObjectOpenHashSet<>();
     private final Set<Key> itemsUsingJavaSwing = new ObjectOpenHashSet<>();
     private final BedrockCrossbowPlayerAnimations crossbows = new BedrockCrossbowPlayerAnimations();
+
+    static String sortedItemArguments(Set<Key> items) {
+        String[] names = new String[items.size()];
+        int index = 0;
+        for (Key item : items) {
+            names[index++] = item.asString();
+        }
+        Arrays.sort(names);
+        StringBuilder arguments = new StringBuilder();
+        for (String name : names) {
+            arguments.append(", '").append(name).append('\'');
+        }
+        return arguments.toString();
+    }
 
     void registerBow(Key id) {
         this.bows.add(id);

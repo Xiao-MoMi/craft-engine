@@ -21,6 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Function;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 
@@ -100,10 +101,22 @@ public final class BedrockItemAttachables {
         String controller = "controller.render." + attachment.prefix;
         writeController(controller, geometryFrames, textureFrames, attachment.controllerPath(root));
         attachment.controllers.add(GsonHelper.createObject(controller, new JsonPrimitive("(" + BedrockItemAttachment.IN_HAND + ") && variable.ce_stage >= 0")));
-        attachment.write(root, bowScripts(stages.stream().map(Stage::condition).toList(), maximumUseTicks));
+        attachment.write(root, bowScripts(stageSelection(stages, Stage::condition), maximumUseTicks));
     }
 
-    static JsonArray bowScripts(List<String> conditions, int maximumUseTicks) {
+    static <T> String stageSelection(List<T> stages, Function<T, String> condition) {
+        StringBuilder script = new StringBuilder("variable.ce_stage = ");
+        for (int i = 0; i < stages.size(); i++) {
+            script.append('(').append(condition.apply(stages.get(i))).append(") ? ").append(i).append(" : (");
+        }
+        script.append("-1");
+        for (int i = 0; i < stages.size(); i++) {
+            script.append(')');
+        }
+        return script.append(';').toString();
+    }
+
+    static JsonArray bowScripts(String stageSelection, int maximumUseTicks) {
         JsonArray preAnimation = new JsonArray();
         // 原版弓使用主手 tick 查询；通用 item_in_use_duration 在部分客户端的单位与文档不一致。
         preAnimation.add("variable.ce_using_item = context.item_slot == 'main_hand' && query.is_using_item && query.main_hand_item_use_duration > 0;");
@@ -111,33 +124,31 @@ public final class BedrockItemAttachables {
         preAnimation.add("variable.ce_charge_amount = variable.ce_using_item ? math.clamp((variable.ce_use_ticks + query.frame_alpha - 1) / 10, 0, 1) : 0;");
         // Geyser 的最大使用时长可能不同于 Java；remaining 必须按来源物品计算。
         preAnimation.add("variable.ce_remaining_ticks = variable.ce_using_item ? math.max(0, " + maximumUseTicks + " - variable.ce_use_ticks) : 0;");
-        String selection = "-1";
-        for (int i = conditions.size() - 1; i >= 0; i--) {
-            selection = "(" + conditions.get(i) + ") ? " + i + " : (" + selection + ")";
-        }
-        preAnimation.add("variable.ce_stage = " + selection + ";");
+        preAnimation.add(stageSelection);
         return preAnimation;
     }
 
     static int findBowIdle(List<ItemBindingRule> rules) {
-        if (rules.stream().noneMatch(rule -> rule.conditions().stream().anyMatch(BedrockItemAttachables::isUseCondition))) {
-            return -1;
-        }
+        boolean hasUseCondition = false;
         int idle = -1;
         for (int i = 0; i < rules.size(); i++) {
-            if (matchesIdle(rules.get(i))) {
+            ItemBindingRule rule = rules.get(i);
+            hasUseCondition = hasUseCondition || rule.hasCondition(BedrockItemAttachables::isUseCondition);
+            if (idle == -1 && matchesIdle(rule)) {
                 idle = i;
+            }
+            if (hasUseCondition && idle != -1) {
                 break;
             }
         }
-        if (idle == -1) {
+        if (!hasUseCondition || idle == -1) {
             return -1;
         }
-        List<ItemBindingCondition> conditions = rules.get(idle).conditions().stream().filter(condition -> !isUseCondition(condition)).toList();
+        List<ItemBindingCondition> conditions = rules.get(idle).conditionsExcept(BedrockItemAttachables::isUseCondition);
         // 先找到真正的待机，再检查所有阶段的非使用条件，避免吞掉耐久等注册分支。
         for (ItemBindingRule rule : rules) {
             if (!(rule.target() instanceof ItemRenderTarget.Model)
-                    || !conditions.equals(rule.conditions().stream().filter(condition -> !isUseCondition(condition)).toList())) {
+                    || !rule.matchesConditionsExcept(conditions, BedrockItemAttachables::isUseCondition)) {
                 return -1;
             }
         }
@@ -149,6 +160,7 @@ public final class BedrockItemAttachables {
                 || (condition instanceof ItemBindingCondition.NumericRange range && range.property() instanceof UseDurationRangeDispatchProperty);
     }
 
+    @SuppressWarnings("DeconstructionCanBeUsed")
     static boolean matchesIdle(ItemBindingRule rule) {
         for (ItemBindingCondition condition : rule.conditions()) {
             if (condition instanceof ItemBindingCondition.BooleanMatch match && match.property() instanceof UsingItemConditionProperty && match.expected()) {
@@ -161,6 +173,7 @@ public final class BedrockItemAttachables {
         return true;
     }
 
+    @SuppressWarnings("DeconstructionCanBeUsed")
     static String useCondition(ItemBindingRule rule) {
         StringBuilder expression = new StringBuilder("1");
         for (ItemBindingCondition condition : rule.conditions()) {

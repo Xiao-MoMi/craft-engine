@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import net.momirealms.craftengine.core.pack.model.definition.special.HeadSpecialModel;
-import net.momirealms.craftengine.core.pack.model.definition.special.PlayerHeadSpecialModel;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.ArrayList;
@@ -17,20 +15,28 @@ public record ItemDefinitionBinding(Key definitionId,
         rules = List.copyOf(rules);
     }
 
-    ItemDefinitionBinding withHeadSkin(Key skin) {
-        List<ItemBindingRule> updated = bindHeadSkin(this.rules, skin);
-        return updated == this.rules ? this : new ItemDefinitionBinding(this.definitionId, this.handAnimationOnSwap,
-                this.oversizedInGui, this.swapAnimationScale, updated);
+    boolean hasPlayerHead() {
+        for (ItemBindingRule rule : this.rules) {
+            if (rule.target().hasPlayerHead()) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    ItemDefinitionBinding withHeadSkin(Key skin) {
+        List<ItemBindingRule> updated = bindHeadSkin(this.rules, skin);
+        return updated == this.rules ? this : new ItemDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, updated);
+    }
+
+    @SuppressWarnings("DeconstructionCanBeUsed")
     private static List<ItemBindingRule> bindHeadSkin(List<ItemBindingRule> rules, Key skin) {
         List<ItemBindingRule> result = rules;
         for (int index = 0; index < rules.size(); index++) {
             ItemBindingRule rule = rules.get(index);
             ItemRenderTarget target = rule.target();
-            if (target instanceof ItemRenderTarget.Special special && (special.model() instanceof PlayerHeadSpecialModel
-                    || special.model() instanceof HeadSpecialModel head && head.kind().equals("player") && head.texture() == null)) {
-                target = new ItemRenderTarget.Model(special.base(), List.of(), skin);
+            if (target instanceof ItemRenderTarget.Model model && model.headSkin() != null && !skin.equals(model.headSkin())) {
+                target = new ItemRenderTarget.Model(model.model(), model.tints(), skin);
             } else if (target instanceof ItemRenderTarget.Composite composite) {
                 List<ItemBindingRule> parts = bindHeadSkin(composite.parts(), skin);
                 if (parts != composite.parts()) {

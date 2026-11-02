@@ -44,10 +44,10 @@ final class BedrockCrossbowStates {
             if (idle == -1) {
                 return List.of();
             }
-            List<ItemBindingCondition> base = rules.get(idle).conditions().stream().filter(condition -> !isState(condition)).toList();
+            List<ItemBindingCondition> base = rules.get(idle).conditionsExcept(BedrockCrossbowStates::isState);
             for (ItemBindingRule rule : rules) {
                 if (!(rule.target() instanceof ItemRenderTarget.Model)
-                        || !base.equals(rule.conditions().stream().filter(condition -> !isState(condition)).toList())) {
+                        || !rule.matchesConditionsExcept(base, BedrockCrossbowStates::isState)) {
                     return List.of();
                 }
             }
@@ -120,11 +120,7 @@ final class BedrockCrossbowStates {
         // 当前只支持普通弩；附魔修正后的装填时长需要后续运行时同步。
         scripts.add("variable.ce_pull = variable.ce_using_item ? variable.ce_use_ticks / " + chargeTicks + " : 0;");
         scripts.add("variable.ce_charge_amount = variable.ce_using_item ? math.clamp((variable.ce_use_ticks + query.frame_alpha - 1) / 10, 0, 1) : 0;");
-        String selection = "-1";
-        for (int i = state.rules().size() - 1; i >= 0; i--) {
-            selection = "(" + condition(state.rules().get(i)) + ") ? " + i + " : (" + selection + ")";
-        }
-        scripts.add("variable.ce_stage = " + selection + ";");
+        scripts.add(BedrockItemAttachables.stageSelection(state.rules(), BedrockCrossbowStates::condition));
         return scripts;
     }
 

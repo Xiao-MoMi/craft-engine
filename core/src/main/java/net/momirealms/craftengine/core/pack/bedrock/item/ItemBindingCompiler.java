@@ -6,6 +6,8 @@ import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.model.definition.*;
+import net.momirealms.craftengine.core.pack.model.definition.special.HeadSpecialModel;
+import net.momirealms.craftengine.core.pack.model.definition.special.PlayerHeadSpecialModel;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class ItemBindingCompiler {
+    private static final Key DEFAULT_HEAD_TEXTURE = Key.minecraft("entity/player/wide/steve");
 
     private ItemBindingCompiler() {
     }
@@ -67,7 +70,13 @@ public final class ItemBindingCompiler {
             // 条件和变换在当前组合层内累积；组合的外层条件和变换保留在组合规则上。
             switch (model) {
                 case BaseItemModel base -> this.emit(new ItemRenderTarget.Model(base.path(), base.tints()), path);
-                case SpecialItemModel special -> this.emit(new ItemRenderTarget.Special(special.base(), special.specialModel()), path);
+                case SpecialItemModel special -> {
+                    if (special.specialModel() instanceof PlayerHeadSpecialModel || (special.specialModel() instanceof HeadSpecialModel head && head.kind().equals("player") && head.texture() == null)) {
+                        this.emit(new ItemRenderTarget.Model(special.base(), List.of(), DEFAULT_HEAD_TEXTURE), path);
+                    } else {
+                        this.emit(new ItemRenderTarget.Special(special.base(), special.specialModel()), path);
+                    }
+                }
                 case EmptyItemModel ignored -> this.emit(ItemRenderTarget.Builtin.EMPTY, path);
                 case BundleSelectedItemModel ignored -> this.emit(ItemRenderTarget.Builtin.BUNDLE_SELECTED_ITEM, path);
                 case ConditionItemModel condition -> {

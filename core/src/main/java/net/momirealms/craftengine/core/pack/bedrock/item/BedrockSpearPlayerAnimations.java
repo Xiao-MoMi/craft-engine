@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
-import java.util.stream.Collectors;
 
 public final class BedrockSpearPlayerAnimations {
     private BedrockSpearPlayerAnimations() {
@@ -31,9 +30,11 @@ public final class BedrockSpearPlayerAnimations {
     }
 
     private static void updateFirstPersonController(BedrockPlayerAnimationState state, Set<Key> spearIds) {
-        String firstPersonCondition = spearIds.stream()
-                .map(id -> "'" + id.asString() + "'")
-                .collect(Collectors.joining(", ", "query.is_item_name_any('slot.weapon.mainhand', ", ")"));
+        StringBuilder firstPersonCondition = new StringBuilder("query.is_item_name_any('slot.weapon.mainhand'");
+        for (Key id : spearIds) {
+            firstPersonCondition.append(", '").append(id.asString()).append('\'');
+        }
+        firstPersonCondition.append(')');
         state.updateCondition("first_person_melee_spear_controller", original -> "(" + original + ") && !(" + firstPersonCondition + ")");
     }
 

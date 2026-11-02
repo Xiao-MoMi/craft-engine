@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Set;
 
 public final class BedrockSwingPlayerAnimations {
@@ -32,13 +31,7 @@ public final class BedrockSwingPlayerAnimations {
     }
 
     private static String firstPersonSwingScript(Set<Key> itemsUsingJavaSwing, JsonObject source) {
-        StringBuilder condition = new StringBuilder("query.is_item_name_any('slot.weapon.mainhand'");
-        itemsUsingJavaSwing.stream()
-                .sorted(Comparator.comparing(Key::asString))
-                .forEach(id -> condition.append(", '")
-                        .append(id.asString())
-                        .append('\''));
-        condition.append(')');
+        String condition = "query.is_item_name_any('slot.weapon.mainhand'" + BedrockPlayerAnimations.sortedItemArguments(itemsUsingJavaSwing) + ")";
         StringBuilder scripts = new StringBuilder("variable.ce_java_swing = ")
                 .append(condition)
                 .append("; variable.ce_java_swing ? { ");

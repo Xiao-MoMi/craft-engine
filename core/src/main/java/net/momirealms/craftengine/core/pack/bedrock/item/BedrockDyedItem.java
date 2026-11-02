@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +19,19 @@ final class BedrockDyedItem {
     private BedrockDyedItem() {
     }
 
+    private static boolean hasDyeTint(ItemRenderTarget.Model target, JavaPackTextureSource textures) {
+        for (Tint tint : target.tints()) {
+            if (textures.dyeColor(tint) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Nullable
     static GeneratedItemVariant write(ItemRegistrationPlan.Entry entry, Key id, ItemBindingRule rule, ItemRenderTarget.Model target,
                                       JavaModelResolver models, JavaPackTextureSource textures, BedrockItemGenerationContext context) throws IOException {
-        if (target.tints().stream().noneMatch(tint -> textures.dyeColor(tint) != null)) {
+        if (!hasDyeTint(target, textures)) {
             return null;
         }
         JavaModel model = target.resolve(models);

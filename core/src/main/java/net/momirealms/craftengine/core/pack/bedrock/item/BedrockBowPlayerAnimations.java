@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Set;
 
 public final class BedrockBowPlayerAnimations {
@@ -50,12 +49,6 @@ public final class BedrockBowPlayerAnimations {
     }
 
     private static String mainHandCondition(Set<Key> bows) {
-        StringBuilder names = new StringBuilder("query.is_item_name_any('slot.weapon.mainhand'");
-        bows.stream()
-                .sorted(Comparator.comparing(Key::asString))
-                .forEach(id -> names.append(", '")
-                        .append(id.asString())
-                        .append('\''));
-        return names.append(')').toString();
+        return "query.is_item_name_any('slot.weapon.mainhand'" + BedrockPlayerAnimations.sortedItemArguments(bows) + ")";
     }
 }

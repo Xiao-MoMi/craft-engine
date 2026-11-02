@@ -34,7 +34,7 @@ public final class Bedrock3DBowAttachables {
         JsonObject using = new JsonObject();
         using.addProperty("java_bow_use", "context.is_first_person && variable.ce_using_item");
         animate.add(using);
-        JsonArray preAnimation = BedrockItemAttachables.bowScripts(stages.stream().map(Stage::condition).toList(), maximumUseTicks);
+        JsonArray preAnimation = BedrockItemAttachables.bowScripts(BedrockItemAttachables.stageSelection(stages, Stage::condition), maximumUseTicks);
         // Java 26.3 FirstPersonHandsAndItemsRenderer：使用时长包含帧插值，弓在 20 tick 达到满蓄力。
         preAnimation.add("variable.ce_bow_time = variable.ce_using_item ? variable.ce_use_ticks + query.frame_alpha - 1 : 0;");
         preAnimation.add("variable.ce_bow_power = variable.ce_bow_time / 20;");

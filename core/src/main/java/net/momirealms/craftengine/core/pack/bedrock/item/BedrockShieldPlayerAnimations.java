@@ -10,7 +10,6 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -33,12 +32,7 @@ public final class BedrockShieldPlayerAnimations {
     }
 
     private static void updateBlockingControllers(BedrockPlayerAnimationController controller, Set<Key> shieldsUsingJavaPose) throws IOException {
-        StringBuilder names = new StringBuilder();
-        shieldsUsingJavaPose.stream()
-                .sorted(Comparator.comparing(Key::asString))
-                .forEach(id -> names.append(", '")
-                        .append(id.asString())
-                        .append('\''));
+        String names = BedrockPlayerAnimations.sortedItemArguments(shieldsUsingJavaPose);
         String mainHandCondition = "query.blocking && !query.is_emerging && query.is_item_name_any('slot.weapon.mainhand'" + names + ")";
         String offHandCondition = "query.blocking && query.is_emerging && query.is_item_name_any('slot.weapon.offhand'" + names + ")";
         for (String view : List.of("first_person", "third_person")) {

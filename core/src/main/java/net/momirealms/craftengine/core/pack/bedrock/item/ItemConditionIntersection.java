@@ -24,7 +24,12 @@ final class ItemConditionIntersection {
         return result;
     }
 
+    /**
+     * 将新条件并入当前分支的条件列表。遇到冲突时返回 false，调用方会丢弃整个分支。
+     */
+    @SuppressWarnings("DeconstructionCanBeUsed")
     private static boolean addCondition(List<ItemBindingCondition> conditions, ItemBindingCondition next) {
+        // scale 为零时只可能得到零；要求命中空候选集的 select 也没有可匹配的值。
         if (next instanceof ItemBindingCondition.NumericRange range && range.scale() == 0 && !range.matches(0)) {
             return false;
         }
@@ -36,10 +41,15 @@ final class ItemConditionIntersection {
             if (existing.equals(next)) {
                 return true;
             }
-            if (existing instanceof ItemBindingCondition.BooleanMatch previous && next instanceof ItemBindingCondition.BooleanMatch incoming && previous.property().equals(incoming.property())) {
+            if (existing instanceof ItemBindingCondition.BooleanMatch previous
+                    && next instanceof ItemBindingCondition.BooleanMatch incoming
+                    && previous.property().equals(incoming.property())) {
                 return previous.expected() == incoming.expected();
             }
-            if (existing instanceof ItemBindingCondition.SelectMatch previous && next instanceof ItemBindingCondition.SelectMatch incoming && previous.property().equals(incoming.property())) {
+            if (existing instanceof ItemBindingCondition.SelectMatch previous
+                    && next instanceof ItemBindingCondition.SelectMatch incoming
+                    && previous.property().equals(incoming.property())) {
+                // 两个 select 都排除某些值时，合并排除项；只要一方限定了候选值，就只保留双方都允许的值。
                 ItemBindingCondition.SelectMatch intersection = intersectSelect(previous, incoming);
                 if (!intersection.negated() && intersection.values().isEmpty()) {
                     return false;
@@ -47,8 +57,11 @@ final class ItemConditionIntersection {
                 conditions.set(i, intersection);
                 return true;
             }
-            if (existing instanceof ItemBindingCondition.NumericRange previous && next instanceof ItemBindingCondition.NumericRange incoming
-                    && previous.property().equals(incoming.property()) && previous.scale() == incoming.scale()) {
+            if (existing instanceof ItemBindingCondition.NumericRange previous
+                    && next instanceof ItemBindingCondition.NumericRange incoming
+                    && previous.property().equals(incoming.property())
+                    && previous.scale() == incoming.scale()) {
+                // 相同 scale 的区间可以直接取交集。下界包含、上界排除，因此两端相等时也没有交集。
                 Float min = previous.minInclusive();
                 Float max = previous.maxExclusive();
                 if (incoming.minInclusive() != null && (min == null || min < incoming.minInclusive())) {
@@ -65,6 +78,7 @@ final class ItemConditionIntersection {
                 return overlapsOtherScales(conditions, intersection);
             }
         }
+        // 同一属性使用不同 scale 时保留各自的区间，在缩放前的属性值上检查它们能否同时成立。
         if (next instanceof ItemBindingCondition.NumericRange range && !overlapsOtherScales(conditions, range)) {
             return false;
         }

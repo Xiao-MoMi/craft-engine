@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 final class BedrockHeldItemModels {
     private final ItemBindingRule inventory;
@@ -49,10 +50,10 @@ final class BedrockHeldItemModels {
         if (inventory == null || hands.isEmpty()) {
             return null;
         }
-        List<ItemBindingCondition> base = base(inventory);
+        List<ItemBindingCondition> base = inventory.conditionsExcept(BedrockHeldItemModels::isViewOrUseCondition);
         // 只消化客户端能判定的显示和使用条件，不能把耐久等物品分支折叠为一个 ID。
         for (ItemBindingRule rule : entry.definition().rules()) {
-            if (!base.equals(base(rule))) {
+            if (!rule.matchesConditionsExcept(base, BedrockHeldItemModels::isViewOrUseCondition)) {
                 return null;
             }
             if (matches(rule, "gui") && (!inventory.target().equals(rule.target())
@@ -63,9 +64,8 @@ final class BedrockHeldItemModels {
         return new BedrockHeldItemModels(inventory, hands, conditions);
     }
 
-    private static List<ItemBindingCondition> base(ItemBindingRule rule) {
-        return rule.conditions().stream().filter(condition -> !(condition instanceof ItemBindingCondition.SelectMatch select
-                && select.property() instanceof DisplayContextSelectProperty) && !BedrockItemAttachables.isUseCondition(condition)).toList();
+    private static boolean isViewOrUseCondition(ItemBindingCondition condition) {
+        return DisplayContextVariants.isDisplayCondition(condition) || BedrockItemAttachables.isUseCondition(condition);
     }
 
     private static boolean matches(ItemBindingRule rule, String context) {
@@ -91,7 +91,8 @@ final class BedrockHeldItemModels {
     }
 
     ItemBindingRule registration() {
-        return new ItemBindingRule(base(this.inventory), this.inventory.target(), this.inventory.transformations(), this.inventory.sourcePath());
+        return new ItemBindingRule(this.inventory.conditionsExcept(BedrockHeldItemModels::isViewOrUseCondition),
+                this.inventory.target(), this.inventory.transformations(), this.inventory.sourcePath());
     }
 
     JsonArray scripts(ItemBehaviorDescription behavior) {
@@ -99,11 +100,7 @@ final class BedrockHeldItemModels {
         scripts.add("variable.ce_using_item = context.item_slot == 'main_hand' && query.is_using_item && query.main_hand_item_use_duration > 0;");
         scripts.add("variable.ce_use_ticks = variable.ce_using_item ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration) : 0;");
         scripts.add("variable.ce_remaining_ticks = variable.ce_using_item ? math.max(0, " + behavior.use().maximumDuration().value() + " - variable.ce_use_ticks) : 0;");
-        String selection = "-1";
-        for (int i = this.hands.size() - 1; i >= 0; i--) {
-            selection = "(" + this.conditions.get(i) + ") ? " + i + " : (" + selection + ")";
-        }
-        scripts.add("variable.ce_stage = " + selection + ";");
+        scripts.add(BedrockItemAttachables.stageSelection(this.conditions, Function.identity()));
         return scripts;
     }
 }

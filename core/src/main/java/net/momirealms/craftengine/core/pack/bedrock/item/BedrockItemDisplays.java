@@ -59,7 +59,7 @@ public final class BedrockItemDisplays {
                         } catch (UnsupportedOperationException | UncheckedIOException e) {
                             String reason = e.toString();
                             if (reported.add(reason)) {
-                                TranslationManager.warn("resource_pack.bedrock.item.display_skipped", variant.id().asString(), viewName(context), reason);
+                                TranslationManager.warn("resource_pack.bedrock.item.display_skipped", variant.id().asString(), context.serializedName(), reason);
                             }
                         }
                     }
@@ -83,9 +83,22 @@ public final class BedrockItemDisplays {
 
     private static int appearance(BedrockDisplayAssets assets, List<Part> parts, Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
         Part first = parts.getFirst();
-        boolean sharedPose = parts.stream().allMatch(part -> part.display().equals(first.display()) && part.mirrored() == first.mirrored());
+        boolean sharedPose = true;
+        for (int i = 1; i < parts.size(); i++) {
+            Part part = parts.get(i);
+            if (!part.display().equals(first.display()) || part.mirrored() != first.mirrored()) {
+                sharedPose = false;
+                break;
+            }
+        }
         // 通常 NONE、GUI 和手持只在模型姿态上不同。把姿态写入映射，共用几何和材质。
-        List<Part> geometry = sharedPose ? parts.stream().map(part -> new Part(part.target(), part.transforms(), JavaModel.Transform.IDENTITY, false)).toList() : parts;
+        List<Part> geometry = parts;
+        if (sharedPose && (first.mirrored() || !first.display().equals(JavaModel.Transform.IDENTITY))) {
+            geometry = new ArrayList<>(parts.size());
+            for (Part part : parts) {
+                geometry.add(new Part(part.target(), part.transforms(), JavaModel.Transform.IDENTITY, false));
+            }
+        }
         Integer shape = meshes.get(geometry);
         if (shape == null) {
             shape = assets.add(geometry);
@@ -112,7 +125,7 @@ public final class BedrockItemDisplays {
         if (!variant.displayModels().isEmpty()) {
             return variant.displayModels().get(context);
         }
-        JsonPrimitive view = new JsonPrimitive(viewName(context));
+        JsonPrimitive view = new JsonPrimitive(context.serializedName());
         for (ItemBindingRule rule : entry.definition().rules()) {
             if (!BedrockItemAttachables.matchesIdle(rule)) {
                 continue;
@@ -133,20 +146,11 @@ public final class BedrockItemDisplays {
         return null;
     }
 
-    static String viewName(ItemDisplayContext context) {
-        return switch (context) {
-            case THIRD_PERSON_LEFT_HAND -> "thirdperson_lefthand";
-            case THIRD_PERSON_RIGHT_HAND -> "thirdperson_righthand";
-            case FIRST_PERSON_LEFT_HAND -> "firstperson_lefthand";
-            case FIRST_PERSON_RIGHT_HAND -> "firstperson_righthand";
-            default -> context.name().toLowerCase(Locale.ROOT);
-        };
-    }
-
+    @SuppressWarnings("DeconstructionCanBeUsed")
     private static List<Part> parts(JavaModelResources resources, ItemBindingRule rule, ItemDisplayContext context) {
         List<ItemBindingRule> children = rule.target() instanceof ItemRenderTarget.Composite composite ? composite.parts() : List.of(rule);
         List<Part> parts = new ArrayList<>(children.size());
-        DisplayPosition position = context == ItemDisplayContext.NONE ? null : DisplayPosition.valueOf(viewName(context).toUpperCase(Locale.ROOT));
+        DisplayPosition position = context == ItemDisplayContext.NONE ? null : DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT));
         for (ItemBindingRule child : children) {
             if (!(child.target() instanceof ItemRenderTarget.Model target)) {
                 return List.of();

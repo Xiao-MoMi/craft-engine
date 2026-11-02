@@ -3,9 +3,9 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 final class BedrockPlayerAnimationState {
     private final JsonObject state;
@@ -16,25 +16,27 @@ final class BedrockPlayerAnimationState {
         this.animations = state.getAsJsonArray("animations");
     }
 
-    private Stream<JsonObject> entriesWith(String name) {
-        return this.animations.asList().stream().filter(JsonElement::isJsonObject)
-                .map(JsonElement::getAsJsonObject).filter(entry -> entry.has(name));
-    }
-
     void updateCondition(String name, UnaryOperator<String> change) {
-        this.entriesWith(name).forEach(entry -> replaceCondition(entry, name, change));
+        this.updateConditions(name, null, false, change);
     }
 
     void updateFirstCondition(String name, UnaryOperator<String> change) {
-        this.entriesWith(name).findFirst().ifPresent(entry -> replaceCondition(entry, name, change));
+        this.updateConditions(name, null, true, change);
     }
 
     void updateConditionUnlessPresent(String name, String preferred, UnaryOperator<String> change) {
-        this.entriesWith(name).filter(entry -> !entry.has(preferred)).forEach(entry -> replaceCondition(entry, name, change));
+        this.updateConditions(name, preferred, false, change);
     }
 
-    private static void replaceCondition(JsonObject entry, String name, UnaryOperator<String> change) {
-        entry.addProperty(name, change.apply(entry.get(name).getAsString()));
+    private void updateConditions(String name, @Nullable String preferred, boolean firstOnly, UnaryOperator<String> change) {
+        for (JsonElement animation : this.animations) {
+            if (animation instanceof JsonObject entry && entry.has(name) && (preferred == null || !entry.has(preferred))) {
+                entry.addProperty(name, change.apply(entry.get(name).getAsString()));
+                if (firstOnly) {
+                    return;
+                }
+            }
+        }
     }
 
     void appendAnimation(String name, String condition) {

@@ -32,11 +32,7 @@ public final class Bedrock2DBowItemHandler implements BedrockItemHandler {
         if (!idleRule.transformations().isEmpty()) {
             return null;
         }
-        List<ItemBindingCondition> registrationConditions = idleRule
-                .conditions()
-                .stream()
-                .filter(condition -> !BedrockItemAttachables.isUseCondition(condition))
-                .toList();
+        List<ItemBindingCondition> registrationConditions = idleRule.conditionsExcept(BedrockItemAttachables::isUseCondition);
         List<BedrockItemAttachables.Stage> stages = new ObjectArrayList<>(rules.size());
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);

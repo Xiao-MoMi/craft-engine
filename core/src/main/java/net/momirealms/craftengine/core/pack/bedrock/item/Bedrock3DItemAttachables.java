@@ -214,9 +214,12 @@ public final class Bedrock3DItemAttachables {
         JsonObject renderMaterials = new JsonObject();
         renderMaterials.addProperty("default", "entity_alphatest");
         renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
-        if (this.materials.stream().anyMatch(material -> material.dyeColor() != null)) {
-            renderMaterials.addProperty("dyed", "entity_alphatest_change_color");
-            renderMaterials.addProperty("dyed_enchanted", "entity_alphatest_change_color_glint");
+        for (Material material : this.materials) {
+            if (material.dyeColor() != null) {
+                renderMaterials.addProperty("dyed", "entity_alphatest_change_color");
+                renderMaterials.addProperty("dyed_enchanted", "entity_alphatest_change_color_glint");
+                break;
+            }
         }
         description.add("materials", renderMaterials);
         description.add("textures", this.textureNames);

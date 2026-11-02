@@ -64,7 +64,7 @@ public final class GeyserGlyphs {
         Map<String, Map<Integer, Integer>> fonts = new HashMap<>();
         // 从各包合并后的字形建立替换表，高优先级包恢复的原生字符不会继承旧替换。
         metrics.forEach((font, glyphs) -> glyphs.forEach((codepoint, glyph) -> {
-            if (glyph.visible() && glyph.character() != codepoint) {
+            if (glyph.character() != codepoint && (glyph.visible() || glyph.advance() < 0)) {
                 fonts.computeIfAbsent(font, key -> new HashMap<>()).put(codepoint, glyph.character());
             }
         }));

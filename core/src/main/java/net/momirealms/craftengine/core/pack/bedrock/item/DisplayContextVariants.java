@@ -2,13 +2,14 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.model.definition.select.DisplayContextSelectProperty;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,76 +23,122 @@ final class DisplayContextVariants {
     }
 
     static boolean usesDisplayContext(ItemRegistrationPlan.Entry entry) {
-        return entry.definition().rules().stream().flatMap(rule -> rule.conditions().stream()).anyMatch(DisplayContextVariants::isDisplayCondition);
+        for (ItemBindingRule rule : entry.definition().rules()) {
+            if (rule.hasCondition(DisplayContextVariants::isDisplayCondition)) {
+                return true;
+            }
+        }
+        return false;
     }
 
+    /**
+     * 将 Java 模型规则按物品栈条件划分为基岩物品变体。每个变体保存各显示位置可用的模型规则。
+     * 例如，只有手持模型随耐久变化时，会按耐久划分变体，但这些变体仍共用同一个背包模型。
+     */
     static List<Variant> collect(ItemRegistrationPlan.Entry entry) {
-        // Project the Java tree onto each view first. Views with identical branches only need to be partitioned once.
-        Map<Map<List<ItemBindingCondition>, List<ItemBindingRule>>, List<ItemDisplayContext>> views = new LinkedHashMap<>();
-        Map<ItemBindingCondition, String> unsupported = new HashMap<>();
-        for (ItemBindingRule rule : entry.definition().rules()) {
-            for (ItemBindingCondition condition : rule.conditions()) {
-                if (!isDisplayCondition(condition) && !BedrockItemAttachables.isUseCondition(condition)) {
-                    String property = unsupportedProperty(condition);
-                    if (property != null) {
-                        unsupported.put(condition, property);
-                    }
-                }
-            }
+        List<PreparedRule> rules = prepareRules(entry.definition().rules());
+        Map<ViewBranches, List<ItemDisplayContext>> contextsByBranches = new LinkedHashMap<>();
+        for (ItemDisplayContext context : ItemDisplayContext.values()) {
+            ViewBranches branches = branchesForView(entry, rules, context);
+            contextsByBranches.computeIfAbsent(branches, ignored -> new ObjectArrayList<>(1)).add(context);
         }
-        for (ItemDisplayContext view : ItemDisplayContext.values()) {
-            Map<List<ItemBindingCondition>, List<ItemBindingRule>> branches = new LinkedHashMap<>();
-            Set<String> reported = new HashSet<>();
-            JsonPrimitive value = new JsonPrimitive(BedrockItemDisplays.viewName(view));
-            for (ItemBindingRule rule : entry.definition().rules()) {
-                if (rule.conditions().stream().anyMatch(c -> isDisplayCondition(c) && !((ItemBindingCondition.SelectMatch) c).matches(value))) {
-                    continue;
-                }
-                // Geyser cannot evaluate this property. Use its fallback in this view only.
-                boolean skip = false;
-                for (ItemBindingCondition condition : rule.conditions()) {
-                    String property = unsupported.get(condition);
-                    if (property != null) {
-                        if (reported.add(property)) {
-                            TranslationManager.warn("resource_pack.bedrock.item.display_skipped", entry.bedrockId().asString(), BedrockItemDisplays.viewName(view), property);
-                        }
-                        skip |= !fallback(condition);
-                    }
-                }
-                if (skip) {
-                    continue;
-                }
-                List<ItemBindingCondition> stack = rule.conditions().stream()
-                        .filter(c -> !isDisplayCondition(c) && !BedrockItemAttachables.isUseCondition(c) && !unsupported.containsKey(c)).toList();
-                branches.computeIfAbsent(stack, ignored -> new ArrayList<>()).add(rule);
-            }
-            if (branches.isEmpty()) {
-                branches.put(List.of(), List.of(EMPTY));
-            }
-            views.computeIfAbsent(branches, ignored -> new ArrayList<>()).add(view);
-        }
+
         List<Variant> variants = List.of(new Variant(List.of(), new EnumMap<>(ItemDisplayContext.class)));
-        for (Map.Entry<Map<List<ItemBindingCondition>, List<ItemBindingRule>>, List<ItemDisplayContext>> group : views.entrySet()) {
-            // A durability split may exist in only one view. Intersect its ranges with the other views' stack conditions.
-            List<Variant> combined = new ArrayList<>();
-            for (Variant variant : variants) {
-                for (Map.Entry<List<ItemBindingCondition>, List<ItemBindingRule>> branch : group.getKey().entrySet()) {
-                    List<ItemBindingCondition> stack = ItemConditionIntersection.intersect(variant.conditions(), branch.getKey());
-                    if (stack != null) {
-                        EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules = new EnumMap<>(variant.rules());
-                        for (ItemDisplayContext view : group.getValue()) {
-                            rules.put(view, branch.getValue());
-                        }
-                        combined.add(new Variant(stack, rules));
-                    }
-                }
-            }
-            variants = combined;
+        for (Map.Entry<ViewBranches, List<ItemDisplayContext>> group : contextsByBranches.entrySet()) {
+            variants = mergeVariants(variants, group.getKey(), group.getValue());
         }
         return variants;
     }
 
-    private static boolean isDisplayCondition(ItemBindingCondition condition) {
+    private static List<PreparedRule> prepareRules(List<ItemBindingRule> rules) {
+        List<PreparedRule> prepared = new ArrayList<>(rules.size());
+        for (ItemBindingRule rule : rules) {
+            List<ItemBindingCondition> stackConditions = new ObjectArrayList<>();
+            List<String> unsupportedProperties = new ObjectArrayList<>();
+            boolean matchesFallback = true;
+            for (ItemBindingCondition condition : rule.conditions()) {
+                // 显示位置由 branchesForView 筛选，使用状态由手持模型处理，两者都不区分物品变体。
+                if (isDisplayCondition(condition) || BedrockItemAttachables.isUseCondition(condition)) {
+                    continue;
+                }
+                // 是否为不支持的 condition 类型
+                String property = unsupportedProperty(condition);
+                if (property == null) {
+                    stackConditions.add(condition);
+                } else {
+                    unsupportedProperties.add(property);
+                    matchesFallback &= fallback(condition);
+                }
+            }
+            prepared.add(new PreparedRule(rule, stackConditions, unsupportedProperties, matchesFallback));
+        }
+        return prepared;
+    }
+
+    private static ViewBranches branchesForView(ItemRegistrationPlan.Entry entry, List<PreparedRule> rules, ItemDisplayContext context) {
+        Map<List<ItemBindingCondition>, List<ItemBindingRule>> branches = new LinkedHashMap<>();
+        String viewName = context.serializedName();
+        JsonPrimitive view = new JsonPrimitive(viewName);
+        Set<String> reported = new ObjectOpenHashSet<>();
+        for (PreparedRule rule : rules) {
+            if (!matchesView(rule.binding(), view)) {
+                continue;
+            }
+            // 每种不支持的属性在当前显示位置只警告一次，即使触发警告的规则随后被跳过。
+            for (String property : rule.unsupportedProperties()) {
+                if (reported.add(property)) {
+                    TranslationManager.warn("resource_pack.bedrock.item.display_skipped", entry.bedrockId().asString(), viewName, property);
+                }
+            }
+            if (rule.matchesFallback()) {
+                branches.computeIfAbsent(rule.stackConditions(), ignored -> new ObjectArrayList<>(1)).add(rule.binding());
+            }
+        }
+        if (branches.isEmpty()) {
+            // 这个位置没有可用模型。保留空模型分支，让其他位置的模型仍能参与组合。
+            branches.put(List.of(), List.of(EMPTY));
+        }
+        return new ViewBranches(branches);
+    }
+
+    private static List<Variant> mergeVariants(List<Variant> variants, ViewBranches branches, List<ItemDisplayContext> contexts) {
+        List<Variant> combined = new ObjectArrayList<>();
+        for (Variant variant : variants) {
+            for (Map.Entry<List<ItemBindingCondition>, List<ItemBindingRule>> branch : branches.byStackConditions().entrySet()) {
+                // 只有能同时满足各显示位置条件的物品栈，才需要一个共同的注册变体。
+                List<ItemBindingCondition> conditions = ItemConditionIntersection.intersect(variant.conditions(), branch.getKey());
+                if (conditions == null) {
+                    continue;
+                }
+                EnumMap<ItemDisplayContext, List<ItemBindingRule>> viewRules = new EnumMap<>(variant.rules());
+                for (ItemDisplayContext context : contexts) {
+                    viewRules.put(context, branch.getValue());
+                }
+                combined.add(new Variant(conditions, viewRules));
+            }
+        }
+        return combined;
+    }
+
+    private record PreparedRule(ItemBindingRule binding,
+                                List<ItemBindingCondition> stackConditions,
+                                List<String> unsupportedProperties,
+                                boolean matchesFallback) {
+    }
+
+    private record ViewBranches(Map<List<ItemBindingCondition>, List<ItemBindingRule>> byStackConditions) {
+    }
+
+    private static boolean matchesView(ItemBindingRule rule, JsonPrimitive view) {
+        for (ItemBindingCondition condition : rule.conditions()) {
+            if (condition instanceof ItemBindingCondition.SelectMatch select && select.property() instanceof DisplayContextSelectProperty && !select.matches(view)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static boolean isDisplayCondition(ItemBindingCondition condition) {
         return condition instanceof ItemBindingCondition.SelectMatch select && select.property() instanceof DisplayContextSelectProperty;
     }
 
@@ -104,8 +151,7 @@ final class DisplayContextVariants {
         }
         String property = json.get("property").getAsString();
         return switch (property) {
-            case "broken", "damaged", "selected", "fishing_rod/cast", "trim_material", "context_dimension", "charge_type",
-                    "damage", "count", "bundle/fullness" -> null;
+            case "broken", "damaged", "selected", "fishing_rod/cast", "trim_material", "context_dimension", "charge_type", "damage", "count", "bundle/fullness" -> null;
             case "has_component" -> json.has("ignore_default") && json.get("ignore_default").getAsBoolean() ? property : null;
             default -> property;
         };
@@ -119,9 +165,17 @@ final class DisplayContextVariants {
         };
     }
 
-    record Variant(List<ItemBindingCondition> conditions, EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules) {
+    record Variant(List<ItemBindingCondition> conditions, // 哪种物品栈会选中这个变体
+                   EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules // 选中这个变体后，各个显示位置用哪些模型规则
+    ) {
+
         ItemBindingRule idle(ItemDisplayContext view) {
-            return this.rules.get(view).stream().filter(BedrockItemAttachables::matchesIdle).findFirst().orElse(EMPTY);
+            for (ItemBindingRule rule : this.rules.get(view)) {
+                if (BedrockItemAttachables.matchesIdle(rule)) {
+                    return rule;
+                }
+            }
+            return EMPTY;
         }
     }
 }

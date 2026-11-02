@@ -13,8 +13,17 @@ import java.util.List;
 public sealed interface ItemRenderTarget {
 
     default boolean hasPlayerHead() {
-        return this instanceof Model model && model.headSkin() != null
-                || this instanceof Composite composite && composite.parts().stream().anyMatch(part -> part.target().hasPlayerHead());
+        if (this instanceof Model model) {
+            return model.headSkin() != null;
+        }
+        if (this instanceof Composite(List<ItemBindingRule> parts)) {
+            for (ItemBindingRule part : parts) {
+                if (part.target().hasPlayerHead()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     record Model(Key model, List<Tint> tints, @Nullable Key headSkin) implements ItemRenderTarget {

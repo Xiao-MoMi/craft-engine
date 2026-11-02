@@ -39,6 +39,14 @@ public record GeneratedItemVariant(Key id,
         return new GeneratedItemVariant(id, rule, null, null, false, null, reason);
     }
 
+    static GeneratedItemVariant worldAlias(GeneratedItemVariant visual, ItemDisplayContext view) {
+        return new GeneratedItemVariant(visual.id(), visual.rule(), visual.iconTexture(), visual.displayBlock(), false, visual.dyeColor(), null, Map.of(), view, null);
+    }
+
+    static GeneratedItemVariant displayContextItem(GeneratedItemVariant inventory, Map<ItemDisplayContext, ItemBindingRule> models, @Nullable Key headId) {
+        return new GeneratedItemVariant(inventory.id(), inventory.rule(), inventory.iconTexture(), inventory.displayBlock(), true, inventory.dyeColor(), null, models, null, headId);
+    }
+
     public boolean generated() {
         return this.iconTexture != null || this.displayBlock != null;
     }
