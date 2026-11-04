@@ -94,8 +94,13 @@ final class BedrockDyedItemIcon {
         }
     }
 
-    private void drawFace(JavaModel.Element element, Direction face, Matrix4f pose, JavaModel.Face source,
-                          BufferedImage texture, int color, boolean dyeable) {
+    private void drawFace(JavaModel.Element element,
+                          Direction face,
+                          Matrix4f pose,
+                          JavaModel.Face source,
+                          BufferedImage texture,
+                          int color,
+                          boolean dyeable) {
         Vector3f origin = project(element, face, pose, 0, 0);
         Vector3f across = project(element, face, pose, 1, 0).sub(origin);
         Vector3f down = project(element, face, pose, 0, 1).sub(origin);

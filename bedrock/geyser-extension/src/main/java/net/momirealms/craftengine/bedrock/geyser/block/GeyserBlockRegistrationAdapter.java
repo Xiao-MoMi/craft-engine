@@ -28,12 +28,12 @@ public final class GeyserBlockRegistrationAdapter {
             if (display.has("collision_boxes")) {
                 List<BoxComponent> boxes = new ArrayList<>();
                 for (JsonElement box : display.getAsJsonArray("collision_boxes")) {
-                    boxes.add(box(box));
+                    boxes.add(box(box, true));
                 }
                 if (boxes.isEmpty()) {
                     boxes.add(BoxComponent.emptyBox());
                 }
-                components.collisionBoxes(boxes).selectionBox(box(display.get("selection_box")))
+                components.collisionBoxes(boxes).selectionBox(box(display.get("selection_box"), false))
                         .lightDampening(display.get("light_dampening").getAsInt())
                         .friction(display.get("friction").getAsFloat());
             }
@@ -71,15 +71,19 @@ public final class GeyserBlockRegistrationAdapter {
         return block.identifier();
     }
 
-    private static BoxComponent box(JsonElement value) {
+    private static BoxComponent box(JsonElement value, boolean collision) {
         if (value == null || value.isJsonNull()) {
             return BoxComponent.emptyBox();
         }
         JsonObject box = value.getAsJsonObject();
         JsonArray origin = box.getAsJsonArray("origin");
         JsonArray size = box.getAsJsonArray("size");
-        return new BoxComponent(origin.get(0).getAsFloat(), origin.get(1).getAsFloat(), origin.get(2).getAsFloat(),
-                size.get(0).getAsFloat(), size.get(1).getAsFloat(), size.get(2).getAsFloat());
+        float originX = origin.get(0).getAsFloat();
+        float sizeX = size.get(0).getAsFloat();
+        if (collision) {
+            // The plan mirrors X in model space. Geyser writes collision min/max in world axes.
+            originX = -originX - sizeX;
+        }
+        return new BoxComponent(originX, origin.get(1).getAsFloat(), origin.get(2).getAsFloat(), sizeX, size.get(1).getAsFloat(), size.get(2).getAsFloat());
     }
-
 }

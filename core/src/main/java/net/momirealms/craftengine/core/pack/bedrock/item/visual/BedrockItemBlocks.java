@@ -30,8 +30,10 @@ public final class BedrockItemBlocks {
     private final BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
     private final JsonObject blocks = new JsonObject();
 
-    private static BedrockElementGeometry.Material bindTexture(TextureKey key, Map<TextureKey, BedrockElementGeometry.Material> bindings,
-                                                               List<TextureData> images, JavaPackTextureSource textures) throws IOException {
+    private static BedrockElementGeometry.Material bindTexture(TextureKey key,
+                                                               Map<TextureKey, BedrockElementGeometry.Material> bindings,
+                                                               List<TextureData> images,
+                                                               JavaPackTextureSource textures) throws IOException {
         BedrockElementGeometry.Material material = bindings.get(key);
         if (material == null) {
             TextureData data = textures.read(key.texture(), TextureUsage.ITEM);
