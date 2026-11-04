@@ -22,6 +22,7 @@ import java.util.*;
 
 public final class GeyserWorldBlocks {
     private final List<JsonObject> definitions = new ArrayList<>();
+    private final List<JsonObject> stateMappings = new ArrayList<>();
     private final Int2IntMap visualStates = new Int2IntOpenHashMap();
     private final BitSet customStates = new BitSet();
     private final Map<String, Integer> aliases = new HashMap<>();
@@ -35,12 +36,17 @@ public final class GeyserWorldBlocks {
         this.definitions.add(definition);
     }
 
+    public void addStateMappings(JsonObject mappings) {
+        this.stateMappings.add(mappings);
+    }
+
     public boolean contains(int visualState) {
         return this.customStates.get(visualState);
     }
 
     public boolean containsServerState(int serverState) {
-        return this.visualStates.containsKey(serverState);
+        int visual = this.visualStates.getOrDefault(serverState, -1);
+        return visual >= 0 && this.customStates.get(visual);
     }
 
     public boolean isEmpty() {
@@ -48,10 +54,22 @@ public final class GeyserWorldBlocks {
     }
 
     public void install() {
-        if (this.definitions.isEmpty()) {
+        if (this.definitions.isEmpty() && this.stateMappings.isEmpty()) {
             return;
         }
         Map<String, Integer> identifiers = BlockRegistries.JAVA_BLOCK_STATE_IDENTIFIER_TO_ID.get();
+        // Native world queries return server IDs even for blocks that keep their vanilla visuals.
+        for (JsonObject mappings : this.stateMappings) {
+            for (Map.Entry<String, JsonElement> entry : mappings.entrySet()) {
+                Integer visual = identifiers.get(entry.getKey());
+                if (visual != null) {
+                    for (JsonElement id : entry.getValue().getAsJsonArray()) {
+                        this.visualStates.put(id.getAsInt(), visual.intValue());
+                    }
+                }
+            }
+        }
+        this.stateMappings.clear();
         for (JsonObject definition : this.definitions) {
             String state = definition.get("java_state").getAsString();
             Integer visual = identifiers.get(state);
@@ -132,5 +150,8 @@ public final class GeyserWorldBlocks {
             BlockRegistries.COLLISIONS.get().set(entry.getIntKey(), entry.getValue());
         }
         this.originalCollisions.clear();
+        this.visualStates.clear();
+        this.customStates.clear();
+        this.aliases.clear();
     }
 }

@@ -200,6 +200,9 @@ public final class CraftEngineGeyserExtension implements Extension {
             if (plan == null) {
                 return;
             }
+            if (plan.has(WORLD_STATE_MAPPINGS)) {
+                this.worldBlocks.addStateMappings(plan.getAsJsonObject(WORLD_STATE_MAPPINGS));
+            }
             for (JsonElement value : plan.getAsJsonArray(ENTRIES)) {
                 JsonObject display = value.getAsJsonObject();
                 String name = display.get(NAME).getAsString();

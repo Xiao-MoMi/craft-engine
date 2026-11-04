@@ -22,7 +22,8 @@ public final class BlockRegistrationPlanWriter {
     private BlockRegistrationPlanWriter() {
     }
 
-    public static void write(BedrockItemResourceGenerator.Result generatedItems, JsonArray worldBlockEntries, Path blockPlanPath) throws IOException {
+    public static void write(BedrockItemResourceGenerator.Result generatedItems, JsonArray worldBlockEntries,
+                             List<WorldBlockSource> worldBlocks, Path blockPlanPath) throws IOException {
         JsonArray entries = new JsonArray();
         for (DisplayBlock block : collectDisplayBlocks(generatedItems)) {
             entries.add(displayBlockToJson(block));
@@ -34,7 +35,25 @@ public final class BlockRegistrationPlanWriter {
         plan.addProperty(KIND, RegistrationPlanKind.BLOCK.id());
         plan.addProperty(FORMAT_VERSION, RegistrationPlanKind.BLOCK.formatVersion());
         plan.add(ENTRIES, entries);
+        plan.add(WORLD_STATE_MAPPINGS, worldStateMappings(worldBlocks));
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(plan), blockPlanPath);
+    }
+
+    private static JsonObject worldStateMappings(List<WorldBlockSource> sources) {
+        JsonObject mappings = new JsonObject();
+        for (WorldBlockSource source : sources) {
+            if (source.visual() == null) {
+                continue;
+            }
+            String visualState = source.visual().getAsString();
+            JsonArray serverIds = mappings.getAsJsonArray(visualState);
+            if (serverIds == null) {
+                serverIds = new JsonArray();
+                mappings.add(visualState, serverIds);
+            }
+            serverIds.add(source.serverStateId());
+        }
+        return mappings;
     }
 
     private static Collection<DisplayBlock> collectDisplayBlocks(BedrockItemResourceGenerator.Result generatedItems) {

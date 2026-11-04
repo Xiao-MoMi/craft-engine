@@ -54,7 +54,7 @@ public final class BedrockPackGenerator {
             // 方块
             Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
             JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root);
-            BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blockPlanPath);
+            BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blocks, blockPlanPath);
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             // 字体文件
