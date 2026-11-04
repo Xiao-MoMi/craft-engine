@@ -99,9 +99,6 @@ public final class BedrockWorldBlocks {
         WorldBlockSource first = sources.getFirst();
         JsonObject properties = components(first);
         for (WorldBlockSource source : sources) {
-            if (source.entityRenderer()) {
-                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.renderer"));
-            }
             if (source != first && !properties.equals(components(source))) {
                 throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.conflict", visualState));
             }

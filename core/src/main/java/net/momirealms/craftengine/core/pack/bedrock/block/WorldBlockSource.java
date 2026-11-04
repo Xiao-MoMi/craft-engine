@@ -17,6 +17,5 @@ public record WorldBlockSource(Key id,
                                int lightDampening,
                                float friction,
                                List<AABB> collisionBoxes,
-                               @Nullable AABB selectionBox,
-                               boolean entityRenderer) {
+                               @Nullable AABB selectionBox) {
 }
