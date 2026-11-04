@@ -5,9 +5,9 @@ import com.google.gson.JsonNull;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationProperties;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationReader;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationProperties;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationReader;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.*;

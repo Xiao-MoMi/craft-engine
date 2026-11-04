@@ -17,7 +17,7 @@ import net.momirealms.craftengine.core.pack.atlas.*;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;

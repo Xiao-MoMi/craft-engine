@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
+
 import java.nio.file.Path;
 
 public final class BedrockItemGenerationContext {

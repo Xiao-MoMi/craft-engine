@@ -3,9 +3,9 @@ package net.momirealms.craftengine.core.pack.bedrock.block;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
-import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemBlocks.DisplayBlock;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks.DisplayBlock;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.IOException;

@@ -5,12 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.model.definition.Transformation;
 import net.momirealms.craftengine.core.util.VectorUtils;
-import org.joml.Matrix3d;
-import org.joml.Matrix4f;
-import org.joml.Matrix4fc;
-import org.joml.Quaternionf;
-import org.joml.Vector3f;
+import org.joml.*;
 
+import java.lang.Math;
 import java.util.List;
 
 public final class BedrockModelTransform {

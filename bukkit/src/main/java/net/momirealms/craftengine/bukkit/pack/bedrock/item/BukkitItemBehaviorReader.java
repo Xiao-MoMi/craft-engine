@@ -2,9 +2,9 @@ package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorDescription.*;
-import net.momirealms.craftengine.core.pack.bedrock.item.ItemBehaviorReader;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription.*;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorReader;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.*;
