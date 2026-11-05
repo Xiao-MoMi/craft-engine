@@ -13,9 +13,6 @@ public interface CraftWorldProxy {
     @FieldGetter(name = "world")
     Object getWorld(World target);
 
-    @FieldSetter(name = "world")
-    void setWorld(World target, Object world);
-
     @FieldSetter(name = "worldBorder")
     void setWorldBorder(World target, Object worldBorder);
 

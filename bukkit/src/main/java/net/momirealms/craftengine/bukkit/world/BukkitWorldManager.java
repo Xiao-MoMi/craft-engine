@@ -100,11 +100,6 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                     // clear ce world
                     CraftWorldProxy.INSTANCE.setWorldBorder(bukkitWorld, null);
                 }
-                if (Config.fixWorldMemoryLeak()) {
-                    if (bukkitWorld != null) {
-                        CraftWorldProxy.INSTANCE.setWorld(bukkitWorld, null);
-                    }
-                }
                 Debugger.CHUNK.debug(() -> "World '" + world.name() + "' has been closed");
             })
             .initialCapacity(16)

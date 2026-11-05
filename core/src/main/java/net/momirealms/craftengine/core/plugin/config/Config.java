@@ -61,7 +61,6 @@ public final class Config {
     private boolean misc$multi_threaded_configuration_load;
     private boolean misc$inject_packet_vents;
     private boolean misc$hook_axiom_paper;
-    private boolean misc$fix_world_memory_leak;
 
     private boolean scripting$js$enable;
     private String scripting$js$engine;
@@ -413,7 +412,6 @@ public final class Config {
         this.misc$multi_threaded_configuration_load = config.getBoolean("misc.multi-threaded-configuration-load", true);
         this.misc$inject_packet_vents = config.getBoolean("misc.inject-packetevents", false);
         this.misc$hook_axiom_paper = config.getBoolean("misc.hook-axiompaper", true);
-        this.misc$fix_world_memory_leak = config.getBoolean("misc.fix-world-memory-leak", false);
 
         // scripting
         this.scripting$js$enable = config.getBoolean("scripting.js.enable", false);
@@ -933,10 +931,6 @@ public final class Config {
 
     public static boolean hookAxiomPaper() {
         return instance.misc$hook_axiom_paper;
-    }
-
-    public static boolean fixWorldMemoryLeak() {
-        return instance.misc$fix_world_memory_leak;
     }
 
     public static boolean debugCommon() {

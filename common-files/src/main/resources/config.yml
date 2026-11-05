@@ -855,9 +855,6 @@ misc:
   # Enables AxiomPaper integration to register custom items as Axiom display items
   # This option requires a restart to apply.
   hook-axiompaper: true
-  # There are many plugins that can cause world leaks, eventually leading to a large number of chunks being leaked.
-  # Enabling this option can mitigate the world leak issues caused by most plugins.
-  fix-world-memory-leak: false
 
 gui:
   browser:
