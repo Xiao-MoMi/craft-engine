@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.text;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 
 import java.util.HashMap;
@@ -8,12 +9,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class GeyserTextData {
     public static final GeyserTextData EMPTY = new GeyserTextData(Map.of(), null, Map.of());
-    private final Map<String, Map<Integer, Integer>> fonts;
+    private final Map<String, Int2IntMap> fonts;
     private final ContainerTitleLayout layout;
     private final Map<String, Map<String, String>> translations;
     private final Map<String, Language> languages = new ConcurrentHashMap<>();
 
-    public GeyserTextData(Map<String, Map<Integer, Integer>> fonts,
+    public GeyserTextData(Map<String, Int2IntMap> fonts,
                           ContainerTitleLayout layout,
                           Map<String, Map<String, String>> translations) {
         this.fonts = fonts;
@@ -21,7 +22,7 @@ public final class GeyserTextData {
         this.translations = translations;
     }
 
-    public Map<String, Map<Integer, Integer>> fonts() {
+    public Map<String, Int2IntMap> fonts() {
         return this.fonts;
     }
 

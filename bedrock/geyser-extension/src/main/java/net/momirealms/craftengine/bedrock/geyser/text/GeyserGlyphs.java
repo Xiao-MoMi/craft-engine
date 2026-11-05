@@ -3,6 +3,8 @@ package net.momirealms.craftengine.bedrock.geyser.text;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
@@ -59,12 +61,12 @@ public final class GeyserGlyphs {
         }
     }
 
-    private static Map<String, Map<Integer, Integer>> replacements(Map<String, Map<Integer, FontGlyph>> metrics) {
-        Map<String, Map<Integer, Integer>> fonts = new HashMap<>();
+    private static Map<String, Int2IntMap> replacements(Map<String, Map<Integer, FontGlyph>> metrics) {
+        Map<String, Int2IntMap> fonts = new HashMap<>();
         // 从各包合并后的字形建立替换表，高优先级包恢复的原生字符不会继承旧替换。
         metrics.forEach((font, glyphs) -> glyphs.forEach((codepoint, glyph) -> {
             if (glyph.character() != codepoint && (glyph.visible() || glyph.advance() < 0)) {
-                fonts.computeIfAbsent(font, key -> new HashMap<>()).put(codepoint, glyph.character());
+                fonts.computeIfAbsent(font, key -> new Int2IntOpenHashMap()).put(codepoint.intValue(), glyph.character());
             }
         }));
         return fonts;

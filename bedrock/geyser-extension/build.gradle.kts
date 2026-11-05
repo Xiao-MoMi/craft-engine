@@ -13,6 +13,7 @@ dependencies {
     compileOnly("org.geysermc.geyser:core:${libs.versions.geyser.get()}")
     implementation(libs.gson)
     implementation(libs.sparrow.reflection)
+    implementation(libs.byte.buddy)
     testImplementation(libs.compat.geyser)
     testImplementation("org.geysermc.geyser:core:${libs.versions.geyser.get()}")
     testImplementation(platform(libs.junit.bom))
@@ -37,6 +38,7 @@ tasks {
     shadowJar {
         relocate("com.google.gson", "net.momirealms.craftengine.bedrock.geyser.libs.gson")
         relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.bedrock.geyser.libs.reflection")
+        relocate("net.bytebuddy", "net.momirealms.craftengine.bedrock.geyser.libs.bytebuddy")
         archiveFileName = "craft-engine-geyser-extension-${project.version}.jar"
         destinationDirectory.set(file("$rootDir/target"))
     }

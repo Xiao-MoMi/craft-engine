@@ -112,8 +112,7 @@ public final class GeyserPackManager implements AutoCloseable {
             Set<UUID> known = this.packIdentifiers.get(entry.getKey());
             ResourcePackOption<?>[] options = new ResourcePackOption<?>[0];
             for (ResourcePack offered : List.copyOf(event.resourcePacks())) {
-                if (known.contains(offered.uuid()) || (offered.codec() instanceof PathPackCodec file
-                        && file.path().toAbsolutePath().normalize().equals(entry.getKey().toAbsolutePath().normalize()))) {
+                if (known.contains(offered.uuid()) || (offered.codec() instanceof PathPackCodec file && file.path().toAbsolutePath().normalize().equals(entry.getKey().toAbsolutePath().normalize()))) {
                     options = event.options(offered.uuid()).toArray(ResourcePackOption<?>[]::new);
                     event.unregister(offered.uuid());
                 }

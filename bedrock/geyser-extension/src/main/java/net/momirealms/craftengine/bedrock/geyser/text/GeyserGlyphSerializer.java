@@ -1,51 +1,71 @@
 package net.momirealms.craftengine.bedrock.geyser.text;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.modifier.FieldManifestation;
+import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.implementation.FieldAccessor;
+import net.bytebuddy.implementation.FixedValue;
+import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.bind.annotation.Argument;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTextComponentProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.LegacyComponentSerializerProxy;
-import org.geysermc.geyser.item.type.Item;
-import org.geysermc.geyser.translator.text.MessageTranslator;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.constructor.SConstructor2;
+import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public final class GeyserGlyphSerializer implements InvocationHandler {
+public final class GeyserGlyphSerializer {
     public static final String RESOLVED_FONT = "craftengine:resolved_glyphs";
-    private static final StackWalker CALLERS = StackWalker.getInstance();
+    private static final SConstructor2 WRAPPER_CONSTRUCTOR = createConstructor();
     private final Object delegate;
-    private final Supplier<Map<String, Map<Integer, Integer>>> fonts;
+    private final Supplier<Map<String, Int2IntMap>> fonts;
 
-    public GeyserGlyphSerializer(Object delegate, Map<String, Map<Integer, Integer>> fonts) {
-        this(delegate, () -> fonts);
-    }
-
-    public GeyserGlyphSerializer(Object delegate, Supplier<Map<String, Map<Integer, Integer>>> fonts) {
+    public GeyserGlyphSerializer(Object delegate, Supplier<Map<String, Int2IntMap>> fonts) {
         this.delegate = delegate;
         this.fonts = fonts;
     }
 
     public Object wrap() {
-        Class<?> type = LegacyComponentSerializerProxy.CLASS;
-        return Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[]{type}, this);
+        return WRAPPER_CONSTRUCTOR.newInstance(this.delegate, this);
     }
 
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] arguments) {
-        LegacyComponentSerializerProxy serializer = LegacyComponentSerializerProxy.INSTANCE;
-        return switch (method.getName()) {
-            case "serialize" -> serializer.serialize(this.delegate, this.rewrite(arguments[0], "minecraft:default"));
-            case "deserialize" -> serializer.deserialize(this.delegate, (String) arguments[0]);
-            case "toBuilder" -> serializer.toBuilder(this.delegate);
-            case "toString" -> "CraftEngine glyph serializer";
-            case "hashCode" -> System.identityHashCode(proxy);
-            case "equals" -> proxy == arguments[0];
-            default -> throw new UnsupportedOperationException("Unsupported legacy serializer method " + method.getName());
-        };
+    private static SConstructor2 createConstructor() {
+        Class<?> wrapper = new ByteBuddy(ClassFileVersion.JAVA_V21)
+                .subclass(Object.class)
+                .implement(LegacyComponentSerializerProxy.CLASS)
+                .name(GeyserGlyphSerializer.class.getName() + "$Generated")
+                .defineField("delegate", LegacyComponentSerializerProxy.CLASS, Visibility.PRIVATE, FieldManifestation.FINAL)
+                .defineField("glyphSerializer", GeyserGlyphSerializer.class, Visibility.PRIVATE, FieldManifestation.FINAL)
+                .defineConstructor(Visibility.PUBLIC)
+                .withParameters(LegacyComponentSerializerProxy.CLASS, GeyserGlyphSerializer.class)
+                .intercept(MethodCall.invoke(SparrowClass.of(Object.class).getDeclaredConstructor(ConstructorMatcher.takeArguments(new Class<?>[0])))
+                        .andThen(FieldAccessor.ofField("delegate").setsArgumentAt(0))
+                        .andThen(FieldAccessor.ofField("glyphSerializer").setsArgumentAt(1)))
+                .method(ElementMatchers.isAbstract())
+                .intercept(MethodDelegation.toField("delegate"))
+                .method(ElementMatchers.named("serialize").and(ElementMatchers.takesArguments(1)))
+                .intercept(MethodDelegation.withDefaultConfiguration().filter(ElementMatchers.named("serialize")).toField("glyphSerializer"))
+                .method(ElementMatchers.isToString())
+                .intercept(FixedValue.value("CraftEngine glyph serializer"))
+                .make()
+                .load(GeyserGlyphSerializer.class.getClassLoader())
+                .getLoaded();
+        return SparrowClass.of(wrapper)
+                .getSparrowConstructor(ConstructorMatcher.takeArguments(LegacyComponentSerializerProxy.CLASS, GeyserGlyphSerializer.class))
+                .asm$2();
+    }
+
+    public String serialize(@Argument(0) Object source) {
+        return LegacyComponentSerializerProxy.INSTANCE.serialize(this.delegate, this.rewrite(source, "minecraft:default"));
     }
 
     public Object rewrite(Object source, String inheritedFont) {
@@ -56,13 +76,12 @@ public final class GeyserGlyphSerializer implements InvocationHandler {
             return source;
         }
         Object result = source;
-        Map<Integer, Integer> glyphs = this.fonts.get().get(font);
+        Int2IntMap glyphs = this.fonts.get().get(font);
         if (glyphs != null && AdventureTextComponentProxy.CLASS.isInstance(source)) {
-            AdventureTextComponentProxy text = AdventureTextComponentProxy.INSTANCE;
-            String content = text.content(source);
+            String content = AdventureTextComponentProxy.INSTANCE.content(source);
             String rewritten = rewriteText(content, glyphs);
             if (rewritten != content) {
-                result = text.content(source, rewritten);
+                result = AdventureTextComponentProxy.INSTANCE.content(source, rewritten);
             }
         }
         // Geyser already expanded translations, so their text/arguments now retain ordinary font inheritance.
@@ -84,21 +103,11 @@ public final class GeyserGlyphSerializer implements InvocationHandler {
         return result;
     }
 
-    private static String rewriteText(String content, Map<Integer, Integer> glyphs) {
+    private static String rewriteText(String content, Int2IntMap glyphs) {
         StringBuilder rewritten = null;
-        Boolean lore = null;
         for (int offset = 0; offset < content.length();) {
             int codepoint = content.codePointAt(offset);
-            Integer replacement = glyphs.get(codepoint);
-            int target = replacement == null ? codepoint : replacement;
-            if (target < 0) {
-                if (lore == null) {
-                    lore = isItemLore();
-                }
-                if (!lore) {
-                    target = codepoint;
-                }
-            }
+            int target = glyphs.getOrDefault(codepoint, codepoint);
             if (target != codepoint && rewritten == null) {
                 rewritten = new StringBuilder(content.length()).append(content, 0, offset);
             }
@@ -108,15 +117,5 @@ public final class GeyserGlyphSerializer implements InvocationHandler {
             offset += Character.charCount(codepoint);
         }
         return rewritten == null ? content : rewritten.toString();
-    }
-
-    private static boolean isItemLore() {
-        // Geyser 的共享序列化器不传文本用途。仅遇到负间距时，识别直接调用 convertMessage 的 Lore 转换入口。
-        String translator = MessageTranslator.class.getName();
-        return CALLERS.walk(frames -> frames.dropWhile(frame -> !frame.getClassName().equals(translator))
-                .dropWhile(frame -> frame.getClassName().equals(translator))
-                .findFirst()
-                .map(frame -> frame.getClassName().equals(Item.class.getName()) && frame.getMethodName().equals("translateComponentsToBedrock"))
-                .orElse(false));
     }
 }
