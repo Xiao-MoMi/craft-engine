@@ -115,8 +115,7 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
     }
 
     private void addCube(List<Object> packets, int entityId, double x, double y, double z) {
-        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(entityId, FurnitureShulkerUUID.createCube(this.config.scale),
-                x, y, z, 0, 0, EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0));
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(entityId, FurnitureShulkerUUID.createCube(this.config.scale), x, y, z, 0, 0, EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0));
         packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, this.config.closedShulkerValues));
     }
 
@@ -154,7 +153,7 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
 
     @Override
     public void show(Player player) {
-        player.sendPacket(player.gameEdition() == GameEdition.BEDROCK ? this.bedrockSpawnPacket : this.spawnPacket, false);
+        player.sendPacket(player.isBedrockPlayer() ? this.bedrockSpawnPacket : this.spawnPacket, false);
     }
 
     @Override
@@ -162,7 +161,7 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         if (this.config.invisible) {
             this.show(player);
         } else {
-            player.sendPacket(player.gameEdition() == GameEdition.BEDROCK ? this.bedrockCulledSpawnPacket : this.culledSpawnPacket, false);
+            player.sendPacket(player.isBedrockPlayer() ? this.bedrockCulledSpawnPacket : this.culledSpawnPacket, false);
         }
     }
 

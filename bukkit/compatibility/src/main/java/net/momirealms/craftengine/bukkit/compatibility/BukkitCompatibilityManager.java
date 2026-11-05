@@ -559,7 +559,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     @Override
     public boolean sendMiningProgress(Player viewer, int breakerId, int serverStateId, BlockPos position, float progress, float speed) {
-        return this.hasGeyser && viewer.gameEdition() == GameEdition.BEDROCK
+        return this.hasGeyser && viewer.isBedrockPlayer()
                 && GeyserUtils.sendMiningProgress(viewer.uuid(), breakerId, serverStateId,
                 position.x(), position.y(), position.z(), progress, speed);
     }

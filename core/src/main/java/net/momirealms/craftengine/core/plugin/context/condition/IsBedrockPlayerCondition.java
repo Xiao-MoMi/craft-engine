@@ -15,8 +15,7 @@ public final class IsBedrockPlayerCondition<CTX extends Context> implements Cond
     @Override
     public boolean test(CTX ctx) {
         return ctx.getOptionalParameter(DirectContextParameters.PLAYER)
-                .map(Player::gameEdition)
-                .map(edition -> edition == GameEdition.BEDROCK)
+                .map(Player::isBedrockPlayer)
                 .orElse(false);
     }
 

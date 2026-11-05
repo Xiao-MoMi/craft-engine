@@ -321,6 +321,14 @@ public interface Player extends NetWorkUser, LivingEntity {
 
     GameEdition gameEdition();
 
+    default boolean isJavaPlayer() {
+        return gameEdition() == GameEdition.JAVA;
+    }
+
+    default boolean isBedrockPlayer() {
+        return gameEdition() == GameEdition.BEDROCK;
+    }
+
     @Override
     default void remove() {
     }
