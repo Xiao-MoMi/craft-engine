@@ -46,12 +46,13 @@ public final class RuntimePatcher {
 
     public static void patch(BukkitCraftEngine plugin) throws Exception {
         boolean registryInjection = !isDatapackDiscoveryAvailable();
-        boolean chunkDataWarmup = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4 && Config.enableChunkCache() && Config.enableAsyncChunkRead();
-        boolean lifecycle = Config.lifecycleChunkCache();
-        if (lifecycle && !chunkDataWarmup) {
-            lifecycleCacheUnavailableReason = "requires Paper 1.21.4+, cache-system=true and async-read=true";
+        boolean chunkDataWarmup = VersionHelper.hasPaperPatch && VersionHelper.isOrAbove1_21_4;
+        if (!chunkDataWarmup) {
+            lifecycleCacheUnavailableReason = "requires Paper 1.21.4+";
         }
-        if (!registryInjection && !chunkDataWarmup) return;
+        if (!registryInjection && !chunkDataWarmup) {
+            return;
+        }
 
         if (registryInjection) {
             Class<?> bridge = injectBridge();
@@ -67,7 +68,7 @@ public final class RuntimePatcher {
             BlocksAgent.install(inst);
         }
 
-        if (lifecycle && chunkDataWarmup) {
+        if (chunkDataWarmup) {
             try {
                 Class<?> bridge = injectBridge();
                 BukkitChunkLifecycle.initialize();
@@ -90,20 +91,18 @@ public final class RuntimePatcher {
                 plugin.logger().info("Patching the server...");
                 ChunkLoadWarmupAgent.install(instrumentation());
             } catch (Throwable t) {
-                if (lifecycle) {
-                    lifecycleCacheUnavailableReason += "; asynchronous warmup is also unavailable, using synchronous chunk reads";
-                } else {
-                    plugin.logger().warn("Failed to hook chunk data read, chunk data will be read synchronously on chunk load", t);
-                }
+                lifecycleCacheUnavailableReason += "; asynchronous warmup is also unavailable, using synchronous chunk reads: " + t;
             }
         }
     }
 
     public static void checkChunkCacheAvailability(BukkitCraftEngine plugin) {
-        if (chunkCacheAvailabilityChecked) return;
+        if (chunkCacheAvailabilityChecked) {
+            return;
+        }
         chunkCacheAvailabilityChecked = true;
-        if (Config.lifecycleChunkCache() && !ChunkLifecycleAgent.installed()) {
-            plugin.logger().warn("Lifecycle chunk cache unavailable: " + lifecycleCacheUnavailableReason + (Config.enableChunkCache() ? "; using timed caching for this startup" : "; chunk caching is disabled"));
+        if (!ChunkLifecycleAgent.installed()) {
+            plugin.logger().warn("Lifecycle chunk cache unavailable: " + lifecycleCacheUnavailableReason + "; using timed caching for this startup");
         }
     }
 

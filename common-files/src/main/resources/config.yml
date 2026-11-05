@@ -726,25 +726,6 @@ chunk-system:
   # Worlds whose name matches any of these regex patterns will always use 'none' storage mode (in-memory only)
   # Useful for temporary or frequently reset worlds where persistence is unnecessary
   blacklisted-worlds: []
-  # Caches decoded chunk data to reduce I/O overhead for frequently loaded/unloaded chunks
-  cache-system: true
-  # timed: expire cached data after 30 seconds without access
-  # lifecycle: retain data until Moonrise releases its chunk holder, without a timer
-  #
-  # Lifecycle mode requires the Paper loader, compatible Moonrise hooks, cache-system and async-read.
-  # Requires Paper/Folia 1.21.4+. Availability is checked at startup.
-  # If unavailable, falls back to timed caching with one warning per startup.
-  # Requires server restart to take effect.
-  cache-mode: lifecycle
-  # Writes chunk data asynchronously on dedicated IO threads instead of blocking the server thread
-  # Requires server restart to take effect
-  async-write: true
-  # Hooks into the server's chunk loading pipeline to read and cache chunk data
-  # before the chunk load event, avoiding synchronous disk I/O on the main thread
-  # Only works on Paper 1.21.4+. Timed mode falls back to synchronous reads if injection fails.
-  # Startup chunks and failed preloads may still require synchronous reads in either mode.
-  # Requires server restart to take effect
-  async-read: true
   # Compression algorithm for chunk data
   # 1 = NONE      |  Compression Speed | Decompress Speed | Compression Ratio | Memory Usage   |
   # 2 = DEFLATE   |     Medium-Slow           Medium          Moderate              Low        |
@@ -824,9 +805,13 @@ client-optimization:
 
 bedrock:
   resource-pack:
+    # Resource pack name shown in the Bedrock client.
     name: "CraftEngine ResourcePack"
+    # Resource pack description shown in the Bedrock client.
     description: "Generated from the Java resource pack"
+    # Generated icon width and height in pixels (currently for dyeable items).
     item-icon-size: 64
+    # Maximum layers per dyeable display material; excess colors are merged.
     display-dye-max-layers: 16
   # Extra ways to identify Bedrock players when API detection does not identify them.
   # Geyser and Floodgate API detection remains active regardless of these options.

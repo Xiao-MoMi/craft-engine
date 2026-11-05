@@ -34,11 +34,6 @@ public final class DefaultStorageAdaptor implements StorageAdaptor {
         RegionStorage regionStorage = Config.chunkStorageType() == StorageType.LINEAR
                 ? new LinearRegionFileStorage(regionDirectory, FACTORY)
                 : new MCARegionFileStorage(regionDirectory, FACTORY);
-        WorldDataStorage storage = Config.enableAsyncChunkWrite() ? new AsyncStorage(regionStorage) : regionStorage;
-        if (Config.enableChunkCache()) {
-            return new CachedStorage<>(storage);
-        } else {
-            return storage;
-        }
+        return new CachedStorage<>(new AsyncStorage(regionStorage));
     }
 }

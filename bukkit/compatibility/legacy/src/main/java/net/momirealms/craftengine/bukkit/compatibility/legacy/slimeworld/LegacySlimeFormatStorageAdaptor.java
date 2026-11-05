@@ -5,7 +5,6 @@ import com.infernalsuite.aswm.api.world.SlimeWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitStorageAdaptor;
 import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.bukkit.world.BukkitWorldManager;
-import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.world.World;
 import net.momirealms.craftengine.core.world.chunk.storage.CachedStorage;
@@ -29,7 +28,7 @@ public final class LegacySlimeFormatStorageAdaptor extends BukkitStorageAdaptor 
         if (world == null) return;
         Debugger.CHUNK.debug(() -> "LoadSlimeWorldEvent -> " + world.getName());
         BukkitWorld bukkitWorld = this.worldManager.injectCraftWorld(world);
-        WorldDataStorage storage = Config.enableChunkCache() ? new CachedStorage<>(new LegacySlimeWorldDataStorage(event.getSlimeWorld())) : new LegacySlimeWorldDataStorage(event.getSlimeWorld());
+        WorldDataStorage storage = new CachedStorage<>(new LegacySlimeWorldDataStorage(event.getSlimeWorld()));
         this.worldManager.installStorageWorld(bukkitWorld, this.worldManager.createStorageWorld(bukkitWorld, storage));
         this.worldManager.handleWorldLoad(bukkitWorld);
     }
@@ -78,6 +77,6 @@ public final class LegacySlimeFormatStorageAdaptor extends BukkitStorageAdaptor 
         if (slimeWorld == null) {
             return super.adapt(world);
         }
-        return new LegacySlimeWorldDataStorage(slimeWorld);
+        return new CachedStorage<>(new LegacySlimeWorldDataStorage(slimeWorld));
     }
 }
