@@ -630,7 +630,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public void sendCustomPacket(ClientCustomPacket packet) {
-        ClientCustomPacketType<? extends ClientCustomPacket> type = BuiltInRegistries.CLIENT_MOD_PACKET.getValue(packet.id());
+        ClientCustomPacketType<? extends ClientCustomPacket> type = BuiltInRegistries.CLIENTBOUND_CUSTOM_PACKET.getValue(packet.id());
         if (type == null || !type.checkPermission(this)) return;
         FriendlyByteBuf result = new FriendlyByteBuf(Unpooled.buffer());
         byte[] data;

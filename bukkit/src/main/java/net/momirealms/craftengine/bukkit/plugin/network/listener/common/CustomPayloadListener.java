@@ -31,7 +31,7 @@ public final class CustomPayloadListener implements ByteBufferPacketListener {
             }
             return;
         }
-        ServerCustomPacketType<? extends ServerCustomPacket> type = BuiltInRegistries.SERVER_MOD_PACKET.getValue(packetId);
+        ServerCustomPacketType<? extends ServerCustomPacket> type = BuiltInRegistries.SERVERBOUND_CUSTOM_PACKET.getValue(packetId);
         if (type == null) return;
         if (type.checkPermission(user)) {
             ServerCustomPacket packet = type.codec().decode(buf);
@@ -45,7 +45,7 @@ public final class CustomPayloadListener implements ByteBufferPacketListener {
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
         FriendlyByteBuf buf = event.getBuffer();
         Key packetId = buf.readKey();
-        ClientCustomPacketType<? extends ClientCustomPacket> type = BuiltInRegistries.CLIENT_MOD_PACKET.getValue(packetId);
+        ClientCustomPacketType<? extends ClientCustomPacket> type = BuiltInRegistries.CLIENTBOUND_CUSTOM_PACKET.getValue(packetId);
         if (type == null || !type.inServerHandle()) return;
         ClientCustomPacket packet = type.codec().decode(buf);
         packet.handle(user, event);

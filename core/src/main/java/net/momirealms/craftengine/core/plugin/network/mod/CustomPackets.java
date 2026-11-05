@@ -46,7 +46,7 @@ public final class CustomPackets {
 
     public static <T extends ClientCustomPacket> ClientCustomPacketType<T> registerClientbound(Key id, NetworkCodec<FriendlyByteBuf, T> codec, BiPredicate<NetWorkUser, Key> permissionChecker, boolean inServerHandle) {
         ClientCustomPacketType<T> type = new ClientCustomPacketType<>(id, codec, permissionChecker, inServerHandle);
-        ((WritableRegistry<ClientCustomPacketType<? extends ClientCustomPacket>>) BuiltInRegistries.CLIENT_MOD_PACKET)
+        ((WritableRegistry<ClientCustomPacketType<? extends ClientCustomPacket>>) BuiltInRegistries.CLIENTBOUND_CUSTOM_PACKET)
                 .register(ResourceKey.create(Registries.CLIENTBOUND_CUSTOM_PACKET.location(), id), type);
         return type;
     }
@@ -57,7 +57,7 @@ public final class CustomPackets {
 
     public static <T extends ServerCustomPacket> ServerCustomPacketType<T> registerServerbound(Key id, NetworkCodec<FriendlyByteBuf, T> codec, BiPredicate<NetWorkUser, Key> permissionChecker) {
         ServerCustomPacketType<T> type = new ServerCustomPacketType<>(id, codec, permissionChecker);
-        ((WritableRegistry<ServerCustomPacketType<? extends ServerCustomPacket>>) BuiltInRegistries.SERVER_MOD_PACKET)
+        ((WritableRegistry<ServerCustomPacketType<? extends ServerCustomPacket>>) BuiltInRegistries.SERVERBOUND_CUSTOM_PACKET)
                 .register(ResourceKey.create(Registries.SERVERBOUND_CUSTOM_PACKET.location(), id), type);
         return type;
     }

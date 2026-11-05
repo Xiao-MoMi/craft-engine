@@ -149,8 +149,8 @@ public final class BuiltInRegistries {
     public static final Registry<LegacyRecipe.Type<? extends LegacyRecipe>> LEGACY_RECIPE_TYPE = createConstantBoundRegistry(Registries.LEGACY_RECIPE_TYPE, 16);
     public static final Registry<PostProcessorType<? extends PostProcessor>> RECIPE_POST_PROCESSOR_TYPE = createConstantBoundRegistry(Registries.RECIPE_POST_PROCESSOR_TYPE, 16);
     public static final Registry<ItemUpdaterType<? extends ItemUpdater>> ITEM_UPDATER_TYPE = createConstantBoundRegistry(Registries.ITEM_UPDATER_TYPE, 16);
-    public static final Registry<ClientCustomPacketType<? extends ClientCustomPacket>> CLIENT_MOD_PACKET = createConstantBoundRegistry(Registries.CLIENTBOUND_CUSTOM_PACKET, 16);
-    public static final Registry<ServerCustomPacketType<? extends ServerCustomPacket>> SERVER_MOD_PACKET = createConstantBoundRegistry(Registries.SERVERBOUND_CUSTOM_PACKET, 16);
+    public static final Registry<ClientCustomPacketType<? extends ClientCustomPacket>> CLIENTBOUND_CUSTOM_PACKET = createConstantBoundRegistry(Registries.CLIENTBOUND_CUSTOM_PACKET, 16);
+    public static final Registry<ServerCustomPacketType<? extends ServerCustomPacket>> SERVERBOUND_CUSTOM_PACKET = createConstantBoundRegistry(Registries.SERVERBOUND_CUSTOM_PACKET, 16);
     public static final Registry<BlockEntityElementConfigType<? extends BlockEntityElement>> BLOCK_ENTITY_ELEMENT_TYPE = createConstantBoundRegistry(Registries.BLOCK_ENTITY_ELEMENT_TYPE, 16);
     public static final Registry<CraftRemainderType<? extends CraftRemainder>> CRAFT_REMAINDER_TYPE = createConstantBoundRegistry(Registries.CRAFT_REMAINDER_TYPE, 16);
     public static final Registry<FurnitureElementConfigType<? extends FurnitureElement>> FURNITURE_ELEMENT_TYPE = createConstantBoundRegistry(Registries.FURNITURE_ELEMENT_TYPE, 16);
