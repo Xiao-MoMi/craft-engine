@@ -23,8 +23,7 @@ public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdap
 
     public static void install(GeyserSession session) {
         Channel channel = session.getUpstream().getSession().getPeer().getChannel();
-        channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME,
-                new GeyserContainerCloseHandler(session));
+        channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME, new GeyserContainerCloseHandler(session));
     }
 
     @Override

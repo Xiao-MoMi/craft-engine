@@ -7,12 +7,6 @@ import org.cloudburstmc.math.vector.Vector3f;
 record DisplayPose(Vector3f translation, Quaternionf left, Vector3f scale, Quaternionf right) {
     static final DisplayPose IDENTITY = new DisplayPose(Vector3f.ZERO, Quaternionf.IDENTITY, Vector3f.ONE, Quaternionf.IDENTITY);
 
-    DisplayPose interpolate(DisplayPose target, float fraction) {
-        return new DisplayPose(GenericMath.lerp(this.translation, target.translation, fraction),
-                rotation(this.left, target.left, fraction), GenericMath.lerp(this.scale, target.scale, fraction),
-                rotation(this.right, target.right, fraction));
-    }
-
     private static Quaternionf rotation(Quaternionf first, Quaternionf second, float fraction) {
         if (first.equals(second)) {
             return first;
@@ -35,7 +29,14 @@ record DisplayPose(Vector3f translation, Quaternionf left, Vector3f scale, Quate
         if (Math.abs(sinY) >= 0.9999999) {
             return Vector3f.from(0, Math.copySign(90, sinY), Math.toDegrees(2 * Math.atan2(z, w)));
         }
-        return Vector3f.from(Math.toDegrees(Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))),
-                Math.toDegrees(Math.asin(sinY)), Math.toDegrees(Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))));
+        return Vector3f.from(Math.toDegrees(Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y))), Math.toDegrees(Math.asin(sinY)), Math.toDegrees(Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z))));
+    }
+
+    DisplayPose interpolate(DisplayPose target, float fraction) {
+        return new DisplayPose(
+                GenericMath.lerp(this.translation, target.translation, fraction),
+                rotation(this.left, target.left, fraction), GenericMath.lerp(this.scale, target.scale, fraction),
+                rotation(this.right, target.right, fraction)
+        );
     }
 }

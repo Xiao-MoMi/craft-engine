@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser;
+package net.momirealms.craftengine.bedrock.geyser.pack;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

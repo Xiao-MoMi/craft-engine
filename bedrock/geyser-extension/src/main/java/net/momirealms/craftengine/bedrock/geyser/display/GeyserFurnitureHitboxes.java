@@ -1,7 +1,6 @@
-package net.momirealms.craftengine.bedrock.geyser;
+package net.momirealms.craftengine.bedrock.geyser.display;
 
 import net.momirealms.craftengine.bedrock.FurnitureShulkerUUID;
-import net.momirealms.craftengine.bedrock.geyser.display.GeyserItemDisplays;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;

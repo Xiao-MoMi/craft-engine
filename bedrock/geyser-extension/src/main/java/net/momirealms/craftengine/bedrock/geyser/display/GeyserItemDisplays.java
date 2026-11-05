@@ -3,11 +3,15 @@ package net.momirealms.craftengine.bedrock.geyser.display;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
+import net.momirealms.craftengine.bedrock.geyser.pack.GeyserRegistrationPlanReader;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
+import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
+import org.geysermc.geyser.api.extension.ExtensionLogger;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.BedrockEntityDefinition;
 import org.geysermc.geyser.entity.EntityTypeBase;
@@ -22,7 +26,10 @@ import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEntityPacket> {
@@ -30,6 +37,23 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
     private final Map<String, Model> items = new LinkedHashMap<>();
     private PacketTranslator<ClientboundAddEntityPacket> original;
     private VanillaEntityType<GeyserItemDisplayEntity> definition;
+
+    public void registerEntities(List<Path> files, GeyserDefineEntitiesEvent event, ExtensionLogger logger) {
+        for (Path path : files) {
+            try {
+                JsonObject plan = GeyserRegistrationPlanReader.readPack(path, RegistrationPlanKind.ITEM);
+                if (plan != null) {
+                    this.define(plan, event);
+                }
+            } catch (IOException | RuntimeException exception) {
+                logger.error("Failed to load item display mappings from " + path, exception);
+            }
+        }
+    }
+
+    public void onFurnitureSpawn(ServerSpawnEntityEvent event) {
+        GeyserFurnitureHitboxes.onSpawn(event, this);
+    }
 
     public void define(JsonObject plan, GeyserDefineEntitiesEvent event) {
         if (!plan.has("item_displays")) {

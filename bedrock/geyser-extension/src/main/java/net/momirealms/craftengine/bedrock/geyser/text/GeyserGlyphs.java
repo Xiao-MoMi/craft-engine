@@ -36,8 +36,7 @@ public final class GeyserGlyphs {
                 }
             }
         }
-        return new GeyserTextData(replacements(metrics), metrics.isEmpty() ? null : new ContainerTitleLayout(metrics),
-                GeyserTranslations.read(packs));
+        return new GeyserTextData(replacements(metrics), metrics.isEmpty() ? null : new ContainerTitleLayout(metrics), GeyserTranslations.read(packs));
     }
 
     private static void readMetrics(JsonObject root, Map<String, Map<Integer, FontGlyph>> metrics) throws IOException {

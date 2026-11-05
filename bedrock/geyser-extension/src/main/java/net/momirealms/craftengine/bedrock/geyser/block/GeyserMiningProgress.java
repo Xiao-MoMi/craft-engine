@@ -27,7 +27,7 @@ public final class GeyserMiningProgress {
             return;
         }
         // Bedrock expects progress per tick scaled to 65535, not the duration between Java's ten stages.
-        int rate = speed > 0 ? Math.max(1, Math.min(65535, Math.round(speed * 65535))) : 0;
+        int rate = speed > 0 ? Math.clamp(Math.round(speed * 65535), 1, 65535) : 0;
         if (state == null || state.breakerId != breakerId || progress < state.progress) {
             if (state != null) {
                 BlockUtils.sendBedrockStopBlockBreak(this.session, position.toFloat());

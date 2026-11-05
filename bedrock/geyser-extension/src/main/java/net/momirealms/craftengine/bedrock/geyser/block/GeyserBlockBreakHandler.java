@@ -25,15 +25,6 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
         this.miningProgress = new GeyserMiningProgress(session);
     }
 
-    public void updateMiningProgress(int breakerId, int x, int y, int z, float progress, float speed) {
-        Vector3i position = Vector3i.from(x, y, z);
-        if (progress >= 0 && breakerId == Integer.MAX_VALUE - this.session.getPlayerEntity().getEntityId()
-                && !position.equals(this.currentBlockPos)) {
-            return;
-        }
-        this.miningProgress.update(breakerId, position, progress, speed);
-    }
-
     @Override
     protected void clearCurrentVariables() {
         if (this.currentBlockPos != null) {
@@ -51,8 +42,7 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
     @Override
     public void handlePlayerAuthInputPacket(PlayerAuthInputPacket packet) {
         super.handlePlayerAuthInputPacket(packet);
-        if (this.currentBlockState != null && this.blocks.contains(this.currentBlockState.javaId())
-                && packet.getTick() != this.lastSwingTick) {
+        if (this.currentBlockState != null && this.blocks.contains(this.currentBlockState.javaId()) && packet.getTick() != this.lastSwingTick) {
             // Java sends a swing every mining tick. Bedrock's animation packets arrive less often,
             // but CE uses swings to distinguish continued mining from a stopped/idle player.
             this.lastSwingTick = packet.getTick();
@@ -67,8 +57,12 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
     }
 
     @Override
-    protected void handleContinueDestroy(Vector3i position, BlockState state, Direction face,
-                                         boolean bedrockDestroyed, boolean sendParticles, long tick) {
+    protected void handleContinueDestroy(Vector3i position,
+                                         BlockState state,
+                                         Direction face,
+                                         boolean bedrockDestroyed,
+                                         boolean sendParticles,
+                                         long tick) {
         boolean custom = this.blocks.contains(state.javaId());
         if (!custom) {
             if (this.currentBlockState != null && this.blocks.contains(this.currentBlockState.javaId())) {
@@ -99,8 +93,7 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
 
     private void cancelCurrent() {
         if (this.currentBlockPos != null) {
-            this.session.sendDownstreamGamePacket(new ServerboundPlayerActionPacket(PlayerAction.CANCEL_DIGGING,
-                    this.currentBlockPos, Direction.DOWN.mcpl(), 0));
+            this.session.sendDownstreamGamePacket(new ServerboundPlayerActionPacket(PlayerAction.CANCEL_DIGGING, this.currentBlockPos, Direction.DOWN.mcpl(), 0));
             BlockUtils.sendBedrockStopBlockBreak(this.session, this.currentBlockPos.toFloat());
             this.getDestructionStageCache().invalidate(this.currentBlockPos);
         }

@@ -3,7 +3,6 @@ package net.momirealms.craftengine.bedrock.geyser.pack;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
-import net.momirealms.craftengine.bedrock.geyser.GeyserRegistrationPlanReader;
 import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
 

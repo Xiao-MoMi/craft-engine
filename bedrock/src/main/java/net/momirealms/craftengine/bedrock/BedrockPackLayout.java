@@ -46,7 +46,6 @@ public final class BedrockPackLayout {
     public static final String CLIENT_BEHAVIOR = "client_behavior";
     public static final String PLACES_BLOCK = "places_block";
 
-
     private BedrockPackLayout() {
     }
 
