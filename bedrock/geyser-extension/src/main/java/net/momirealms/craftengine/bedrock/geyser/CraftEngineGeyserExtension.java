@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
 import net.momirealms.craftengine.bedrock.geyser.display.GeyserItemDisplays;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
@@ -54,8 +55,8 @@ public final class CraftEngineGeyserExtension implements Extension {
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private final Map<String, String> headIdentifiers = new HashMap<>();
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
-    private GeyserHeldDye.HandProperties mainHandDye;
-    private GeyserHeldDye.HandProperties offHandDye;
+    private GeyserDyeProperties mainHandDye;
+    private GeyserDyeProperties offHandDye;
     private boolean hasDyedItems;
     private GeyserLivePacks packs;
     private Object originalSerializer;
@@ -171,8 +172,9 @@ public final class CraftEngineGeyserExtension implements Extension {
     public void onDefineEntityProperties(GeyserDefineEntityPropertiesEvent event) {
         this.itemDisplays.properties(event);
         if (this.hasDyedItems) {
-            this.mainHandDye = GeyserHeldDye.HandProperties.register(event, false);
-            this.offHandDye = GeyserHeldDye.HandProperties.register(event, true);
+            Identifier player = Identifier.of("minecraft:player");
+            this.mainHandDye = GeyserDyeProperties.register(event, player, MAIN_HAND_DYE);
+            this.offHandDye = GeyserDyeProperties.register(event, player, OFF_HAND_DYE);
         }
     }
 

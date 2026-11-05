@@ -18,13 +18,17 @@ import java.util.Arrays;
 import java.util.Map;
 
 final class BedrockDyedItemIcon {
-    private static final int SIZE = 64;
     private static final float RADIANS = (float) Math.PI / 180;
-    private final BufferedImage normal = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-    private final BufferedImage dyed = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-    private final float[] depths = new float[SIZE * SIZE];
+    private final int size;
+    private final BufferedImage normal;
+    private final BufferedImage dyed;
+    private final float[] depths;
 
-    BedrockDyedItemIcon() {
+    BedrockDyedItemIcon(int size) {
+        this.size = size;
+        this.normal = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        this.dyed = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        this.depths = new float[size * size];
         Arrays.fill(this.depths, Float.NEGATIVE_INFINITY);
     }
 
@@ -55,7 +59,7 @@ final class BedrockDyedItemIcon {
         return image.getRGB(Math.floorMod(x, image.getWidth()), Math.floorMod(y, image.getHeight()));
     }
 
-    private static Vector3f project(JavaModel.Element element, Direction face, Matrix4f pose, int u, int v) {
+    private Vector3f project(JavaModel.Element element, Direction face, Matrix4f pose, int u, int v) {
         Vector3f corner = switch (face) {
             case SOUTH -> new Vector3f(u, 1 - v, 1);
             case NORTH -> new Vector3f(1 - u, 1 - v, 0);
@@ -66,7 +70,7 @@ final class BedrockDyedItemIcon {
         };
         corner.mul(new Vector3f(element.to()).sub(element.from())).add(element.from());
         pose.transformPosition(corner);
-        return corner.set((8 + corner.x) * SIZE / 16, (8 - corner.y) * SIZE / 16, corner.z);
+        return corner.set((8 + corner.x) * this.size / 16, (8 - corner.y) * this.size / 16, corner.z);
     }
 
     void render(JavaModel model, ItemRenderTarget.Model target, JavaPackTextureSource textures) throws IOException {
@@ -101,17 +105,17 @@ final class BedrockDyedItemIcon {
                           BufferedImage texture,
                           int color,
                           boolean dyeable) {
-        Vector3f origin = project(element, face, pose, 0, 0);
-        Vector3f across = project(element, face, pose, 1, 0).sub(origin);
-        Vector3f down = project(element, face, pose, 0, 1).sub(origin);
+        Vector3f origin = this.project(element, face, pose, 0, 0);
+        Vector3f across = this.project(element, face, pose, 1, 0).sub(origin);
+        Vector3f down = this.project(element, face, pose, 0, 1).sub(origin);
         float determinant = across.x * down.y - across.y * down.x;
         if (determinant <= 0.00001f) {
             return;
         }
         int x0 = Math.max(0, (int) Math.floor(origin.x + Math.min(0, across.x) + Math.min(0, down.x)));
         int y0 = Math.max(0, (int) Math.floor(origin.y + Math.min(0, across.y) + Math.min(0, down.y)));
-        int x1 = Math.min(SIZE, (int) Math.ceil(origin.x + Math.max(0, across.x) + Math.max(0, down.x)));
-        int y1 = Math.min(SIZE, (int) Math.ceil(origin.y + Math.max(0, across.y) + Math.max(0, down.y)));
+        int x1 = Math.min(this.size, (int) Math.ceil(origin.x + Math.max(0, across.x) + Math.max(0, down.x)));
+        int y1 = Math.min(this.size, (int) Math.ceil(origin.y + Math.max(0, across.y) + Math.max(0, down.y)));
         for (int y = y0; y < y1; y++) {
             for (int x = x0; x < x1; x++) {
                 float dx = x + 0.5f - origin.x;
@@ -119,7 +123,7 @@ final class BedrockDyedItemIcon {
                 float u = (dx * down.y - dy * down.x) / determinant;
                 float v = (across.x * dy - across.y * dx) / determinant;
                 float depth = origin.z + u * across.z + v * down.z;
-                int index = y * SIZE + x;
+                int index = y * this.size + x;
                 if (u < 0 || u >= 1 || v < 0 || v >= 1 || depth < this.depths[index]) {
                     continue;
                 }

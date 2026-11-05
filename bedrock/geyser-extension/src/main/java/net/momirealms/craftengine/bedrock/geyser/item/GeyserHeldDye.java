@@ -9,53 +9,27 @@ import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
-import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
-import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
-import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.player.PlayerEntity;
-import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
-import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
 
 import java.util.concurrent.TimeUnit;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.MAIN_HAND_DYE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.OFF_HAND_DYE;
-
 public final class GeyserHeldDye extends ChannelDuplexHandler {
     private final GeyserSession session;
-    private final HandProperties main;
-    private final HandProperties off;
+    private final GeyserDyeProperties main;
+    private final GeyserDyeProperties off;
     private int mainColor = Integer.MIN_VALUE;
     private int offColor = Integer.MIN_VALUE;
 
-    private GeyserHeldDye(GeyserSession session, HandProperties main, HandProperties off) {
+    private GeyserHeldDye(GeyserSession session, GeyserDyeProperties main, GeyserDyeProperties off) {
         this.session = session;
         this.main = main;
         this.off = off;
     }
 
-    public record HandProperties(GeyserIntEntityProperty red, GeyserIntEntityProperty greenBlue) {
-
-        public static HandProperties register(GeyserDefineEntityPropertiesEvent event, boolean offhand) {
-            String name = offhand ? OFF_HAND_DYE : MAIN_HAND_DYE;
-            Identifier player = Identifier.of("minecraft:player");
-            // 将 RGB 拆成 8 位与 16 位，两项都处于基岩实体整型属性的精确范围内。
-            return new HandProperties(event.registerIntegerProperty(player, Identifier.of(name + "_r"), -1, 255, -1),
-                    event.registerIntegerProperty(player, Identifier.of(name + "_gb"), 0, 65535, 0));
-        }
-
-        void send(PlayerEntity player, int rgb) {
-            player.updatePropertiesBatched(batch -> {
-                batch.update(this.red, rgb < 0 ? -1 : rgb >>> 16);
-                batch.update(this.greenBlue, rgb < 0 ? 0 : rgb & 65535);
-            }, true);
-        }
-    }
-
-    public static void install(GeyserSession session, HandProperties main, HandProperties off) {
+    public static void install(GeyserSession session, GeyserDyeProperties main, GeyserDyeProperties off) {
         GeyserHeldDye handler = new GeyserHeldDye(session, main, off);
         session.getUpstream().getSession().getPeer().getChannel().pipeline()
                 .addBefore(session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-held-dye", handler);
@@ -68,14 +42,14 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         }
         if (this.session.isSpawned()) {
             PlayerInventory inventory = this.session.getPlayerInventory();
-            int main = color(inventory.getItemInHand());
-            int off = color(inventory.getOffhand());
+            int main = GeyserDyeProperties.color(inventory.getItemInHand());
+            int off = GeyserDyeProperties.color(inventory.getOffhand());
             if (this.mainColor != main) {
-                this.main.send(this.session.getPlayerEntity(), main);
+                this.session.getPlayerEntity().updatePropertiesBatched(batch -> this.main.write(batch, main), true);
                 this.mainColor = main;
             }
             if (this.offColor != off) {
-                this.off.send(this.session.getPlayerEntity(), off);
+                this.session.getPlayerEntity().updatePropertiesBatched(batch -> this.off.write(batch, off), true);
                 this.offColor = off;
             }
         } else {
@@ -83,11 +57,6 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
             this.offColor = Integer.MIN_VALUE;
         }
         this.session.scheduleInEventLoop(this::syncOwnHands, 50, TimeUnit.MILLISECONDS);
-    }
-
-    private static int color(GeyserItemStack item) {
-        Integer color = item == null || item.isEmpty() ? null : item.getComponent(DataComponentTypes.DYED_COLOR);
-        return color == null ? -1 : color & 0xffffff;
     }
 
     @Override
@@ -105,7 +74,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         super.write(context, message, promise);
     }
 
-    private void syncRemote(long id, HandProperties hand, ItemData item) {
+    private void syncRemote(long id, GeyserDyeProperties hand, ItemData item) {
         if (id == this.session.getPlayerEntity().geyserId()) {
             return;
         }
@@ -115,7 +84,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         this.session.executeInEventLoop(() -> {
             Entity entity = this.session.getEntityCache().getEntityByGeyserId(id);
             if (entity instanceof PlayerEntity player && player.isValid() && !this.session.isClosed()) {
-                hand.send(player, color);
+                player.updatePropertiesBatched(batch -> hand.write(batch, color), true);
             }
         });
     }

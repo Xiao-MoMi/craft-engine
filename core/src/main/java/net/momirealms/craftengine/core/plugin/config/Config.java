@@ -89,8 +89,6 @@ public final class Config {
     private Set<String> resource_pack$exclude_file_extensions;
     private boolean resource_pack$cache_resource_files;
     private String resource_pack$description;
-    private String resource_pack$bedrock$name;
-    private String resource_pack$bedrock$description;
 
     private boolean resource_pack$protection$crash_tools$method_1;
     private boolean resource_pack$protection$crash_tools$method_2;
@@ -307,6 +305,10 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
+    private String bedrock$resource_pack$name;
+    private String bedrock$resource_pack$description;
+    private int bedrock$resource_pack$item_icon_size;
+    private int bedrock$resource_pack$display_dye_max_layers;
     private String bedrock$additional_identification$name_prefix;
     private boolean bedrock$additional_identification$floodgate_uuid;
     private boolean bedrock$additional_identification$geyser_brand;
@@ -443,8 +445,6 @@ public final class Config {
 
         // resource pack
         this.resource_pack$description = config.getString("resource-pack.description", "<gray>CraftEngine ResourcePack</gray>");
-        this.resource_pack$bedrock$name = config.getString("resource-pack.bedrock.name", "CraftEngine ResourcePack");
-        this.resource_pack$bedrock$description = config.getString("resource-pack.bedrock.description", "Generated from the Java resource pack");
         this.resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
         this.resource_pack$generate_mod_assets = config.getBoolean("resource-pack.generate-mod-assets", false);
         this.resource_pack$remove_tinted_leaves_particle = config.getBoolean("resource-pack.remove-tinted-leaves-particle", true);
@@ -886,6 +886,16 @@ public final class Config {
         this.client_optimization$entity_culling$rate_limiting$restore_per_tick = config.getInt("client-optimization.entity-culling.rate-limiting.restore-per-tick", 5);
 
         // bedrock support
+        this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
+        this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
+        this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64);
+        if (this.bedrock$resource_pack$item_icon_size <= 0) {
+            this.bedrock$resource_pack$item_icon_size = 64;
+        }
+        this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16);
+        if (this.bedrock$resource_pack$display_dye_max_layers <= 0) {
+            this.bedrock$resource_pack$display_dye_max_layers = 16;
+        }
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
@@ -1597,11 +1607,19 @@ public final class Config {
     }
 
     public static String bedrockPackName() {
-        return instance.resource_pack$bedrock$name;
+        return instance.bedrock$resource_pack$name;
     }
 
     public static String bedrockPackDescription() {
-        return instance.resource_pack$bedrock$description;
+        return instance.bedrock$resource_pack$description;
+    }
+
+    public static int bedrockItemIconSize() {
+        return instance.bedrock$resource_pack$item_icon_size;
+    }
+
+    public static int bedrockDisplayDyeMaxLayers() {
+        return instance.bedrock$resource_pack$display_dye_max_layers;
     }
 
     public static String sacrificedVanillaArmorType() {

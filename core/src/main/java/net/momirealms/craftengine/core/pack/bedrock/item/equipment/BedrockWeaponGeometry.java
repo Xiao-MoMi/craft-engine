@@ -30,11 +30,15 @@ public final class BedrockWeaponGeometry {
     }
 
     public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition) throws IOException {
+        return this.createStage(rule, condition, false);
+    }
+
+    public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition, boolean preserveDye) throws IOException {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
         BedrockModelTransform.uniformScale(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
         JavaModel model = target.resolve(this.models);
-        JsonArray cubes = this.geometry(model, target, false);
+        JsonArray cubes = this.geometry(model, target, preserveDye);
         // 将规则的局部变换烘焙进几何，模型的手持 display 由挂点骨骼应用。
         BedrockModelTransform.apply(cubes, transformation, 1);
         return new Bedrock3DItemAttachables.Stage(model, cubes, condition);
@@ -49,8 +53,7 @@ public final class BedrockWeaponGeometry {
             JsonArray cubes = new JsonArray();
             List<JavaModel.Texture> layers = this.models.resolveLayers(model);
             for (int layer = 0; layer < layers.size(); layer++) {
-                int color = layer < target.tints().size() ? this.textures.resolveTint(target.tints().get(layer)) : WHITE;
-                BedrockElementGeometry.Material material = this.material(new TextureKey(layers.get(layer), color, null));
+                BedrockElementGeometry.Material material = this.material(layers.get(layer), target, layer, preserveDye);
                 TextureData data = this.textures.read(layers.get(layer), TextureUsage.ITEM);
                 BedrockGeneratedGeometry.addLayer(cubes, data, material.name(), layer, data.image().getWidth(), data.image().getHeight());
             }
@@ -60,10 +63,7 @@ public final class BedrockWeaponGeometry {
             Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();
             for (JavaModel.Element element : model.elements()) {
                 for (JavaModel.Face face : element.faces().values()) {
-                    Tint tint = face.tintIndex() >= 0 && face.tintIndex() < target.tints().size() ? target.tints().get(face.tintIndex()) : null;
-                    Integer dye = preserveDye && tint != null ? this.textures.dyeColor(tint) : null;
-                    int color = tint != null && dye == null ? this.textures.resolveTint(tint) : WHITE;
-                    faces.put(face, this.material(new TextureKey(face.texture(), color, dye)));
+                    faces.put(face, this.material(face.texture(), target, face.tintIndex(), preserveDye));
                 }
             }
             return BedrockElementGeometry.convert(model, faces);
@@ -71,7 +71,11 @@ public final class BedrockWeaponGeometry {
         throw new UnsupportedOperationException("Unsupported item model geometry: " + model.id());
     }
 
-    private BedrockElementGeometry.Material material(TextureKey key) throws IOException {
+    private BedrockElementGeometry.Material material(JavaModel.Texture texture, ItemRenderTarget.Model target, int tintIndex, boolean preserveDye) throws IOException {
+        Tint tint = tintIndex >= 0 && tintIndex < target.tints().size() ? target.tints().get(tintIndex) : null;
+        Integer dye = preserveDye && tint != null ? this.textures.dyeColor(tint) : null;
+        int color = tint != null && dye == null ? this.textures.resolveTint(tint) : WHITE;
+        TextureKey key = new TextureKey(texture, color, dye);
         BedrockElementGeometry.Material material = this.bindings.get(key);
         if (material == null) {
             material = new BedrockElementGeometry.Material("layer" + this.materials.size(), 1, 1);

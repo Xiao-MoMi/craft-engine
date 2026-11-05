@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.display;
 
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector2f;
@@ -12,6 +13,7 @@ import org.cloudburstmc.protocol.bedrock.packet.SetEntityLinkPacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.Tickable;
+import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 
@@ -27,6 +29,8 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     private DisplayPose target = DisplayPose.IDENTITY;
     private DisplayPose sent;
     private GeyserItemDisplays.Appearance sentAppearance;
+    private int dyeColor = -1;
+    private int sentDyeColor = -1;
     private float sentYaw;
     private float sentPitch;
     private int teleportDuration;
@@ -55,6 +59,7 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
 
     void item(ItemStack stack) {
         this.model = this.displays.resolve(this.session, stack);
+        this.dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
     }
 
     void context(byte value) {
@@ -119,14 +124,15 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
         DisplayPose pose = this.sample(System.nanoTime());
         float renderYaw = this.billboard == 1 || this.billboard == 3 ? this.session.getPlayerEntity().getYaw() + 180 : this.yaw;
         float renderPitch = this.billboard == 2 || this.billboard == 3 ? -this.session.getPlayerEntity().getPitch() : this.pitch;
-        if (!changeCarrier && pose.equals(this.sent) && appearance == this.sentAppearance && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
+        if (!changeCarrier && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
             return;
         }
         this.sent = pose;
         this.sentAppearance = appearance;
+        this.sentDyeColor = this.dyeColor;
         this.sentYaw = renderYaw;
         this.sentPitch = renderPitch;
-        this.updatePropertiesBatched(batch -> this.carrier.write(batch, pose, appearance, renderYaw, renderPitch), false);
+        this.updatePropertiesBatched(batch -> this.carrier.write(batch, pose, appearance, this.dyeColor, renderYaw, renderPitch), false);
         if (changeCarrier && this.valid) {
             // 换资源包时客户端实体类型也要切换。保持 Java 实体、运行时 ID 和乘客关系。
             RemoveEntityPacket remove = new RemoveEntityPacket();
@@ -144,8 +150,14 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
 
     private void link(Entity vehicle, Entity passenger) {
         SetEntityLinkPacket link = new SetEntityLinkPacket();
-        link.setEntityLink(new EntityLinkData(vehicle.geyserId(), passenger.geyserId(),
-                vehicle.getPassengers().indexOf(passenger) <= 0 ? EntityLinkData.Type.RIDER : EntityLinkData.Type.PASSENGER, true, false, 0));
+        link.setEntityLink(new EntityLinkData(
+                vehicle.geyserId(),
+                passenger.geyserId(),
+                vehicle.getPassengers().indexOf(passenger) <= 0 ? EntityLinkData.Type.RIDER : EntityLinkData.Type.PASSENGER,
+                true,
+                false,
+                0
+        ));
         this.session.sendUpstreamPacket(link);
     }
 

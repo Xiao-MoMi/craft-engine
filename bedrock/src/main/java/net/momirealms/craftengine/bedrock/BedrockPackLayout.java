@@ -8,6 +8,7 @@ public final class BedrockPackLayout {
     public static final String DYE_COLOR = "dye_color";
     public static final String MAIN_HAND_DYE = "craftengine:main_hand_dye";
     public static final String OFF_HAND_DYE = "craftengine:off_hand_dye";
+    public static final String DISPLAY_DYE = "craftengine:display_dye";
     public static final String DISPLAY_BLOCK = "display_block";
     public static final String NAME = "name";
     public static final String GEOMETRY = "geometry";

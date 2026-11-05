@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public final class BedrockDyedItem {
             return null;
         }
         String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
-        BedrockDyedItemIcon icon = new BedrockDyedItemIcon();
+        BedrockDyedItemIcon icon = new BedrockDyedItemIcon(Config.bedrockItemIconSize());
         icon.render(model, target, textures);
         icon.write(context.root(), texture);
 

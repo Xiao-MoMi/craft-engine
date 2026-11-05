@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.display;
 
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.geysermc.geyser.api.entity.property.BatchPropertyUpdater;
 import org.geysermc.geyser.api.entity.property.type.GeyserFloatEntityProperty;
@@ -7,9 +8,12 @@ import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.util.Identifier;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
+
 final class DisplayProperties {
     private final Identifier id;
     private GeyserIntEntityProperty shape;
+    private GeyserDyeProperties dye;
     private Axes translation;
     private Axes left;
     private Axes scale;
@@ -30,6 +34,7 @@ final class DisplayProperties {
 
     void register(GeyserDefineEntityPropertiesEvent event) {
         this.shape = event.registerIntegerProperty(this.id, Identifier.of("craftengine:shape"), 0, 1000000, 0);
+        this.dye = GeyserDyeProperties.register(event, this.id, DISPLAY_DYE);
         this.translation = this.axes(event, "pos", 0);
         this.left = this.axes(event, "left", 0);
         this.scale = this.axes(event, "size", 1);
@@ -49,8 +54,9 @@ final class DisplayProperties {
         return event.registerFloatProperty(this.id, Identifier.of("craftengine:" + name), -1000000f, 1000000f, initial);
     }
 
-    void write(BatchPropertyUpdater batch, DisplayPose pose, GeyserItemDisplays.Appearance model, float yaw, float pitch) {
+    void write(BatchPropertyUpdater batch, DisplayPose pose, GeyserItemDisplays.Appearance model, int dyeColor, float yaw, float pitch) {
         batch.update(this.shape, model.shape());
+        this.dye.write(batch, dyeColor);
         this.modelPosition.write(batch, model.translation());
         this.modelRotation.write(batch, model.rotation());
         this.modelScale.write(batch, model.scale());
