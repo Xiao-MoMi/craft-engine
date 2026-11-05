@@ -15,26 +15,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreenPacket> {
     private final PacketTranslator<ClientboundOpenScreenPacket> delegate;
-    private final Supplier<ContainerTitleLayout> layout;
+    private final ContainerTitleLayout layout;
     private final ExtensionLogger logger;
     private final Set<String> reported = ConcurrentHashMap.newKeySet();
 
     public GeyserGuiMenus(PacketTranslator<ClientboundOpenScreenPacket> delegate, ContainerTitleLayout layout, ExtensionLogger logger) {
-        this(delegate, () -> layout, logger);
-    }
-
-    public GeyserGuiMenus(PacketTranslator<ClientboundOpenScreenPacket> delegate, Supplier<ContainerTitleLayout> layout, ExtensionLogger logger) {
         this.delegate = delegate;
         this.layout = layout;
         this.logger = logger;
     }
 
     @SuppressWarnings("unchecked")
-    public static void install(ExtensionLogger logger, Supplier<ContainerTitleLayout> layout) {
+    public static void install(ExtensionLogger logger, ContainerTitleLayout layout) {
         PacketTranslator<ClientboundOpenScreenPacket> original = (PacketTranslator<ClientboundOpenScreenPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundOpenScreenPacket.class);
         if (original instanceof GeyserGuiMenus menus) {
             original = menus.delegate;
@@ -54,8 +49,7 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
     }
 
     public ClientboundOpenScreenPacket rewrite(ClientboundOpenScreenPacket packet, boolean classic, String locale) {
-        ContainerTitleLayout layout = this.layout.get();
-        if (layout == null) {
+        if (this.layout == null) {
             return packet;
         }
         int rows = switch (packet.getType()) {
@@ -76,7 +70,7 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
             return packet;
         }
         try {
-            Object title = new GeyserContainerTitle(layout).create(parts, rows, locale);
+            Object title = new GeyserContainerTitle(this.layout).create(parts, rows, locale);
             return title == null ? packet : OpenScreenPacketProxy.INSTANCE.withTitle(packet, title);
         } catch (UnsupportedOperationException exception) {
             if (this.logger != null && this.reported.add(exception.getMessage())) {

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bedrock.geyser.pack;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
 
@@ -13,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 import java.util.UUID;
 import java.util.zip.ZipFile;
 
@@ -22,13 +20,11 @@ public final class GeyserPackSnapshot {
     private final Path data;
     private final UUID uuid;
     private ResourcePack pack;
-    private final List<JsonObject> registrations;
 
-    private GeyserPackSnapshot(Path directory, Path data, UUID uuid, List<JsonObject> registrations) {
+    private GeyserPackSnapshot(Path directory, Path data, UUID uuid) {
         this.directory = directory;
         this.data = data;
         this.uuid = uuid;
-        this.registrations = registrations;
     }
 
     public static GeyserPackSnapshot read(Path source, Path dataSource, Path store) throws IOException {
@@ -43,10 +39,7 @@ public final class GeyserPackSnapshot {
             if (!header.equals(header(data))) {
                 throw new IOException("Resource pack and extension data belong to different builds: " + source);
             }
-            List<JsonObject> registrations = List.of(
-                    GeyserRegistrationPlanReader.readPack(data, RegistrationPlanKind.ITEM),
-                    GeyserRegistrationPlanReader.readPack(data, RegistrationPlanKind.BLOCK));
-            return new GeyserPackSnapshot(directory, data, UUID.fromString(header.get("uuid").getAsString()), registrations);
+            return new GeyserPackSnapshot(directory, data, UUID.fromString(header.get("uuid").getAsString()));
         } catch (IOException | RuntimeException exception) {
             Files.deleteIfExists(pack);
             Files.deleteIfExists(data);
@@ -85,18 +78,5 @@ public final class GeyserPackSnapshot {
 
     public UUID uuid() {
         return this.uuid;
-    }
-
-    public GeyserRegistrationChanges registrationChanges(GeyserPackSnapshot other) {
-        GeyserRegistrationChanges changes = new GeyserRegistrationChanges();
-        changes.compare(RegistrationPlanKind.ITEM, this.registrations.get(0), other.registrations.get(0));
-        changes.compare(RegistrationPlanKind.BLOCK, this.registrations.get(1), other.registrations.get(1));
-        return changes;
-    }
-
-    public void delete() throws IOException {
-        Files.deleteIfExists(this.directory.resolve("pack.mcpack"));
-        Files.deleteIfExists(this.data);
-        Files.deleteIfExists(this.directory);
     }
 }

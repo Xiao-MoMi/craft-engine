@@ -39,10 +39,9 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.packManager = new GeyserPackManager(
                     this.geyserApi().packDirectory(),
                     this.dataFolder().resolve("data"),
-                    this.dataFolder().resolve("pack-snapshots"),
-                    this.logger()
+                    this.dataFolder().resolve("pack-snapshots")
             );
-            this.textManager.load(this.packManager, this.geyserApi().configDirectory());
+            this.textManager.load(this.packManager.text(), this.geyserApi().configDirectory());
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to load CraftEngine pack/data pairs", exception);
         }
@@ -54,10 +53,9 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemManager.init();
         this.blockManager.init();
         this.customPayloads.install();
-        GeyserGuiMenus.install(this.logger(), () -> this.textManager.data().layout());
+        GeyserGuiMenus.install(this.logger(), this.textManager.data().layout());
         this.blockManager.initPlacementHandler();
-        this.textManager.installContext();
-        this.packManager.start();
+        this.packManager.prepare();
     }
 
     @Subscribe
@@ -72,7 +70,6 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
-        this.packManager.disconnect(event.connection());
         this.blockManager.disconnect(event.connection());
     }
 
@@ -84,10 +81,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (this.blockManager != null) {
             this.blockManager.unload();
         }
-        if (this.packManager != null) {
-            this.packManager.close();
-        }
-        this.textManager.uninstallContext();
         if (this.itemManager != null) {
             this.itemManager.disable();
         }
@@ -126,7 +119,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         GeyserSession session = (GeyserSession) event.connection();
         this.blockManager.initSession(session);
         this.itemManager.initSessionDye(session);
-        this.textManager.initSession(session);
         GeyserContainerCloseHandler.install(session);
         this.itemManager.initSession(session);
     }

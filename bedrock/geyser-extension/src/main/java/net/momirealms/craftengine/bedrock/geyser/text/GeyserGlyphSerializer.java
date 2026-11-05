@@ -21,15 +21,14 @@ import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 public final class GeyserGlyphSerializer {
     public static final String RESOLVED_FONT = "craftengine:resolved_glyphs";
     private static final SConstructor2 WRAPPER_CONSTRUCTOR = createConstructor();
     private final Object delegate;
-    private final Supplier<Map<String, Int2IntMap>> fonts;
+    private final Map<String, Int2IntMap> fonts;
 
-    public GeyserGlyphSerializer(Object delegate, Supplier<Map<String, Int2IntMap>> fonts) {
+    public GeyserGlyphSerializer(Object delegate, Map<String, Int2IntMap> fonts) {
         this.delegate = delegate;
         this.fonts = fonts;
     }
@@ -76,11 +75,11 @@ public final class GeyserGlyphSerializer {
             return source;
         }
         Object result = source;
-        Int2IntMap glyphs = this.fonts.get().get(font);
+        Int2IntMap glyphs = this.fonts.get(font);
         if (glyphs != null && AdventureTextComponentProxy.CLASS.isInstance(source)) {
             String content = AdventureTextComponentProxy.INSTANCE.content(source);
             String rewritten = rewriteText(content, glyphs);
-            if (rewritten != content) {
+            if (rewritten != null) {
                 result = AdventureTextComponentProxy.INSTANCE.content(source, rewritten);
             }
         }
@@ -90,10 +89,10 @@ public final class GeyserGlyphSerializer {
         for (int i = 0; i < children.size(); i++) {
             Object child = children.get(i);
             Object rewritten = this.rewrite(child, font);
-            if (child != rewritten && rewrittenChildren == null) {
-                rewrittenChildren = new ArrayList<>(children);
-            }
-            if (rewrittenChildren != null) {
+            if (child != rewritten) {
+                if (rewrittenChildren == null) {
+                    rewrittenChildren = new ArrayList<>(children);
+                }
                 rewrittenChildren.set(i, rewritten);
             }
         }
@@ -116,6 +115,6 @@ public final class GeyserGlyphSerializer {
             }
             offset += Character.charCount(codepoint);
         }
-        return rewritten == null ? content : rewritten.toString();
+        return rewritten == null ? null : rewritten.toString();
     }
 }

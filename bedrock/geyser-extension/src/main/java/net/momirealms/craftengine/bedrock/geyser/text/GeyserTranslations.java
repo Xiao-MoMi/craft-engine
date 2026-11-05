@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -33,10 +32,10 @@ public final class GeyserTranslations {
         return translations;
     }
 
-    public static void install(Supplier<GeyserTextData> source, Path configDirectory) throws IOException {
+    public static void install(GeyserTextData data, Path configDirectory) throws IOException {
         MinecraftLocaleProxy.INSTANCE.localeMappings(new GeyserTranslationMap(
                 MinecraftLocaleProxy.INSTANCE.localeMappings(),
-                source,
+                data,
                 readOverrides(configDirectory.resolve("locales/overrides"))
         ));
     }

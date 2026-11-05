@@ -1,8 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.proxy.session;
 
-import io.netty.channel.EventLoop;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
-import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
@@ -12,7 +10,4 @@ public interface GeyserSessionProxy {
 
     @MethodInvoker(name = "getWorldName")
     Object worldName(Object target);
-
-    @FieldSetter(name = "tickEventLoop")
-    void tickEventLoop(Object target, EventLoop eventLoop);
 }

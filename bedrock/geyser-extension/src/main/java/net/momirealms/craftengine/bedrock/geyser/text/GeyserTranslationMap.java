@@ -6,17 +6,16 @@ import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 final class GeyserTranslationMap extends AbstractMap<String, Map<String, String>> {
     private final Map<String, Map<String, String>> loaded = new ConcurrentHashMap<>();
-    private final Supplier<GeyserTextData> source;
+    private final GeyserTextData data;
     private final Map<String, Map<String, String>> overrides;
 
     GeyserTranslationMap(Map<String, Map<String, String>> loaded,
-                         Supplier<GeyserTextData> source,
+                         GeyserTextData data,
                          Map<String, Map<String, String>> overrides) {
-        this.source = source;
+        this.data = data;
         this.overrides = overrides;
         this.putAll(loaded);
     }
@@ -29,7 +28,7 @@ final class GeyserTranslationMap extends AbstractMap<String, Map<String, String>
     @Override
     public Map<String, String> get(Object locale) {
         Map<String, String> base = this.loaded.get(locale);
-        return locale instanceof String language ? this.source.get().translate(language, base, this.overrides.get(locale)) : base;
+        return locale instanceof String language ? this.data.translate(language, base, this.overrides.get(locale)) : base;
     }
 
     @Override
