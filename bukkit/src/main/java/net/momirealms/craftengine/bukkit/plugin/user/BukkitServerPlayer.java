@@ -67,6 +67,7 @@ import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacketType;
+import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundBedrockHandshakePacket;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
@@ -190,13 +191,13 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private boolean swingHandAck;
     private int lastSwingHandTick;
     private float miningProgress;
-    private boolean advancedMiningThisTick;
     // for client visual sync
     private int resentSoundTick;
     private int resentSwingTick;
     // has fabric client mod or not
     private boolean enableClientCustomBlock = false;
     private int clientModProtocol = -1;
+    private volatile int bedrockProtocol = -1;
     private IntIdentityList blockList = new IntIdentityList(BlockStateUtils.vanillaBlockStateCount());
     private IntIdentityList biomeList;
     private boolean needsBlockStateBitWidthConversion = MiscUtils.ceilLog2(this.blockList.size()) != MiscUtils.ceilLog2(RegistryUtils.currentBlockRegistrySize());
@@ -635,7 +636,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         byte[] data;
         try {
             @SuppressWarnings("unchecked")
-            var codec = (NetworkCodec<FriendlyByteBuf, ClientCustomPacket>) packet.codec();
+            NetworkCodec<FriendlyByteBuf, ClientCustomPacket> codec = (NetworkCodec<FriendlyByteBuf, ClientCustomPacket>) packet.codec();
             codec.encode(result, packet);
             data = new byte[result.readableBytes()];
             result.readBytes(data);
@@ -803,7 +804,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
 
         // 本tick内有挥手
-        this.advancedMiningThisTick = false;
         if (hasSwingHand()) {
             if (this.gameTicks - this.preventBreakTick >= 3) {
                 // 连续挥手且没被重置
@@ -829,11 +829,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             }
             this.swingHandAck = false;
         }
-        if (!this.advancedMiningThisTick && this.miningProgress > 0 && this.isDestroyingCustomBlock && this.destroyPos != null
-                && currentDestroyStageDisplay() == null) {
-            this.broadcastDestroyProgressVanilla(this.destroyPos, this.lastSentState, this.miningProgress, 0, false);
-        }
-
         // 实体剔除更新相机位置
         if (Config.enableEntityCulling()) {
             this.firstPersonCameraVec3 = this.eyeLocation;
@@ -998,9 +993,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             this.destroyedState = state;
             this.isDestroyingBlock = true;
             this.isDestroyingCustomBlock = custom;
-            if (custom && currentDestroyStageDisplay() == null) {
-                this.broadcastDestroyProgressVanilla(pos, 0, 0, 0, false);
-            }
         }
 
         if (custom) {
@@ -1183,9 +1175,8 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                 ImmutableBlockState customState = optionalCustomState.get();
                 // accumulate progress
                 this.miningProgress = progressToAdd + miningProgress;
-                this.advancedMiningThisTick = true;
                 // broadcast changes; dedup (vanilla 0~10 stage or custom item index) happens inside
-                this.broadcastDestroyProgress(hitPos, this.miningProgress, progressToAdd);
+                this.broadcastDestroyProgress(hitPos, this.miningProgress);
 
                 // can break now
                 if (this.miningProgress >= 1f) {
@@ -1239,20 +1230,16 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void broadcastDestroyProgress(BlockPos hitPos, float progress) {
-        this.broadcastDestroyProgress(hitPos, progress, 0);
-    }
-
-    private void broadcastDestroyProgress(BlockPos hitPos, float progress, float speed) {
         DestroyStageDisplayEntitySetting display = currentDestroyStageDisplay();
         int key = progress < 0 ? -1 : (display != null ? display.itemIndexForProgress(progress) : (int) (progress * 10.0F));
-        boolean changed = key != this.lastSentState;
+        if (key == this.lastSentState) {
+            return;
+        }
         this.lastSentState = key;
         if (display != null) {
-            if (changed) {
-                this.broadcastDestroyProgressViaDisplay(hitPos, progress, display);
-            }
+            this.broadcastDestroyProgressViaDisplay(hitPos, progress, display);
         } else {
-            this.broadcastDestroyProgressVanilla(hitPos, key, progress, speed, changed);
+            this.broadcastDestroyProgressVanilla(hitPos, key);
         }
     }
 
@@ -1265,26 +1252,36 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     }
 
     private void broadcastDestroyProgressVanilla(BlockPos hitPos, int stage) {
-        this.broadcastDestroyProgressVanilla(hitPos, stage, stage < 0 ? -1 : stage / 10f, 0, true);
-    }
-
-    private void broadcastDestroyProgressVanilla(BlockPos hitPos, int stage, float progress, float speed, boolean changed) {
-        int breakerId = Integer.MAX_VALUE - entityId();
-        int stateId = this.destroyedState == null ? -1 : BlockStateUtils.blockStateToId(this.destroyedState);
-        Object packet = changed ? ClientboundBlockDestructionPacketProxy.INSTANCE.newInstance(breakerId, LocationUtils.toBlockPos(hitPos), stage) : null;
-        this.sendDestroyProgress(this, hitPos, breakerId, stateId, progress, speed, packet);
+        Object packet = ClientboundBlockDestructionPacketProxy.INSTANCE.newInstance(Integer.MAX_VALUE - entityId(), LocationUtils.toBlockPos(hitPos), stage);
+        this.sendPacket(packet, false);
         for (Player other : getTrackedBy()) {
             if (isWithinDestroyRange(hitPos, other)) {
-                this.sendDestroyProgress(other, hitPos, breakerId, stateId, progress, speed, packet);
+                other.sendPacket(packet, false);
             }
         }
     }
 
-    private void sendDestroyProgress(Player viewer, BlockPos position, int breakerId, int stateId, float progress, float speed, @Nullable Object packet) {
-        // A synchronized Bedrock viewer must not also receive Java stages: Geyser would start a second, estimated timer.
-        if (!this.plugin.compatibilityManager().sendMiningProgress(viewer, breakerId, stateId, position, progress, speed)
-                && packet != null) {
-            viewer.sendPacket(packet, false);
+    public void offerBedrockHandshake() {
+        this.bedrockProtocol = -1;
+        this.sendCustomPacket(ClientboundBedrockHandshakePacket.INSTANCE);
+    }
+
+    @Override
+    public int bedrockProtocol() {
+        return this.bedrockProtocol;
+    }
+
+    @Override
+    public void setBedrockProtocol(int version) {
+        if (this.bedrockProtocol == version) {
+            return;
+        }
+        if (version >= 0) {
+            this.setGameEdition(GameEdition.BEDROCK);
+        }
+        this.bedrockProtocol = version;
+        if (version >= 0) {
+            this.plugin.logger().info("Enabled Bedrock extension protocol " + version + " for " + this.name());
         }
     }
 

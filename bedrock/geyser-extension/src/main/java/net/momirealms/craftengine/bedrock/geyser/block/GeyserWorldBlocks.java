@@ -44,11 +44,6 @@ public final class GeyserWorldBlocks {
         return this.customStates.get(visualState);
     }
 
-    public boolean containsServerState(int serverState) {
-        int visual = this.visualStates.getOrDefault(serverState, -1);
-        return visual >= 0 && this.customStates.get(visual);
-    }
-
     public boolean isEmpty() {
         return this.customStates.isEmpty();
     }

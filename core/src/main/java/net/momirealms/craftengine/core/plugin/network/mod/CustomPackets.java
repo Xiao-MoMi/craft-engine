@@ -5,6 +5,7 @@ import net.kyori.adventure.text.TranslationArgument;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.*;
@@ -20,12 +21,14 @@ import java.util.function.BiPredicate;
 public final class CustomPackets {
     public static final int PROTOCOL_VERSION = 1;
     public static final BiPredicate<NetWorkUser, Key> ALWAYS_ALLOWED = (user, key) -> true;
+    public static final ClientCustomPacketType<ClientboundBedrockHandshakePacket> BEDROCK_HANDSHAKE_REQUEST = registerClientbound(ClientboundBedrockHandshakePacket.ID, ClientboundBedrockHandshakePacket.CODEC, ALWAYS_ALLOWED, false);
     public static final ClientCustomPacketType<ClientboundLightPacket> LIGHT = registerClientbound(ClientboundLightPacket.ID, ClientboundLightPacket.CODEC, ALWAYS_ALLOWED, true);
     public static final ClientCustomPacketType<ClientboundVisualBlockStateBatchStartPacket> VISUAL_BLOCK_STATE_BATCH_START = registerClientbound(ClientboundVisualBlockStateBatchStartPacket.ID, ClientboundVisualBlockStateBatchStartPacket.CODEC, false);
     public static final ClientCustomPacketType<ClientboundVisualBlockStateBatchFinishedPacket> VISUAL_BLOCK_STATE_BATCH_FINISHED = registerClientbound(ClientboundVisualBlockStateBatchFinishedPacket.ID, ClientboundVisualBlockStateBatchFinishedPacket.CODEC, false);
     public static final ClientCustomPacketType<ClientboundVisualBlockStatesPacket> VISUAL_BLOCK_STATES = registerClientbound(ClientboundVisualBlockStatesPacket.ID, ClientboundVisualBlockStatesPacket.CODEC, false);
     public static final ClientCustomPacketType<ClientboundCancelBlockUpdateResponsePacket> CANCEL_BLOCK_UPDATE_RESPONSE = registerClientbound(ClientboundCancelBlockUpdateResponsePacket.ID, ClientboundCancelBlockUpdateResponsePacket.CODEC, false);
     public static final ClientCustomPacketType<ClientboundCreativeModeTabItemsPacket> CREATIVE_MODE_TAB_ITEMS = registerClientbound(ClientboundCreativeModeTabItemsPacket.ID, ClientboundCreativeModeTabItemsPacket.CODEC, false);
+    public static final ServerCustomPacketType<ServerboundBedrockHandshakePacket> BEDROCK_HANDSHAKE = registerServerbound(ServerboundBedrockHandshakePacket.ID, ServerboundBedrockHandshakePacket.CODEC, (user, key) -> user.decoderState() == ConnectionState.PLAY);
     public static final ServerCustomPacketType<ServerboundHandshakePacket> HANDSHAKE = registerServerbound(ServerboundHandshakePacket.ID, ServerboundHandshakePacket.CODEC, (p, k) -> true);
     public static final ServerCustomPacketType<ServerboundEnableClientCustomBlockPacket> ENABLE_CLIENT_CUSTOM_BLOCK = registerServerbound(ServerboundEnableClientCustomBlockPacket.ID, ServerboundEnableClientCustomBlockPacket.CODEC);
     public static final ServerCustomPacketType<ServerboundCancelBlockUpdateRequestPacket> CANCEL_BLOCK_UPDATE_REQUEST = registerServerbound(ServerboundCancelBlockUpdateRequestPacket.ID, ServerboundCancelBlockUpdateRequestPacket.CODEC);
@@ -44,7 +47,7 @@ public final class CustomPackets {
     public static <T extends ClientCustomPacket> ClientCustomPacketType<T> registerClientbound(Key id, NetworkCodec<FriendlyByteBuf, T> codec, BiPredicate<NetWorkUser, Key> permissionChecker, boolean inServerHandle) {
         ClientCustomPacketType<T> type = new ClientCustomPacketType<>(id, codec, permissionChecker, inServerHandle);
         ((WritableRegistry<ClientCustomPacketType<? extends ClientCustomPacket>>) BuiltInRegistries.CLIENT_MOD_PACKET)
-                .register(ResourceKey.create(Registries.CLIENT_MOD_PACKET.location(), id), type);
+                .register(ResourceKey.create(Registries.CLIENTBOUND_CUSTOM_PACKET.location(), id), type);
         return type;
     }
 
@@ -55,7 +58,7 @@ public final class CustomPackets {
     public static <T extends ServerCustomPacket> ServerCustomPacketType<T> registerServerbound(Key id, NetworkCodec<FriendlyByteBuf, T> codec, BiPredicate<NetWorkUser, Key> permissionChecker) {
         ServerCustomPacketType<T> type = new ServerCustomPacketType<>(id, codec, permissionChecker);
         ((WritableRegistry<ServerCustomPacketType<? extends ServerCustomPacket>>) BuiltInRegistries.SERVER_MOD_PACKET)
-                .register(ResourceKey.create(Registries.SERVER_MOD_PACKET.location(), id), type);
+                .register(ResourceKey.create(Registries.SERVERBOUND_CUSTOM_PACKET.location(), id), type);
         return type;
     }
 

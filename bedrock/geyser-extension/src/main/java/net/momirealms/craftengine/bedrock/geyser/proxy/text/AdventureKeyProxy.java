@@ -15,4 +15,7 @@ public interface AdventureKeyProxy {
 
     @MethodInvoker(name = "key", isStatic = true)
     Object key(String value);
+
+    @MethodInvoker(name = "asString")
+    String asString(Object key);
 }

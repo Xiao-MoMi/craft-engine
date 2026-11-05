@@ -276,9 +276,6 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     @Override
     public void onDelayedEnable() {
-        if (this.hasGeyser) {
-            runCatchingHook(GeyserUtils::initializeMiningSync, "Geyser mining synchronization");
-        }
         if (this.isPluginEnabled("CoreProtect")) {
             runCatchingHook(() -> registerProtectionLogger(new CoreProtectProtectionLogger()), "CoreProtect");
         }
@@ -555,13 +552,6 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
             return true;
         }
         return Config.identifyBedrockByFloodgateUuid() && uuid.getMostSignificantBits() == 0;
-    }
-
-    @Override
-    public boolean sendMiningProgress(Player viewer, int breakerId, int serverStateId, BlockPos position, float progress, float speed) {
-        return this.hasGeyser && viewer.isBedrockPlayer()
-                && GeyserUtils.sendMiningProgress(viewer.uuid(), breakerId, serverStateId,
-                position.x(), position.y(), position.z(), progress, speed);
     }
 
     @Override

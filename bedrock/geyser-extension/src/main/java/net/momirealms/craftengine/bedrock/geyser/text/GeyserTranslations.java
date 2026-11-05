@@ -34,9 +34,8 @@ public final class GeyserTranslations {
     }
 
     public static void install(Supplier<GeyserTextData> source, Path configDirectory) throws IOException {
-        MinecraftLocaleProxy proxy = MinecraftLocaleProxy.INSTANCE;
-        proxy.localeMappings(new GeyserTranslationMap(
-                proxy.localeMappings(),
+        MinecraftLocaleProxy.INSTANCE.localeMappings(new GeyserTranslationMap(
+                MinecraftLocaleProxy.INSTANCE.localeMappings(),
                 source,
                 readOverrides(configDirectory.resolve("locales/overrides"))
         ));

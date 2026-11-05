@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bedrock.geyser.display.GeyserItemDisplays;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserPackManager;
 import net.momirealms.craftengine.bedrock.geyser.text.GeyserTextManager;
 import org.geysermc.event.PostOrder;
@@ -26,11 +27,13 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserBlockManager blockManager;
     private GeyserItemManager itemManager;
     private GeyserPackManager packManager;
+    private GeyserCustomPayloads customPayloads;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
         this.textManager.init();
         this.blockManager = new GeyserBlockManager(this.logger());
+        this.customPayloads = new GeyserCustomPayloads();
         this.itemManager = new GeyserItemManager(this.logger(), this.blockManager);
         try {
             this.packManager = new GeyserPackManager(
@@ -50,6 +53,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemDisplays.install();
         this.itemManager.init();
         this.blockManager.init();
+        this.customPayloads.install();
         GeyserGuiMenus.install(this.logger(), () -> this.textManager.data().layout());
         this.blockManager.initPlacementHandler();
         this.textManager.installContext();
@@ -74,6 +78,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        if (this.customPayloads != null) {
+            this.customPayloads.uninstall();
+        }
         if (this.blockManager != null) {
             this.blockManager.unload();
         }

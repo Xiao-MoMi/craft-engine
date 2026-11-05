@@ -8,46 +8,26 @@ import org.geysermc.geyser.level.physics.Direction;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BlockBreakHandler;
 import org.geysermc.geyser.util.BlockUtils;
-import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerAction;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundPlayerActionPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundPunchPacket;
 
 import java.util.Objects;
 
 public final class GeyserBlockBreakHandler extends BlockBreakHandler {
     private final GeyserWorldBlocks blocks;
-    private final GeyserMiningProgress miningProgress;
-    private long lastSwingTick = Long.MIN_VALUE;
 
     public GeyserBlockBreakHandler(GeyserSession session, GeyserWorldBlocks blocks) {
         super(session);
         this.blocks = blocks;
-        this.miningProgress = new GeyserMiningProgress(session);
-    }
-
-    @Override
-    protected void clearCurrentVariables() {
-        if (this.currentBlockPos != null) {
-            this.miningProgress.forget(Integer.MAX_VALUE - this.session.getPlayerEntity().getEntityId(), this.currentBlockPos);
-        }
-        super.clearCurrentVariables();
-    }
-
-    @Override
-    public void reset() {
-        this.miningProgress.reset();
-        super.reset();
     }
 
     @Override
     public void handlePlayerAuthInputPacket(PlayerAuthInputPacket packet) {
         super.handlePlayerAuthInputPacket(packet);
-        if (this.currentBlockState != null && this.blocks.contains(this.currentBlockState.javaId()) && packet.getTick() != this.lastSwingTick) {
+        if (super.currentBlockState != null && this.blocks.contains(super.currentBlockState.javaId())) {
             // Java sends a swing every mining tick. Bedrock's animation packets arrive less often,
             // but CE uses swings to distinguish continued mining from a stopped/idle player.
-            this.lastSwingTick = packet.getTick();
-            this.session.sendDownstreamGamePacket(ServerboundPunchPacket.INSTANCE);
-            this.session.activateArmAnimationTicking();
+            super.session.sendDownstreamGamePacket(ServerboundPunchPacket.INSTANCE);
+            super.session.activateArmAnimationTicking();
         }
     }
 
@@ -63,40 +43,18 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
                                          boolean bedrockDestroyed,
                                          boolean sendParticles,
                                          long tick) {
-        boolean custom = this.blocks.contains(state.javaId());
-        if (!custom) {
-            if (this.currentBlockState != null && this.blocks.contains(this.currentBlockState.javaId())) {
-                this.cancelCurrent();
-                if (!sendParticles && !bedrockDestroyed) {
-                    return;
-                }
-            }
+        GeyserItemStack item = super.session.getPlayerInventory().getItemInHand();
+        boolean sameItem = super.currentItemStack != null && super.currentItemStack.getJavaId() == item.getJavaId() && Objects.equals(super.currentItemStack.getComponents(), item.getComponents());
+        if (!this.blocks.contains(state.javaId()) || !position.equals(super.currentBlockPos) || !sameItem) {
             super.handleContinueDestroy(position, state, face, bedrockDestroyed, sendParticles, tick);
             return;
         }
-        GeyserItemStack item = this.session.getPlayerInventory().getItemInHand();
-        boolean sameItem = this.currentItemStack != null && this.currentItemStack.getJavaId() == item.getJavaId()
-                && Objects.equals(this.currentItemStack.getComponents(), item.getComponents());
-        if (!position.equals(this.currentBlockPos) || state != this.currentBlockState || !sameItem) {
-            this.cancelCurrent();
-            this.handleStartBreak(position, state, face, tick);
-        }
-        this.currentBlockFace = face;
+        super.currentBlockFace = face;
         if (bedrockDestroyed) {
-            BlockUtils.restoreCorrectBlock(this.session, position, state);
+            BlockUtils.restoreCorrectBlock(super.session, position, state);
         }
         if (sendParticles) {
-            BlockUtils.spawnBlockBreakParticles(this.session, face, position, state);
+            BlockUtils.spawnBlockBreakParticles(super.session, face, position, state);
         }
-        // Do not send FINISH_DIGGING or overwrite CE's crack packets with Geyser's carrier-based timer.
-    }
-
-    private void cancelCurrent() {
-        if (this.currentBlockPos != null) {
-            this.session.sendDownstreamGamePacket(new ServerboundPlayerActionPacket(PlayerAction.CANCEL_DIGGING, this.currentBlockPos, Direction.DOWN.mcpl(), 0));
-            BlockUtils.sendBedrockStopBlockBreak(this.session, this.currentBlockPos.toFloat());
-            this.getDestructionStageCache().invalidate(this.currentBlockPos);
-        }
-        this.clearCurrentVariables();
     }
 }

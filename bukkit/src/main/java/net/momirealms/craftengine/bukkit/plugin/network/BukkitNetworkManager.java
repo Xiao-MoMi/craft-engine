@@ -548,6 +548,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         BukkitServerPlayer user = (BukkitServerPlayer) getUser(player);
         if (user != null) {
             user.setPlayer(player);
+            user.offerBedrockHandshake();
             // 玩家自身实体的包处理器（血量 metadata 缩放等）
             user.entityViews().put(user.entityId(), SelfPlayerPacketHandler.INSTANCE);
             this.onlineUsers.put(player.getUniqueId(), user);

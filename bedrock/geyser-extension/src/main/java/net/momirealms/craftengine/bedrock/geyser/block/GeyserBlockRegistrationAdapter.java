@@ -23,7 +23,8 @@ public final class GeyserBlockRegistrationAdapter {
         if (world) {
             // CE owns mining completion; the client must not destroy the visual carrier independently.
             components.selectionBox(BoxComponent.fullBox()).collisionBoxes(BoxComponent.fullBox())
-                    .destructibleByMining(Float.MAX_VALUE).placeAir(false)
+                    .destructibleByMining(Float.MAX_VALUE)
+                    .placeAir(false)
                     .lightEmission(display.get("light_emission").getAsInt());
             if (display.has("collision_boxes")) {
                 List<BoxComponent> boxes = new ArrayList<>();

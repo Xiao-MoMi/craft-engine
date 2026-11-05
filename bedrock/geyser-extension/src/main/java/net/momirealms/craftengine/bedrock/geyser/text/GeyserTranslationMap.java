@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.text;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.AbstractMap;
 import java.util.Map;
 import java.util.Set;
@@ -35,6 +37,7 @@ final class GeyserTranslationMap extends AbstractMap<String, Map<String, String>
         return this.loaded.containsKey(locale);
     }
 
+    @NotNull
     @Override
     public Set<Entry<String, Map<String, String>>> entrySet() {
         return this.loaded.entrySet();
