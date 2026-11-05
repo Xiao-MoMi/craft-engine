@@ -164,6 +164,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
         return EmptyBlockBehavior.INSTANCE;
     }
 
+    @Override
+    public BlockSounds blockSoundsByName(String name) {
+        return SoundUtils.blockSoundsByName(name);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public BlockBehavior createBlockBehavior(BlockDefinition blockDefinition, ConfigValue behaviorValue) {

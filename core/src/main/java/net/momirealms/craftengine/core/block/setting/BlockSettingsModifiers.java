@@ -124,8 +124,17 @@ public final class BlockSettingsModifiers {
         return settings -> settings.instrument(instrument);
     });
     public static final BlockSettingsModifierType<BlockSettingsModifier> SOUNDS = register(Key.ce("sounds"), value -> {
-        BlockSounds blockSounds = BlockSounds.fromConfig(value.getAsSection());
-        return settings -> settings.sounds(blockSounds);
+        if (value.is(String.class)) {
+            String name = value.getAsString();
+            BlockSounds blockSounds = CraftEngine.instance().blockManager().blockSoundsByName(name);
+            if (blockSounds == null) {
+                throw new IllegalArgumentException("Invalid sound type '" + name + "' at " + value.path());
+            }
+            return settings -> settings.sounds(blockSounds);
+        } else {
+            BlockSounds blockSounds = BlockSounds.fromConfig(value.getAsSection());
+            return settings -> settings.sounds(blockSounds);
+        }
     });
     public static final BlockSettingsModifierType<BlockSettingsModifier> FLUID_STATE = register(Key.ce("fluid_state"), value -> {
         String state = value.getAsString();

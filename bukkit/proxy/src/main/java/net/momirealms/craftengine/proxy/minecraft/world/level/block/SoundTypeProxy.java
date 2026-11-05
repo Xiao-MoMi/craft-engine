@@ -1,12 +1,29 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.block;
 
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
+import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
+
+import java.lang.reflect.Field;
 
 @ReflectionProxy(name = "net.minecraft.world.level.block.SoundType")
 public interface SoundTypeProxy {
     SoundTypeProxy INSTANCE = ASMProxyFactory.create(SoundTypeProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.block.SoundType");
+
+    default Object getByName(String name) {
+        Field field = SparrowClass.of(CLASS).getField(FieldMatcher.named(name).and(FieldMatcher.staticField()).and(FieldMatcher.type(CLASS)));
+        if (field == null) {
+            return null;
+        }
+        try {
+            return field.get(null);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Failed to access sound type '" + name + "'", e);
+        }
+    }
 
     @ConstructorInvoker
     Object newInstance(float volume,

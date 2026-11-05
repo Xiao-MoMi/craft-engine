@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.util;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import net.momirealms.craftengine.core.block.BlockSounds;
+import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
@@ -11,17 +12,47 @@ import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import org.bukkit.SoundCategory;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public final class SoundUtils {
     private SoundUtils() {}
 
     private static final Cache<Key, Object> SOUND_HOLDER_CACHE = Caffeine.newBuilder()
             .maximumSize(256)
             .build();
+    private static final Map<String, BlockSounds> BLOCK_SOUNDS_CACHE = Collections.synchronizedMap(new HashMap<>());
+
+    public static BlockSounds blockSoundsByName(String name) {
+        return BLOCK_SOUNDS_CACHE.computeIfAbsent(name.toUpperCase(Locale.ROOT), key -> {
+            Object soundType = SoundTypeProxy.INSTANCE.getByName(key);
+            return soundType == null ? null : fromNMSSoundType(soundType);
+        });
+    }
+
+    public static BlockSounds fromNMSSoundType(Object soundType) {
+        float volume = SoundTypeProxy.INSTANCE.getVolume(soundType);
+        float pitch = SoundTypeProxy.INSTANCE.getPitch(soundType);
+        return new BlockSounds(
+                fromNMSSoundEvent(SoundTypeProxy.INSTANCE.getBreakSound(soundType), volume, pitch * 0.8f),
+                fromNMSSoundEvent(SoundTypeProxy.INSTANCE.getStepSound(soundType), volume * 0.15f, pitch),
+                fromNMSSoundEvent(SoundTypeProxy.INSTANCE.getPlaceSound(soundType), volume, pitch * 0.8f),
+                fromNMSSoundEvent(SoundTypeProxy.INSTANCE.getHitSound(soundType), volume * 0.5f, pitch * 0.5f),
+                fromNMSSoundEvent(SoundTypeProxy.INSTANCE.getFallSound(soundType), volume * 0.5f, pitch * 0.75f)
+        );
+    }
+
+    public static SoundData fromNMSSoundEvent(Object soundEvent, float volume, float pitch) {
+        return new SoundData(KeyUtils.identifierToKey(SoundEventProxy.INSTANCE.getLocation(soundEvent)),
+                SoundData.SoundValue.fixed(volume), SoundData.SoundValue.fixed(pitch));
+    }
 
     // 高频发包路径用，避免每次 parse/create SoundEvent
     public static Object getOrCreateSoundHolder(Key key) {
-        return SOUND_HOLDER_CACHE.get(key, k ->
-                HolderProxy.INSTANCE.direct(SoundEventProxy.INSTANCE.createVariableRangeEvent(KeyUtils.toIdentifier(k))));
+        return SOUND_HOLDER_CACHE.get(key, k -> HolderProxy.INSTANCE.direct(SoundEventProxy.INSTANCE.createVariableRangeEvent(KeyUtils.toIdentifier(k))));
     }
 
     public static Enum<?> toNMS(SoundSource source) {

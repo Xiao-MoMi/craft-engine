@@ -39,6 +39,9 @@ public interface BlockManager extends Manageable, ModelGenerator {
 
     Map<Key, Key> soundReplacements();
 
+    @Nullable
+    BlockSounds blockSoundsByName(String name);
+
     Key getBlockOwnerId(BlockStateWrapper state);
 
     @NotNull
