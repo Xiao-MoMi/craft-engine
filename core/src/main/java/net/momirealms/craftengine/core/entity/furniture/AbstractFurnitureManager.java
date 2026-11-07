@@ -293,8 +293,12 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             // 家具行为
             ConfigValue value = section.getValue(BEHAVIORS);
             if (value != null) {
-                List<FurnitureBehaviorTemplate> furnitureBehaviorTemplates = value.getAsList(v -> FurnitureBehaviors.fromConfig(furniture, v.getAsSection()));
-                ((FurnitureDefinitionImpl) furniture).setBehaviors(furnitureBehaviorTemplates);
+                try {
+                    List<FurnitureBehaviorTemplate> furnitureBehaviorTemplates = value.getAsList(v -> FurnitureBehaviors.fromConfig(furniture, v.getAsSection()));
+                    ((FurnitureDefinitionImpl) furniture).setBehaviors(furnitureBehaviorTemplates);
+                } catch (KnownResourceException e) {
+                    error(e, path);
+                }
             }
             AbstractFurnitureManager.this.byId.put(id, furniture);
         }
