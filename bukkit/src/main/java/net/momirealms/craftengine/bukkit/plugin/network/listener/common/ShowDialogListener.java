@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.plugin.network.protocol.dialog.Dialog;
+import net.momirealms.craftengine.core.plugin.network.protocol.dialog.DialogPacketInspection;
 import net.momirealms.craftengine.core.plugin.network.protocol.dialog.DialogTypes;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -33,6 +34,9 @@ public final class ShowDialogListener implements ByteBufferPacketListener {
         Either<Integer, Tag> directOrRef = buf.readHolder(it -> it.readNbt(false));
         Player player = (Player) user;
         directOrRef.ifRight(tag -> {
+            if (!DialogPacketInspection.requiresProcessing(tag, BukkitNetworkManager.instance()::hasNetworkTag)) {
+                return;
+            }
             Dialog dialog = DialogTypes.read((CompoundTag) tag);
             MutableBoolean changed = new MutableBoolean(false);
             dialog.applyClientboundData(item -> {
