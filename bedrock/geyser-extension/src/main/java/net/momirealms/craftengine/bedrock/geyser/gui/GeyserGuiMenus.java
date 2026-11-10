@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.proxy.inventory.OpenScreenPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.floodgate.util.UiProfile;
-import org.geysermc.geyser.api.extension.ExtensionLogger;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
@@ -19,23 +19,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreenPacket> {
     private final PacketTranslator<ClientboundOpenScreenPacket> delegate;
     private final ContainerTitleLayout layout;
-    private final ExtensionLogger logger;
     private final Set<String> reported = ConcurrentHashMap.newKeySet();
 
-    public GeyserGuiMenus(PacketTranslator<ClientboundOpenScreenPacket> delegate, ContainerTitleLayout layout, ExtensionLogger logger) {
+    public GeyserGuiMenus(PacketTranslator<ClientboundOpenScreenPacket> delegate, ContainerTitleLayout layout) {
         this.delegate = delegate;
         this.layout = layout;
-        this.logger = logger;
     }
 
     @SuppressWarnings("unchecked")
-    public static void install(ExtensionLogger logger, ContainerTitleLayout layout) {
+    public static void install(ContainerTitleLayout layout) {
         PacketTranslator<ClientboundOpenScreenPacket> original = (PacketTranslator<ClientboundOpenScreenPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundOpenScreenPacket.class);
         if (original instanceof GeyserGuiMenus menus) {
             original = menus.delegate;
         }
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(original, layout, logger));
-        logger.info("Enabled unified classic container title layout.");
+        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(original, layout));
+        GeyserTranslationManager.info("gui.layout_enabled");
     }
 
     @Override
@@ -73,8 +71,8 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
             Object title = new GeyserContainerTitle(this.layout).create(parts, rows, locale);
             return title == null ? packet : OpenScreenPacketProxy.INSTANCE.withTitle(packet, title);
         } catch (UnsupportedOperationException exception) {
-            if (this.logger != null && this.reported.add(exception.getMessage())) {
-                this.logger.warning("Container title kept its native layout: " + exception.getMessage());
+            if (this.reported.add(exception.getMessage())) {
+                GeyserTranslationManager.warn("gui.native_layout", exception.getMessage());
             }
             return packet;
         }

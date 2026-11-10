@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
-import net.momirealms.craftengine.bedrock.geyser.text.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 

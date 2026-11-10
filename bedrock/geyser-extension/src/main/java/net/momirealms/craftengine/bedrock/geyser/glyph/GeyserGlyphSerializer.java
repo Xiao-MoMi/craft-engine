@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.text;
+package net.momirealms.craftengine.bedrock.geyser.glyph;
 
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import net.bytebuddy.ByteBuddy;
@@ -86,7 +86,7 @@ public final class GeyserGlyphSerializer {
         // Geyser already expanded translations, so their text/arguments now retain ordinary font inheritance.
         List<Object> children = component.children(source);
         List<Object> rewrittenChildren = null;
-        for (int i = 0; i < children.size(); i++) {
+        for (int i = 0, size = children.size(); i < size; i++) {
             Object child = children.get(i);
             Object rewritten = this.rewrite(child, font);
             if (child != rewritten) {

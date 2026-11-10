@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.text;
+package net.momirealms.craftengine.bedrock.geyser.util;
 
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
