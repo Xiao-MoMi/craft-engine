@@ -1,10 +1,13 @@
 package net.momirealms.craftengine.core.util;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;
 
 public final class Key {
+    private static final Cache<String, Key> CACHE = Caffeine.newBuilder().maximumSize(8192).build();
     public static final String CRAFTENGINE_NAMESPACE = "craftengine";
     public static final String MINECRAFT_NAMESPACE = "minecraft";
     public final String namespace;
@@ -45,6 +48,10 @@ public final class Key {
 
     public static Key of(String namespacedId) {
         return of(decompose(namespacedId, MINECRAFT_NAMESPACE));
+    }
+
+    public static Key ofCached(String namespacedId) {
+        return CACHE.get(namespacedId, Key::of);
     }
 
     public static Key minecraft(String namespacedId) {

@@ -8,7 +8,6 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier;
-import net.momirealms.craftengine.core.item.CustomItemIdCache;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.component.value.Enchantment;
 import net.momirealms.craftengine.core.item.component.value.FireworkExplosion;
@@ -116,7 +115,7 @@ public final class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrap
         if (tag == null) return null;
         Object stringTag = CompoundTagProxy.INSTANCE.get(tag, IdProcessor.CRAFT_ENGINE_ID);
         if (stringTag == null) return null;
-        return CustomItemIdCache.parse(StringTagProxy.INSTANCE.getData(stringTag));
+        return Key.ofCached(StringTagProxy.INSTANCE.getData(stringTag));
     }
 
     @Override
