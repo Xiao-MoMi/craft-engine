@@ -804,6 +804,7 @@ client-optimization:
       restore-per-tick: 25
 
 bedrock:
+  enable: true
   resource-pack:
     # Resource pack name shown in the Bedrock client.
     name: "CraftEngine ResourcePack"

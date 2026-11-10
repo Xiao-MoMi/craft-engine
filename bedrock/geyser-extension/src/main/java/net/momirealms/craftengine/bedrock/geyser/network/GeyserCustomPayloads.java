@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bedrock.geyser.network;
 
 import net.momirealms.craftengine.bedrock.geyser.proxy.network.ClientboundCustomPayloadPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
-import net.momirealms.craftengine.bedrock.network.BedrockProtocol;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
@@ -33,13 +32,20 @@ public final class GeyserCustomPayloads extends PacketTranslator<ClientboundCust
     public void translate(GeyserSession session, ClientboundCustomPayloadPacket packet) {
         Object channelKey = ClientboundCustomPayloadPacketProxy.INSTANCE.channel(packet);
         String channel = AdventureKeyProxy.INSTANCE.asString(channelKey);
-        if (BedrockProtocol.HANDSHAKE_CHANNEL.equals(channel)) {
-            int protocolVersion = BedrockProtocol.readHandshake(ByteBuffer.wrap(packet.getData()));
-            if (protocolVersion == BedrockProtocol.VERSION) {
-                session.sendDownstreamGamePacket(ClientboundCustomPayloadPacketProxy.Serverbound.INSTANCE.newInstance(channelKey, BedrockProtocol.handshake(BedrockProtocol.VERSION)));
-            }
+        ClientCustomPacketType<?> type = GeyserCustomPackets.clientbound(channel);
+        if (type != null) {
+            type.codec().decode(ByteBuffer.wrap(packet.getData())).handle(session);
             return;
         }
         this.original.translate(session, packet);
+    }
+
+    public void send(GeyserSession session, ServerCustomPacket packet) {
+        ServerCustomPacketType<?> type = GeyserCustomPackets.serverbound(packet.id());
+        if (type == null) {
+            throw new IllegalArgumentException("Unregistered serverbound custom packet: " + packet.id());
+        }
+        Object channel = AdventureKeyProxy.INSTANCE.key(type.id());
+        session.sendDownstreamGamePacket(ClientboundCustomPayloadPacketProxy.Serverbound.INSTANCE.newInstance(channel, type.encode(packet)));
     }
 }

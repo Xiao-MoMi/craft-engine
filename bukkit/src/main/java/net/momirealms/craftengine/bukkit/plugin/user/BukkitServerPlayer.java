@@ -1263,6 +1263,9 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     public void offerBedrockHandshake() {
         this.bedrockProtocol = -1;
+        if (!Config.bedrockEnabled()) {
+            return;
+        }
         this.sendCustomPacket(ClientboundBedrockHandshakePacket.INSTANCE);
     }
 

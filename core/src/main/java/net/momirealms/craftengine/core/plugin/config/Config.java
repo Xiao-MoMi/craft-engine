@@ -300,6 +300,7 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$bucket_size;
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
+    private boolean bedrock$enable = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
     private int bedrock$resource_pack$item_icon_size;
@@ -870,6 +871,9 @@ public final class Config {
         this.client_optimization$entity_culling$rate_limiting$restore_per_tick = config.getInt("client-optimization.entity-culling.rate-limiting.restore-per-tick", 5);
 
         // bedrock support
+        if (this.firstTime) {
+            this.bedrock$enable = config.getBoolean("bedrock.enable", true);
+        }
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64);
@@ -1766,6 +1770,10 @@ public final class Config {
 
     public static boolean multiThreadedConfigLoad() {
         return instance.misc$multi_threaded_configuration_load;
+    }
+
+    public static boolean bedrockEnabled() {
+        return instance.bedrock$enable;
     }
 
     public static String bedrockIdentificationNamePrefix() {

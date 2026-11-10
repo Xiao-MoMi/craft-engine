@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import net.momirealms.craftengine.bedrock.FurnitureShulkerUUID;
+import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
@@ -29,6 +31,7 @@ import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
 public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
+    private static final Key HITBOX_CHANNEL = Config.bedrockEnabled() ? Key.of(HardHitboxPayload.CHANNEL) : null;
     private final ShulkerFurnitureHitboxConfig config;
     private final FurnitureHitboxPart[] parts;
     public final ColliderConfig colliderConfig;
@@ -66,7 +69,7 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[0],
                 List.of(BaseEntityData.SharedFlags.createEntityData((byte) 0x20))));
         packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
-                entityIds[1], FurnitureShulkerUUID.create(), x + offset.x, processedY, z - offset.z, 0, yaw,
+                entityIds[1], UUID.randomUUID(), x + offset.x, processedY, z - offset.z, 0, yaw,
                 EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0
         ));
         packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityIds[1], config.cachedShulkerValues));
@@ -95,27 +98,37 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         this.interactionDespawnPacket = interactionCount == 0 ? null : ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(java.util.Arrays.copyOfRange(this.entityIds, 2, this.entityIds.length)));
         this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(packets);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(this.entityIds));
-        if (config.direction.stepY() == 0) {
+        if (!Config.bedrockEnabled()) {
+            this.bedrockSpawnPacket = this.spawnPacket;
+            this.bedrockCulledSpawnPacket = this.culledSpawnPacket;
+        } else if (config.direction.stepY() == 0) {
             AABB bounds = this.colliderConfig.bounds;
             double baseX = x + offset.x;
             double baseZ = z - offset.z;
-            List<Object> cubes = new ArrayList<>(4 + interactionCount * 2);
-            this.addCube(cubes, this.entityIds[1], baseX, bounds.minY, baseZ);
+            List<Object> cubes = new ArrayList<>(6 + interactionCount * 2);
+            this.addBedrockHitbox(cubes, this.entityIds[1], baseX, bounds.minY, baseZ, config.scale, config.scale);
             if (config.peek != 0) {
                 // Mirror the base cube across the collider's center. At partial peek the cubes overlap.
-                this.addCube(cubes, this.entityIds[0], bounds.minX + bounds.maxX - baseX, bounds.minY, bounds.minZ + bounds.maxZ - baseZ);
+                this.addBedrockHitbox(cubes, this.entityIds[0], bounds.minX + bounds.maxX - baseX, bounds.minY, bounds.minZ + bounds.maxZ - baseZ, config.scale, config.scale);
             }
             this.bedrockCulledSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(cubes));
             cubes.addAll(packets.subList(interactionStart, packets.size()));
             this.bedrockSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(cubes);
         } else {
-            this.bedrockCulledSpawnPacket = this.culledSpawnPacket;
-            this.bedrockSpawnPacket = this.spawnPacket;
+            AABB bounds = this.colliderConfig.bounds;
+            List<Object> bedrockPackets = new ArrayList<>(3 + interactionCount * 2);
+            this.addBedrockHitbox(bedrockPackets, this.entityIds[1],
+                    (bounds.minX + bounds.maxX) * 0.5, bounds.minY, (bounds.minZ + bounds.maxZ) * 0.5,
+                    config.scale, bounds.maxY - bounds.minY);
+            this.bedrockCulledSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(bedrockPackets));
+            bedrockPackets.addAll(packets.subList(interactionStart, packets.size()));
+            this.bedrockSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(bedrockPackets);
         }
     }
 
-    private void addCube(List<Object> packets, int entityId, double x, double y, double z) {
-        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(entityId, FurnitureShulkerUUID.createCube(this.config.scale), x, y, z, 0, 0, EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0));
+    private void addBedrockHitbox(List<Object> packets, int entityId, double x, double y, double z, double width, double height) {
+        packets.add(PacketUtils.createClientboundCustomPayloadPacket(HITBOX_CHANNEL, HardHitboxPayload.CODEC.encode(new HardHitboxPayload(entityId, width, height))));
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(entityId, UUID.randomUUID(), x, y, z, 0, 0, EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0));
         packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, this.config.closedShulkerValues));
     }
 

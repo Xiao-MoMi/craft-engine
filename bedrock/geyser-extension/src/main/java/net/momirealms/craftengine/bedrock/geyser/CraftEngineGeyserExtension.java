@@ -2,7 +2,8 @@ package net.momirealms.craftengine.bedrock.geyser;
 
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
-import net.momirealms.craftengine.bedrock.geyser.display.GeyserItemDisplays;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
+import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
@@ -31,6 +32,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
+    private GeyserHardHitboxManager hardHitboxManager;
     private GeyserGlyphManager glyphManager;
     private GeyserLanguageManager languageManager;
     private GeyserBlockManager blockManager;
@@ -50,6 +52,7 @@ public final class CraftEngineGeyserExtension implements Extension {
             throw new IllegalStateException("Failed to initialize translations", exception);
         }
         this.itemDisplays = new GeyserItemDisplays();
+        this.hardHitboxManager = new GeyserHardHitboxManager(this);
         this.blockManager = new GeyserBlockManager();
         this.customPayloads = new GeyserCustomPayloads();
         this.glyphManager = new GeyserGlyphManager();
@@ -79,13 +82,14 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
-    public void onFurnitureShulkerSpawn(ServerSpawnEntityEvent event) {
-        this.itemDisplays.onFurnitureSpawn(event);
+    public void onHardHitboxSpawn(ServerSpawnEntityEvent event) {
+        this.hardHitboxManager.onSpawn(event);
     }
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
         this.blockManager.disconnect(event.connection());
+        this.hardHitboxManager.disconnect(event.connection());
     }
 
     @Subscribe
@@ -100,6 +104,9 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.itemManager.disable();
         }
         this.itemDisplays.uninstall();
+        if (this.hardHitboxManager != null) {
+            this.hardHitboxManager.disable();
+        }
         if (this.blockManager != null) {
             this.blockManager.disable();
         }
@@ -151,6 +158,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserTranslationManager translationManager() {
         return this.translations;
+    }
+
+    public GeyserHardHitboxManager hardHitboxManager() {
+        return this.hardHitboxManager;
     }
 
     public GeyserItemDisplays itemDisplays() {

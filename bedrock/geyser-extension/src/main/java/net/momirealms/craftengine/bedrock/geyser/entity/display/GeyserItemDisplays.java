@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.display;
+package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -7,7 +7,6 @@ import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
-import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.util.Identifier;
@@ -43,10 +42,6 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         } catch (RuntimeException exception) {
             GeyserTranslationManager.error("display.registration_failed", exception);
         }
-    }
-
-    public void onFurnitureSpawn(ServerSpawnEntityEvent event) {
-        GeyserFurnitureHitboxes.onSpawn(event, this);
     }
 
     public void define(JsonObject plan, GeyserDefineEntitiesEvent event) {

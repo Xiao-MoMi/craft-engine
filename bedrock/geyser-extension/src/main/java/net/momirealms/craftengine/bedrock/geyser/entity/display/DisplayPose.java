@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.display;
+package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;

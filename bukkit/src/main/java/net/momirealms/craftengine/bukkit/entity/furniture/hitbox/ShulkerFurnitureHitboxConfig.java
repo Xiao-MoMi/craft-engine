@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurniture
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -69,7 +70,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
         ShulkerData.Silent.addEntityDataIfNotDefaultValue(true, this.cachedShulkerValues);
         ShulkerData.MobFlags.addEntityDataIfNotDefaultValue((byte) 0x01, this.cachedShulkerValues); // NO AI
         ShulkerData.SharedFlags.addEntityDataIfNotDefaultValue((byte) 0x20, this.cachedShulkerValues); // Invisible
-        this.closedShulkerValues = List.copyOf(this.cachedShulkerValues);
+        this.closedShulkerValues = Config.bedrockEnabled() ? List.copyOf(this.cachedShulkerValues) : List.of();
         ShulkerData.RawPeekAmount.addEntityDataIfNotDefaultValue(peek, this.cachedShulkerValues);
 
         List<Object> cachedInteractionValues = new ArrayList<>();

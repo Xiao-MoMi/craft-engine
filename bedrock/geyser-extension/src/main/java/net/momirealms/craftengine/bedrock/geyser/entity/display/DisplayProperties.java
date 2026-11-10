@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.bedrock.geyser.display;
+package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.vector.Vector3f;
