@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.Rec
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.UnknownDisplayTypeException;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MutableBoolean;
+import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
         FriendlyByteBuf buf = event.getBuffer();
         List<RecipeBookEntry> entries;
         try {
-            entries = buf.readCollection(ArrayList::new, byteBuf -> RecipeBookEntry.read(byteBuf, PacketUtils::readItem));
+            entries = buf.readCollection(ArrayList::new, byteBuf -> RecipeBookEntry.read(byteBuf, b -> VersionHelper.isOrAbove26_1 ? PacketUtils.readItemTemplate(b) : PacketUtils.readItem(b)));
         } catch (UnknownDisplayTypeException e) {
             Debugger.PACKET.debug(() -> "Skipped rewriting recipe book packet for player " + user.name() + ": " + e.getMessage());
             return;
@@ -59,7 +60,13 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeCollection(entries, ((byteBuf, recipeBookEntry) -> recipeBookEntry.write(byteBuf,
-                    ($, item) -> PacketUtils.writeItem(buf, item))));
+                    (b, item) -> {
+                        if (VersionHelper.isOrAbove26_1) {
+                            PacketUtils.writeItemTemplate(b, item);
+                        } else {
+                            PacketUtils.writeItem(b, item);
+                        }
+                    })));
             buf.writeBoolean(replace);
         }
     }

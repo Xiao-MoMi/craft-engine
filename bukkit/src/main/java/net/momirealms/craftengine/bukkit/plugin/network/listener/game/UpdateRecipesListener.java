@@ -83,7 +83,7 @@ public final class UpdateRecipesListener {
             );
             List<SingleInputButtonDisplay> displays;
             try {
-                displays = buf.readCollection(ArrayList::new, byteBuf -> SingleInputButtonDisplay.read(byteBuf, PacketUtils::readItem));
+                displays = buf.readCollection(ArrayList::new, byteBuf -> SingleInputButtonDisplay.read(byteBuf, b -> VersionHelper.isOrAbove26_1 ? PacketUtils.readItemTemplate(b) : PacketUtils.readItem(b)));
             } catch (UnknownDisplayTypeException e) {
                 Debugger.PACKET.debug(() -> "Skipped rewriting recipe packet for player " + user.name() + ": " + e.getMessage());
                 return;
@@ -110,7 +110,13 @@ public final class UpdateRecipesListener {
                         (b, c) -> b.writeCollection(c, FriendlyByteBuf::writeVarInt)
                 );
                 buf.writeCollection(displays, (b, d) ->
-                        d.write(b, ($, item) -> PacketUtils.writeItem(buf, item)));
+                        d.write(b, (byteBuf, item) -> {
+                            if (VersionHelper.isOrAbove26_1) {
+                                PacketUtils.writeItemTemplate(byteBuf, item);
+                            } else {
+                                PacketUtils.writeItem(byteBuf, item);
+                            }
+                        }));
             }
         }
     }
