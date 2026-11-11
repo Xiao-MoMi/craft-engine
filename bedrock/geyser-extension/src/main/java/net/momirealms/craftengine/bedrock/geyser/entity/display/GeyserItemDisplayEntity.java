@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
+import org.geysermc.geyser.translator.item.ItemTranslator;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
@@ -21,12 +24,12 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     private final GeyserItemDisplays displays;
     private DisplayProperties carrier;
     private GeyserItemDisplays.Model model;
+    private ItemData equipment = ItemData.AIR;
+    private ItemData sentEquipment = ItemData.AIR;
     private int context;
     private int billboard;
-    private int duration;
-    private long start;
-    private DisplayPose previous = DisplayPose.IDENTITY;
-    private DisplayPose target = DisplayPose.IDENTITY;
+    private final DisplayInterpolation transform = new DisplayInterpolation();
+    private boolean dirty = true;
     private DisplayPose sent;
     private GeyserItemDisplays.Appearance sentAppearance;
     private int dyeColor = -1;
@@ -58,54 +61,59 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     }
 
     void item(ItemStack stack) {
-        this.model = this.displays.resolve(this.session, stack);
+        this.dirty = true;
+        ItemData translated = stack == null || stack.getAmount() <= 0 ? ItemData.AIR : ItemTranslator.translateToBedrock(this.session, stack);
+        this.model = this.displays.resolve(translated);
         this.dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
+        this.equipment = ItemData.AIR;
+        if (this.model == null && translated != ItemData.AIR
+                && translated.getDefinition().getIdentifier().startsWith("minecraft:")) {
+            this.model = this.displays.vanilla(this.session, stack);
+            if (this.model != null && this.model.appearance(0).shape() == 0) {
+                this.equipment = translated;
+            }
+            if (this.model != null) {
+                this.dyeColor = GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
+            }
+        }
     }
 
     void context(byte value) {
+        this.dirty = true;
         this.context = value;
     }
 
     void billboard(byte value) {
+        this.dirty = true;
         this.billboard = value;
     }
 
     void startInterpolation(int delay) {
-        long now = System.nanoTime();
-        this.previous = this.sample(now);
-        this.start = now + delay * 50000000L;
+        this.transform.start(delay);
     }
 
     void duration(int ticks) {
-        this.duration = Math.max(0, ticks);
+        this.transform.duration(ticks);
+    }
+
+    void translation(Vector3f value) {
+        this.transform.translation(value);
+    }
+
+    void scale(Vector3f value) {
+        this.transform.scale(value);
+    }
+
+    void left(Quaternionf value) {
+        this.transform.left(value);
+    }
+
+    void right(Quaternionf value) {
+        this.transform.right(value);
     }
 
     void teleportDuration(int ticks) {
         this.teleportDuration = Math.clamp(ticks, 0, 59);
-    }
-
-    void translation(Vector3f value) {
-        this.target = new DisplayPose(value, this.target.left(), this.target.scale(), this.target.right());
-    }
-
-    void scale(Vector3f value) {
-        this.target = new DisplayPose(this.target.translation(), this.target.left(), value, this.target.right());
-    }
-
-    void left(Quaternionf value) {
-        this.target = new DisplayPose(this.target.translation(), value, this.target.scale(), this.target.right());
-    }
-
-    void right(Quaternionf value) {
-        this.target = new DisplayPose(this.target.translation(), this.target.left(), this.target.scale(), value);
-    }
-
-    private DisplayPose sample(long now) {
-        if (this.duration == 0 || this.start == 0) {
-            return this.target;
-        }
-        float fraction = (now - this.start) / (50000000f * this.duration);
-        return fraction >= 1 ? this.target : (fraction <= 0 ? this.previous : this.previous.interpolate(this.target, fraction));
     }
 
     @Override
@@ -115,30 +123,41 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     }
 
     private void updateDisplay() {
+        if (!this.dirty && !this.transform.dirty() && this.billboard == 0) {
+            return;
+        }
+        this.dirty = false;
+        this.updateEquipment(false);
         GeyserItemDisplays.Appearance appearance = this.model == null ? GeyserItemDisplays.Appearance.EMPTY : this.model.appearance(this.context);
-        boolean changeCarrier = appearance.shape() != 0 && this.carrier != this.model.carrier();
+        boolean changeCarrier = this.model != null && this.carrier != this.model.carrier();
         if (changeCarrier) {
             this.carrier = this.model.carrier();
             this.bedrockDefinition = Registries.BEDROCK_ENTITY_DEFINITIONS.get(this.carrier.id());
         }
-        DisplayPose pose = this.sample(System.nanoTime());
+        DisplayPose pose = this.transform.target();
+        boolean interpolationChanged = this.transform.dirty() || changeCarrier || this.sent == null;
         float renderYaw = this.billboard == 1 || this.billboard == 3 ? this.session.getPlayerEntity().getYaw() + 180 : this.yaw;
         float renderPitch = this.billboard == 2 || this.billboard == 3 ? -this.session.getPlayerEntity().getPitch() : this.pitch;
-        if (!changeCarrier && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
+        if (!interpolationChanged && !changeCarrier && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
             return;
         }
+        DisplayPose previous = changeCarrier ? null : this.sent;
+        boolean modelChanged = changeCarrier || appearance != this.sentAppearance;
+        boolean dyeChanged = changeCarrier || this.sent == null || this.dyeColor != this.sentDyeColor;
+        int interpolation = interpolationChanged ? this.transform.consume(!this.valid || changeCarrier || this.sent == null) : -1;
+        this.updatePropertiesBatched(batch -> this.carrier.write(batch, pose, previous, appearance, modelChanged, this.dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay()), false);
         this.sent = pose;
         this.sentAppearance = appearance;
         this.sentDyeColor = this.dyeColor;
         this.sentYaw = renderYaw;
         this.sentPitch = renderPitch;
-        this.updatePropertiesBatched(batch -> this.carrier.write(batch, pose, appearance, this.dyeColor, renderYaw, renderPitch), false);
         if (changeCarrier && this.valid) {
             // 换资源包时客户端实体类型也要切换。保持 Java 实体、运行时 ID 和乘客关系。
             RemoveEntityPacket remove = new RemoveEntityPacket();
             remove.setUniqueEntityId(this.geyserId);
             this.session.sendUpstreamPacket(remove);
             super.spawnEntity();
+            this.updateEquipment(true);
             if (this.vehicle != null) {
                 this.link(this.vehicle, this);
             }
@@ -146,6 +165,30 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
                 this.link(this, passenger);
             }
         }
+    }
+
+    @Override
+    public void spawnEntity() {
+        this.dirty = true;
+        this.updateDisplay();
+        super.spawnEntity();
+        if (this.equipment != ItemData.AIR) {
+            this.updateEquipment(true);
+        }
+    }
+
+    private void updateEquipment(boolean force) {
+        if (!this.valid || (!force && this.equipment.equals(this.sentEquipment))) {
+            return;
+        }
+        this.sentEquipment = this.equipment;
+        MobEquipmentPacket packet = new MobEquipmentPacket();
+        packet.setRuntimeEntityId(this.geyserId);
+        packet.setItem(this.equipment);
+        packet.setInventorySlot(0);
+        packet.setHotbarSlot(-1);
+        packet.setContainerId(0);
+        this.session.sendUpstreamPacket(packet);
     }
 
     private void link(Entity vehicle, Entity passenger) {
@@ -199,6 +242,7 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     }
 
     private void move(Vector3f position, float yaw, float pitch, boolean teleported) {
+        this.dirty = true;
         super.moveAbsoluteRaw(position, yaw, pitch, yaw, this.onGround, teleported);
     }
 

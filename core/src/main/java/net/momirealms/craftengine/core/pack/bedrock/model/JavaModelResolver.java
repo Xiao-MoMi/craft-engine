@@ -42,6 +42,10 @@ public final class JavaModelResolver {
         return resolved;
     }
 
+    public Map<DisplayPosition, Transform> resolveVanillaDisplay(Key model) throws IOException {
+        return this.inherit(model, true, new HashSet<>(4)).display();
+    }
+
     public JavaModel resolveVanilla(Key model) throws IOException {
         return this.resolve(model, true);
     }

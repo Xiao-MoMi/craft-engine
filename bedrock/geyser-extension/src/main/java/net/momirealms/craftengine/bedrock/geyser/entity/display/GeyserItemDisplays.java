@@ -16,7 +16,6 @@ import org.geysermc.geyser.entity.VanillaEntityType;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
-import org.geysermc.geyser.translator.item.ItemTranslator;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
@@ -30,6 +29,7 @@ import java.util.Map;
 public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEntityPacket> {
     private final Map<Identifier, DisplayProperties> carriers = new LinkedHashMap<>();
     private final Map<String, Model> items = new LinkedHashMap<>();
+    private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
     private PacketTranslator<ClientboundAddEntityPacket> original;
     private VanillaEntityType<GeyserItemDisplayEntity> definition;
 
@@ -59,6 +59,20 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         for (int i = 1; i < appearances.length; i++) {
             JsonArray pose = values.get(i).getAsJsonArray();
             appearances[i] = new Appearance(pose.get(0).getAsInt(), vector(pose, 1, Vector3f.ZERO), vector(pose, 2, Vector3f.ZERO), vector(pose, 3, Vector3f.ONE));
+        }
+        if (displays.has("vanilla_identifier")) {
+            Identifier heldId = Identifier.of(displays.get("vanilla_identifier").getAsString());
+            event.register(CustomEntityDefinition.of(heldId));
+            DisplayProperties heldProperties = new DisplayProperties(heldId);
+            this.carriers.put(heldId, heldProperties);
+            for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("vanilla").entrySet()) {
+                JsonArray contexts = entry.getValue().getAsJsonArray();
+                Appearance[] poses = new Appearance[contexts.size()];
+                for (int i = 0; i < poses.length; i++) {
+                    poses[i] = appearances[contexts.get(i).getAsInt()];
+                }
+                this.vanillaItems.put(entry.getKey(), new Model(poses[0].shape() == 0 ? heldProperties : properties, poses));
+            }
         }
         for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("items").entrySet()) {
             JsonArray contexts = entry.getValue().getAsJsonArray();
@@ -128,6 +142,7 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
             this.original = null;
         }
         this.items.clear();
+        this.vanillaItems.clear();
         this.carriers.clear();
     }
 
@@ -148,12 +163,12 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         session.getEntityCache().spawnEntity(entity);
     }
 
-    Model resolve(GeyserSession session, ItemStack stack) {
-        if (stack == null || stack.getAmount() <= 0) {
-            return null;
-        }
-        ItemData translated = ItemTranslator.translateToBedrock(session, stack);
-        return this.items.get(translated.getDefinition().getIdentifier());
+    Model resolve(ItemData item) {
+        return this.items.get(item.getDefinition().getIdentifier());
+    }
+
+    Model vanilla(GeyserSession session, ItemStack stack) {
+        return this.vanillaItems.get(session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier().toString());
     }
 
     record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale) {

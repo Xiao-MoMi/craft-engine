@@ -267,9 +267,36 @@ public final class JavaResourcePack {
         return GsonHelper.sortObjectKeys(translations).getAsJsonObject();
     }
 
-    public Map<Key, JsonObject> itemDefinitions() throws IOException {
+    public Map<Key, JsonObject> vanillaItemDefinitions() throws IOException {
+        if (Files.isDirectory(this.vanillaRoot.resolve("assets/minecraft/items"))) {
+            return itemDefinitions(this.vanillaRoot.resolve("assets"));
+        }
         Map<Key, JsonObject> definitions = new TreeMap<>(Comparator.comparing(Key::asString));
-        Path assets = this.root.resolve("assets");
+        Path directory = this.vanillaRoot.resolve("assets/minecraft/models/item");
+        if (!Files.isDirectory(directory)) {
+            return definitions;
+        }
+        try (Stream<Path> files = Files.walk(directory)) {
+            for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
+                String name = CharacterUtils.replaceBackslashWithSlash(directory.relativize(file).toString());
+                Key id = Key.of("minecraft", name.substring(0, name.length() - 5));
+                JsonObject model = new JsonObject();
+                model.addProperty("type", "minecraft:model");
+                model.addProperty("model", "minecraft:item/" + id.value());
+                JsonObject definition = new JsonObject();
+                definition.add("model", model);
+                definitions.put(id, definition);
+            }
+        }
+        return definitions;
+    }
+
+    public Map<Key, JsonObject> itemDefinitions() throws IOException {
+        return itemDefinitions(this.root.resolve("assets"));
+    }
+
+    private static Map<Key, JsonObject> itemDefinitions(Path assets) throws IOException {
+        Map<Key, JsonObject> definitions = new TreeMap<>(Comparator.comparing(Key::asString));
         if (!Files.isDirectory(assets)) {
             return definitions;
         }

@@ -36,6 +36,7 @@ public final class JavaPackTextureSource {
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
     private final Map<Key, BufferedImage> paletteImages = new HashMap<>();
     private final Map<Key, TextureData> headSkins = new HashMap<>();
+    private final Map<Key, TextureData> standaloneTextures = new HashMap<>();
     private final Map<Key, Map<Key, Int2IntMap>> palettes = new HashMap<>();
     private BufferedImage grassColormap;
 
@@ -94,6 +95,9 @@ public final class JavaPackTextureSource {
     }
 
     public TextureData read(Texture texture, TextureUsage usage) throws IOException {
+        if (texture.standalone()) {
+            return this.readStandalone(texture.sprite());
+        }
         if (texture.skin()) {
             return this.readHeadSkin(texture.sprite());
         }
@@ -108,6 +112,22 @@ public final class JavaPackTextureSource {
             throw new IOException("No successfully loaded sprite " + texture.sprite() + " for " + usage);
         }
         return data;
+    }
+
+    private TextureData readStandalone(Key texture) throws IOException {
+        TextureData cached = this.standaloneTextures.get(texture);
+        if (cached != null) {
+            return cached;
+        }
+        try (InputStream input = this.pack.openResource(ResourcePackUtils.texturePath(texture))) {
+            BufferedImage image = input == null ? null : ClientPngReader.read(input);
+            if (image == null) {
+                throw new IOException("Missing standalone texture " + texture);
+            }
+            TextureData data = new TextureData(image, null);
+            this.standaloneTextures.put(texture, data);
+            return data;
+        }
     }
 
     private TextureData readHeadSkin(Key skin) throws IOException {

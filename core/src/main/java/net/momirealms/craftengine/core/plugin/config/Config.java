@@ -301,6 +301,8 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
     private boolean bedrock$enable = true;
+    private boolean bedrock$display$convert_vanilla_items;
+    private boolean bedrock$display$convert_text = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
     private int bedrock$resource_pack$item_icon_size;
@@ -874,6 +876,8 @@ public final class Config {
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
+        this.bedrock$display$convert_vanilla_items = config.getBoolean("bedrock.display.convert-vanilla-items", false);
+        this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64);
@@ -1770,6 +1774,14 @@ public final class Config {
 
     public static boolean multiThreadedConfigLoad() {
         return instance.misc$multi_threaded_configuration_load;
+    }
+
+    public static boolean bedrockConvertVanillaItems() {
+        return instance.bedrock$display$convert_vanilla_items;
+    }
+
+    public static boolean bedrockConvertText() {
+        return instance.bedrock$display$convert_text;
     }
 
     public static boolean bedrockEnabled() {

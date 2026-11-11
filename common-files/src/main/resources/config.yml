@@ -805,6 +805,10 @@ client-optimization:
 
 bedrock:
   enable: true
+  display:
+    # Regenerate the Bedrock pack and cedata, then restart Geyser to apply.
+    convert-vanilla-items: false
+    convert-text: true
   resource-pack:
     # Resource pack name shown in the Bedrock client.
     name: "CraftEngine ResourcePack"

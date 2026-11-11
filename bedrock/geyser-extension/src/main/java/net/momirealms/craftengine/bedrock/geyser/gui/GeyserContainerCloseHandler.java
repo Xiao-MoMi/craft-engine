@@ -9,7 +9,9 @@ import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket;
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
 import org.geysermc.geyser.inventory.InventoryHolder;
 import org.geysermc.geyser.session.GeyserSession;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Obsolete
 public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdapter {
     private static final String HANDLER_NAME = "craftengine-container-close";
     private final GeyserSession session;

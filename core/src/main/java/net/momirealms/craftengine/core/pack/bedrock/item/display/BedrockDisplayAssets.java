@@ -54,7 +54,8 @@ final class BedrockDisplayAssets {
         for (BedrockItemDisplays.Part part : parts) {
             ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
             try {
-                partsCubes.add(mesh.createStage(rule, "1", true).cubes());
+                partsCubes.add((part.geometry() == null ? mesh.createStage(rule, "1", true)
+                        : mesh.createStage(rule, "1", true, part.geometry())).cubes());
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -249,15 +250,34 @@ final class BedrockDisplayAssets {
         return ranges.toString();
     }
 
-    void finish() throws IOException {
+    void finish(boolean vanillaItems) throws IOException {
         String emptyId = "geometry." + this.name + ".empty";
         this.geometryNames.addProperty("empty", emptyId);
         JsonObject empty = createObject("description", createObject("identifier", new JsonPrimitive(emptyId)));
-        empty.add("bones", rig());
+        JsonObject emptyDescription = empty.getAsJsonObject("description");
+        emptyDescription.addProperty("visible_bounds_width", 4);
+        emptyDescription.addProperty("visible_bounds_height", 4);
+        emptyDescription.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
+        JsonArray emptyBones = rig();
+        JsonObject handBone = bone("rightitem", "model_z");
+        emptyBones.add(handBone);
+        empty.add("bones", emptyBones);
         JsonArray geometries = new JsonArray();
         geometries.add(empty);
         this.write("models/entity/" + this.name + "/empty.geo.json", "1.21.0", "minecraft:geometry", geometries);
         this.writeControllers();
+        JsonObject held = new JsonObject();
+        held.addProperty("geometry", "Geometry.empty");
+        JsonArray heldMaterials = new JsonArray();
+        heldMaterials.add(createObject("*", new JsonPrimitive("Material.default")));
+        held.add("materials", heldMaterials);
+        JsonArray heldTextures = new JsonArray();
+        heldTextures.add("Texture.default");
+        held.add("textures", heldTextures);
+        this.textures.addProperty("default", "textures/items/apple");
+        String heldController = "controller.render." + this.name + ".held";
+        this.controllers.add(heldController, held);
+        this.activeControllers.add(createObject(heldController, new JsonPrimitive("query.property('craftengine:shape') == 0")));
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
@@ -269,10 +289,10 @@ final class BedrockDisplayAssets {
         pitch.add(0);
         pitch.add(0);
         rig.add("pitch", createObject("rotation", pitch));
-        rig.add("translation", propertyVector("position", "pos"));
-        rig.add("left", propertyVector("rotation", "left"));
-        rig.add("size", propertyVector("scale", "size"));
-        rig.add("right", propertyVector("rotation", "right"));
+        rig.add("translation", interpolatedVector("position", "pos"));
+        rig.add("left", interpolatedVector("rotation", "left"));
+        rig.add("size", interpolatedVector("scale", "size"));
+        rig.add("right", interpolatedVector("rotation", "right"));
         for (int i = 0; i < 3; i++) {
             String axis = List.of("x", "y", "z").get(i);
             JsonObject bone = i == 0 ? propertyVector("position", "model_pos") : new JsonObject();
@@ -284,20 +304,51 @@ final class BedrockDisplayAssets {
             }
             rig.add("model_" + axis, bone);
         }
+        JsonObject hand = new JsonObject();
+        hand.add("position", VectorUtils.toJson(0, -8, 0));
+        hand.add("rotation", VectorUtils.toJson(90, 0, 0));
+        hand.add("scale", VectorUtils.toJson(2, 2, 2));
+        rig.add("rightitem", hand);
         this.animation("pose", rig);
         this.animate.add("pose");
         JsonObject description = new JsonObject();
         description.addProperty("identifier", "craftengine:" + this.name);
+        description.addProperty("enable_attachables", true);
         JsonObject materials = createObject("default", new JsonPrimitive("entity_alphatest"));
         description.add("materials", materials);
         description.add("textures", this.textures);
         description.add("geometry", this.geometryNames);
         description.add("animations", this.animationNames);
-        description.add("scripts", createObject("animate", this.animate));
+        description.add("scripts", BedrockDisplayInterpolation.scripts(this.animate));
         description.add("render_controllers", this.activeControllers);
         this.write("entity/" + this.name + ".entity.json", "1.10.0", "minecraft:client_entity", createObject("description", description));
+        if (vanillaItems) {
+            JsonObject heldDescription = new JsonObject();
+            heldDescription.addProperty("identifier", "craftengine:" + this.name + "_held");
+            heldDescription.addProperty("enable_attachables", true);
+            heldDescription.add("materials", materials);
+            heldDescription.add("textures", createObject("default", new JsonPrimitive("textures/items/apple")));
+            // 普通手持物品需要单几何载体，不能与 CE 模型的多几何渲染控制器共用实体定义。
+            heldDescription.add("geometry", createObject("default", new JsonPrimitive(emptyId)));
+            heldDescription.add("animations", createObject("pose", this.animationNames.get("pose")));
+            JsonArray heldAnimate = new JsonArray();
+            heldAnimate.add("pose");
+            heldDescription.add("scripts", BedrockDisplayInterpolation.scripts(heldAnimate));
+            JsonArray heldControllers = new JsonArray();
+            heldControllers.add("controller.render.default");
+            heldDescription.add("render_controllers", heldControllers);
+            this.write("entity/" + this.name + "_held.entity.json", "1.10.0", "minecraft:client_entity", createObject("description", heldDescription));
+        }
         this.write("animations/" + this.name + ".animation.json", "1.10.0", "animations", this.animations);
         this.write("render_controllers/" + this.name + ".json", "1.10.0", "render_controllers", this.controllers);
+    }
+
+    private static JsonObject interpolatedVector(String channel, String group) {
+        JsonArray values = new JsonArray();
+        for (String axis : List.of("x", "y", "z")) {
+            values.add("v.ce_" + group + "_" + (channel.equals("rotation") ? "r" : "") + axis);
+        }
+        return createObject(channel, values);
     }
 
     private static JsonObject propertyVector(String channel, String property) {

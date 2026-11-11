@@ -34,10 +34,13 @@ public final class BedrockWeaponGeometry {
     }
 
     public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition, boolean preserveDye) throws IOException {
+        return this.createStage(rule, condition, preserveDye, ((ItemRenderTarget.Model) rule.target()).resolve(this.models));
+    }
+
+    public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition, boolean preserveDye, JavaModel model) throws IOException {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
         BedrockModelTransform.uniformScale(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-        JavaModel model = target.resolve(this.models);
         JsonArray cubes = this.geometry(model, target, preserveDye);
         // 将规则的局部变换烘焙进几何，模型的手持 display 由挂点骨骼应用。
         BedrockModelTransform.apply(cubes, transformation, 1);

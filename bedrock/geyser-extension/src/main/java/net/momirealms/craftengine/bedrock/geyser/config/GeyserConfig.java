@@ -24,6 +24,7 @@ public final class GeyserConfig {
     private long lastModified;
     private long size;
     private String forcedLocale = "";
+    private boolean debug;
 
     public GeyserConfig(Path directory, ExtensionLogger logger) {
         this.configFilePath = directory.resolve("config.yml");
@@ -95,9 +96,14 @@ public final class GeyserConfig {
 
     private void loadFullSettings() {
         this.forcedLocale = this.config.getStringOrDefault("", Route.from("forced-locale"));
+        this.debug = this.config.getBooleanOrDefault(false, Route.from("debug"));
     }
 
     public static String forcedLocale() {
         return instance.forcedLocale;
+    }
+
+    public static boolean debug() {
+        return instance.debug;
     }
 }

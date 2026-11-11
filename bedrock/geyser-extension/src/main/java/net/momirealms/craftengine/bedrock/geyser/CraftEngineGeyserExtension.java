@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
@@ -32,6 +33,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
+    private GeyserTextDisplayManager textDisplayManager;
     private GeyserHardHitboxManager hardHitboxManager;
     private GeyserGlyphManager glyphManager;
     private GeyserLanguageManager languageManager;
@@ -74,6 +76,10 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
         this.itemDisplays.install();
+        if (this.extensionData.convertText()) {
+            this.textDisplayManager = new GeyserTextDisplayManager();
+            this.textDisplayManager.install();
+        }
         this.itemManager.init();
         this.blockManager.init();
         this.customPayloads.install();
@@ -88,6 +94,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
+        if (this.textDisplayManager != null) {
+            this.textDisplayManager.disconnect(event.connection());
+        }
         this.blockManager.disconnect(event.connection());
         this.hardHitboxManager.disconnect(event.connection());
     }
@@ -102,6 +111,9 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
         if (this.itemManager != null) {
             this.itemManager.disable();
+        }
+        if (this.textDisplayManager != null) {
+            this.textDisplayManager.uninstall();
         }
         this.itemDisplays.uninstall();
         if (this.hardHitboxManager != null) {
@@ -144,7 +156,10 @@ public final class CraftEngineGeyserExtension implements Extension {
         GeyserSession session = (GeyserSession) event.connection();
         this.blockManager.initSession(session);
         this.itemManager.initSessionDye(session);
-        GeyserContainerCloseHandler.install(session);
+        // 应该是 geyser 的 bug，临时修复一下
+        if (true) {
+            GeyserContainerCloseHandler.install(session);
+        }
         this.itemManager.initSession(session);
     }
 
@@ -162,6 +177,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserHardHitboxManager hardHitboxManager() {
         return this.hardHitboxManager;
+    }
+
+    public GeyserTextDisplayManager textDisplayManager() {
+        return this.textDisplayManager;
     }
 
     public GeyserItemDisplays itemDisplays() {

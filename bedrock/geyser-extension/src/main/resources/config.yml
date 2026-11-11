@@ -1,3 +1,4 @@
 ___version___: '${config_version}'
 
 forced-locale: ''
+debug: false

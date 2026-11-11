@@ -25,12 +25,15 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY);
     private final JsonObject items;
+    private final boolean convertText;
     private final JsonObject blocks;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
 
     private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages) {
         this.items = items;
+        JsonObject displays = items == null ? null : items.getAsJsonObject("item_displays");
+        this.convertText = displays != null && displays.has("convert_text") && displays.get("convert_text").getAsBoolean();
         this.blocks = blocks;
         this.glyphs = glyphs;
         this.languages = languages;
@@ -81,6 +84,10 @@ public final class GeyserExtensionData {
     @Nullable
     public JsonObject blocks() {
         return this.blocks;
+    }
+
+    public boolean convertText() {
+        return this.convertText;
     }
 
     public GeyserGlyphData glyphs() {
