@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.core.plugin.config;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import net.kyori.adventure.text.Component;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicator;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicators;
@@ -18,6 +16,7 @@ import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResol
 import net.momirealms.craftengine.core.pack.host.HttpClientManager;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.PluginProperties;
+import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProviders;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -27,7 +26,6 @@ import net.momirealms.craftengine.core.world.chunk.storage.CompressionMethod;
 import net.momirealms.craftengine.core.world.chunk.storage.StorageType;
 import net.momirealms.sparrow.yaml.SparrowYaml;
 import net.momirealms.sparrow.yaml.YamlDocument;
-import net.momirealms.sparrow.yaml.node.SectionNode;
 import net.momirealms.sparrow.yaml.upgrade.YamlUpgradeBuilder;
 import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
 
@@ -39,7 +37,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public final class Config {
@@ -411,7 +408,8 @@ public final class Config {
 
     @SuppressWarnings("DuplicatedCode")
     public void loadFullSettings() {
-        YamlUtils.Reader config = YamlUtils.reader(settings());
+        List<ResourceException> errors = new ArrayList<>();
+        CollectingConfigReader config = new CollectingConfigReader(settings(), this.configFilePath, errors);
         this.forcedLocale = TranslationManager.parseLocale(config.getString("forced-locale", ""));
         this.misc$delayConfigurationLoad = config.getBoolean("misc.delay-configuration-load", true);
         this.misc$multi_threaded_configuration_load = config.getBoolean("misc.multi-threaded-configuration-load", true);
@@ -447,22 +445,15 @@ public final class Config {
         this.resource_pack$override_uniform_font = config.getBoolean("resource-pack.override-uniform-font", false);
         this.resource_pack$generate_mod_assets = config.getBoolean("resource-pack.generate-mod-assets", false);
         this.resource_pack$remove_tinted_leaves_particle = config.getBoolean("resource-pack.remove-tinted-leaves-particle", true);
-        this.resource_pack$supported_version$min = getVersion(config.get("resource-pack.supported-version.min", "server").toString());
-        this.resource_pack$supported_version$max = getVersion(config.get("resource-pack.supported-version.max", "latest").toString());
+        this.resource_pack$supported_version$min = config.read("resource-pack.supported-version.min", Config::getVersion, VersionHelper.MINECRAFT_VERSION);
+        this.resource_pack$supported_version$max = config.read("resource-pack.supported-version.max", Config::getVersion, getVersion("latest"));
         if (this.resource_pack$supported_version$min.isAbove(this.resource_pack$supported_version$max)) {
+            config.error("resource-pack.supported-version.min", "config.version_order");
             this.resource_pack$supported_version$min = this.resource_pack$supported_version$max;
         }
         this.resource_pack$merge_external_folders = config.getStringList("resource-pack.merge-external-folders");
         this.resource_pack$merge_external_zips = config.getStringList("resource-pack.merge-external-zip-files");
-        ImmutableList.Builder<Pattern> excludedFilesBuilder = ImmutableList.builder();
-        for (String regex : config.getStringList("resource-pack.exclude-files")) {
-            try {
-                excludedFilesBuilder.add(Pattern.compile(regex));
-            } catch (PatternSyntaxException e) {
-                this.plugin.logger().warn("Invalid regex in resource-pack.exclude-files: " + regex, e);
-            }
-        }
-        this.resource_pack$exclude_files = excludedFilesBuilder.build();
+        this.resource_pack$exclude_files = config.getPatterns("resource-pack.exclude-files");
         this.resource_pack$exclude_file_extensions = new HashSet<>(config.getStringList("resource-pack.exclude-file-extensions"));
         this.resource_pack$cache_resource_files = config.getBoolean("resource-pack.cache-resource-files", true);
         this.resource_pack$delivery$send_on_join = config.getBoolean("resource-pack.delivery.send-on-join", true);
@@ -470,7 +461,7 @@ public final class Config {
         this.resource_pack$delivery$kick_if_failed_to_apply = config.getBoolean("resource-pack.delivery.kick-if-failed-to-apply", true);
         this.resource_pack$delivery$strict_player_uuid_validation = config.getBoolean("resource-pack.delivery.strict-player-uuid-validation", true);
         this.resource_pack$delivery$proxy$enable = config.getBoolean("resource-pack.delivery.proxy.enable", false);
-        this.resource_pack$delivery$proxy$port = config.getInt("resource-pack.delivery.proxy.port", 7890);
+        this.resource_pack$delivery$proxy$port = config.getInt("resource-pack.delivery.proxy.port", 7890, 0, 65535);
         this.resource_pack$delivery$proxy$host = config.getString("resource-pack.delivery.proxy.host", "localhost");
         this.resource_pack$delivery$proxy$username = config.getString("resource-pack.delivery.proxy.username", "");
         this.resource_pack$delivery$proxy$password = config.getString("resource-pack.delivery.proxy.password", "");
@@ -482,10 +473,10 @@ public final class Config {
                 this.resource_pack$delivery$proxy$username,
                 this.resource_pack$delivery$proxy$password
         );
-        this.resource_pack$delivery$prompt = AdventureHelper.miniMessage().deserialize(config.getString("resource-pack.delivery.prompt", "<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
+        this.resource_pack$delivery$prompt = config.read("resource-pack.delivery.prompt", value -> AdventureHelper.miniMessage().deserialize(CollectingConfigReader.string(value)), AdventureHelper.miniMessage().deserialize("<yellow>To fully experience our server, please accept our custom resource pack.</yellow>"));
         this.resource_pack$pack_squash$enable = config.getBoolean("resource-pack.pack-squash.enable", false);
-        this.resource_pack$pack_squash$software_path = resolvePath(config.getString("resource-pack.pack-squash.software-path", "./packsquash/packsquash.exe"));
-        this.resource_pack$pack_squash$config_path = resolvePath(config.getString("resource-pack.pack-squash.config-path", "./packsquash/config.toml"));
+        this.resource_pack$pack_squash$software_path = config.read("resource-pack.pack-squash.software-path", value -> resolvePath(CollectingConfigReader.string(value)), resolvePath("./packsquash/packsquash.exe"));
+        this.resource_pack$pack_squash$config_path = config.read("resource-pack.pack-squash.config-path", value -> resolvePath(CollectingConfigReader.string(value)), resolvePath("./packsquash/config.toml"));
         this.resource_pack$protection$crash_tools$method_1 = config.getBoolean("resource-pack.protection.crash-tools.method-1", false);
         this.resource_pack$protection$crash_tools$method_2 = config.getBoolean("resource-pack.protection.crash-tools.method-2", false);
         this.resource_pack$protection$crash_tools$method_3 = config.getBoolean("resource-pack.protection.crash-tools.method-3", false);
@@ -503,23 +494,23 @@ public final class Config {
         this.resource_pack$protection$incorrect_crc = config.getBoolean("resource-pack.protection.incorrect-crc", false);
         this.resource_pack$protection$fake_file_size = config.getBoolean("resource-pack.protection.fake-file-size", false);
         this.resource_pack$protection$obfuscation$namespace$amount = config.getInt("resource-pack.protection.obfuscation.namespace.amount", 32);
-        this.resource_pack$protection$obfuscation$namespace$length = NumberProviders.fromConfig(ConfigValue.of("resource-pack.protection.obfuscation.namespace.length", config.get("resource-pack.protection.obfuscation.namespace.length", 2)));
-        this.resource_pack$protection$obfuscation$overlay$length = NumberProviders.fromConfig(ConfigValue.of("resource-pack.protection.obfuscation.overlay.length", config.get("resource-pack.protection.obfuscation.overlay.length", 4)));
-        this.resource_pack$protection$obfuscation$path$depth = NumberProviders.fromConfig(ConfigValue.of("resource-pack.protection.obfuscation.path.depth", config.get("resource-pack.protection.obfuscation.path.depth", 4)));
-        this.resource_pack$protection$obfuscation$path$length = NumberProviders.fromConfig(ConfigValue.of("resource-pack.protection.obfuscation.path.length", config.get("resource-pack.protection.obfuscation.path.length", 2)));
+        this.resource_pack$protection$obfuscation$namespace$length = config.read("resource-pack.protection.obfuscation.namespace.length", NumberProviders::fromConfig, ConstantNumberProvider.constant(2));
+        this.resource_pack$protection$obfuscation$overlay$length = config.read("resource-pack.protection.obfuscation.overlay.length", NumberProviders::fromConfig, ConstantNumberProvider.constant(4));
+        this.resource_pack$protection$obfuscation$path$depth = config.read("resource-pack.protection.obfuscation.path.depth", NumberProviders::fromConfig, ConstantNumberProvider.constant(4));
+        this.resource_pack$protection$obfuscation$path$length = config.read("resource-pack.protection.obfuscation.path.length", NumberProviders::fromConfig, ConstantNumberProvider.constant(2));
         this.resource_pack$protection$obfuscation$path$anti_unzip = config.getBoolean("resource-pack.protection.obfuscation.path.anti-unzip", false);
         this.resource_pack$protection$obfuscation$item_model$enable = config.getBoolean("resource-pack.protection.obfuscation.item-model.enable", false) && this.resource_pack$protection$obfuscation$enable;
         this.resource_pack$protection$obfuscation$item_model$use_cache = config.getBoolean("resource-pack.protection.obfuscation.item-model.use-cache", true);
         this.resource_pack$protection$obfuscation$path$block_source = config.getString("resource-pack.protection.obfuscation.path.block-source", "obf_block");
         this.resource_pack$protection$obfuscation$path$item_source = config.getString("resource-pack.protection.obfuscation.path.item-source", "obf_item");
-        this.resource_pack$protection$obfuscation$atlas$images_per_canvas = Math.max(0, config.getInt("resource-pack.protection.obfuscation.atlas.images-per-canvas", 256));
+        this.resource_pack$protection$obfuscation$atlas$images_per_canvas = config.getClampedInt("resource-pack.protection.obfuscation.atlas.images-per-canvas", 256, 0, Integer.MAX_VALUE);
         this.resource_pack$protection$obfuscation$atlas$prefix = config.getString("resource-pack.protection.obfuscation.atlas.prefix", "atlas");
         this.resource_pack$protection$obfuscation$bypass_textures = config.getStringList("resource-pack.protection.obfuscation.bypass-textures");
         this.resource_pack$protection$obfuscation$bypass_models = config.getStringList("resource-pack.protection.obfuscation.bypass-models");
         this.resource_pack$protection$obfuscation$bypass_sounds = config.getStringList("resource-pack.protection.obfuscation.bypass-sounds");
         this.resource_pack$protection$obfuscation$bypass_equipments = config.getStringList("resource-pack.protection.obfuscation.bypass-equipments");
         this.resource_pack$protection$obfuscation$bypass_item_models = config.getStringList("resource-pack.protection.obfuscation.bypass-item-models");
-        this.resource_pack$optimization$cache_size = Math.max(0, config.getInt("resource-pack.optimization.cache-size", 64));
+        this.resource_pack$optimization$cache_size = config.getClampedInt("resource-pack.optimization.cache-size", 64, 0, Integer.MAX_VALUE);
         this.resource_pack$optimization$texture$enable = config.getBoolean("resource-pack.optimization.texture.enable", true);
         this.resource_pack$optimization$texture$zopfli_iterations = config.getInt("resource-pack.optimization.texture.zopfli-iterations", 0);
         this.resource_pack$optimization$texture$exlude = config.getStringList("resource-pack.optimization.texture.exclude").stream().map(p -> {
@@ -543,46 +534,15 @@ public final class Config {
         this.resource_pack$exclude_core_shaders = config.getBoolean("resource-pack.exclude-core-shaders", false);
         this.resource_pack$overlay_format = config.getString("resource-pack.overlay-format", "overlay_{version}");
         if (!this.resource_pack$overlay_format.contains("{version}")) {
-            TranslationManager.warn(
-                    "config.errors_detected",
-                    TranslationManager.message(
-                            "resource_pack.invalid_overlay_format",
-                            this.resource_pack$overlay_format
-                    )
-            );
+            config.error("resource-pack.overlay-format", "resource_pack.invalid_overlay_format", this.resource_pack$overlay_format);
             this.resource_pack$overlay_format = "overlay_{version}";
         }
-        try {
-            List<?> list = config.getList("resource-pack.duplicated-files-handler");
-            List<ConditionalResolution> resolutions = new ArrayList<>();
-            for (int i = 0; i < list.size(); i++) {
-                resolutions.add(ConditionalResolution.FACTORY.create(ConfigSection.of("resource-pack.duplicated-files-handler[" + i + "]", MiscUtils.castToMap(list.get(i)))));
-            }
-            this.resource_pack$duplicated_files_handler = resolutions;
-        } catch (KnownResourceException e) {
-            TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
-            this.resource_pack$duplicated_files_handler = List.of();
-        } catch (Throwable e) {
-            this.plugin.logger().warn("Failed to load resource-pack.duplicated-files-handler", e);
-            this.resource_pack$duplicated_files_handler = List.of();
-        }
+        this.resource_pack$duplicated_files_handler = config.getList("resource-pack.duplicated-files-handler", value -> ConditionalResolution.FACTORY.create(value.getAsSection()));
 
         // chunk
-        this.chunk_system$compression_method = config.getInt("chunk-system.compression-method", 4);
-        try {
-            this.chunk_system$storage_type = StorageType.valueOf(config.getString("chunk-system.storage-type", "mca").toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException e) {
-            this.chunk_system$storage_type = StorageType.MCA;
-        }
-        ImmutableList.Builder<Pattern> blacklistedWorldsBuilder = ImmutableList.builder();
-        for (String regex : config.getStringList("chunk-system.blacklisted-worlds")) {
-            try {
-                blacklistedWorldsBuilder.add(Pattern.compile(regex));
-            } catch (PatternSyntaxException e) {
-                this.plugin.logger().warn("Invalid regex in chunk-system.blacklisted-worlds: " + regex, e);
-            }
-        }
-        this.chunk_system$blacklisted_worlds = blacklistedWorldsBuilder.build();
+        this.chunk_system$compression_method = config.getInt("chunk-system.compression-method", 4, 1, CompressionMethod.METHOD_COUNT);
+        this.chunk_system$storage_type = config.getEnum("chunk-system.storage-type", StorageType.class, StorageType.MCA);
+        this.chunk_system$blacklisted_worlds = config.getPatterns("chunk-system.blacklisted-worlds");
         this.chunk_system$restore_vanilla_blocks_on_chunk_unload = config.getBoolean("chunk-system.restore-vanilla-blocks-on-chunk-unload", true);
         this.chunk_system$restore_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.restore-custom-blocks-on-chunk-load", true);
         this.chunk_system$sync_custom_blocks_on_chunk_load = config.getBoolean("chunk-system.sync-custom-blocks-on-chunk-load", false);
@@ -592,34 +552,10 @@ public final class Config {
         }
 
         this.chunk_system$process_invalid_furniture$enable = config.getBoolean("chunk-system.process-invalid-furniture.enable", false);
-        ImmutableMap.Builder<String, String> furnitureBuilder = ImmutableMap.builder();
-        for (String furniture : config.getStringList("chunk-system.process-invalid-furniture.remove")) {
-            furnitureBuilder.put(furniture, "");
-        }
-        if (config.contains("chunk-system.process-invalid-furniture.convert")) {
-            SectionNode section = config.getSection("chunk-system.process-invalid-furniture.convert");
-            if (section != null) {
-                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
-                    furnitureBuilder.put(entry.getKey(), entry.getValue().toString());
-                }
-            }
-        }
-        this.chunk_system$process_invalid_furniture$mapping = furnitureBuilder.build();
+        this.chunk_system$process_invalid_furniture$mapping = this.parseInvalidObjectMapping(config, "chunk-system.process-invalid-furniture");
 
         this.chunk_system$process_invalid_blocks$enable = config.getBoolean("chunk-system.process-invalid-blocks.enable", false);
-        ImmutableMap.Builder<String, String> blockBuilder = ImmutableMap.builder();
-        for (String furniture : config.getStringList("chunk-system.process-invalid-blocks.remove")) {
-            blockBuilder.put(furniture, "");
-        }
-        if (config.contains("chunk-system.process-invalid-blocks.convert")) {
-            SectionNode section = config.getSection("chunk-system.process-invalid-blocks.convert");
-            if (section != null) {
-                for (Map.Entry<String, Object> entry : section.getValues().entrySet()) {
-                    blockBuilder.put(entry.getKey(), entry.getValue().toString());
-                }
-            }
-        }
-        this.chunk_system$process_invalid_blocks$mapping = blockBuilder.build();
+        this.chunk_system$process_invalid_blocks$mapping = this.parseInvalidObjectMapping(config, "chunk-system.process-invalid-blocks");
 
         this.chunk_system$generation$feature = config.getBoolean("chunk-system.generation.feature", true);
         this.chunk_system$generation$carver = config.getBoolean("chunk-system.generation.carver", true);
@@ -637,13 +573,13 @@ public final class Config {
 
         // damage indicator
         this.damage_indicator$enable = config.getBoolean("damage-indicator.enable", false);
-        this.damage_indicator$default_visibility = DamageVisibility.byName(config.getString("damage-indicator.default-visibility", "self"), DamageVisibility.SELF);
+        this.damage_indicator$default_visibility = config.getEnum("damage-indicator.default-visibility", DamageVisibility.class, DamageVisibility.SELF);
         this.damage_indicator$disable_vanilla_particles = config.getBoolean("damage-indicator.disable-vanilla-particles", false);
         this.damage_indicator$schemes = LazyReference.untilNotNull(() -> parseDamageIndicatorSchemes(settings()));
 
         // furniture
         this.furniture$hide_base_entity = config.getBoolean("furniture.hide-base-entity", true);
-        this.furniture$collision_entity_type = ColliderType.valueOf(config.getString("furniture.collision-entity-type", "interaction").toUpperCase(Locale.ENGLISH));
+        this.furniture$collision_entity_type = config.getEnum("furniture.collision-entity-type", ColliderType.class, ColliderType.INTERACTION);
         if (this.firstTime) {
             this.furniture$light_system = config.getBoolean("furniture.light-system.enable", true);
         }
@@ -651,19 +587,13 @@ public final class Config {
         // equipment
         this. equipment$sacrificed_vanilla_armor$type = config.getString("equipment.sacrificed-vanilla-armor.type", "chainmail").toLowerCase(Locale.ENGLISH);
         if (!AbstractPackManager.ALLOWED_VANILLA_EQUIPMENT.contains(this.equipment$sacrificed_vanilla_armor$type)) {
-            TranslationManager.warn(
-                    "config.errors_detected",
-                    TranslationManager.message(
-                            "resource.equipment.invalid_sacrificed_armor",
-                            this.equipment$sacrificed_vanilla_armor$type
-                    )
-            );
+            config.error("equipment.sacrificed-vanilla-armor.type", "resource.equipment.invalid_sacrificed_armor", this.equipment$sacrificed_vanilla_armor$type);
             this.equipment$sacrificed_vanilla_armor$type = "chainmail";
         }
 
-        this.equipment$sacrificed_vanilla_armor$asset_id = Key.of(config.getString("equipment.sacrificed-vanilla-armor.asset-id", "minecraft:chainmail"));
-        this.equipment$sacrificed_vanilla_armor$humanoid = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid", "minecraft:trims/entity/humanoid/chainmail"));
-        this.equipment$sacrificed_vanilla_armor$humanoid_leggings = Key.of(config.getString("equipment.sacrificed-vanilla-armor.humanoid-leggings", "minecraft:trims/entity/humanoid_leggings/chainmail"));
+        this.equipment$sacrificed_vanilla_armor$asset_id = config.getKey("equipment.sacrificed-vanilla-armor.asset-id", "minecraft:chainmail");
+        this.equipment$sacrificed_vanilla_armor$humanoid = config.getKey("equipment.sacrificed-vanilla-armor.humanoid", "minecraft:trims/entity/humanoid/chainmail");
+        this.equipment$sacrificed_vanilla_armor$humanoid_leggings = config.getKey("equipment.sacrificed-vanilla-armor.humanoid-leggings", "minecraft:trims/entity/humanoid_leggings/chainmail");
         if (this.firstTime) {
             this.equipment$lod$enable = config.getBoolean("equipment.lod.enable", true);
         }
@@ -680,7 +610,7 @@ public final class Config {
         this.item$always_generate_model_overrides = config.getBoolean("item.always-generate-model-overrides", false);
         this.item$collect_legacy_custom_model_data = config.getBoolean("item.collect-legacy-custom-model-data", false);
         this.item$always_use_custom_model_data = this.item$always_generate_model_overrides || (config.getBoolean("item.always-use-custom-model-data", false) && VersionHelper.isOrAbove1_21_2);
-        this.item$default_material = Key.of(config.getString("item.default-material", "nether_brick"));
+        this.item$default_material = config.getKey("item.default-material", "nether_brick");
         this.item$default_drop_display$enable = config.getBoolean("item.default-drop-display.enable", false);
         this.item$default_drop_display$format = this.item$default_drop_display$enable ? config.getString("item.default-drop-display.format", "<arg:count>x <name>"): null;
         this.item$data_fixer_upper$enable = config.getBoolean("item.data-fixer-upper.enable", true);
@@ -688,36 +618,10 @@ public final class Config {
         if (fallbackVersion == null || fallbackVersion.isEmpty() || fallbackVersion.equalsIgnoreCase("server")) {
             this.item$data_fixer_upper$fallback_version = VersionHelper.WORLD_VERSION;
         } else {
-            this.item$data_fixer_upper$fallback_version = Integer.parseInt(fallbackVersion);
+            this.item$data_fixer_upper$fallback_version = config.read("item.data-fixer-upper.fallback-version", ConfigValue::getAsInt, VersionHelper.WORLD_VERSION);
         }
-        SectionNode customModelDataOverridesSection = config.getSection("item.custom-model-data-starting-value.overrides");
-        if (customModelDataOverridesSection != null) {
-            Map<Key, Integer> customModelDataOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : customModelDataOverridesSection.getValues().entrySet()) {
-                if (entry.getValue() instanceof String s) {
-                    customModelDataOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
-                } else if (entry.getValue() instanceof Integer i) {
-                    customModelDataOverrides.put(Key.of(entry.getKey()), i);
-                }
-            }
-            this.item$custom_model_data_starting_value$overrides = customModelDataOverrides;
-        } else {
-            this.item$custom_model_data_starting_value$overrides = Map.of();
-        }
-        SectionNode breakPowerSection = config.getSection("item.break-power");
-        if (breakPowerSection != null) {
-            Map<Key, Integer> breakPowerOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : breakPowerSection.getValues().entrySet()) {
-                if (entry.getValue() instanceof String s) {
-                    breakPowerOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
-                } else if (entry.getValue() instanceof Integer i) {
-                    breakPowerOverrides.put(Key.of(entry.getKey()), i);
-                }
-            }
-            this.item$break_power = breakPowerOverrides;
-        } else {
-            this.item$break_power = Map.of();
-        }
+        this.item$custom_model_data_starting_value$overrides = config.getKeyIntMap("item.custom-model-data-starting-value.overrides");
+        this.item$break_power = config.getKeyIntMap("item.break-power");
 
         // block
         this.block$sound_system$enable = config.getBoolean("block.sound-system.enable", true);
@@ -727,32 +631,43 @@ public final class Config {
         this.block$simplify_adventure_break_check = config.getBoolean("block.simplify-adventure-break-check", false);
         this.block$simplify_adventure_place_check = config.getBoolean("block.simplify-adventure-place-check", false);
         this.block$predict_breaking = config.getBoolean("block.predict-breaking.enable", true);
-        this.block$predict_breaking_interval = Math.max(config.getInt("block.predict-breaking.interval", 10), 1);
-        this.block$extended_interaction_range = Math.max(config.getDouble("block.predict-breaking.extended-interaction-range", 0.5), 0.0);
+        this.block$predict_breaking_interval = config.getClampedInt("block.predict-breaking.interval", 10, 1, Integer.MAX_VALUE);
+        this.block$extended_interaction_range = config.getClampedDouble("block.predict-breaking.extended-interaction-range", 0.5, 0.0);
         this.block$light_system$async_update = config.getBoolean("block.light-system.async", true);
         this.block$light_system$enable = config.getBoolean("block.light-system.enable", true);
         if (this.firstTime) {
-            this.block$deceive_bukkit_material$default = Key.of(config.getString("block.deceive-bukkit-material.default", "bricks"));
+            this.block$deceive_bukkit_material$default = config.getKey("block.deceive-bukkit-material.default", "bricks");
             this.block$deceive_bukkit_material$overrides = new HashMap<>();
-            SectionNode overridesSection = config.getSection("block.deceive-bukkit-material.overrides");
-            if (overridesSection != null) {
-                for (Map.Entry<String, Object> entry : overridesSection.getValues().entrySet()) {
-                    String key = entry.getKey();
-                    Key value = Key.of(String.valueOf(entry.getValue()));
-                    if (key.contains("~")) {
-                        int min = Integer.parseInt(key.split("~")[0]);
-                        int max = Integer.parseInt(key.split("~")[1]);
-                        for (int i = min; i <= max; i++) {
-                            this.block$deceive_bukkit_material$overrides.put(i, value);
-                        }
-                    } else {
-                        this.block$deceive_bukkit_material$overrides.put(Integer.valueOf(key), value);
+            for (Map.Entry<String, Object> entry : config.getSection("block.deceive-bukkit-material.overrides").entrySet()) {
+                String path = "block.deceive-bukkit-material.overrides." + entry.getKey();
+                config.attempt(path, () -> {
+                    Key value = CollectingConfigReader.identifier(ConfigValue.of(path, entry.getValue()));
+                    String[] range = entry.getKey().split("~", -1);
+                    if (range.length > 2) {
+                        throw new KnownResourceException("config.invalid_range", path, entry.getKey());
                     }
-                }
+                    int min;
+                    int max;
+                    try {
+                        min = Integer.parseInt(range[0]);
+                        max = range.length == 2 ? Integer.parseInt(range[1]) : min;
+                    } catch (NumberFormatException e) {
+                        throw new KnownResourceException("config.invalid_range", path, entry.getKey());
+                    }
+                    if (min > max) {
+                        throw new KnownResourceException("config.invalid_range", path, entry.getKey());
+                    }
+                    for (int i = min; ; i++) {
+                        this.block$deceive_bukkit_material$overrides.put(i, value);
+                        if (i == max) {
+                            break;
+                        }
+                    }
+                    return value;
+                }, null);
             }
             this.block$inject_bukkit_material = config.getBoolean("block.inject-bukkit-material", false);
-            this.block$serverside_blocks = Math.min(config.getInt("block.serverside-blocks", 2000), 1_000_000);
-            if (this.block$serverside_blocks < 0) this.block$serverside_blocks = 0;
+            this.block$serverside_blocks = config.getClampedInt("block.serverside-blocks", 2000, 0, 1_000_000);
         }
 
         // recipe
@@ -760,11 +675,11 @@ public final class Config {
         this.recipe$force_sync_reload = config.getBoolean("recipe.force-sync-reload", false);
         this.recipe$reload_on_all = config.getBoolean("recipe.reload-on-all", true);
         this.recipe$disable_vanilla_recipes$all = config.getBoolean("recipe.disable-vanilla-recipes.all", false);
-        this.recipe$disable_vanilla_recipes$list = config.getStringList("recipe.disable-vanilla-recipes.list").stream().map(Key::of).collect(Collectors.toSet());
+        this.recipe$disable_vanilla_recipes$list = new HashSet<>(config.getList("recipe.disable-vanilla-recipes.list", CollectingConfigReader::identifier));
         this.recipe$ingredient_sources = config.getStringList("recipe.ingredient-sources");
         this.recipe$unlock_on_ingredient_obtained = config.getBoolean("recipe.unlock-on-ingredient-obtained", true);
         this.recipe$unlock_on_join$all = config.getBoolean("recipe.unlock-on-join.all", false);
-        this.recipe$unlock_on_join$list = config.getStringList("recipe.unlock-on-join.list").stream().map(Key::of).collect(Collectors.toSet());
+        this.recipe$unlock_on_join$list = new HashSet<>(config.getList("recipe.unlock-on-join.list", CollectingConfigReader::identifier));
         if (this.firstTime) {
             this.recipe$inject_block_entities = config.getBoolean("recipe.inject-block-entities", true);
         }
@@ -777,12 +692,11 @@ public final class Config {
             case "whitelist" -> true;
             case "blacklist" -> false;
             default -> {
-                this.plugin.logger().warn("Unknown entity tracking mode '" + trackingMode + "'. Falling back to whitelist.");
+                config.error("entity.tracking.mode", ConfigConstants.PARSE_ENUM_FAILED, trackingMode, "whitelist, blacklist");
                 yield true;
             }
         };
-        this.entity$tracking$list = config.getStringList("entity.tracking.list").stream()
-                .map(Key::of)
+        this.entity$tracking$list = config.getList("entity.tracking.list", CollectingConfigReader::identifier).stream()
                 .collect(Collectors.toUnmodifiableSet());
 
         // image
@@ -793,20 +707,7 @@ public final class Config {
         this.image$illegal_characters_filter$sign = config.getBoolean("image.illegal-characters-filter.sign", true);
 
         this.image$codepoint_starting_value$default = config.getInt("image.codepoint-starting-value.default", 0);
-        SectionNode codepointOverridesSection = config.getSection("image.codepoint-starting-value.overrides");
-        if (codepointOverridesSection != null) {
-            Map<Key, Integer> codepointOverrides = new HashMap<>();
-            for (Map.Entry<String, Object> entry : codepointOverridesSection.getValues().entrySet()) {
-                if (entry.getValue() instanceof String s) {
-                    codepointOverrides.put(Key.of(entry.getKey()), Integer.parseInt(s));
-                } else if (entry.getValue() instanceof Integer i) {
-                    codepointOverrides.put(Key.of(entry.getKey()), i);
-                }
-            }
-            this.image$codepoint_starting_value$overrides = codepointOverrides;
-        } else {
-            this.image$codepoint_starting_value$overrides = Map.of();
-        }
+        this.image$codepoint_starting_value$overrides = config.getKeyIntMap("image.codepoint-starting-value.overrides");
 
         if (this.firstTime) {
             this.network$disable_chat_report = config.getBoolean("network.disable-chat-report", false);
@@ -835,8 +736,8 @@ public final class Config {
         this.network$intercept_packets$dialog = config.getBoolean("network.intercept-packets.dialog", true);
         this.network$mod_channel$requires_permission = config.getBoolean("network.mod-channel.requires-permission", true);
         this.network$mod_channel$logging_permission_denied = config.getBoolean("network.mod-channel.logging-permission-denied", true);
-        this.network$mod_channel$creative_tab_max_items_per_packet = Math.max(config.getInt("network.mod-channel.creative-tab-max-items-per-packet", 10), 1);
-        this.network$mod_channel$visual_block_states_max_per_packet = Math.max(config.getInt("network.mod-channel.visual-block-states-max-per-packet", 5000), 1);
+        this.network$mod_channel$creative_tab_max_items_per_packet = config.getClampedInt("network.mod-channel.creative-tab-max-items-per-packet", 10, 1, Integer.MAX_VALUE);
+        this.network$mod_channel$visual_block_states_max_per_packet = config.getClampedInt("network.mod-channel.visual-block-states-max-per-packet", 5000, 1, Integer.MAX_VALUE);
         if (this.firstTime) {
             this.network$item_crypto$enable = config.getBoolean("network.item-crypto.enable", false);
             if (this.network$item_crypto$enable) {
@@ -849,7 +750,10 @@ public final class Config {
                     case "xor" -> new Xor(key);
                     case "aes-gcm" -> new AESGCM(key);
                     case "chacha20" -> new ChaCha20(key);
-                    default -> null;
+                    default -> {
+                        config.error("network.item-crypto.algorithm", ConfigConstants.PARSE_ENUM_FAILED, algorithm, "xor, aes-gcm, chacha20");
+                        yield null;
+                    }
                 });
             }
         }
@@ -878,30 +782,66 @@ public final class Config {
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
-        try {
-            Object scoreboard = config.getValue("bedrock.scoreboard");
-            this.bedrock$scoreboard = BedrockSidebarConfig.fromConfig(ConfigSection.of("bedrock.scoreboard", scoreboard == null ? Map.of() : scoreboard));
-        } catch (KnownResourceException e) {
-            e.setFilePath(this.configFilePath);
-            throw new IllegalStateException(TranslationManager.message("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
+        int sidebarErrors = errors.size();
+        this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
+        if (errors.size() != sidebarErrors) {
+            this.bedrock$scoreboard = new BedrockSidebarConfig(false, List.of());
         }
         this.bedrock$display$convert_vanilla_items = config.getBoolean("bedrock.display.convert-vanilla-items", false);
         this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
-        this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64);
-        if (this.bedrock$resource_pack$item_icon_size <= 0) {
-            this.bedrock$resource_pack$item_icon_size = 64;
-        }
-        this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16);
-        if (this.bedrock$resource_pack$display_dye_max_layers <= 0) {
-            this.bedrock$resource_pack$display_dye_max_layers = 16;
-        }
+        this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64, 1, Integer.MAX_VALUE);
+        this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16, 1, Integer.MAX_VALUE);
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
 
         this.firstTime = false;
+        this.reportErrors(errors);
+    }
+
+    private Map<String, String> parseInvalidObjectMapping(CollectingConfigReader config, String path) {
+        Map<String, String> result = new LinkedHashMap<>();
+        config.getList(path + ".remove", value -> {
+            String key = CollectingConfigReader.string(value);
+            if (result.putIfAbsent(key, "") != null) {
+                config.error(value.path(), "config.duplicate_key", key);
+            }
+            return key;
+        });
+        for (Map.Entry<String, Object> entry : config.getSection(path + ".convert").entrySet()) {
+            String entryPath = path + ".convert." + entry.getKey();
+            String value = config.attempt(entryPath, () -> CollectingConfigReader.string(ConfigValue.of(entryPath, entry.getValue())), null);
+            if (value != null && result.putIfAbsent(entry.getKey(), value) != null) {
+                config.error(entryPath, "config.duplicate_key", entry.getKey());
+            }
+        }
+        return Map.copyOf(result);
+    }
+
+    private void reportErrors(List<ResourceException> errors) {
+        if (errors.isEmpty()) {
+            return;
+        }
+        TranslationManager.warn("resource.errors_detected", this.configFilePath.toString(), Integer.toString(errors.size()));
+        for (int i = 0; i < errors.size(); i++) {
+            ResourceException error = errors.get(i);
+            if (error instanceof KnownResourceException) {
+                TranslationManager.warn("resource.errors_detail", Integer.toString(i + 1), error.node(), error.getLocalizedMessage());
+            } else {
+                this.plugin.logger().error(TranslationManager.message("resource.errors_detail", Integer.toString(i + 1), error.node(), TranslationManager.message("resource.unknown_error")), error.getCause());
+            }
+        }
+    }
+
+    private static MinecraftVersion getVersion(ConfigValue value) {
+        String version = CollectingConfigReader.string(value);
+        try {
+            return getVersion(version);
+        } catch (IllegalArgumentException e) {
+            throw new KnownResourceException("config.invalid_version", value.path(), version);
+        }
     }
 
     private static MinecraftVersion getVersion(String version) {
@@ -1837,18 +1777,6 @@ public final class Config {
         return instance.resource_pack$delivery$proxy$scheme;
     }
 
-    public static boolean enablePackSquash() {
-        return instance.resource_pack$pack_squash$enable;
-    }
-
-    public static Path packSquashPath() {
-        return instance.resource_pack$pack_squash$software_path;
-    }
-
-    public static Path packSquashConfigPath() {
-        return instance.resource_pack$pack_squash$config_path;
-    }
-
     public static boolean generationNoise() {
         return instance.chunk_system$generation$noise;
     }
@@ -1902,18 +1830,11 @@ public final class Config {
     }
 
     private List<DamageIndicator> parseDamageIndicatorSchemes(YamlDocument config) {
-        List<Map<?, ?>> list = YamlUtils.reader(config).getMapList("damage-indicator.schemes");
-        List<DamageIndicator> schemes = new ArrayList<>(list.size());
-        int index = 0;
-        for (Map<?, ?> element : list) {
-            String path = "damage-indicator.schemes." + index++;
-            try {
-                schemes.add(DamageIndicators.fromConfig(ConfigSection.of(path, element)));
-            } catch (Throwable t) {
-                this.plugin.logger().warn("Failed to load damage indicator scheme at " + path, t);
-            }
-        }
-        return List.copyOf(schemes);
+        List<ResourceException> errors = new ArrayList<>();
+        CollectingConfigReader reader = new CollectingConfigReader(config, this.configFilePath, errors);
+        List<DamageIndicator> schemes = reader.getList("damage-indicator.schemes", value -> DamageIndicators.fromConfig(value.getAsSection()));
+        this.reportErrors(errors);
+        return schemes;
     }
 
     public YamlDocument loadYamlConfig(String filePath, YamlUpgradePipeline pipeline) {

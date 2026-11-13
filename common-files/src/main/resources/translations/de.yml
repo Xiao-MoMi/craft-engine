@@ -144,6 +144,13 @@ command.world_settings.set.success: '<white>World Setting <arg:0> wurde eingeste
 condition.enchantment.invalid_format: Ungültiges Prädikat-Format '<arg:0>'. (z.B. minecraft:sharpness>=4)
 condition.unknown_type: Unbekannter Condition-Typ '<arg:0>'
 config.errors_detected: Fehler in config.yml gefunden - <arg:0>
+config.expected_list: 'Eine Liste wird erwartet'
+config.expected_scalar: 'Ein skalarer Wert wird erwartet'
+config.invalid_regex: 'Ungültiger regulärer Ausdruck ''<arg:0>'''
+config.invalid_version: 'Nicht unterstützte Minecraft-Version ''<arg:0>'''
+config.version_order: 'Die Mindestversion darf die Höchstversion nicht überschreiten'
+config.invalid_range: 'Ungültige Ganzzahl oder ungültiger Ganzzahlbereich ''<arg:0>'''
+config.duplicate_key: 'Doppelter Schlüssel ''<arg:0>'''
 damage_indicator.unknown_type: 'Unbekannter Schadensanzeigetyp ''<arg:0>'''
 exception.invalid_argument: '<red>Ungültiges Argument. Grund: <white><arg:0></white></red>'
 exception.invalid_sender: <red><arg:0> darf diesen Befehl nicht ausführen. Muss vom Typ <arg:1> sein</red>

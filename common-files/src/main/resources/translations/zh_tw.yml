@@ -144,6 +144,13 @@ command.world_settings.set.success: '<white>已將世界設定<arg:0>設為<arg:
 condition.enchantment.invalid_format: 無效的謂詞格式 '<arg:0>'。（例如：minecraft:sharpness>=4）
 condition.unknown_type: 未知的條件類型 '<arg:0>'
 config.errors_detected: 在 config.yml 中發現錯誤 - <arg:0>
+config.expected_list: '應為列表'
+config.expected_scalar: '應為單一純量值'
+config.invalid_regex: '無效的正規表示式「<arg:0>」'
+config.invalid_version: '不支援的 Minecraft 版本「<arg:0>」'
+config.version_order: '最低版本不能高於最高版本'
+config.invalid_range: '無效的整數或整數範圍「<arg:0>」'
+config.duplicate_key: '重複的鍵「<arg:0>」'
 damage_indicator.unknown_type: '未知的傷害指示器類型''<arg:0>'''
 exception.invalid_argument: <red>引數無效。原因：<white><arg:0></white></red>
 exception.invalid_sender: <red><arg:0> 不允許執行此指令。執行者必須是 <arg:1></red>
