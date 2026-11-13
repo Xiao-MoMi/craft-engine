@@ -314,7 +314,7 @@ final class BedrockDisplayAssets {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", "craftengine:" + this.name);
         description.addProperty("enable_attachables", true);
-        JsonObject materials = createObject("default", new JsonPrimitive("entity_alphatest"));
+        JsonObject materials = createObject("default", new JsonPrimitive("entity_alphatest_one_sided"));
         description.add("materials", materials);
         description.add("textures", this.textures);
         description.add("geometry", this.geometryNames);
