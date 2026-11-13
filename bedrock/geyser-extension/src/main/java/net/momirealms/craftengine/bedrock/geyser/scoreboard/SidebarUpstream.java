@@ -10,9 +10,9 @@ import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.matcher.ElementMatchers;
 import org.cloudburstmc.protocol.bedrock.BedrockServerSession;
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
-import org.cloudburstmc.protocol.bedrock.packet.SetScorePacket;
-import org.cloudburstmc.protocol.bedrock.packet.SetDisplayObjectivePacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveObjectivePacket;
+import org.cloudburstmc.protocol.bedrock.packet.SetDisplayObjectivePacket;
+import org.cloudburstmc.protocol.bedrock.packet.SetScorePacket;
 import org.geysermc.geyser.session.UpstreamSession;
 
 import java.lang.reflect.Constructor;

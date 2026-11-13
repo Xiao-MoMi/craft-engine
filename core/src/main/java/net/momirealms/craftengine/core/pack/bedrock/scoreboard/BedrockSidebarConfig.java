@@ -1,10 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.scoreboard;
 
-import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
-import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
-import net.momirealms.craftengine.core.plugin.config.ConfigSection;
-import net.momirealms.craftengine.core.plugin.config.ConfigValue;
-import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
+import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.util.CollectingConfigReader;
 import net.momirealms.craftengine.core.util.Key;
 

@@ -1,6 +1,9 @@
 package net.momirealms.craftengine.bedrock.geyser.scoreboard;
 
-import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.*;
+import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.FixedNumberProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.ObjectivePacketProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.ScorePacketProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.TeamPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
 import org.cloudburstmc.nbt.NbtMap;
@@ -10,7 +13,9 @@ import org.geysermc.geyser.scoreboard.display.slot.DisplaySlot;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.network.packet.Packet;
-import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.*;
+import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.BlankFormat;
+import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.NumberFormat;
+import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.StyledFormat;
 import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.*;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
 

@@ -59,7 +59,6 @@ import net.momirealms.craftengine.core.plugin.context.function.DummyFunction;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.*;
-import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.sparrow.message.tag.resolver.TagResolver;
 import org.bukkit.Bukkit;

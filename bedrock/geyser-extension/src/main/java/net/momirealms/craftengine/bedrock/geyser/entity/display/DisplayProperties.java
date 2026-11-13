@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
-import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.math.imaginary.Quaternionf;
+import org.cloudburstmc.math.vector.Vector3f;
 import org.geysermc.geyser.api.entity.property.BatchPropertyUpdater;
 import org.geysermc.geyser.api.entity.property.type.GeyserFloatEntityProperty;
 import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;

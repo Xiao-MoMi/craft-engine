@@ -1,13 +1,12 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.hitbox;
 
-import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
-
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
-import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
+import org.geysermc.geyser.api.connection.GeyserConnection;
 import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.entity.BedrockEntityDefinition;
 import org.geysermc.geyser.entity.type.living.monster.ShulkerEntity;
