@@ -415,11 +415,15 @@ public class FriendlyByteBuf extends ByteBuf {
     }
 
     public int readVarInt() {
+        return readVarIntFromBuffer(this);
+    }
+
+    public static int readVarIntFromBuffer(ByteBuf buffer) {
         int value = 0;
         int shift = 0;
         byte byteValue;
         do {
-            byteValue = this.readByte();
+            byteValue = buffer.readByte();
             value |= (byteValue & 127) << shift++ * 7;
             if (shift > 5) {
                 throw new RuntimeException("VarInt too big");
