@@ -61,8 +61,18 @@ final class DisplayProperties {
         return event.registerFloatProperty(this.id, Identifier.of("craftengine:" + name), -1000000f, 1000000f, initial);
     }
 
-    void write(BatchPropertyUpdater batch, DisplayPose pose, DisplayPose previous,
-               GeyserItemDisplays.Appearance model, boolean modelChanged, int dyeColor, boolean dyeChanged, float yaw, float pitch, int interpolation, float duration, float delay) {
+    void write(BatchPropertyUpdater batch,
+               DisplayPose pose,
+               DisplayPose previous,
+               GeyserItemDisplays.Appearance model,
+               boolean modelChanged,
+               int dyeColor,
+               boolean dyeChanged,
+               float yaw,
+               float pitch,
+               int interpolation,
+               float duration,
+               float delay) {
         if (interpolation >= 0) {
             batch.update(this.interpolation, interpolation);
             batch.update(this.duration, duration);

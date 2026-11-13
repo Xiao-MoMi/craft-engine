@@ -99,5 +99,4 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
         String title = ContainerTitleCodec.encode(rows, layerTexts);
         return AdventureComponentProxy.INSTANCE.font(AdventureComponentProxy.INSTANCE.text(title), RESOLVED_FONT);
     }
-
 }

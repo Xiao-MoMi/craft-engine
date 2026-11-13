@@ -1,12 +1,9 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
-import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
 import org.geysermc.geyser.entity.type.Entity;
@@ -17,7 +14,7 @@ import org.geysermc.geyser.session.GeyserSession;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class GeyserHeldDye extends ChannelDuplexHandler {
+public final class GeyserHeldDye {
     private final GeyserPlayer player;
     private final GeyserSession session;
     private ScheduledFuture<?> task;
@@ -35,7 +32,8 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
 
     public static GeyserHeldDye install(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off) {
         GeyserHeldDye handler = new GeyserHeldDye(player, main, off);
-        player.installHandler("craftengine-held-dye", handler, true);
+        player.network().onSend(AddPlayerPacket.class, handler::onAddPlayer);
+        player.network().onSend(MobEquipmentPacket.class, handler::onEquipment);
         player.session().executeInEventLoop(handler::syncOwnHands);
         return handler;
     }
@@ -69,19 +67,17 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         this.task = this.session.scheduleInEventLoop(this::syncOwnHands, 50, TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
-        if (message instanceof BedrockPacketWrapper wrapper && wrapper.getTargetSubClientId() == 0) {
-            if (wrapper.getPacket() instanceof AddPlayerPacket player) {
-                this.syncRemote(player.getRuntimeEntityId(), this.main, player.getHand());
-            } else if (wrapper.getPacket() instanceof MobEquipmentPacket equipment) {
-                int slot = equipment.getContainerId();
-                if (slot == ContainerId.INVENTORY || slot == ContainerId.OFFHAND) {
-                    this.syncRemote(equipment.getRuntimeEntityId(), slot == ContainerId.OFFHAND ? this.off : this.main, equipment.getItem());
-                }
-            }
+    private void onAddPlayer(GeyserPacketEvent<AddPlayerPacket> event) {
+        AddPlayerPacket player = event.packet();
+        this.syncRemote(player.getRuntimeEntityId(), this.main, player.getHand());
+    }
+
+    private void onEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
+        MobEquipmentPacket equipment = event.packet();
+        int slot = equipment.getContainerId();
+        if (slot == ContainerId.INVENTORY || slot == ContainerId.OFFHAND) {
+            this.syncRemote(equipment.getRuntimeEntityId(), slot == ContainerId.OFFHAND ? this.off : this.main, equipment.getItem());
         }
-        super.write(context, message, promise);
     }
 
     private void syncRemote(long id, GeyserDyeProperties hand, ItemData item) {

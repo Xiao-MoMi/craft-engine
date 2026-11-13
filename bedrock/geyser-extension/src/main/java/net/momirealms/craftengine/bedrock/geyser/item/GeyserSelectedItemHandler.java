@@ -1,16 +1,13 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryActionData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction;
-import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
@@ -21,8 +18,7 @@ import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
-    private static final String HANDLER_NAME = "craftengine-selected-items";
+public final class GeyserSelectedItemHandler {
     private final GeyserPlayer player;
     private final GeyserSession session;
     private ScheduledFuture<?> task;
@@ -43,7 +39,14 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     static GeyserSelectedItemHandler install(GeyserPlayer player, GeyserItemRuntime runtime, GeyserHeadItemViews heads, boolean pollSelection) {
         GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(player, runtime, heads);
         // 匹配与槽位读取均在 Geyser 事件循环执行，不能在网络线程临时修改匹配上下文。
-        player.installHandler(HANDLER_NAME, handler, true);
+        player.network().onReceive(MobEquipmentPacket.class, handler::restoreEquipment);
+        player.network().onReceive(InventoryTransactionPacket.class, handler::restoreTransaction);
+        player.network().onReceive(PlayerAuthInputPacket.class, handler::restorePlayerInput);
+        player.network().onSend(InventoryContentPacket.class, handler::onInventoryContent);
+        player.network().onSend(InventorySlotPacket.class, handler::onInventorySlot);
+        player.network().onSend(MobArmorEquipmentPacket.class, handler::onArmorEquipment);
+        player.network().onSend(MobEquipmentPacket.class, handler::onEquipment);
+        player.network().onSend(ItemStackResponsePacket.class, handler::onStackResponse);
         if (pollSelection) {
             player.session().executeInEventLoop(handler::poll);
         }
@@ -81,38 +84,28 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         this.task = this.session.scheduleInEventLoop(this::poll, 50, TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-        if (message instanceof BedrockPacketWrapper wrapper && wrapper.getSenderSubClientId() == 0) {
-            this.restoreIncoming(wrapper.getPacket());
+    private void restoreEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
+        MobEquipmentPacket equipment = event.packet();
+        int slot = equipment.getHotbarSlot();
+        int netId = 0;
+        if (equipment.getContainerId() == ContainerId.INVENTORY && slot >= 0 && slot < 9) {
+            netId = this.session.getPlayerInventory().getItem(slot + 36).getNetId();
         }
-        super.channelRead(context, message);
+        equipment.setItem(this.restore(equipment.getItem(), netId));
     }
 
-    private void restoreIncoming(BedrockPacket packet) {
-        // Geyser 按未选中变体校验交互物品，回程必须还原显示替换，保留 netId 和物品数据。
-        switch (packet) {
-            case MobEquipmentPacket equipment -> {
-                int slot = equipment.getHotbarSlot();
-                int netId = 0;
-                if (equipment.getContainerId() == ContainerId.INVENTORY && slot >= 0 && slot < 9) {
-                    netId = this.session.getPlayerInventory().getItem(slot + 36).getNetId();
-                }
-                equipment.setItem(this.restore(equipment.getItem(), netId));
-            }
-            case InventoryTransactionPacket transaction -> {
-                transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
-                this.restoreActions(transaction.getActions());
-            }
-            case PlayerAuthInputPacket input -> {
-                ItemUseTransaction transaction = input.getItemUseTransaction();
-                if (transaction != null) {
-                    transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
-                    this.restoreActions(transaction.getActions());
-                }
-            }
-            default -> {
-            }
+    private void restoreTransaction(GeyserPacketEvent<InventoryTransactionPacket> event) {
+        InventoryTransactionPacket transaction = event.packet();
+        transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
+        this.restoreActions(transaction.getActions());
+    }
+
+    private void restorePlayerInput(GeyserPacketEvent<PlayerAuthInputPacket> event) {
+        PlayerAuthInputPacket input = event.packet();
+        ItemUseTransaction transaction = input.getItemUseTransaction();
+        if (transaction != null) {
+            transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
+            this.restoreActions(transaction.getActions());
         }
     }
 
@@ -127,28 +120,30 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
         }
     }
 
-    @Override
-    public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
-        if (message instanceof BedrockPacketWrapper wrapper && wrapper.getTargetSubClientId() == 0) {
-            this.renderOutgoing(wrapper.getPacket());
-        }
-        super.write(context, message, promise);
+    private void onInventoryContent(GeyserPacketEvent<InventoryContentPacket> event) {
+        InventoryContentPacket inventory = event.packet();
+        this.renderInventory(inventory);
     }
 
-    private void renderOutgoing(BedrockPacket packet) {
-        switch (packet) {
-            case InventoryContentPacket inventory -> this.renderInventory(inventory);
-            case InventorySlotPacket inventory -> inventory.setItem(this.renderSlot(inventory.getItem(), inventory.getContainerId(), inventory.getSlot()));
-            case MobArmorEquipmentPacket armor -> armor.setHelmet(this.heads.equipped(armor.getHelmet()));
-            case MobEquipmentPacket equipment -> {
-                boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
-                boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
-                equipment.setItem(this.render(equipment.getItem(), own && mainHand && equipment.getHotbarSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
-            }
-            case ItemStackResponsePacket ignored -> this.refresh(-1);
-            default -> {
-            }
-        }
+    private void onInventorySlot(GeyserPacketEvent<InventorySlotPacket> event) {
+        InventorySlotPacket inventory = event.packet();
+        inventory.setItem(this.renderSlot(inventory.getItem(), inventory.getContainerId(), inventory.getSlot()));
+    }
+
+    private void onArmorEquipment(GeyserPacketEvent<MobArmorEquipmentPacket> event) {
+        MobArmorEquipmentPacket armor = event.packet();
+        armor.setHelmet(this.heads.equipped(armor.getHelmet()));
+    }
+
+    private void onEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
+        MobEquipmentPacket equipment = event.packet();
+        boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
+        boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
+        equipment.setItem(this.render(equipment.getItem(), own && mainHand && equipment.getHotbarSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
+    }
+
+    private void onStackResponse(GeyserPacketEvent<ItemStackResponsePacket> event) {
+        this.refresh(-1);
     }
 
     private void renderInventory(InventoryContentPacket inventory) {

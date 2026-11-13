@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bedrock.geyser.gui;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket;
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
@@ -12,18 +11,13 @@ import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Obsolete
 public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdapter {
-    private static final String HANDLER_NAME = "craftengine-container-close";
     private final GeyserSession session;
     private long clientTick = -1;
     private long resumeTick;
     private BedrockPacketWrapper pendingClose;
 
-    GeyserContainerCloseHandler(GeyserSession session) {
+    public GeyserContainerCloseHandler(GeyserSession session) {
         this.session = session;
-    }
-
-    public static void install(GeyserPlayer player) {
-        player.installHandler(HANDLER_NAME, new GeyserContainerCloseHandler(player.session()), true);
     }
 
     @Override
