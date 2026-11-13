@@ -1,10 +1,10 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
-import org.geysermc.geyser.session.GeyserSession;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 
 public interface ClientCustomPacket {
 
     String id();
 
-    void handle(GeyserSession session);
+    void handle(GeyserPlayer player);
 }

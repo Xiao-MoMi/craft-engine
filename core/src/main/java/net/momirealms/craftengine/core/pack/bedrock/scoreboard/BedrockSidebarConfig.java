@@ -16,7 +16,11 @@ public record BedrockSidebarConfig(boolean enable, List<Profile> profiles) {
 
     public static BedrockSidebarConfig fromConfig(ConfigSection section, CollectingConfigReader config) {
         boolean enable = config.attempt(section.assemblePath("enable"), () -> section.getBoolean("enable", true), false);
-        List<Profile> profiles = config.getList(section.getValue("profiles"), value -> Profile.fromConfig(value.getAsSection(), config));
+        List<Profile> profiles = config.getList(section.getValue("profiles"), value -> {
+            int errors = config.errorCount();
+            Profile profile = Profile.fromConfig(value.getAsSection(), config);
+            return config.errorCount() == errors ? profile : null;
+        });
         return new BedrockSidebarConfig(enable, List.copyOf(profiles));
     }
 

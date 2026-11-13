@@ -3,9 +3,8 @@ package net.momirealms.craftengine.bedrock.geyser.block;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
-import org.geysermc.geyser.api.connection.GeyserConnection;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -70,15 +69,9 @@ public final class GeyserBlockManager {
         GeyserTranslationManager.info("block.placement_enabled", this.blockItems.size());
     }
 
-    public void initSession(GeyserSession session) {
+    public void initPlayer(GeyserPlayer player) {
         if (!this.worldBlocks.isEmpty()) {
-            session.setBlockBreakHandler(new GeyserBlockBreakHandler(session, this.worldBlocks));
-        }
-    }
-
-    public void disconnect(GeyserConnection connection) {
-        if (this.placementHandler != null && connection instanceof GeyserSession session) {
-            this.placementHandler.disconnect(session);
+            player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
         }
     }
 

@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import org.cloudburstmc.protocol.bedrock.BedrockPeer;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
@@ -14,29 +14,40 @@ import org.geysermc.geyser.entity.type.player.PlayerEntity;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
 
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class GeyserHeldDye extends ChannelDuplexHandler {
+    private final GeyserPlayer player;
     private final GeyserSession session;
+    private ScheduledFuture<?> task;
     private final GeyserDyeProperties main;
     private final GeyserDyeProperties off;
     private int mainColor = Integer.MIN_VALUE;
     private int offColor = Integer.MIN_VALUE;
 
-    private GeyserHeldDye(GeyserSession session, GeyserDyeProperties main, GeyserDyeProperties off) {
-        this.session = session;
+    private GeyserHeldDye(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off) {
+        this.player = player;
+        this.session = player.session();
         this.main = main;
         this.off = off;
     }
 
-    public static void install(GeyserSession session, GeyserDyeProperties main, GeyserDyeProperties off) {
-        GeyserHeldDye handler = new GeyserHeldDye(session, main, off);
-        session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-held-dye", handler);
-        session.executeInEventLoop(handler::syncOwnHands);
+    public static GeyserHeldDye install(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off) {
+        GeyserHeldDye handler = new GeyserHeldDye(player, main, off);
+        player.installHandler("craftengine-held-dye", handler, true);
+        player.session().executeInEventLoop(handler::syncOwnHands);
+        return handler;
+    }
+
+    public void close() {
+        if (this.task != null) {
+            this.task.cancel(false);
+        }
     }
 
     private void syncOwnHands() {
-        if (this.session.isClosed()) {
+        if (this.player.isClosed()) {
             return;
         }
         if (this.session.isSpawned()) {
@@ -55,7 +66,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
             this.mainColor = Integer.MIN_VALUE;
             this.offColor = Integer.MIN_VALUE;
         }
-        this.session.scheduleInEventLoop(this::syncOwnHands, 50, TimeUnit.MILLISECONDS);
+        this.task = this.session.scheduleInEventLoop(this::syncOwnHands, 50, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -81,7 +92,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         // 入场包先送出，再同步该实体的颜色。后续切换到未染色物品同样要清除旧值。
         this.session.executeInEventLoop(() -> {
             Entity entity = this.session.getEntityCache().getEntityByGeyserId(id);
-            if (entity instanceof PlayerEntity player && player.isValid() && !this.session.isClosed()) {
+            if (entity instanceof PlayerEntity player && player.isValid() && !this.player.isClosed()) {
                 player.updatePropertiesBatched(batch -> hand.write(batch, color), true);
             }
         });

@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import org.cloudburstmc.protocol.bedrock.data.debugshape.DebugShape;
-import org.cloudburstmc.protocol.bedrock.packet.DebugDrawerPacket;
-import org.geysermc.geyser.api.connection.GeyserConnection;
+import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.geysermc.geyser.entity.BedrockEntityDefinitions;
 import org.geysermc.geyser.entity.EntityTypeBase;
 import org.geysermc.geyser.entity.VanillaEntityType;
@@ -15,11 +13,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTyp
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class GeyserTextDisplayManager extends PacketTranslator<ClientboundAddEntityPacket> {
-    private final Map<GeyserSession, Long2ObjectLinkedOpenHashMap<DebugShape>> pending = new ConcurrentHashMap<>();
     private PacketTranslator<ClientboundAddEntityPacket> original;
     private VanillaEntityType<GeyserTextDisplayEntity> definition;
 
@@ -33,7 +27,7 @@ public final class GeyserTextDisplayManager extends PacketTranslator<Clientbound
                 .addTranslator(MetadataTypes.BOOLEAN, GeyserTextDisplayEntity::setSilent)
                 .addTranslator(MetadataTypes.BOOLEAN, GeyserTextDisplayEntity::setGravity)
                 .addTranslator(null).addTranslator(null);
-        this.definition = VanillaEntityType.inherited(context -> new GeyserTextDisplayEntity(context, this), base.build())
+        this.definition = VanillaEntityType.inherited(context -> new GeyserTextDisplayEntity(context, CraftEngineGeyserExtension.instance().playerManager().get(context.session())), base.build())
                 .type(EntityType.TEXT_DISPLAY).bedrockDefinition(BedrockEntityDefinitions.ARMOR_STAND)
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.transform().startInterpolation((int) meta.getValue()))
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.transform().duration((int) meta.getValue()))
@@ -58,7 +52,8 @@ public final class GeyserTextDisplayManager extends PacketTranslator<Clientbound
 
     @Override
     public void translate(GeyserSession session, ClientboundAddEntityPacket packet) {
-        if (packet.getType() != EntityType.TEXT_DISPLAY || session.getUpstream().getProtocolVersion() < 975) {
+        GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
+        if (player == null || packet.getType() != EntityType.TEXT_DISPLAY || session.getUpstream().getProtocolVersion() < 975) {
             this.original.translate(session, packet);
             return;
         }
@@ -66,35 +61,11 @@ public final class GeyserTextDisplayManager extends PacketTranslator<Clientbound
         if (!context.callServerSpawnEvent()) {
             return;
         }
-        GeyserTextDisplayEntity entity = this.definition.factory().create(context);
+        GeyserTextDisplayEntity entity = new GeyserTextDisplayEntity(context, player);
         if (context.consumers() != null) {
             context.consumers().forEach(consumer -> consumer.accept(entity));
         }
         session.getEntityCache().spawnEntity(entity);
-    }
-
-    void queue(GeyserSession session, DebugShape shape) {
-        Long2ObjectLinkedOpenHashMap<DebugShape> shapes = this.pending.get(session);
-        if (shapes == null) {
-            shapes = new Long2ObjectLinkedOpenHashMap<>();
-            this.pending.put(session, shapes);
-            session.executeInEventLoop(() -> this.flush(session));
-        }
-        shapes.put(shape.getId(), shape);
-    }
-
-    private void flush(GeyserSession session) {
-        Long2ObjectLinkedOpenHashMap<DebugShape> shapes = this.pending.remove(session);
-        if (shapes == null || session.isClosed()) {
-            return;
-        }
-        DebugDrawerPacket packet = new DebugDrawerPacket();
-        packet.getShapes().addAll(shapes.values());
-        session.sendUpstreamPacket(packet);
-    }
-
-    public void disconnect(GeyserConnection connection) {
-        this.pending.remove(connection);
     }
 
     public void uninstall() {
@@ -102,6 +73,5 @@ public final class GeyserTextDisplayManager extends PacketTranslator<Clientbound
             Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundAddEntityPacket.class, this, this.original);
             this.original = null;
         }
-        this.pending.clear();
     }
 }

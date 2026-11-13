@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
@@ -22,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickable {
     private static final AtomicLong IDS = new AtomicLong(Long.MIN_VALUE);
     private static final Color TRANSPARENT = new Color(0, true);
-    private final GeyserTextDisplayManager manager;
+    private final GeyserPlayer player;
     private final DisplayTransform transform = new DisplayTransform();
     private final List<DebugText> shapes = new ArrayList<>();
     private String text = "";
@@ -49,9 +50,9 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
     private float targetYaw;
     private float targetPitch;
 
-    GeyserTextDisplayEntity(EntitySpawnContext context, GeyserTextDisplayManager manager) {
+    GeyserTextDisplayEntity(EntitySpawnContext context, GeyserPlayer player) {
         super(context);
-        this.manager = manager;
+        this.player = player;
     }
 
     DisplayTransform transform() {
@@ -269,12 +270,12 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                 return;
             }
             if (shape.getDimension() != previous.getDimension()) {
-                this.manager.queue(this.session, new DebugShape(previous.getId(), previous.getDimension()));
+                this.player.queueShape(new DebugShape(previous.getId(), previous.getDimension()));
                 shape.setId(IDS.getAndIncrement());
             }
             this.shapes.set(index, shape);
         }
-        this.manager.queue(this.session, shape);
+        this.player.queueShape(shape);
     }
 
     private static Vector3f textRotation(Quaternionf rotation) {
@@ -306,7 +307,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
     private void removeShapes(int remaining) {
         for (int index = this.shapes.size() - 1; index >= remaining; index--) {
             DebugText shape = this.shapes.remove(index);
-            this.manager.queue(this.session, new DebugShape(shape.getId(), shape.getDimension()));
+            this.player.queueShape(new DebugShape(shape.getId(), shape.getDimension()));
         }
     }
 }

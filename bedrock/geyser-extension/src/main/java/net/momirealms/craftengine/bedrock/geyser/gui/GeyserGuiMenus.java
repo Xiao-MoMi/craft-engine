@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.inventory.OpenScreenPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
@@ -47,8 +48,9 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
     @Override
     public void translate(GeyserSession session, ClientboundOpenScreenPacket packet) {
         // 资源包的容器布局仅适配经典 UI，Pocket 布局沿用原生处理。
-        if (session.getClientData().getUiProfile() == UiProfile.CLASSIC && this.layout != null) {
-            packet = this.rewrite(packet, session.locale());
+        GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
+        if (player != null && player.uiProfile() == UiProfile.CLASSIC && this.layout != null) {
+            packet = this.rewrite(packet, player.locale());
         }
         this.delegate.translate(session, packet);
     }

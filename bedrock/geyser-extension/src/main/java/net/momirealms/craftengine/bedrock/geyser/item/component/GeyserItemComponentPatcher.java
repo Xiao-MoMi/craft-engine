@@ -3,14 +3,13 @@ package net.momirealms.craftengine.bedrock.geyser.item.component;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.nbt.NbtMap;
-import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.ItemComponentPacket;
 import org.geysermc.geyser.registry.type.ItemMappings;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.List;
 import java.util.Map;
@@ -24,9 +23,8 @@ public final class GeyserItemComponentPatcher extends ChannelDuplexHandler {
         this.mappings = mappings;
     }
 
-    public static void install(GeyserSession session, Map<String, GeyserItemComponentPatch> patches) {
-        session.getUpstream().getSession().getPeer().getChannel().pipeline()
-                .addBefore(BedrockPeer.NAME, "craftengine-item-components", new GeyserItemComponentPatcher(patches, session.getItemMappings()));
+    public static void install(GeyserPlayer player, Map<String, GeyserItemComponentPatch> patches) {
+        player.installHandler("craftengine-item-components", new GeyserItemComponentPatcher(patches, player.session().getItemMappings()), false);
     }
 
     @Override

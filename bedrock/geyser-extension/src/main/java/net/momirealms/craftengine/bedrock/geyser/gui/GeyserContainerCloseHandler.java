@@ -1,9 +1,8 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import org.cloudburstmc.protocol.bedrock.BedrockPeer;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket;
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
@@ -23,9 +22,8 @@ public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdap
         this.session = session;
     }
 
-    public static void install(GeyserSession session) {
-        Channel channel = session.getUpstream().getSession().getPeer().getChannel();
-        channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME, new GeyserContainerCloseHandler(session));
+    public static void install(GeyserPlayer player) {
+        player.installHandler(HANDLER_NAME, new GeyserContainerCloseHandler(player.session()), true);
     }
 
     @Override

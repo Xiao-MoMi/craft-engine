@@ -6,15 +6,14 @@ import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDispla
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
-import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManagerImpl;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarManager;
-import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarCommand;
 import net.momirealms.craftengine.bedrock.geyser.translation.GeyserLanguageManager;
 import org.geysermc.event.PostOrder;
 import org.geysermc.event.subscribe.Subscribe;
@@ -32,8 +31,8 @@ import java.nio.file.Path;
 public final class CraftEngineGeyserExtension implements Extension {
     private static CraftEngineGeyserExtension instance;
 
+    private GeyserPlayerManager playerManager;
     private GeyserSidebarManager sidebarManager;
-    private SidebarCommand sidebarCommand;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
@@ -49,7 +48,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
         instance = this;
-        this.sidebarCommand = new SidebarCommand(this);
+        this.playerManager = new GeyserPlayerManager(this);
         this.config = new GeyserConfig(this.dataFolder(), this.logger());
         this.config.load();
         try {
@@ -102,25 +101,15 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
-    public void onDefineCommands(GeyserDefineCommandsEvent event) {
-        this.sidebarCommand.register(event);
-    }
-
-    @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
-        this.sidebarCommand.disconnect(event.connection());
-        if (this.sidebarManager != null) {
-            this.sidebarManager.disconnect(event.connection());
-        }
-        if (this.textDisplayManager != null) {
-            this.textDisplayManager.disconnect(event.connection());
-        }
-        this.blockManager.disconnect(event.connection());
-        this.hardHitboxManager.disconnect(event.connection());
+        this.playerManager.remove(event.connection());
     }
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        if (this.playerManager != null) {
+            this.playerManager.disable();
+        }
         if (this.sidebarManager != null) {
             this.sidebarManager.uninstall();
         }
@@ -137,9 +126,6 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.textDisplayManager.uninstall();
         }
         this.itemDisplays.uninstall();
-        if (this.hardHitboxManager != null) {
-            this.hardHitboxManager.disable();
-        }
         if (this.blockManager != null) {
             this.blockManager.disable();
         }
@@ -174,18 +160,15 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onSessionInitialize(SessionInitializeEvent event) {
-        GeyserSession session = (GeyserSession) event.connection();
-        this.blockManager.initSession(session);
-        this.itemManager.initSessionDye(session);
-        // 应该是 geyser 的 bug，临时修复一下
-        if (true) {
-            GeyserContainerCloseHandler.install(session);
-        }
-        this.itemManager.initSession(session);
+        this.playerManager.add((GeyserSession) event.connection());
     }
 
     public static CraftEngineGeyserExtension instance() {
         return instance;
+    }
+
+    public GeyserPlayerManager playerManager() {
+        return this.playerManager;
     }
 
     public GeyserSidebarManager sidebarManager() {

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.SortedSetMultimap;
 import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -25,13 +26,18 @@ public final class GeyserItemRuntime {
     private final GeyserSession session;
     private final Set<String> selectedItems;
     private boolean selected;
+    private final ItemMappings originalMappings;
+    private ItemMappings boundMappings;
+    private GeyserSelectedItemHandler selectedHandler;
 
     GeyserItemRuntime(GeyserSession session, Set<String> selectedItems) {
         this.session = session;
+        this.originalMappings = session.getItemMappings();
         this.selectedItems = selectedItems;
     }
 
-    public static void install(GeyserSession session, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers) {
+    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers) {
+        GeyserSession session = player.session();
         Set<String> selectedModels = new HashSet<>();
         for (CustomItemDefinition definition : definitions.values()) {
             if (definition.predicates().stream().anyMatch(GeyserItemPredicates::usesSelection)) {
@@ -49,7 +55,16 @@ public final class GeyserItemRuntime {
             session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
         }
         GeyserHeadItemViews heads = new GeyserHeadItemViews(session.getItemMappings(), headIdentifiers);
-        GeyserSelectedItemHandler.install(session, runtime, heads, !definitions.isEmpty());
+        runtime.boundMappings = session.getItemMappings();
+        runtime.selectedHandler = GeyserSelectedItemHandler.install(player, runtime, heads, !definitions.isEmpty());
+        return runtime;
+    }
+
+    public void close() {
+        this.selectedHandler.close();
+        if (this.session.getItemMappings() == this.boundMappings) {
+            this.session.setItemMappings(this.originalMappings);
+        }
     }
 
     ItemMappings bindMappings(ItemMappings original, Map<String, CustomItemDefinition> definitions) {

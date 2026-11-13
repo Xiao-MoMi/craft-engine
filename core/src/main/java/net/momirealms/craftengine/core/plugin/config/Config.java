@@ -782,11 +782,7 @@ public final class Config {
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
-        int sidebarErrors = errors.size();
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
-        if (errors.size() != sidebarErrors) {
-            this.bedrock$scoreboard = new BedrockSidebarConfig(false, List.of());
-        }
         this.bedrock$display$convert_vanilla_items = config.getBoolean("bedrock.display.convert-vanilla-items", false);
         this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");

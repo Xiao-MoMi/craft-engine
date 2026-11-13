@@ -9,7 +9,7 @@ import java.util.Map;
 
 public final class ContainerTitleLayout {
     public static final int ORIGIN = 256;
-    public static final String MARKER = "craftengine:layout/";
+    public static final String MARKER = "ce:layout/";
     public static final int SPACER_FIRST = 0xE200;
     public static final int MAX_SPACER = 33;
     private static final int SPACER_BYTES = 3;

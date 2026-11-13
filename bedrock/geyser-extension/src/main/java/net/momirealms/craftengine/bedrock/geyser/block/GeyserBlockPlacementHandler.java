@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.block;
 
+import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction;
@@ -8,9 +10,7 @@ import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.LongSupplier;
 
 public final class GeyserBlockPlacementHandler extends PacketTranslator<InventoryTransactionPacket> {
@@ -18,7 +18,6 @@ public final class GeyserBlockPlacementHandler extends PacketTranslator<Inventor
     private final PacketTranslator<InventoryTransactionPacket> delegate;
     private final Set<String> blockItems;
     private final LongSupplier clock;
-    private final Map<GeyserSession, Placement> placements = new ConcurrentHashMap<>();
 
     GeyserBlockPlacementHandler(PacketTranslator<InventoryTransactionPacket> delegate, Set<String> blockItems, LongSupplier clock) {
         this.delegate = delegate;
@@ -38,11 +37,6 @@ public final class GeyserBlockPlacementHandler extends PacketTranslator<Inventor
         if (Registries.BEDROCK_PACKET_TRANSLATORS.get(InventoryTransactionPacket.class) == this) {
             Registries.BEDROCK_PACKET_TRANSLATORS.register(InventoryTransactionPacket.class, this.delegate);
         }
-        this.placements.clear();
-    }
-
-    public void disconnect(GeyserSession session) {
-        this.placements.remove(session);
     }
 
     @Override
@@ -53,24 +47,20 @@ public final class GeyserBlockPlacementHandler extends PacketTranslator<Inventor
             this.delegate.translate(session, packet);
             return;
         }
+        GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
+        if (player == null) {
+            this.delegate.translate(session, packet);
+            return;
+        }
         long now = this.clock.getAsLong();
-        Placement placement = this.placements.get(session);
         // Geyser's same-position deduplication misses repeats targeting the block just placed.
         // Pace automatic repeats across positions; a new explicit click always starts immediately.
-        if (packet.getTriggerType() == ItemUseTransaction.TriggerType.SIMULATION_TICK
-                && placement != null && now - placement.lastInteraction < REPEAT_INTERVAL_NANOS) {
+        if (packet.getTriggerType() == ItemUseTransaction.TriggerType.SIMULATION_TICK && player.placementWithin(now, REPEAT_INTERVAL_NANOS)) {
             session.getPlayerInventoryHolder().updateSlot(session.getPlayerInventory().getOffsetForHotbar(packet.getHotbarSlot()));
             return;
         }
-        if (placement == null) {
-            placement = new Placement();
-            this.placements.put(session, placement);
-        }
-        placement.lastInteraction = now;
+        player.placed(now);
         this.delegate.translate(session, packet);
     }
 
-    private static final class Placement {
-        private long lastInteraction;
-    }
 }

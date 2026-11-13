@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
+import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.network.ClientboundCustomPayloadPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
 import org.geysermc.geyser.registry.Registries;
@@ -34,7 +36,10 @@ public final class GeyserCustomPayloads extends PacketTranslator<ClientboundCust
         String channel = AdventureKeyProxy.INSTANCE.asString(channelKey);
         ClientCustomPacketType<?> type = GeyserCustomPackets.clientbound(channel);
         if (type != null) {
-            type.codec().decode(ByteBuffer.wrap(packet.getData())).handle(session);
+            GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
+            if (player != null) {
+                type.codec().decode(ByteBuffer.wrap(packet.getData())).handle(player);
+            }
             return;
         }
         this.original.translate(session, packet);

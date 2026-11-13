@@ -1,10 +1,9 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import org.cloudburstmc.protocol.bedrock.BedrockPeer;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
@@ -19,36 +18,47 @@ import org.geysermc.geyser.session.GeyserSession;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
     private static final String HANDLER_NAME = "craftengine-selected-items";
+    private final GeyserPlayer player;
     private final GeyserSession session;
+    private ScheduledFuture<?> task;
     private final GeyserItemRuntime runtime;
     private final GeyserHeadItemViews heads;
     private final Map<Integer, Replacement> originals = new HashMap<>();
     private int selectedSlot;
     private String dimension;
 
-    GeyserSelectedItemHandler(GeyserSession session, GeyserItemRuntime runtime, GeyserHeadItemViews heads) {
-        this.session = session;
+    GeyserSelectedItemHandler(GeyserPlayer player, GeyserItemRuntime runtime, GeyserHeadItemViews heads) {
+        this.player = player;
+        this.session = player.session();
         this.runtime = runtime;
         this.heads = heads;
-        this.selectedSlot = session.getPlayerInventory().getHeldItemSlot();
+        this.selectedSlot = this.session.getPlayerInventory().getHeldItemSlot();
     }
 
-    static void install(GeyserSession session, GeyserItemRuntime runtime, GeyserHeadItemViews heads, boolean pollSelection) {
-        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(session, runtime, heads);
-        Channel channel = session.getUpstream().getSession().getPeer().getChannel();
+    static GeyserSelectedItemHandler install(GeyserPlayer player, GeyserItemRuntime runtime, GeyserHeadItemViews heads, boolean pollSelection) {
+        GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(player, runtime, heads);
         // 匹配与槽位读取均在 Geyser 事件循环执行，不能在网络线程临时修改匹配上下文。
-        channel.pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, HANDLER_NAME, handler);
+        player.installHandler(HANDLER_NAME, handler, true);
         if (pollSelection) {
-            session.executeInEventLoop(handler::poll);
+            player.session().executeInEventLoop(handler::poll);
         }
+        return handler;
+    }
+
+    public void close() {
+        if (this.task != null) {
+            this.task.cancel(false);
+        }
+        this.originals.clear();
     }
 
     private void poll() {
-        if (this.session.isClosed()) {
+        if (this.player.isClosed()) {
             return;
         }
         if (this.session.isSpawned()) {
@@ -68,7 +78,7 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
             }
         }
         // 同一维度类型下切换世界也要刷新；仅状态变化时发包，不定时重发整个背包。
-        this.session.scheduleInEventLoop(this::poll, 50, TimeUnit.MILLISECONDS);
+        this.task = this.session.scheduleInEventLoop(this::poll, 50, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -167,6 +177,9 @@ public final class GeyserSelectedItemHandler extends ChannelDuplexHandler {
 
     private void refresh(int previous) {
         this.session.executeInEventLoop(() -> {
+            if (this.player.isClosed()) {
+                return;
+            }
             PlayerInventory inventory = this.session.getPlayerInventory();
             Set<Integer> active = new HashSet<>();
             for (int slot = 0; slot < inventory.getSize(); slot++) {

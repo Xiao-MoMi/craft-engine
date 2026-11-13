@@ -8,11 +8,11 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.util.Identifier;
-import org.geysermc.geyser.session.GeyserSession;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -117,19 +117,21 @@ public final class GeyserItemManager {
         this.worldItemViews.install();
     }
 
-    public void initSessionDye(GeyserSession session) {
+    public GeyserHeldDye initPlayerDye(GeyserPlayer player) {
         if (this.hasDyedItems) {
-            GeyserHeldDye.install(session, this.mainHandDye, this.offHandDye);
+            return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye);
         }
+        return null;
     }
 
-    public void initSession(GeyserSession session) {
+    public GeyserItemRuntime initPlayer(GeyserPlayer player) {
         if (!this.componentPatches.isEmpty()) {
-            GeyserItemComponentPatcher.install(session, this.componentPatches);
+            GeyserItemComponentPatcher.install(player, this.componentPatches);
         }
         if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty()) {
-            GeyserItemRuntime.install(session, this.contextualItems, this.headIdentifiers);
+            return GeyserItemRuntime.install(player, this.contextualItems, this.headIdentifiers);
         }
+        return null;
     }
 
     public void disable() {

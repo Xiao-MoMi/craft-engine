@@ -38,6 +38,10 @@ public final class CollectingConfigReader {
         this.errors.add(new KnownResourceException(this.file, translationKey, path, arguments));
     }
 
+    public int errorCount() {
+        return this.errors.size();
+    }
+
     public <T> T read(String path, Function<ConfigValue, T> parser, T fallback) {
         return this.attempt(path, () -> {
             Object value = this.values;
