@@ -806,7 +806,38 @@ client-optimization:
 bedrock:
   enable: true
   scoreboard:
-    enable: true
+    # Match an existing sidebar to image decorations and a horizontal offset.
+    #
+    # objective-id: exact match against the internal scoreboard objective ID, not its displayed title.
+    # title-contains: case-sensitive substring match against the plain-text title; not a regex.
+    #
+    # Only the first matching profile applies; profiles are not combined.
+    #
+    # Example CE profile matching TAB's sidebar objective:
+    # profiles:
+    #   - objective-id: TAB-Scoreboard
+    #     # UI pixels: positive moves left; negative moves right
+    #     offset-x: 0
+    #     elements:
+    #       - id: panel
+    #         # Supply your own PNG: assets/myserver/textures/sidebar/panel.png
+    #         texture: myserver:sidebar/panel
+    #         width: 160
+    #         height: 180
+    #         # Align the image's anchor with the same anchor on the text area.
+    #         anchor: top_right
+    #         x: 0
+    #         y: -4
+    #         # Text uses layer 2; lower layers draw behind it.
+    #         layer: 1
+    #       - id: logo
+    #         texture: myserver:sidebar/logo
+    #         width: 64
+    #         height: 16
+    #         anchor: top_middle
+    #         x: 0
+    #         y: -22
+    #         layer: 3
     profiles: []
   display:
     # Regenerate the Bedrock pack and cedata, then restart Geyser to apply.
@@ -817,6 +848,9 @@ bedrock:
     name: "CraftEngine ResourcePack"
     # Resource pack description shown in the Bedrock client.
     description: "Generated from the Java resource pack"
+    # Full font ID regexes excluded from Bedrock glyph conversion, including references.
+    exclude-fonts:
+      - 'nameplates:.*'
     # Generated icon width and height in pixels (currently for dyeable items).
     item-icon-size: 64
     # Maximum layers per dyeable display material; excess colors are merged.

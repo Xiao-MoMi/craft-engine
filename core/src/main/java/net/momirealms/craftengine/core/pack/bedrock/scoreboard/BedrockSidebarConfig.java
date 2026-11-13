@@ -8,20 +8,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public record BedrockSidebarConfig(boolean enable, List<Profile> profiles) {
-    public static final BedrockSidebarConfig DEFAULT = new BedrockSidebarConfig(true, List.of());
+public record BedrockSidebarConfig(List<Profile> profiles) {
+    public static final BedrockSidebarConfig DEFAULT = new BedrockSidebarConfig(List.of());
     private static final String[] OBJECTIVE_ID = ConfigKeys.of("objective_id");
     private static final String[] TITLE_CONTAINS = ConfigKeys.of("title_contains");
     private static final String[] OFFSET_X = ConfigKeys.of("offset_x");
 
     public static BedrockSidebarConfig fromConfig(ConfigSection section, CollectingConfigReader config) {
-        boolean enable = config.attempt(section.assemblePath("enable"), () -> section.getBoolean("enable", true), false);
         List<Profile> profiles = config.getList(section.getValue("profiles"), value -> {
             int errors = config.errorCount();
             Profile profile = Profile.fromConfig(value.getAsSection(), config);
             return config.errorCount() == errors ? profile : null;
         });
-        return new BedrockSidebarConfig(enable, List.copyOf(profiles));
+        return new BedrockSidebarConfig(List.copyOf(profiles));
+    }
+
+    public boolean enable() {
+        return !this.profiles.isEmpty();
     }
 
     public record Profile(String objectiveId, String titleContains, int offsetX, List<Element> elements) {

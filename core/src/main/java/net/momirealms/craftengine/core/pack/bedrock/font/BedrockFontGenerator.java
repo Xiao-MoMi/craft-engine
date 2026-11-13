@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -44,7 +45,7 @@ public final class BedrockFontGenerator {
     }
 
     public static void write(JavaResourcePack resources, Path root) throws IOException {
-        JavaFontResolver fonts = new JavaFontResolver(resources);
+        JavaFontResolver fonts = new JavaFontResolver(resources, Config.bedrockExcludedFonts());
         // 所有字体共用的位图页和码位
         GlyphAtlas atlas = new GlyphAtlas();
 

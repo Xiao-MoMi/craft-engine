@@ -304,6 +304,7 @@ public final class Config {
     private boolean bedrock$display$convert_text = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
+    private List<Pattern> bedrock$resource_pack$exclude_fonts = List.of();
     private int bedrock$resource_pack$item_icon_size;
     private int bedrock$resource_pack$display_dye_max_layers;
     private String bedrock$additional_identification$name_prefix;
@@ -787,6 +788,7 @@ public final class Config {
         this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
+        this.bedrock$resource_pack$exclude_fonts = config.getPatterns("bedrock.resource-pack.exclude-fonts");
         this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64, 1, Integer.MAX_VALUE);
         this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16, 1, Integer.MAX_VALUE);
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
@@ -1533,6 +1535,10 @@ public final class Config {
 
     public static String bedrockPackDescription() {
         return instance.bedrock$resource_pack$description;
+    }
+
+    public static List<Pattern> bedrockExcludedFonts() {
+        return instance.bedrock$resource_pack$exclude_fonts;
     }
 
     public static int bedrockItemIconSize() {

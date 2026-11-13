@@ -15,17 +15,20 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public final class JavaFontResolver {
     private final JavaResourcePack resources;
+    private final List<Pattern> excludedFonts;
     private final Map<String, BufferedImage> images = new HashMap<>();
     private final Map<Key, Int2ObjectMap<Glyph>> resolved = new HashMap<>();
     private final Set<Key> resolving = new HashSet<>();
     private int circularReferences;
     private final Map<Key, List<JavaResourcePack.FontResource>> fonts;
 
-    public JavaFontResolver(JavaResourcePack resources) throws IOException {
+    public JavaFontResolver(JavaResourcePack resources, List<Pattern> excludedFonts) throws IOException {
         this.resources = resources;
+        this.excludedFonts = excludedFonts;
         this.fonts = resources.fonts();
     }
 
@@ -33,7 +36,20 @@ public final class JavaFontResolver {
         return this.fonts.keySet();
     }
 
+    private boolean isExcluded(Key font) {
+        String id = font.asString();
+        for (Pattern pattern : this.excludedFonts) {
+            if (pattern.matcher(id).matches()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Int2ObjectMap<Glyph> resolve(Key font) throws IOException {
+        if (this.isExcluded(font)) {
+            return Int2ObjectMaps.emptyMap();
+        }
         Int2ObjectMap<Glyph> cached = this.resolved.get(font);
         if (cached != null) {
             return cached;
@@ -89,6 +105,9 @@ public final class JavaFontResolver {
             case "bitmap" -> this.bitmap(provider, custom);
             case "reference" -> {
                 Key target = Key.of(provider.get("id").getAsString());
+                if (this.isExcluded(target)) {
+                    yield Int2ObjectMaps.emptyMap();
+                }
                 if (!this.fonts.containsKey(target)) {
                     throw new IOException(TranslationManager.message("resource_pack.bedrock.font.missing_ref", target.asString()));
                 }
