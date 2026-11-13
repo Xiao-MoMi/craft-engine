@@ -351,7 +351,7 @@ public final class JavaResourcePack {
     }
 
     public JsonObject readModel(Key model) throws IOException {
-        JsonObject json = this.readJson("assets/" + model.namespace() + "/models/" + model.value() + ".json");
+        JsonObject json = this.readJson(ResourcePackUtils.modelPath(model));
         if (json == null) {
             throw new IOException("Missing Java model " + model + " for " + this.version.version());
         }
@@ -359,7 +359,7 @@ public final class JavaResourcePack {
     }
 
     public JsonObject readVanillaModel(Key model) throws IOException {
-        JsonObject json = readJson(this.vanillaRoot.resolve("assets/" + model.namespace() + "/models/" + model.value() + ".json"));
+        JsonObject json = readJson(this.vanillaRoot.resolve(ResourcePackUtils.modelPath(model)));
         if (json == null) {
             throw new IOException("Missing vanilla Java model " + model + " for " + this.version.version());
         }

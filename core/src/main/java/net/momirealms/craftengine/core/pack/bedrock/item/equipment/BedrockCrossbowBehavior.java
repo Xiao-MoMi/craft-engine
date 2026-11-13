@@ -12,13 +12,13 @@ import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlock
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CrossBowPullingRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.definition.select.ChargeTypeSelectProperty;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.joml.Matrix4f;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,12 +109,12 @@ final class BedrockCrossbowBehavior extends BedrockEquipmentBehavior {
                 return null;
             }
             ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-            BufferedImage image = renderer.render(target);
+            BedrockTexture image = renderer.render(target);
             if (image == null) {
                 return null;
             }
             String texture = "textures/" + state.id().namespace() + '/' + state.id().value() + "/stage_" + i;
-            stages.add(new BedrockItemAttachables.Stage(target.resolve(models), image, texture, BedrockCrossbowStates.condition(rule), new Matrix4f()));
+            stages.add(new BedrockItemAttachables.Stage(target.resolve(models), image.image(), texture, BedrockCrossbowStates.condition(rule), new Matrix4f()));
         }
         for (BedrockItemAttachables.Stage stage : stages) {
             ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));

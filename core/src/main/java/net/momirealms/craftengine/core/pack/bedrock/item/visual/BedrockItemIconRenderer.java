@@ -7,17 +7,18 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Transform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
-import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public final class BedrockItemIconRenderer {
     );
     private final JavaModelResolver models;
     private final JavaPackTextureSource textures;
+    private final Map<JavaModel, List<TextureData>> iconLayers = new IdentityHashMap<>();
     private JavaModel vanillaIconModel;
 
     public BedrockItemIconRenderer(JavaModelResources resources) {
@@ -40,27 +42,44 @@ public final class BedrockItemIconRenderer {
     }
 
     @Nullable
-    public BufferedImage render(ItemRenderTarget.Model target) throws IOException {
-        JavaModel model = target.resolve(this.models);
-        List<Texture> textures = this.resolveIconLayers(model);
-        if (textures == null || textures.isEmpty()) {
+    public BedrockTexture render(ItemRenderTarget.Model target) throws IOException {
+        List<TextureData> textures = this.analyze(target);
+        if (textures == null) {
             return null;
         }
-        List<BufferedImage> layers = new ArrayList<>(textures.size());
-        for (int index = 0; index < textures.size(); index++) {
-            Integer color = index < target.tints().size() ? this.textures.resolveTint(target.tints().get(index)) : WHITE;
-            BufferedImage image = this.textures.readStatic(textures.get(index), TextureUsage.ITEM);
-            if (image == null) {
-                return null;
-            }
-            // 先按各层 tint 染色再合成，未染色的 overlay 保持原色。
-            layers.add(color == 0xffffff ? image : ImageUtils.multiplyColor(image, color));
+        if (textures.size() == 1) {
+            return this.renderLayer(textures.getFirst(), target, 0);
         }
-        return ImageUtils.composite(layers);
+        List<BedrockTexture> layers = new ArrayList<>(textures.size());
+        for (int index = 0; index < textures.size(); index++) {
+            // 先按各层 tint 染色再合成，未染色的 overlay 保持原色。
+            layers.add(this.renderLayer(textures.get(index), target, index));
+        }
+        return BedrockTexture.composite(layers);
+    }
+
+    private BedrockTexture renderLayer(TextureData texture, ItemRenderTarget.Model target, int index) throws IOException {
+        int color = index < target.tints().size() ? this.textures.resolveTint(target.tints().get(index)) : WHITE;
+        return texture.staticTexture(color);
+    }
+
+    public boolean canRender(ItemRenderTarget.Model target) throws IOException {
+        return this.analyze(target) != null;
     }
 
     @Nullable
-    private List<Texture> resolveIconLayers(JavaModel model) throws IOException {
+    private List<TextureData> analyze(ItemRenderTarget.Model target) throws IOException {
+        JavaModel model = target.resolve(this.models);
+        if (this.iconLayers.containsKey(model)) {
+            return this.iconLayers.get(model);
+        }
+        List<TextureData> layers = this.resolveIconLayers(model);
+        this.iconLayers.put(model, layers);
+        return layers;
+    }
+
+    @Nullable
+    private List<TextureData> resolveIconLayers(JavaModel model) throws IOException {
         if (model.kind() != GeometryKind.GENERATED) {
             return null;
         }
@@ -74,12 +93,23 @@ public final class BedrockItemIconRenderer {
             }
         }
         List<Texture> layers = this.models.resolveLayers(model);
+        if (layers.isEmpty()) {
+            return null;
+        }
         for (Texture texture : layers) {
             if (texture.forceTranslucent()) {
                 return null;
             }
         }
-        return layers;
+        List<TextureData> data = new ArrayList<>(layers.size());
+        for (Texture texture : layers) {
+            TextureData layer = this.textures.read(texture, TextureUsage.ITEM);
+            if (layer.animation() != null) {
+                return null;
+            }
+            data.add(layer);
+        }
+        return data;
     }
 
     public boolean needsHandheldAttachable(JavaModel model) throws IOException {

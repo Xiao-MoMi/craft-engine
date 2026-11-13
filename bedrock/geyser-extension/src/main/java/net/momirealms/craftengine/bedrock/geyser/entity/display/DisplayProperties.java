@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
+import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector3f;
@@ -13,6 +14,7 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
 
 final class DisplayProperties {
     private final Identifier id;
+    private GeyserIntEntityProperty heldItemType;
     private GeyserIntEntityProperty shape;
     private GeyserDyeProperties dye;
     private Axes translation;
@@ -51,10 +53,16 @@ final class DisplayProperties {
         this.modelScale = this.axes(event, "model_size", 1);
         this.pitch = this.property(event, "pitch", 0);
         this.yaw = this.property(event, "yaw", 0);
+        // Geyser 切换载体后仍使用最初的属性管理器，因此所有载体必须保持相同的属性索引。
+        this.heldItemType = event.registerIntegerProperty(this.id, Identifier.of(BedrockHeldItemType.PROPERTY), 0, BedrockHeldItemType.SPEAR.id(), 0);
     }
 
     private Axes axes(GeyserDefineEntityPropertiesEvent event, String name, float initial) {
         return new Axes(this.property(event, name + "_x", initial), this.property(event, name + "_y", initial), this.property(event, name + "_z", initial));
+    }
+
+    void heldItemType(BatchPropertyUpdater batch, BedrockHeldItemType type) {
+        batch.update(this.heldItemType, type.id());
     }
 
     private GeyserFloatEntityProperty property(GeyserDefineEntityPropertiesEvent event, String name, float initial) {

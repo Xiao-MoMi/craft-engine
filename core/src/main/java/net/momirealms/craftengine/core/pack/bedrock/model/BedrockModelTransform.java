@@ -79,7 +79,7 @@ public final class BedrockModelTransform {
             }
             matrix.transformPosition(center);
             size.mul(scale);
-            Vector3f angles = bedrockAngles(cubeRotation.rotation(rotation.mul(local, local)));
+            Vector3f angles = rotationAngles(cubeRotation.rotation(rotation.mul(local, local)));
             cube.add("origin", VectorUtils.toJson(new Vector3f(center).sub(new Vector3f(size).mul(0.5f))));
             cube.add("size", VectorUtils.toJson(size));
             cube.add("pivot", VectorUtils.toJson(center));
@@ -87,7 +87,7 @@ public final class BedrockModelTransform {
         }
     }
 
-    private static Vector3f bedrockAngles(Matrix3d rotation) {
+    public static Vector3f rotationAngles(Matrix3dc rotation) {
         double cosY = Math.hypot(rotation.m00(), rotation.m01());
         double y = Math.atan2(-rotation.m02(), cosY);
         double x;

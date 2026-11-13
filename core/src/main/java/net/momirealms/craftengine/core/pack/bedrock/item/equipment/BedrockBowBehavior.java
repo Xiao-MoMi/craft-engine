@@ -12,11 +12,11 @@ import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconR
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.joml.Matrix4fc;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,12 +70,12 @@ final class BedrockBowBehavior extends BedrockEquipmentBehavior {
                 return null;
             }
             ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-            BufferedImage image = renderer.render(target);
+            BedrockTexture image = renderer.render(target);
             if (image == null) {
                 return null;
             }
             String texture = "textures/" + plan.id().namespace() + '/' + plan.id().value() + "/stage_" + i;
-            stages.add(new BedrockItemAttachables.Stage(target.resolve(models), image, texture, BedrockItemAttachables.useCondition(rule), transformation));
+            stages.add(new BedrockItemAttachables.Stage(target.resolve(models), image.image(), texture, BedrockItemAttachables.useCondition(rule), transformation));
         }
         // 全部阶段准备好以后才写入资源和单条注册映射，避免生成半套弓。
         for (BedrockItemAttachables.Stage stage : stages) {

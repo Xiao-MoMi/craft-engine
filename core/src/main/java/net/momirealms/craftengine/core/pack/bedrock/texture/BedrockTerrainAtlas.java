@@ -29,6 +29,12 @@ public final class BedrockTerrainAtlas {
     }
 
     public void write(TextureData data, int color, String tile, Path root) throws IOException {
+        JsonObject texture = new JsonObject();
+        texture.addProperty("textures", this.writeTexture(data, color, tile, root));
+        this.terrain.add(tile, texture);
+    }
+
+    private String writeTexture(TextureData data, int color, String tile, Path root) throws IOException {
         String path = "textures/" + tile;
         TextureAnimation animation = data.animation();
         int width = data.image().getWidth();
@@ -36,19 +42,20 @@ public final class BedrockTerrainAtlas {
         int size = Math.max(width, height);
         BufferedImage first;
         if (animation == null) {
-            first = color == 0xffffff ? data.image() : ImageUtils.multiplyColor(data.image(), color);
+            BedrockTexture texture = data.staticTexture(color);
+            if (width == height) {
+                return texture.write(root, path);
+            }
+            first = texture.image();
         } else {
             int interval = animation.sampleInterval(); // 所有帧时长的最大公约数
             int count = animation.duration() / interval;
             BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB); // 最终动画长条
-            BufferedImage frame = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); // 单帧临时画布
             int[] pixels = new int[width * height];
-            // 每层独立播放；插值预烘焙到 tick，避免不同时长的帧在 Bedrock 中变速。
-            for (int sample = 0; sample < count; sample++) {
-                animation.render(sample * interval, color, frame);
+            animation.forEachFrame(color, (sample, frame) -> {
                 frame.getRGB(0, 0, width, height, pixels, 0, width);
                 strip.setRGB(0, sample * size, width, height, pixels, 0, width);
-            }
+            });
             ImageUtils.writePng(strip, root.resolve(path + "_anim.png"));
             JsonObject flipbook = new JsonObject();
             flipbook.addProperty("atlas_tile", tile);
@@ -64,9 +71,7 @@ public final class BedrockTerrainAtlas {
             first = padded;
         }
         ImageUtils.writePng(first, root.resolve(path + ".png"));
-        JsonObject texture = new JsonObject();
-        texture.addProperty("textures", path);
-        this.terrain.add(tile, texture);
+        return path;
     }
 
     public void finish(Path root) throws IOException {
@@ -79,6 +84,7 @@ public final class BedrockTerrainAtlas {
         atlas.addProperty("padding", 8);
         atlas.addProperty("num_mip_levels", 4);
         atlas.add("texture_data", this.terrain);
+        Files.createDirectories(root.resolve(TERRAIN_TEXTURE_ATLAS).getParent());
         GsonHelper.writeJsonFile(atlas, root.resolve(TERRAIN_TEXTURE_ATLAS));
         GsonHelper.writeJsonFile(this.flipbooks, root.resolve(FLIPBOOK_TEXTURES));
     }

@@ -13,9 +13,9 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +126,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             return transparent(id, registration, context);
         }
         // 只有所有部件都能画成图标时才合成贴图，否则交给展示方块保留整组模型的变换。
-        BufferedImage icon = this.renderIcon(parts);
+        BedrockTexture icon = this.renderIcon(parts);
         if (icon != null) {
             return writeIcon(id, registration, icon, context);
         }
@@ -136,19 +136,19 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
     }
 
     @Nullable
-    private BufferedImage renderIcon(List<ItemBindingRule> parts) throws IOException {
-        List<BufferedImage> images = new ObjectArrayList<>(parts.size());
+    private BedrockTexture renderIcon(List<ItemBindingRule> parts) throws IOException {
+        List<BedrockTexture> images = new ObjectArrayList<>(parts.size());
         for (ItemBindingRule part : parts) {
             if (!part.transformations().isEmpty()) {
                 return null;
             }
-            BufferedImage image = this.renderer.render((ItemRenderTarget.Model) part.target());
+            BedrockTexture image = this.renderer.render((ItemRenderTarget.Model) part.target());
             if (image == null) {
                 return null;
             }
             images.add(image);
         }
-        return ImageUtils.composite(images);
+        return BedrockTexture.composite(images);
     }
 
     private void writeEquipment(BedrockItemPresentation plan, @Nullable Key headId,
@@ -235,12 +235,11 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
     }
 
     private static GeneratedItemVariant transparent(Key id, ItemBindingRule registration, BedrockItemGenerationContext context) throws IOException {
-        return writeIcon(id, registration, new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB), context);
+        return writeIcon(id, registration, new BedrockTexture(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)), context);
     }
 
-    private static GeneratedItemVariant writeIcon(Key id, ItemBindingRule registration, BufferedImage image, BedrockItemGenerationContext context) throws IOException {
-        String path = "textures/" + id.namespace() + '/' + id.value() + "/icon";
-        ImageUtils.writePng(image, context.root().resolve(path + ".png"));
+    private static GeneratedItemVariant writeIcon(Key id, ItemBindingRule registration, BedrockTexture image, BedrockItemGenerationContext context) throws IOException {
+        String path = image.write(context.root(), "textures/" + id.namespace() + '/' + id.value() + "/icon");
         return GeneratedItemVariant.icon(id, registration, path, false);
     }
 

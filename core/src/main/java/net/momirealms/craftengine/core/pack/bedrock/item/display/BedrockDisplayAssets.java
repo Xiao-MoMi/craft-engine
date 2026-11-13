@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockWeaponGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
@@ -250,7 +251,7 @@ final class BedrockDisplayAssets {
         return ranges.toString();
     }
 
-    void finish(boolean vanillaItems) throws IOException {
+    void finish() throws IOException {
         String emptyId = "geometry." + this.name + ".empty";
         this.geometryNames.addProperty("empty", emptyId);
         JsonObject empty = createObject("description", createObject("identifier", new JsonPrimitive(emptyId)));
@@ -259,8 +260,10 @@ final class BedrockDisplayAssets {
         emptyDescription.addProperty("visible_bounds_height", 4);
         emptyDescription.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
         JsonArray emptyBones = rig();
-        JsonObject handBone = bone("rightitem", "model_z");
-        emptyBones.add(handBone);
+        emptyBones.add(bone("held_z", "model_z"));
+        emptyBones.add(bone("held_y", "held_z"));
+        emptyBones.add(bone("held_x", "held_y"));
+        emptyBones.add(bone("rightitem", "held_x"));
         empty.add("bones", emptyBones);
         JsonArray geometries = new JsonArray();
         geometries.add(empty);
@@ -304,11 +307,6 @@ final class BedrockDisplayAssets {
             }
             rig.add("model_" + axis, bone);
         }
-        JsonObject hand = new JsonObject();
-        hand.add("position", VectorUtils.toJson(0, -8, 0));
-        hand.add("rotation", VectorUtils.toJson(90, 0, 0));
-        hand.add("scale", VectorUtils.toJson(2, 2, 2));
-        rig.add("rightitem", hand);
         this.animation("pose", rig);
         this.animate.add("pose");
         JsonObject description = new JsonObject();
@@ -322,23 +320,37 @@ final class BedrockDisplayAssets {
         description.add("scripts", BedrockDisplayInterpolation.scripts(this.animate));
         description.add("render_controllers", this.activeControllers);
         this.write("entity/" + this.name + ".entity.json", "1.10.0", "minecraft:client_entity", createObject("description", description));
-        if (vanillaItems) {
-            JsonObject heldDescription = new JsonObject();
-            heldDescription.addProperty("identifier", "craftengine:" + this.name + "_held");
-            heldDescription.addProperty("enable_attachables", true);
-            heldDescription.add("materials", materials);
-            heldDescription.add("textures", createObject("default", new JsonPrimitive("textures/items/apple")));
-            // 普通手持物品需要单几何载体，不能与 CE 模型的多几何渲染控制器共用实体定义。
-            heldDescription.add("geometry", createObject("default", new JsonPrimitive(emptyId)));
-            heldDescription.add("animations", createObject("pose", this.animationNames.get("pose")));
-            JsonArray heldAnimate = new JsonArray();
-            heldAnimate.add("pose");
-            heldDescription.add("scripts", BedrockDisplayInterpolation.scripts(heldAnimate));
-            JsonArray heldControllers = new JsonArray();
-            heldControllers.add("controller.render.default");
-            heldDescription.add("render_controllers", heldControllers);
-            this.write("entity/" + this.name + "_held.entity.json", "1.10.0", "minecraft:client_entity", createObject("description", heldDescription));
+        JsonObject heldDescription = new JsonObject();
+        heldDescription.addProperty("identifier", "craftengine:" + this.name + "_held");
+        heldDescription.addProperty("enable_attachables", true);
+        heldDescription.add("materials", materials);
+        heldDescription.add("textures", createObject("default", new JsonPrimitive("textures/items/apple")));
+        // 普通手持物品需要单几何载体，不能与 CE 模型的多几何渲染控制器共用实体定义。
+        heldDescription.add("geometry", createObject("default", new JsonPrimitive(emptyId)));
+        JsonObject heldAnimations = createObject("pose", this.animationNames.get("pose"));
+        heldDescription.add("animations", heldAnimations);
+        JsonArray heldAnimate = new JsonArray();
+        heldAnimate.add("pose");
+        for (BedrockHeldItemType type : BedrockHeldItemType.values()) {
+            JavaModel.Transform correction = BedrockHeldItemTransforms.correction(type);
+            JsonObject channels = new JsonObject();
+            JsonObject z = createObject("position", VectorUtils.toJson(correction.translation()));
+            z.add("rotation", VectorUtils.toJson(0, 0, correction.rotation().z));
+            channels.add("held_z", z);
+            channels.add("held_y", createObject("rotation", VectorUtils.toJson(0, correction.rotation().y, 0)));
+            JsonObject x = createObject("rotation", VectorUtils.toJson(correction.rotation().x, 0, 0));
+            x.add("scale", VectorUtils.toJson(correction.scale()));
+            channels.add("held_x", x);
+            String alias = "held_" + type.id();
+            this.animation(alias, channels);
+            heldAnimations.add(alias, this.animationNames.get(alias));
+            heldAnimate.add(createObject(alias, new JsonPrimitive("query.property('" + BedrockHeldItemType.PROPERTY + "') == " + type.id())));
         }
+        heldDescription.add("scripts", BedrockDisplayInterpolation.scripts(heldAnimate));
+        JsonArray heldControllers = new JsonArray();
+        heldControllers.add("controller.render.default");
+        heldDescription.add("render_controllers", heldControllers);
+        this.write("entity/" + this.name + "_held.entity.json", "1.10.0", "minecraft:client_entity", createObject("description", heldDescription));
         this.write("animations/" + this.name + ".animation.json", "1.10.0", "animations", this.animations);
         this.write("render_controllers/" + this.name + ".json", "1.10.0", "render_controllers", this.controllers);
     }

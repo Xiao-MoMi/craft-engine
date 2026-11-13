@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.IOException;
 import java.util.List;
 
 public record TextureAnimation(BufferedImage sheet,
@@ -33,6 +34,16 @@ public record TextureAnimation(BufferedImage sheet,
             interval = MiscUtils.gcd(interval, frame.time());
         }
         return interval;
+    }
+
+    public void forEachFrame(int color, FrameConsumer consumer) throws IOException {
+        int interval = this.sampleInterval();
+        BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
+        // 所有采样复用同一画布；消费者必须在回调内完成读取或复制。
+        for (int tick = 0; tick < this.duration; tick += interval) {
+            this.render(tick, color, image);
+            consumer.accept(tick / interval, image);
+        }
     }
 
     public void render(int tick, int color, BufferedImage target) {
@@ -76,5 +87,11 @@ public record TextureAnimation(BufferedImage sheet,
     }
 
     public record Frame(int index, int time) {
+    }
+
+    @FunctionalInterface
+    public interface FrameConsumer {
+
+        void accept(int index, BufferedImage image) throws IOException;
     }
 }

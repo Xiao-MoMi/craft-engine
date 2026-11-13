@@ -34,6 +34,7 @@ public final class JavaPackTextureSource {
     private final JavaResourcePack pack;
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
+    private final Map<Key, Map<Texture, IOException>> textureFailures = new HashMap<>();
     private final Map<Key, BufferedImage> paletteImages = new HashMap<>();
     private final Map<Key, TextureData> headSkins = new HashMap<>();
     private final Map<Key, TextureData> standaloneTextures = new HashMap<>();
@@ -88,12 +89,6 @@ public final class JavaPackTextureSource {
                 ((int) (channels.get(0) * 255) << 16) | ((int) (channels.get(1) * 255) << 8) | (int) (channels.get(2) * 255));
     }
 
-    @Nullable
-    public BufferedImage readStatic(Texture texture, TextureUsage usage) throws IOException {
-        TextureData data = this.read(texture, usage);
-        return data.animation() != null ? null : data.image();
-    }
-
     public TextureData read(Texture texture, TextureUsage usage) throws IOException {
         if (texture.standalone()) {
             return this.readStandalone(texture.sprite());
@@ -101,7 +96,8 @@ public final class JavaPackTextureSource {
         if (texture.skin()) {
             return this.readHeadSkin(texture.sprite());
         }
-        if (usage == TextureUsage.ITEM && this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11)) {
+        boolean useItemAtlas = usage == TextureUsage.ITEM && this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11);
+        if (useItemAtlas) {
             TextureData data = this.readFromAtlas(texture, ITEMS);
             if (data != null) {
                 return data;
@@ -109,9 +105,35 @@ public final class JavaPackTextureSource {
         }
         TextureData data = this.readFromAtlas(texture, BLOCKS);
         if (data == null) {
-            throw new IOException("No successfully loaded sprite " + texture.sprite() + " for " + usage);
+            throw this.textureFailure(texture, usage, useItemAtlas);
         }
         return data;
+    }
+
+    private IOException textureFailure(Texture texture, TextureUsage usage, boolean useItemAtlas) {
+        IOException itemFailure = useItemAtlas ? this.atlasFailure(texture, ITEMS) : null;
+        IOException blockFailure = this.atlasFailure(texture, BLOCKS);
+        String message = "No successfully loaded sprite " + texture.sprite() + " for " + usage;
+        if (itemFailure != null) {
+            message += "; " + itemFailure.getMessage();
+        }
+        if (blockFailure != null) {
+            message += "; " + blockFailure.getMessage();
+        }
+        IOException failure = new IOException(message);
+        if (itemFailure != null) {
+            failure.addSuppressed(itemFailure);
+        }
+        if (blockFailure != null) {
+            failure.addSuppressed(blockFailure);
+        }
+        return failure;
+    }
+
+    @Nullable
+    private IOException atlasFailure(Texture texture, Key atlas) {
+        Map<Texture, IOException> failures = this.textureFailures.get(atlas);
+        return failures == null ? null : failures.get(texture);
     }
 
     private TextureData readStandalone(Key texture) throws IOException {
@@ -124,10 +146,15 @@ public final class JavaPackTextureSource {
             if (image == null) {
                 throw new IOException("Missing standalone texture " + texture);
             }
-            TextureData data = new TextureData(image, null);
+            TextureData data = this.withVanillaReference(texture, this.pack.readResourceMetadata(ResourcePackUtils.texturePath(texture)), new TextureData(image, null));
             this.standaloneTextures.put(texture, data);
             return data;
         }
+    }
+
+    private TextureData withVanillaReference(Key resource, @Nullable JsonObject metadata, TextureData data) {
+        String reference = BedrockVanillaTextureReferences.resolve(this.pack, resource, metadata);
+        return reference == null ? data : new TextureData(data.image(), data.animation(), reference);
     }
 
     private TextureData readHeadSkin(Key skin) throws IOException {
@@ -157,12 +184,13 @@ public final class JavaPackTextureSource {
         if (atlasTextures.containsKey(texture)) {
             return atlasTextures.get(texture);
         }
-        Atlas atlas = this.atlas(atlasId);
         TextureData data;
         try {
-            data = this.load(texture, atlasId, atlas);
+            data = this.load(texture, atlasId, this.atlas(atlasId));
         } catch (IOException | RuntimeException e) {
-            // 未成功加载的 sprite 不参与图集查找；缓存失败结果，避免重复读取。
+            // 失败的 sprite 继续参与后续图集回退，所有候选失败时才汇总原因。
+            IOException failure = new IOException("Failed to load sprite " + texture.sprite() + " in atlas " + atlasId + ": " + e.getMessage(), e);
+            this.textureFailures.computeIfAbsent(atlasId, ignored -> new HashMap<>()).put(texture, failure);
             data = null;
         }
         atlasTextures.put(texture, data);
@@ -175,7 +203,11 @@ public final class JavaPackTextureSource {
 
         Atlas.TexturePalette palette = atlas.getTexturePalette(spriteId);
         if (palette != null) {
-            return this.readPalette(palette);
+            try {
+                return this.readPalette(palette);
+            } catch (IOException | RuntimeException e) {
+                throw new IOException("Failed to load palette texture " + ResourcePackUtils.texturePath(palette.resource()) + ": " + e.getMessage(), e);
+            }
         }
 
         Atlas.TextureRegion region = atlas.getTextureRegion(spriteId);
@@ -192,12 +224,25 @@ public final class JavaPackTextureSource {
             throw new IOException("Missing sprite " + spriteId + " in atlas " + atlasId);
         }
 
+        try {
+            return this.loadResource(resourceId, region);
+        } catch (IOException | RuntimeException e) {
+            throw new IOException("Failed to load texture " + ResourcePackUtils.texturePath(resourceId) + ": " + e.getMessage(), e);
+        }
+    }
+
+    private TextureData loadResource(Key resourceId, @Nullable Atlas.TextureRegion region) throws IOException {
         String texturePath = ResourcePackUtils.texturePath(resourceId);
-        JsonObject metadata = this.pack.readResourceMetadata(texturePath);
+        JsonObject metadata;
+        try {
+            metadata = this.pack.readResourceMetadata(texturePath);
+        } catch (IOException | RuntimeException e) {
+            throw new IOException("Failed to read texture metadata " + texturePath + ".mcmeta: " + e.getMessage(), e);
+        }
         BufferedImage image;
         try (InputStream input = this.pack.openResource(texturePath)) {
             if (input == null) {
-                throw new IOException("Missing texture " + resourceId + " for sprite " + spriteId);
+                throw new IOException("Missing texture " + resourceId);
             }
             image = ClientPngReader.read(input);
             if (image == null) {
@@ -206,7 +251,8 @@ public final class JavaPackTextureSource {
         }
 
         if (region == null) {
-            return JavaTextureAnimation.read(image, metadata, this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
+            TextureData data = JavaTextureAnimation.read(image, metadata, this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
+            return this.withVanillaReference(resourceId, metadata, data);
         }
 
         // unstitch 使用整张图片切片，不应用源图片的动画元数据。
@@ -218,7 +264,7 @@ public final class JavaPackTextureSource {
         int width = (int) Math.floor(rectangle.width() * scaleX);
         int height = (int) Math.floor(rectangle.height() * scaleY);
         if (width <= 0 || height <= 0 || x < 0 || y < 0 || x > image.getWidth() - width || y > image.getHeight() - height) {
-            throw new IOException("Invalid unstitch region for sprite " + spriteId);
+            throw new IOException("Invalid unstitch region for texture " + resourceId);
         }
         return new TextureData(image.getSubimage(x, y, width, height), null);
     }
@@ -226,7 +272,11 @@ public final class JavaPackTextureSource {
     private Atlas atlas(Key id) throws IOException {
         Atlas atlas = this.atlases.get(id);
         if (atlas == null) {
-            atlas = new Atlas(this.pack.readAtlas(id));
+            try {
+                atlas = new Atlas(this.pack.readAtlas(id));
+            } catch (IOException | RuntimeException e) {
+                throw new IOException("Failed to load atlas assets/" + id.namespace() + "/atlases/" + id.value() + ".json: " + e.getMessage(), e);
+            }
             this.atlases.put(id, atlas);
         }
         return atlas;
@@ -277,6 +327,8 @@ public final class JavaPackTextureSource {
                 if (input == null || (image = ClientPngReader.read(input)) == null) {
                     throw new IOException("Missing or invalid palette texture " + resource);
                 }
+            } catch (IOException | RuntimeException e) {
+                throw new IOException("Failed to load palette image " + ResourcePackUtils.texturePath(resource) + ": " + e.getMessage(), e);
             }
             this.paletteImages.put(resource, image);
         }

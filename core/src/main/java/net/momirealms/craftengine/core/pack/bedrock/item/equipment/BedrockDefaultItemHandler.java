@@ -12,11 +12,10 @@ import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlock
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
-import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
@@ -39,7 +38,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
             return contextual;
         }
         List<ItemBindingRule> rules = entry.definition().rules();
-        ItemRenderType type = ItemRenderType.classify(entry.definition(), this.resources);
+        ItemRenderType type = ItemRenderType.classify(entry.definition(), this.renderer);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(rules.size());
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);
@@ -128,22 +127,21 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
 
     private GeneratedItemVariant writeIcon(BedrockItemGenerationContext context, Key id, ItemBindingRule rule, List<ItemBindingRule> parts,
                                            List<JavaModel> models, boolean separateHandPoses) throws IOException {
-        List<BufferedImage> images = new ObjectArrayList<>(parts.size());
+        List<BedrockTexture> images = new ObjectArrayList<>(parts.size());
         for (ItemBindingRule part : parts) {
-            BufferedImage image = this.renderer.render((ItemRenderTarget.Model) part.target());
+            BedrockTexture image = this.renderer.render((ItemRenderTarget.Model) part.target());
             if (image == null) {
                 throw new UnsupportedOperationException("Model cannot be rendered as a static icon: " + part.sourcePath());
             }
             images.add(image);
         }
-        BufferedImage icon = ImageUtils.composite(images);
-        String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
-        ImageUtils.writePng(icon, context.root().resolve(texture + ".png"));
+        BedrockTexture icon = BedrockTexture.composite(images);
+        String texture = icon.write(context.root(), "textures/" + id.namespace() + '/' + id.value() + "/icon");
         boolean attachable = separateHandPoses || (!models.isEmpty() && this.renderer.needsHandheldAttachable(models.getFirst()));
         if (separateHandPoses) {
             BedrockItemAttachables.writeComposite(id, models, images, context.root());
         } else if (attachable) {
-            BedrockItemAttachables.write(id, models.getFirst(), icon, texture, context.root());
+            BedrockItemAttachables.write(id, models.getFirst(), icon.image(), texture, context.root());
         }
         return GeneratedItemVariant.icon(id, rule, texture, attachable);
     }

@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
@@ -48,13 +49,13 @@ public final class BedrockItemAttachables {
         attachment.write(root, null);
     }
 
-    static void writeComposite(Key id, List<JavaModel> models, List<BufferedImage> images, Path root) throws IOException {
+    static void writeComposite(Key id, List<JavaModel> models, List<BedrockTexture> images, Path root) throws IOException {
         BedrockItemAttachment attachment = new BedrockItemAttachment(id);
         JsonObject controllers = new JsonObject();
         for (int i = 0; i < models.size(); i++) {
             String alias = "part_" + i;
             String texture = "textures/" + id.namespace() + '/' + id.value() + "/" + alias;
-            BufferedImage image = images.get(i);
+            BufferedImage image = images.get(i).image();
             ImageUtils.writePng(image, root.resolve(texture + ".png"));
             addStaticPart(attachment, models.get(i), image, texture, i);
             // 所有部件同时可见，各自的动画只作用于本部件的骨骼。

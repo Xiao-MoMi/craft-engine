@@ -839,9 +839,15 @@ bedrock:
     #         y: -22
     #         layer: 3
     profiles: []
-  display:
-    # Regenerate the Bedrock pack and cedata, then restart Geyser to apply.
-    convert-vanilla-items: false
+  display-entity:
+    # Vanilla item IDs whose Java models are converted for item display entities.
+    # These items more closely match their Java Edition appearance than their Bedrock Edition counterparts.
+    # Vanilla items not listed here use approximate Bedrock held-item rendering.
+    # Example:
+    # vanilla-items:
+    #   - minecraft:apple
+    #   - minecraft:diamond_sword
+    vanilla-items: []
     convert-text: true
   resource-pack:
     # Resource pack name shown in the Bedrock client.

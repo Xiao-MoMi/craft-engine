@@ -1,10 +1,12 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
+import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -26,6 +28,8 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     private GeyserItemDisplays.Model model;
     private ItemData equipment = ItemData.AIR;
     private ItemData sentEquipment = ItemData.AIR;
+    private BedrockHeldItemType heldItemType = BedrockHeldItemType.NATIVE;
+    private BedrockHeldItemType sentHeldItemType;
     private int context;
     private int billboard;
     private final DisplayInterpolation transform = new DisplayInterpolation();
@@ -66,11 +70,13 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
         this.model = this.displays.resolve(translated);
         this.dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
         this.equipment = ItemData.AIR;
+        this.heldItemType = BedrockHeldItemType.NATIVE;
         if (this.model == null && translated != ItemData.AIR
                 && translated.getDefinition().getIdentifier().startsWith("minecraft:")) {
             this.model = this.displays.vanilla(this.session, stack);
             if (this.model != null && this.model.appearance(0).shape() == 0) {
                 this.equipment = translated;
+                this.heldItemType = GeyserHeldItemTypes.resolve(translated, this.session.getItemMappings().getMapping(stack).isBlock());
             }
             if (this.model != null) {
                 this.dyeColor = GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
@@ -138,16 +144,23 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
         boolean interpolationChanged = this.transform.dirty() || changeCarrier || this.sent == null;
         float renderYaw = this.billboard == 1 || this.billboard == 3 ? this.session.getPlayerEntity().getYaw() + 180 : this.yaw;
         float renderPitch = this.billboard == 2 || this.billboard == 3 ? -this.session.getPlayerEntity().getPitch() : this.pitch;
-        if (!interpolationChanged && !changeCarrier && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
+        boolean heldItemChanged = changeCarrier || this.heldItemType != this.sentHeldItemType;
+        if (!interpolationChanged && !changeCarrier && !heldItemChanged && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
             return;
         }
         DisplayPose previous = changeCarrier ? null : this.sent;
         boolean modelChanged = changeCarrier || appearance != this.sentAppearance;
         boolean dyeChanged = changeCarrier || this.sent == null || this.dyeColor != this.sentDyeColor;
         int interpolation = interpolationChanged ? this.transform.consume(!this.valid || changeCarrier || this.sent == null) : -1;
-        this.updatePropertiesBatched(batch -> this.carrier.write(batch, pose, previous, appearance, modelChanged, this.dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay()), false);
+        this.updatePropertiesBatched(batch -> {
+            this.carrier.write(batch, pose, previous, appearance, modelChanged, this.dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay());
+            if (heldItemChanged) {
+                this.carrier.heldItemType(batch, this.heldItemType);
+            }
+        }, false);
         this.sent = pose;
         this.sentAppearance = appearance;
+        this.sentHeldItemType = this.heldItemType;
         this.sentDyeColor = this.dyeColor;
         this.sentYaw = renderYaw;
         this.sentPitch = renderPitch;
@@ -255,6 +268,8 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     @Override
     public void addAdditionalSpawnData(AddEntityPacket packet) {
         super.addAdditionalSpawnData(packet);
+        packet.getMetadata().put(EntityDataTypes.WIDTH, this.getBoundingBoxWidth());
+        packet.getMetadata().put(EntityDataTypes.HEIGHT, this.getBoundingBoxHeight());
         packet.setRotation(Vector2f.ZERO);
         packet.setHeadRotation(0);
         packet.setBodyRotation(0);

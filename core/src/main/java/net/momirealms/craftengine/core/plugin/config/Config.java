@@ -300,8 +300,8 @@ public final class Config {
 
     private boolean bedrock$enable = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
-    private boolean bedrock$display$convert_vanilla_items;
-    private boolean bedrock$display$convert_text = true;
+    private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
+    private boolean bedrock$display_entity$convert_text = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
     private List<Pattern> bedrock$resource_pack$exclude_fonts = List.of();
@@ -361,10 +361,7 @@ public final class Config {
             if (defaultInputStream == null) {
                 throw new IOException("Embedded config.yml not found");
             }
-            YamlUpgradePipeline pipeline = yamlUpgradeBuilder()
-                    .updateComments(true)
-                    .deleteRemovedNodes(true)
-                    .build();
+            YamlUpgradePipeline pipeline = mainConfigUpgradePipeline();
             upgradedConfig = pipeline.upgrade(
                     loadedConfig,
                     this.yaml.load(defaultInputStream),
@@ -394,6 +391,15 @@ public final class Config {
 
     public static YamlUpgradeBuilder yamlUpgradeBuilder() {
         return YamlUpgradePipeline.builder().versionExtractor(ConfigVersionExtractor.INSTANCE);
+    }
+
+    static YamlUpgradePipeline mainConfigUpgradePipeline() {
+        return yamlUpgradeBuilder()
+                .addPatch(version -> Integer.parseInt(version) < 126, patch -> patch.relocate(
+                        YamlUtils.route("bedrock.display.convert-text"), YamlUtils.route("bedrock.display-entity.convert-text")))
+                .updateComments(true)
+                .deleteRemovedNodes(true)
+                .build();
     }
 
     private void updateConfigFileAttributes() throws IOException {
@@ -784,8 +790,8 @@ public final class Config {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
-        this.bedrock$display$convert_vanilla_items = config.getBoolean("bedrock.display.convert-vanilla-items", false);
-        this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
+        this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
+        this.bedrock$display_entity$convert_text = config.getBoolean("bedrock.display-entity.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$resource_pack$exclude_fonts = config.getPatterns("bedrock.resource-pack.exclude-fonts");
@@ -1731,12 +1737,12 @@ public final class Config {
         return instance.misc$multi_threaded_configuration_load;
     }
 
-    public static boolean bedrockConvertVanillaItems() {
-        return instance.bedrock$display$convert_vanilla_items;
+    public static Set<Key> bedrockVanillaDisplayItems() {
+        return instance.bedrock$display_entity$vanilla_items;
     }
 
     public static boolean bedrockConvertText() {
-        return instance.bedrock$display$convert_text;
+        return instance.bedrock$display_entity$convert_text;
     }
 
     public static boolean bedrockEnabled() {

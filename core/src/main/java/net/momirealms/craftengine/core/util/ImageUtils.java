@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Function;
 
 public final class ImageUtils {
 
@@ -93,21 +94,26 @@ public final class ImageUtils {
     }
 
     public static BufferedImage composite(List<BufferedImage> layers) {
+        return composite(layers, Function.identity());
+    }
+
+    public static <T> BufferedImage composite(List<T> layers, Function<? super T, BufferedImage> image) {
         if (layers.size() == 1) {
-            return layers.getFirst();
+            return image.apply(layers.getFirst());
         }
         int width = 1;
         int height = 1;
-        for (BufferedImage layer : layers) {
-            width = Math.max(width, layer.getWidth());
-            height = Math.max(height, layer.getHeight());
+        for (T layer : layers) {
+            BufferedImage source = image.apply(layer);
+            width = Math.max(width, source.getWidth());
+            height = Math.max(height, source.getHeight());
         }
         BufferedImage result = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = result.createGraphics();
         try {
             graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            for (BufferedImage layer : layers) {
-                graphics.drawImage(layer, 0, 0, width, height, null);
+            for (T layer : layers) {
+                graphics.drawImage(image.apply(layer), 0, 0, width, height, null);
             }
         } finally {
             graphics.dispose();

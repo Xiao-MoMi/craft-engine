@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPl
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.Key;
@@ -41,7 +42,7 @@ final class BedrockSpearBehavior extends BedrockEquipmentBehavior {
         if (!inventory.transformations().isEmpty() || !(inventory.target() instanceof ItemRenderTarget.Model target)) {
             return null;
         }
-        BufferedImage icon = renderer.render(target);
+        BedrockTexture icon = renderer.render(target);
         if (icon == null) {
             return null;
         }
@@ -68,15 +69,15 @@ final class BedrockSpearBehavior extends BedrockEquipmentBehavior {
         List<BufferedImage> stages = new ArrayList<>(hands.size());
         List<String> conditions = new ArrayList<>(hands.size());
         for (Map.Entry<ItemBindingRule, StringBuilder> hand : hands.entrySet()) {
-            BufferedImage image = renderer.render((ItemRenderTarget.Model) hand.getKey().target());
+            BedrockTexture image = renderer.render((ItemRenderTarget.Model) hand.getKey().target());
             if (image == null) {
                 return null;
             }
-            stages.add(image);
+            stages.add(image.image());
             conditions.add("(" + hand.getValue() + ") && (" + this.stageCondition(hand.getKey()) + ")");
         }
         String path = "textures/" + plan.id().namespace() + '/' + plan.id().value() + "/icon";
-        ImageUtils.writePng(icon, context.root().resolve(path + ".png"));
+        ImageUtils.writePng(icon.image(), context.root().resolve(path + ".png"));
         Bedrock2DSpearAttachables.write(plan, conditions, stages, context.root());
         return GeneratedItemVariant.icon(plan.id(), inventory, path, true);
     }

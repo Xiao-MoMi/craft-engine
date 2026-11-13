@@ -24,8 +24,13 @@ import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosi
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix3d;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -34,6 +39,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class BedrockItemDisplays {
+    private static final Key TRIDENT_ICON = Key.minecraft("item/trident");
+    private static final Transformation SPECIAL_MODEL_FLIP = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, -1, -1), new Quaternionf());
 
     private BedrockItemDisplays() {
     }
@@ -89,12 +96,10 @@ public final class BedrockItemDisplays {
             }
         }
         JsonObject result = new JsonObject();
-        if (Config.bedrockConvertVanillaItems()) {
-            result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
-            result.addProperty("vanilla_identifier", "craftengine:" + name + "_held");
-        }
+        result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
+        result.addProperty("vanilla_identifier", "craftengine:" + name + "_held");
         result.addProperty("convert_text", Config.bedrockConvertText());
-        assets.finish(Config.bedrockConvertVanillaItems());
+        assets.finish();
         result.addProperty("identifier", "craftengine:" + name);
         result.add("items", items);
         result.add("appearances", appearances);
@@ -105,15 +110,19 @@ public final class BedrockItemDisplays {
                                       Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
         JsonObject items = new JsonObject();
         Map<JsonArray, Integer> indices = new HashMap<>();
+        Set<Key> selected = Config.bedrockVanillaDisplayItems();
         for (Map.Entry<Key, JsonObject> entry : resources.pack().vanillaItemDefinitions().entrySet()) {
             JsonArray contexts = new JsonArray();
-            List<List<Part>> converted = new ArrayList<>(ItemDisplayContext.values().length);
+            List<List<Part>> converted = List.of();
             try {
-                for (ItemDisplayContext context : ItemDisplayContext.values()) {
-                    converted.add(vanillaParts(resources, entry.getValue().getAsJsonObject("model"), context, List.of()));
+                if (selected.contains(entry.getKey())) {
+                    converted = new ArrayList<>(ItemDisplayContext.values().length);
+                    for (ItemDisplayContext context : ItemDisplayContext.values()) {
+                        converted.add(vanillaParts(resources, entry.getValue().getAsJsonObject("model"), context, List.of()));
+                    }
                 }
             } catch (UnsupportedOperationException | IOException exception) {
-                converted.clear();
+                converted = List.of();
             }
             for (ItemDisplayContext context : ItemDisplayContext.values()) {
                 if (!converted.isEmpty()) {
@@ -126,28 +135,46 @@ public final class BedrockItemDisplays {
                     contexts.add(index);
                     continue;
                 }
-                Key model = vanillaModel(entry.getValue().getAsJsonObject("model"), context);
-                Map<DisplayPosition, JavaModel.Transform> display = model == null ? Map.of() : resources.models().resolveVanillaDisplay(model);
-                JavaModel.Transform transform = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY
-                        : display.getOrDefault(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)), JavaModel.Transform.IDENTITY);
-                boolean mirrored = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
-                int side = mirrored ? -1 : 1;
-                JsonArray pose = new JsonArray();
-                pose.add(0);
-                pose.add(VectorUtils.toJson(-side * transform.translation().x + 0.0f, transform.translation().y, transform.translation().z));
-                pose.add(VectorUtils.toJson(-transform.rotation().x + 0.0f, -side * transform.rotation().y + 0.0f, side * transform.rotation().z + 0.0f));
-                pose.add(VectorUtils.toJson(transform.scale()));
-                Integer index = indices.get(pose);
-                if (index == null) {
-                    index = appearances.size();
-                    appearances.add(pose);
-                    indices.put(pose, index);
-                }
-                contexts.add(index);
+                contexts.add(heldAppearance(resources, entry.getValue().getAsJsonObject("model"), context, indices, appearances));
             }
             items.add(entry.getKey().asString(), contexts);
         }
         return items;
+    }
+
+    private static int heldAppearance(JavaModelResources resources, JsonObject node, ItemDisplayContext context,
+                                      Map<JsonArray, Integer> indices, JsonArray appearances) throws IOException {
+        List<Transformation> transforms = new ArrayList<>();
+        Key model = vanillaModel(node, context, transforms, resources.pack().version());
+        Map<DisplayPosition, JavaModel.Transform> display = model == null ? Map.of() : resources.models().resolveVanillaDisplay(model);
+        JavaModel.Transform transform = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY
+                : display.getOrDefault(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)), JavaModel.Transform.IDENTITY);
+        boolean mirrored = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+        int side = mirrored ? -1 : 1;
+        JsonArray pose = new JsonArray();
+        pose.add(0);
+        pose.add(VectorUtils.toJson(-side * transform.translation().x + 0.0f, transform.translation().y, transform.translation().z));
+        pose.add(VectorUtils.toJson(-transform.rotation().x + 0.0f, -side * transform.rotation().y + 0.0f, side * transform.rotation().z + 0.0f));
+        pose.add(VectorUtils.toJson(transform.scale()));
+        if (!transforms.isEmpty()) {
+            float radians = (float) (Math.PI / 180);
+            Matrix4f coordinates = new Matrix4f().translation(8, -8, -8).scale(-16, 16, 16);
+            Matrix4f local = new Matrix4f(coordinates).mul(BedrockModelTransform.compose(transforms)).mul(new Matrix4f(coordinates).invert());
+            Matrix4f matrix = new Matrix4f().translation(-side * transform.translation().x, transform.translation().y, transform.translation().z)
+                    .rotateXYZ(transform.rotation().x * radians, -side * transform.rotation().y * radians, -side * transform.rotation().z * radians)
+                    .scale(transform.scale()).mul(local);
+            Vector3f rotation = BedrockModelTransform.rotationAngles(new Matrix3d().rotation(matrix.getUnnormalizedRotation(new Quaternionf())).transpose()).negate();
+            pose.set(1, VectorUtils.toJson(matrix.getTranslation(new Vector3f())));
+            pose.set(2, VectorUtils.toJson(rotation));
+            pose.set(3, VectorUtils.toJson(matrix.getScale(new Vector3f())));
+        }
+        Integer index = indices.get(pose);
+        if (index == null) {
+            index = appearances.size();
+            appearances.add(pose);
+            indices.put(pose, index);
+        }
+        return index;
     }
 
     private static List<Part> vanillaParts(JavaModelResources resources, JsonObject node, ItemDisplayContext context,
@@ -232,15 +259,30 @@ public final class BedrockItemDisplays {
     }
 
     @Nullable
-    private static Key vanillaModel(JsonObject node, ItemDisplayContext context) {
+    private static Key vanillaModel(JsonObject node, ItemDisplayContext context, List<Transformation> transforms, MinecraftVersion version) {
+        if (node.has("transformation")) {
+            transforms.add(Transformation.fromJson(node.get("transformation")));
+        }
         String type = node.get("type").getAsString();
         switch (type) {
             case "minecraft:model", "model":
-                return Key.of(node.get("model").getAsString());
+                Key model = Key.of(node.get("model").getAsString());
+                if (model.equals(TRIDENT_ICON)) {
+                    // 图标分支仍由原生三叉戟几何承载，保留其朝上的基准，不能切回未翻转的特殊模型坐标。
+                    transforms.add(SPECIAL_MODEL_FLIP);
+                }
+                return model;
             case "minecraft:special", "special":
+                String special = node.getAsJsonObject("model").get("type").getAsString().replace("minecraft:", "");
+                if (!special.equals("shield") && !special.equals("trident")) {
+                    // 其它原生特殊模型尚未还原到 Java 局部坐标，继续使用原生基准，避免重复应用其内置姿态。
+                    transforms.clear();
+                } else if (version.isBelow(MinecraftVersion.V26_1)) {
+                    transforms.add(SPECIAL_MODEL_FLIP);
+                }
                 return Key.of(node.get("base").getAsString());
             case "minecraft:condition", "condition":
-                return vanillaModel(node.getAsJsonObject("on_false"), context);
+                return vanillaModel(node.getAsJsonObject("on_false"), context, transforms, version);
             case "minecraft:select", "select":
                 String property = node.get("property").getAsString();
                 String value = switch (property) {
@@ -254,16 +296,16 @@ public final class BedrockItemDisplays {
                         JsonElement when = branch.get("when");
                         if ((when.isJsonPrimitive() && when.getAsString().equals(value))
                                 || (when.isJsonArray() && when.getAsJsonArray().contains(new JsonPrimitive(value)))) {
-                            return vanillaModel(branch.getAsJsonObject("model"), context);
+                            return vanillaModel(branch.getAsJsonObject("model"), context, transforms, version);
                         }
                     }
                 }
-                return node.has("fallback") ? vanillaModel(node.getAsJsonObject("fallback"), context) : null;
+                return node.has("fallback") ? vanillaModel(node.getAsJsonObject("fallback"), context, transforms, version) : null;
             case "minecraft:range_dispatch", "range_dispatch":
-                return node.has("fallback") ? vanillaModel(node.getAsJsonObject("fallback"), context) : null;
+                return node.has("fallback") ? vanillaModel(node.getAsJsonObject("fallback"), context, transforms, version) : null;
             case "minecraft:composite", "composite":
                 JsonArray models = node.getAsJsonArray("models");
-                return models.isEmpty() ? null : vanillaModel(models.get(0).getAsJsonObject(), context);
+                return models.isEmpty() ? null : vanillaModel(models.get(0).getAsJsonObject(), context, transforms, version);
             default:
                 return null;
         }

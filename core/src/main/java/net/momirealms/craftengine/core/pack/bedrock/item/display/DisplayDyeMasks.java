@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ImageUtils;
@@ -67,7 +66,7 @@ record DisplayDyeMasks(TextureData texture, BitSet coverage) {
         int[] source = new int[width * height];
         Int2LongOpenHashMap frequencies = new Int2LongOpenHashMap();
         // 只统计可染色面采样的非透明像素。动画共用一个调色板，插值帧也参与分组。
-        BedrockItemTextures.forEachFrame(this.texture, WHITE, (index, frame) -> {
+        this.texture.forEachFrame(WHITE, (index, frame) -> {
             frame.getRGB(0, 0, width, height, source, 0, width);
             for (int i = this.coverage.nextSetBit(0); i >= 0; i = this.coverage.nextSetBit(i + 1)) {
                 if (source[i] >>> 24 != 0) {
@@ -88,7 +87,7 @@ record DisplayDyeMasks(TextureData texture, BitSet coverage) {
         BufferedImage mask = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         int[] pixels = ((DataBufferInt) mask.getRaster().getDataBuffer()).getData();
         int[] shades = new int[source.length];
-        BedrockItemTextures.forEachFrame(this.texture, WHITE, (index, frame) -> {
+        this.texture.forEachFrame(WHITE, (index, frame) -> {
             frame.getRGB(0, 0, width, height, source, 0, width);
             for (int i = this.coverage.nextSetBit(0); i >= 0; i = this.coverage.nextSetBit(i + 1)) {
                 shades[i] = palette.get(source[i] & 0xffffff);
