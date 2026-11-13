@@ -18,4 +18,7 @@ public interface MessageTranslatorProxy {
 
     @FieldGetter(name = "RENDERER", isStatic = true)
     Object renderer();
+
+    @MethodInvoker(name = "componentFromNbtTag", isStatic = true)
+    Object componentFromNbtTag(Object tag);
 }

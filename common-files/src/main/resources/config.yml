@@ -805,6 +805,9 @@ client-optimization:
 
 bedrock:
   enable: true
+  scoreboard:
+    enable: true
+    profiles: []
   display:
     # Regenerate the Bedrock pack and cedata, then restart Geyser to apply.
     convert-vanilla-items: false

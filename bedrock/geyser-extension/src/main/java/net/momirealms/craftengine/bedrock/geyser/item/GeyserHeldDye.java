@@ -31,8 +31,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
 
     public static void install(GeyserSession session, GeyserDyeProperties main, GeyserDyeProperties off) {
         GeyserHeldDye handler = new GeyserHeldDye(session, main, off);
-        session.getUpstream().getSession().getPeer().getChannel().pipeline()
-                .addBefore(session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-held-dye", handler);
+        session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-held-dye", handler);
         session.executeInEventLoop(handler::syncOwnHands);
     }
 
@@ -78,8 +77,7 @@ public final class GeyserHeldDye extends ChannelDuplexHandler {
         if (id == this.session.getPlayerEntity().geyserId()) {
             return;
         }
-        int color = item != null && item.getTag() != null && item.getTag().containsKey("customColor")
-                ? item.getTag().getInt("customColor") & 0xffffff : -1;
+        int color = item != null && item.getTag() != null && item.getTag().containsKey("customColor") ? item.getTag().getInt("customColor") & 0xffffff : -1;
         // 入场包先送出，再同步该实体的颜色。后续切换到未染色物品同样要清除旧值。
         this.session.executeInEventLoop(() -> {
             Entity entity = this.session.getEntityCache().getEntityByGeyserId(id);

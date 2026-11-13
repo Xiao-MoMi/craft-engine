@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
+import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarProfiles;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphs;
 import net.momirealms.craftengine.bedrock.geyser.translation.GeyserLanguageData;
 import net.momirealms.craftengine.bedrock.geyser.translation.GeyserTranslations;
@@ -23,14 +24,16 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY);
+    private final SidebarProfiles scoreboard;
     private final JsonObject items;
     private final boolean convertText;
     private final JsonObject blocks;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
 
-    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages) {
+    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard) {
+        this.scoreboard = scoreboard;
         this.items = items;
         JsonObject displays = items == null ? null : items.getAsJsonObject("item_displays");
         this.convertText = displays != null && displays.has("convert_text") && displays.get("convert_text").getAsBoolean();
@@ -48,7 +51,7 @@ public final class GeyserExtensionData {
             JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK);
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
-            return new GeyserExtensionData(items, blocks, glyphs, languages);
+            return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
         }
@@ -88,6 +91,10 @@ public final class GeyserExtensionData {
 
     public boolean convertText() {
         return this.convertText;
+    }
+
+    public SidebarProfiles scoreboard() {
+        return this.scoreboard;
     }
 
     public GeyserGlyphData glyphs() {

@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanW
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplays;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
@@ -61,6 +62,7 @@ public final class BedrockPackGenerator {
             BedrockFontGenerator.write(resources, root);
             // 容器
             BedrockGuiGenerator.write(resources, root);
+            BedrockSidebarGenerator.write(resources, root);
 
             // 元数据
             JsonObject manifest = manifest();

@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.item.network.encrypt.ChaCha20;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
 import net.momirealms.craftengine.core.item.network.encrypt.Xor;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarConfig;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.HttpClientManager;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
@@ -301,6 +302,7 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
     private boolean bedrock$enable = true;
+    private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private boolean bedrock$display$convert_vanilla_items;
     private boolean bedrock$display$convert_text = true;
     private String bedrock$resource_pack$name;
@@ -875,6 +877,13 @@ public final class Config {
         // bedrock support
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
+        }
+        try {
+            Object scoreboard = config.getValue("bedrock.scoreboard");
+            this.bedrock$scoreboard = BedrockSidebarConfig.fromConfig(ConfigSection.of("bedrock.scoreboard", scoreboard == null ? Map.of() : scoreboard));
+        } catch (KnownResourceException e) {
+            e.setFilePath(this.configFilePath);
+            throw new IllegalStateException(TranslationManager.message("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
         }
         this.bedrock$display$convert_vanilla_items = config.getBoolean("bedrock.display.convert-vanilla-items", false);
         this.bedrock$display$convert_text = config.getBoolean("bedrock.display.convert-text", true);
@@ -1576,6 +1585,10 @@ public final class Config {
 
     public static String packDescription() {
         return instance.resource_pack$description;
+    }
+
+    public static BedrockSidebarConfig bedrockScoreboard() {
+        return instance.bedrock$scoreboard;
     }
 
     public static String bedrockPackName() {

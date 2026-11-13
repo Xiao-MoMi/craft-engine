@@ -12,10 +12,13 @@ public final class ContainerTitleCodec {
     }
 
     public static String encode(int rows, List<String> layers) {
+        return encode(ContainerTitleLayout.MARKER + rows + '/', layers);
+    }
+
+    public static String encode(String marker, List<String> layers) {
         if (layers.size() > MAX_BYTES / ENTRY_BYTES) {
             throw new UnsupportedOperationException("Title table exceeds protocol capacity");
         }
-        String marker = ContainerTitleLayout.MARKER + rows + '/';
         StringBuilder countBuilder = new StringBuilder(COUNT_BYTES).append('N');
         appendNumber(countBuilder, layers.size());
         String count = countBuilder.append(':').toString();

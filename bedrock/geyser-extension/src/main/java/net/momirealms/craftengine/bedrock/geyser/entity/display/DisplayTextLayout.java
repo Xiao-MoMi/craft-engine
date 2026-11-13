@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 record DisplayTextLayout(List<Line> lines, int width) {
+
     static DisplayTextLayout wrap(String text, int maxWidth) {
         List<Line> lines = new ArrayList<>();
         StringBuilder line = new StringBuilder();
@@ -15,15 +16,15 @@ record DisplayTextLayout(List<Line> lines, int width) {
         boolean bold = false;
         for (int index = 0; index < text.length(); index++) {
             char character = text.charAt(index);
-            if (character == '\u00a7' && index + 1 < text.length()) {
+            if (character == '§' && index + 1 < text.length()) {
                 char code = text.charAt(++index);
                 if (code == 'r' || "0123456789abcdef".indexOf(code) >= 0) {
                     format.setLength(0);
                     bold = false;
                 }
                 bold |= code == 'l';
-                format.append('\u00a7').append(code);
-                line.append('\u00a7').append(code);
+                format.append('§').append(code);
+                line.append('§').append(code);
                 continue;
             }
             int advance = SignUtils.getCharacterWidth(character) + (bold ? 1 : 0);

@@ -21,8 +21,12 @@ public final class ContainerTitleLayout {
     }
 
     public List<List<Run>> layout(List<GuiTitlePart> parts) {
+        return this.layout(parts, false);
+    }
+
+    public List<List<Run>> layout(List<GuiTitlePart> parts, boolean force) {
         // 没有需要映射的自定义字形时，交给原生标题渲染。
-        if (!this.hasCustomGlyph(parts)) {
+        if (!force && !this.hasCustomGlyph(parts)) {
             return List.of();
         }
         List<Layer> layers = new ArrayList<>();
@@ -92,6 +96,23 @@ public final class ContainerTitleLayout {
             result.add(layer.runs);
         }
         return result;
+    }
+
+    public int width(List<GuiTitlePart> parts) {
+        double width = 0;
+        for (GuiTitlePart part : parts) {
+            Map<Integer, FontGlyph> font = this.fonts.get(part.font());
+            for (int offset = 0; offset < part.text().length();) {
+                int codepoint = part.text().codePointAt(offset);
+                offset += Character.charCount(codepoint);
+                FontGlyph glyph = font == null ? null : font.get(codepoint);
+                if (glyph == null) {
+                    throw new UnsupportedOperationException("Unknown glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
+                }
+                width += glyph.advance() + (glyph.visible() && (part.decorations() & 2) != 0 ? 1 : 0);
+            }
+        }
+        return Math.max(0, (int) Math.ceil(width));
     }
 
     private static int minimumLayer(List<Layer> layers, double inkStart, double inkEnd) {

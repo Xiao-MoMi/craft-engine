@@ -13,6 +13,8 @@ import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManagerImpl;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
+import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarManager;
+import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarCommand;
 import net.momirealms.craftengine.bedrock.geyser.translation.GeyserLanguageManager;
 import org.geysermc.event.PostOrder;
 import org.geysermc.event.subscribe.Subscribe;
@@ -30,6 +32,8 @@ import java.nio.file.Path;
 public final class CraftEngineGeyserExtension implements Extension {
     private static CraftEngineGeyserExtension instance;
 
+    private GeyserSidebarManager sidebarManager;
+    private SidebarCommand sidebarCommand;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
@@ -45,6 +49,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
         instance = this;
+        this.sidebarCommand = new SidebarCommand(this);
         this.config = new GeyserConfig(this.dataFolder(), this.logger());
         this.config.load();
         try {
@@ -76,6 +81,10 @@ public final class CraftEngineGeyserExtension implements Extension {
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
         this.itemDisplays.install();
+        if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
+            this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
+            this.sidebarManager.install();
+        }
         if (this.extensionData.convertText()) {
             this.textDisplayManager = new GeyserTextDisplayManager();
             this.textDisplayManager.install();
@@ -93,7 +102,16 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
+    public void onDefineCommands(GeyserDefineCommandsEvent event) {
+        this.sidebarCommand.register(event);
+    }
+
+    @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
+        this.sidebarCommand.disconnect(event.connection());
+        if (this.sidebarManager != null) {
+            this.sidebarManager.disconnect(event.connection());
+        }
         if (this.textDisplayManager != null) {
             this.textDisplayManager.disconnect(event.connection());
         }
@@ -103,6 +121,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        if (this.sidebarManager != null) {
+            this.sidebarManager.uninstall();
+        }
         if (this.customPayloads != null) {
             this.customPayloads.uninstall();
         }
@@ -165,6 +186,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public static CraftEngineGeyserExtension instance() {
         return instance;
+    }
+
+    public GeyserSidebarManager sidebarManager() {
+        return this.sidebarManager;
     }
 
     public GeyserConfig config() {

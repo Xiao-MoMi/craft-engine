@@ -9,6 +9,7 @@ public final class BedrockPackFiles {
             RegistrationPlanKind.ITEM.file(),
             RegistrationPlanKind.BLOCK.file(),
             BedrockPackLayout.TRANSLATIONS,
+            BedrockPackLayout.SCOREBOARD,
             BedrockPackLayout.GLYPHS
     );
 

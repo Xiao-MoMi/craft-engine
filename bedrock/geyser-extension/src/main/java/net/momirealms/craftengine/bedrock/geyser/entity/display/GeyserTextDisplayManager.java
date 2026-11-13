@@ -18,7 +18,6 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.Clie
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("UnstableApiUsage")
 public final class GeyserTextDisplayManager extends PacketTranslator<ClientboundAddEntityPacket> {
     private final Map<GeyserSession, Long2ObjectLinkedOpenHashMap<DebugShape>> pending = new ConcurrentHashMap<>();
     private PacketTranslator<ClientboundAddEntityPacket> original;
