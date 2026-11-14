@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item.setting;
 
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
+import net.momirealms.craftengine.core.util.CustomSettingTypeRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class CustomItemSettingType<T> {
+    private static final CustomSettingTypeRegistry REGISTRY = new CustomSettingTypeRegistry("item");
     private static final List<CustomItemSettingType<?>> TYPES = new ArrayList<>();
     private static volatile CustomItemSettingType<?>[] frozenTypes;
     private final int id;
@@ -23,10 +25,7 @@ public final class CustomItemSettingType<T> {
         this.dataProcessor = dataProcessor;
         this.clientBoundDataProcessor = clientBoundDataProcessor;
         synchronized (CustomItemSettingType.class) {
-            if (frozenTypes != null) {
-                throw new IllegalStateException("Custom item setting types must be registered before item configuration loading");
-            }
-            this.id = TYPES.size();
+            this.id = REGISTRY.register();
             TYPES.add(this);
         }
     }
@@ -49,15 +48,12 @@ public final class CustomItemSettingType<T> {
         if (frozenTypes == null) {
             frozenTypes = TYPES.toArray(new CustomItemSettingType<?>[0]);
             TYPES.clear();
+            REGISTRY.freeze();
         }
     }
 
     static Object[] newDataArray() {
-        CustomItemSettingType<?>[] types = frozenTypes;
-        if (types == null) {
-            throw new IllegalStateException("Custom item setting types must be frozen before creating item settings");
-        }
-        return new Object[types.length];
+        return REGISTRY.newDataArray();
     }
 
     static CustomItemSettingType<?> byId(int id) {

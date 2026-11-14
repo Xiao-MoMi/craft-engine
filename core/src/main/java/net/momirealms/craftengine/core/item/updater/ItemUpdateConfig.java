@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.item.updater;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.processor.ItemVersionProcessor;
 import net.momirealms.sparrow.nbt.NumericTag;
 import net.momirealms.sparrow.nbt.Tag;
@@ -26,7 +27,7 @@ public final class ItemUpdateConfig {
     }
 
     public int maxVersion() {
-        return maxVersion;
+        return this.maxVersion;
     }
 
     public ItemUpdateResult update(Item item, Supplier<ItemBuildContext> context) {
@@ -39,16 +40,22 @@ public final class ItemUpdateConfig {
             return new ItemUpdateResult(item, false, false);
         }
         ItemBuildContext buildContext = context.get();
-        Item orginalItem = item;
-        buildContext.setItem(orginalItem);
+        Item originalItem = item;
+        buildContext.setItem(originalItem);
         for (Version version : this.versions) {
             if (currentVersion < version.version) {
                 version.apply(buildContext);
             }
         }
         item = buildContext.item();
-        item.setTag(this.maxVersion, ItemVersionProcessor.VERSION_TAG);
-        return new ItemUpdateResult(item, orginalItem != item, true);
+        int finalVersion = this.maxVersion;
+        ItemDefinition definition = item.getDefinitionOrNull();
+        if (definition != null && !definition.isVanillaItem()) {
+            ItemUpdateConfig updater = definition.updater().orElse(null);
+            finalVersion = updater != null ? updater.maxVersion() : 0;
+        }
+        item.setTag(finalVersion, ItemVersionProcessor.VERSION_TAG);
+        return new ItemUpdateResult(item, originalItem != item, true);
     }
 
     public record Version(int version, ItemUpdater[] updaters) implements Comparable<Version> {
