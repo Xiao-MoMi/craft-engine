@@ -362,6 +362,8 @@ item:
     drop: false
     pick-up: false
     attack: false
+    join: -1 # Delay in ticks after joining; -1 disables, 0 updates immediately
+    quit: false
 
   # Decide the starting value for automatic custom model data assignment.
   custom-model-data-starting-value:

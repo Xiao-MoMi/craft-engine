@@ -53,6 +53,7 @@ import net.momirealms.craftengine.core.world.context.InteractEntityContext;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundContainerSetDataPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ServerboundUseItemOnPacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.ContainerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionHandProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.InteractionResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
@@ -86,8 +87,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Supplier;
 
 public final class ItemEventListener implements Listener {
+    private static final int PLAYER_INVENTORY_SLOT_COUNT = 41;
     private final BukkitCraftEngine plugin;
     private final BukkitItemManager itemManager;
 
@@ -923,6 +926,71 @@ public final class ItemEventListener implements Listener {
     关于物品更新器
 
      */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        int delay = Config.triggerUpdateJoin();
+        if (delay < 0) {
+            return;
+        }
+        BukkitServerPlayer player = BukkitAdaptor.adapt(event.getPlayer());
+        if (player == null) {
+            return;
+        }
+        if (delay == 0) {
+            this.updateInventoryOnJoin(player);
+        } else {
+            this.plugin.scheduler().platform().runLater(() -> this.updateInventoryOnJoin(player), null, delay, player);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        if (!Config.triggerUpdateQuit()) {
+            return;
+        }
+        BukkitServerPlayer player = BukkitAdaptor.adapt(event.getPlayer());
+        if (player == null) {
+            return;
+        }
+        this.updatePlayerInventory(player);
+    }
+
+    private void updateInventoryOnJoin(BukkitServerPlayer player) {
+        if (!player.isOnline() || !this.updatePlayerInventory(player)) {
+            return;
+        }
+        Object minecraftPlayer = player.minecraftPlayer();
+        Object inventoryMenu = PlayerProxy.INSTANCE.getInventoryMenu(minecraftPlayer);
+        AbstractContainerMenuProxy.INSTANCE.broadcastChanges(inventoryMenu);
+        Object containerMenu = PlayerProxy.INSTANCE.getContainerMenu(minecraftPlayer);
+        if (containerMenu != inventoryMenu) {
+            AbstractContainerMenuProxy.INSTANCE.broadcastChanges(containerMenu);
+        }
+    }
+
+    private boolean updatePlayerInventory(BukkitServerPlayer player) {
+        Object minecraftPlayer = player.minecraftPlayer();
+        Object inventory = PlayerProxy.INSTANCE.getInventory(minecraftPlayer);
+        Supplier<ItemBuildContext> contextSupplier = () -> ItemBuildContext.of(player);
+        boolean updated = false;
+        for (int slot = 0; slot < PLAYER_INVENTORY_SLOT_COUNT; slot++) {
+            Object itemStack = ContainerProxy.INSTANCE.getItem(inventory, slot);
+            if (ItemStackProxy.INSTANCE.isEmpty(itemStack)) {
+                continue;
+            }
+            Item item = this.itemManager.wrap(itemStack);
+            ItemUpdateResult result = this.itemManager.updateItem(item, contextSupplier);
+            if (result.updated()) {
+                ContainerProxy.INSTANCE.setItem(inventory, slot, result.finalItem().minecraftItem());
+                updated = true;
+            }
+        }
+        if (updated) {
+            ContainerProxy.INSTANCE.setChanged(inventory);
+        }
+        return updated;
+    }
+
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onDropItem(PlayerDropItemEvent event) {
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(event.getPlayer());

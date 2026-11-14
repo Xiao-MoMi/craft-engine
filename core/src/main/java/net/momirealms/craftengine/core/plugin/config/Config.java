@@ -263,6 +263,8 @@ public final class Config {
     private boolean item$update_triggers$click_in_inventory;
     private boolean item$update_triggers$drop;
     private boolean item$update_triggers$pick_up;
+    private int item$update_triggers$join = -1;
+    private boolean item$update_triggers$quit;
     private int item$custom_model_data_starting_value$default;
     private Map<Key, Integer> item$custom_model_data_starting_value$overrides;
     private Map<Key, Integer> item$break_power;
@@ -613,6 +615,8 @@ public final class Config {
         this.item$update_triggers$click_in_inventory = config.getBoolean("item.update-triggers.click-in-inventory", false);
         this.item$update_triggers$drop = config.getBoolean("item.update-triggers.drop", false);
         this.item$update_triggers$pick_up = config.getBoolean("item.update-triggers.pick-up", false);
+        this.item$update_triggers$join = config.getInt("item.update-triggers.join", -1);
+        this.item$update_triggers$quit = config.getBoolean("item.update-triggers.quit", false);
         this.item$custom_model_data_starting_value$default = config.getInt("item.custom-model-data-starting-value.default", 10000);
         this.item$always_use_item_model = config.getBoolean("item.always-use-item-model", true) && VersionHelper.isOrAbove1_21_2;
         this.item$always_generate_model_overrides = config.getBoolean("item.always-generate-model-overrides", false);
@@ -1612,6 +1616,14 @@ public final class Config {
 
     public static boolean triggerUpdateDrop() {
         return instance.item$update_triggers$drop;
+    }
+
+    public static int triggerUpdateJoin() {
+        return instance.item$update_triggers$join;
+    }
+
+    public static boolean triggerUpdateQuit() {
+        return instance.item$update_triggers$quit;
     }
 
     public static boolean asyncLightUpdate() {
