@@ -62,6 +62,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     private final EquipmentParser equipmentParser;
     // 缓存
     protected final Map<Key, ItemDefinition> itemDefinitionById = new ConcurrentHashMap<>();
+    private volatile Map<Key, ItemDefinition> loadedItems = Map.of();
     protected final Map<String, ItemDefinition> itemDefinitionByPath = new ConcurrentHashMap<>();
     protected final Map<Key, List<UniqueKey>> customItemTags = new HashMap<>();
     protected final Map<Key, ModernItemModel> modernItemModels1_21_4 = new ConcurrentHashMap<>();
@@ -142,6 +143,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         super.clearModelsToGenerate();
         this.clearFeatureFlags();
         this.itemDefinitionById.clear();
+        this.loadedItems = Map.of();
         this.itemDefinitionByPath.clear();
         this.cachedCustomItemSuggestions.clear();
         this.cachedTotemSuggestions.clear();
@@ -184,7 +186,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public Optional<ItemDefinition> getItemDefinition(Key key) {
-        return Optional.ofNullable(this.itemDefinitionById.get(key));
+        return Optional.ofNullable(getItemDefinitionOrNull(key));
     }
 
     @Override
@@ -248,7 +250,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public Map<Key, ItemDefinition> loadedItems() {
-        return Collections.unmodifiableMap(this.itemDefinitionById);
+        return this.loadedItems;
     }
 
     public List<Key> orderedItemIds() {
@@ -378,6 +380,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         private final Map<Key, IdAllocator> idAllocators = new HashMap<>();
         private final List<CompletableFuture<?>> futures = Collections.synchronizedList(new ArrayList<>());
         private final Map<Key, List<Key>> tempCategories = new ConcurrentHashMap<>();
+        private final Map<Key, ItemDefinition> pendingAliases = new ConcurrentHashMap<>();
 
         @Override
         public Key type() {
@@ -386,7 +389,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
         @Override
         public int count() {
-            return AbstractItemManager.this.itemDefinitionById.size();
+            return AbstractItemManager.this.loadedItems.size();
         }
 
         private boolean isModernFormatRequired() {
@@ -428,6 +431,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         @Override
         public void preProcess() {
             CustomItemSettingType.freeze();
+            this.pendingAliases.clear();
             if (!this.idAllocators.isEmpty()) {
                 this.idAllocators.clear();
             }
@@ -524,6 +528,9 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             }
             ARROW_ONLY.setDynamic(customProjectiles);
             ARROW_OR_FIREWORK.setDynamic(customProjectiles);
+            AbstractItemManager.this.loadedItems = Map.copyOf(AbstractItemManager.this.itemDefinitionById);
+            this.pendingAliases.forEach(AbstractItemManager.this.itemDefinitionById::putIfAbsent);
+            this.pendingAliases.clear();
         }
 
         // 创建或获取已有的自动分配器
@@ -780,6 +787,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 AbstractItemManager.this.itemDefinitionById.put(id, itemDefinition);
                 AbstractItemManager.this.itemDefinitionByPath.put(id.value(), itemDefinition);
+                // 别名
+                List<Key> aliases = section.getList("alias", ConfigValue::getAsIdentifier);
+                if (!aliases.isEmpty()) {
+                    for (int i = 0, size = aliases.size(); i < size; i++) {
+                        this.pendingAliases.putIfAbsent(aliases.get(i), itemDefinition);
+                    }
+                }
                 if (VersionHelper.isOrAbove26_1 && settings.dyeable() == Tristate.TRUE) {
                     AbstractItemManager.this.dyeableItems.put(id, itemDefinition);
                 }

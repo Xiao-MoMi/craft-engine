@@ -124,7 +124,7 @@ public final class BukkitItemManager extends AbstractItemManager {
                 player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
             }
         }
-        for (ItemDefinition itemDefinition : this.itemDefinitionById.values()) {
+        for (ItemDefinition itemDefinition : loadedItems().values()) {
             if (itemDefinition instanceof BukkitItemDefinition bukkitItemDefinition) {
                 bukkitItemDefinition.initConstantItem();
             }
@@ -538,13 +538,14 @@ public final class BukkitItemManager extends AbstractItemManager {
     @Deprecated
     @Override
     public BukkitItem createCustomWrappedItem(Key id, Player player) {
-        return Optional.ofNullable(itemDefinitionById.get(id)).map(it -> (BukkitItem) it.buildItem(player)).orElse(null);
+        ItemDefinition definition = getItemDefinitionOrNull(id);
+        return definition != null ? (BukkitItem) definition.buildItem(player) : null;
     }
 
     @Deprecated
     @Override
     public BukkitItem createWrappedItem(Key id, @Nullable Player player) {
-        ItemDefinition itemDefinition = this.itemDefinitionById.get(id);
+        ItemDefinition itemDefinition = getItemDefinitionOrNull(id);
         if (itemDefinition != null) {
             return (BukkitItem) itemDefinition.buildItem(player);
         }
