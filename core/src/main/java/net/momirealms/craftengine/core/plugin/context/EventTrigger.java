@@ -22,6 +22,7 @@ public final class EventTrigger {
     public static final EventTrigger FURNITURE_BREAK = register(Key.ce("furniture_break"));
     public static final EventTrigger PLACE = register(Key.ce("place"), "build");
     public static final EventTrigger PICK_UP = register(Key.ce("pick_up"), "pick");
+    public static final EventTrigger DROP = register(Key.ce("drop"));
     public static final EventTrigger STEP = register(Key.ce("step"));
     public static final EventTrigger FALL = register(Key.ce("fall"));
     public static final EventTrigger SHOOT = register(Key.ce("shoot"));

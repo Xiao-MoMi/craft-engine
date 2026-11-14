@@ -926,16 +926,32 @@ public final class ItemEventListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     public void onDropItem(PlayerDropItemEvent event) {
         BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(event.getPlayer());
-        if (serverPlayer == null) return;
-        serverPlayer.stopMiningBlock();
-        if (!Config.triggerUpdateDrop()) return;
-        org.bukkit.entity.Item itemDrop = event.getItemDrop();
-        ItemStack itemStack = itemDrop.getItemStack();
-        Item wrapped = this.itemManager.wrap(itemStack);
-        ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(serverPlayer));
-        if (result.updated()) {
-            itemDrop.setItemStack(ItemStackUtils.getBukkitStack(result.finalItem().minecraftItem()));
+        if (serverPlayer == null) {
+            return;
         }
+        serverPlayer.stopMiningBlock();
+        BukkitItemEntity itemEntity = (BukkitItemEntity) BukkitAdaptor.adapt(event.getItemDrop());
+        Item item = itemEntity.getItem();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition == null) {
+            return;
+        }
+        if (!itemDefinition.behavior().onDrop(serverPlayer, itemEntity)) {
+            event.setCancelled(true);
+            return;
+        }
+        item = itemEntity.getItem();
+        itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition == null) {
+            return;
+        }
+        if (Config.triggerUpdateDrop() && itemDefinition.updater().isPresent()) {
+            ItemUpdateResult result = this.itemManager.updateItem(item, () -> ItemBuildContext.of(serverPlayer));
+            if (result.updated()) {
+                itemEntity.setItem(result.finalItem());
+            }
+        }
+        this.executeItemEntityFunctions(event, serverPlayer, itemEntity, itemDefinition, EventTrigger.DROP);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
@@ -966,7 +982,7 @@ public final class ItemEventListener implements Listener {
             return;
         }
         this.updateItemOnPickup(player, itemEntity, item, itemDefinition);
-        this.executePickupFunctions(event, player, itemEntity, itemDefinition);
+        this.executeItemEntityFunctions(event, player, itemEntity, itemDefinition, EventTrigger.PICK_UP);
     }
 
     private void updateItemOnPickup(BukkitServerPlayer player, BukkitItemEntity itemEntity, Item item, ItemDefinition itemDefinition) {
@@ -979,8 +995,12 @@ public final class ItemEventListener implements Listener {
         }
     }
 
-    private void executePickupFunctions(EntityPickupItemEvent event, BukkitServerPlayer player, BukkitItemEntity itemEntity, ItemDefinition itemDefinition) {
-        List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.PICK_UP);
+    private void executeItemEntityFunctions(org.bukkit.event.Cancellable event,
+                                            BukkitServerPlayer player,
+                                            BukkitItemEntity itemEntity,
+                                            ItemDefinition itemDefinition,
+                                            EventTrigger trigger) {
+        List<Function<Context>> functions = itemDefinition.eventFunctions(trigger);
         if (functions.isEmpty()) {
             return;
         }

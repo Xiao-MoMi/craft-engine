@@ -36,6 +36,10 @@ public abstract class ItemBehavior {
         return true;
     }
 
+    public boolean onDrop(Player player, ItemEntity itemEntity) {
+        return true;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> void let(Class<T> tClass, Consumer<T> consumer) {
         if (tClass.isInstance(this)) {

@@ -92,4 +92,14 @@ public final class CompositeItemBehavior extends ItemBehavior {
         }
         return true;
     }
+
+    @Override
+    public boolean onDrop(Player player, ItemEntity itemEntity) {
+        for (ItemBehavior behavior : this.behaviors) {
+            if (!behavior.onDrop(player, itemEntity)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

@@ -76,4 +76,9 @@ public final class DualItemBehavior extends ItemBehavior {
     public boolean onPickup(Entity entity, ItemEntity itemEntity) {
         return this.first.onPickup(entity, itemEntity) && this.second.onPickup(entity, itemEntity);
     }
+
+    @Override
+    public boolean onDrop(Player player, ItemEntity itemEntity) {
+        return this.first.onDrop(player, itemEntity) && this.second.onDrop(player, itemEntity);
+    }
 }
