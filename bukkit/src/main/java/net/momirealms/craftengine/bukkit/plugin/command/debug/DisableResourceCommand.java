@@ -6,8 +6,6 @@ import net.momirealms.craftengine.core.pack.Pack;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
-import net.momirealms.sparrow.yaml.YamlDocument;
-import net.momirealms.sparrow.yaml.route.Route;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.incendo.cloud.Command;
@@ -18,8 +16,6 @@ import org.incendo.cloud.suggestion.Suggestion;
 import org.incendo.cloud.suggestion.SuggestionProvider;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
 public final class DisableResourceCommand extends BukkitCommandFeature<CommandSender> {
@@ -40,26 +36,13 @@ public final class DisableResourceCommand extends BukkitCommandFeature<CommandSe
                 }))
                 .handler(context -> {
                     String packFolder = context.get("pack");
-                    Path path = plugin().dataFolderPath().resolve("resources").resolve(packFolder);
-                    if (!Files.exists(path)) {
-                        handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_FAILURE, Component.text(packFolder));
-                        return;
-                    }
-                    Path packMetaPath = path.resolve("pack.yml");
-                    if (!Files.exists(packMetaPath)) {
-                        try {
-                            Files.createFile(packMetaPath);
-                        } catch (IOException e) {
-                            plugin().logger().warn("Could not create pack.yml file: " + packMetaPath);
+                    try {
+                        if (!plugin().packManager().setPackEnabled(packFolder, false)) {
+                            handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_FAILURE, Component.text(packFolder));
                             return;
                         }
-                    }
-                    YamlDocument document = plugin().config().loadYamlData(packMetaPath);
-                    document.set(Route.from("enable"), false);
-                    try {
-                        document.save(packMetaPath.toFile());
                     } catch (IOException e) {
-                        plugin().logger().warn("Could not save pack.yml file: " + packMetaPath);
+                        plugin().logger().warn("Could not update pack.yml for resource " + packFolder, e);
                         return;
                     }
                     handleFeedback(context, MessageConstants.COMMAND_RESOURCE_DISABLE_SUCCESS, Component.text(packFolder));

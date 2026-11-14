@@ -82,6 +82,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -148,6 +149,7 @@ public abstract class AbstractPackManager implements PackManager {
     public final JsonObject vanillaItemAtlas;
     private Map<Path, CachedConfigFile> cachedConfigFiles = Collections.emptyMap();
     private Map<Path, CachedAssetFile> cachedAssetFiles = Collections.emptyMap();
+    private final Map<Path, CachedResourceArchive> resourceArchives = new HashMap<>();
     private final PackOptimizationCache optimizationCache = new PackOptimizationCache(0);
     protected ZipGenerator zipGenerator;
     protected volatile ResourcePackHost resourcePackHost = NoneHost.INSTANCE;
@@ -415,6 +417,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     @Override
     public void disable() {
+        this.closeResourceArchives();
         this.optimizationCache.clear();
         this.selectedPacks.clear();
         this.packPreferences.clear();
@@ -433,6 +436,64 @@ public abstract class AbstractPackManager implements PackManager {
         this.loadedPacks.clear();
         this.workflows = Map.of();
     }
+
+    private void closeResourceArchives() {
+        for (CachedResourceArchive archive : this.resourceArchives.values()) {
+            this.closeResourceArchive(archive);
+        }
+        this.resourceArchives.clear();
+    }
+
+    private void closeResourceArchive(CachedResourceArchive archive) {
+        FileSystem fileSystem = archive.pack().folder().getFileSystem();
+        this.cachedConfigFiles.keySet().removeIf(path -> path.getFileSystem() == fileSystem);
+        this.cachedAssetFiles.keySet().removeIf(path -> path.getFileSystem() == fileSystem);
+        try {
+            fileSystem.close();
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to close resource archive file system", e);
+        }
+    }
+
+    private Pack loadResourceArchive(PackSource source) throws IOException {
+        Path sourcePath = source.path().toAbsolutePath().normalize();
+        CachedResourceArchive cached = this.resourceArchives.get(sourcePath);
+        BasicFileAttributes attributes = Files.readAttributes(sourcePath, BasicFileAttributes.class);
+        if (cached != null) {
+            if (cached.lastModified().equals(attributes.lastModifiedTime()) && cached.size() == attributes.size()) {
+                return cached.pack();
+            }
+            this.resourceArchives.remove(sourcePath);
+            this.closeResourceArchive(cached);
+        }
+        FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
+        try {
+            Path folder = source.loadArchive(fileSystem);
+            Pack pack = this.readPack(folder, source.defaultNamespace());
+            this.resourceArchives.put(sourcePath, new CachedResourceArchive(attributes.lastModifiedTime(), attributes.size(), pack));
+            return pack;
+        } catch (IOException | RuntimeException e) {
+            try {
+                fileSystem.close();
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
+        }
+    }
+
+    private void removeUnusedResourceArchives() {
+        Iterator<CachedResourceArchive> archives = this.resourceArchives.values().iterator();
+        while (archives.hasNext()) {
+            CachedResourceArchive archive = archives.next();
+            if (this.loadedPacks.get(archive.pack().name()) != archive.pack()) {
+                archives.remove();
+                this.closeResourceArchive(archive);
+            }
+        }
+    }
+
+    private record CachedResourceArchive(FileTime lastModified, long size, Pack pack) {}
 
     @Override
     public void delayedInit() {
@@ -485,7 +546,19 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Override
+    public boolean setPackEnabled(String name, boolean enabled) throws IOException {
+        Path path = this.plugin.dataFolderPath().resolve("resources").resolve(name);
+        PackSource source = new PackSource(path);
+        if (!Files.isDirectory(path) && !source.isArchive()) {
+            return false;
+        }
+        source.setEnabled(this.plugin.config(), enabled);
+        return true;
+    }
+
+    @Override
     public void loadPacks() {
+        this.loadedPacks.clear();
         Path resourcesFolder = this.plugin.dataFolderPath().resolve("resources");
         try {
             if (Files.notExists(resourcesFolder)) {
@@ -498,66 +571,87 @@ public abstract class AbstractPackManager implements PackManager {
         try {
             try (DirectoryStream<Path> paths = Files.newDirectoryStream(resourcesFolder)) {
                 for (Path path : paths) {
-                    if (!Files.isDirectory(path)) {
-                        continue;
-                    }
                     // hidden
-                    String namespace = path.getFileName().toString();
-                    if (namespace.charAt(0) == '.') {
+                    PackSource source = new PackSource(path);
+                    String packName = source.name();
+                    if (packName.charAt(0) == '.') {
                         continue;
                     }
-                    if (!Identifier.isValidNamespace(namespace)) {
-                        namespace = "minecraft";
-                    }
-
-                    String description = null;
-                    String version = null;
-                    String author = null;
-                    boolean enable = true;
-                    List<String> subPacks = new ArrayList<>(4);
-                    Path metaFile = path.resolve("pack.yml");
-                    if (Files.exists(metaFile) && Files.isRegularFile(metaFile)) {
-                        LoadSettings settings = LoadSettings.builder()
-                                .setLabel(metaFile.toAbsolutePath().toString())
-                                .build();
-
-                        StringKeyConstructor constructor = new StringKeyConstructor(settings, path);
-                        Load load = new Load(settings, constructor);
-                        try (InputStream is = Files.newInputStream(metaFile)) {
-                            Object rawData = load.loadFromInputStream(is);
-                            if (rawData instanceof Map<?, ?> data) {
-                                @SuppressWarnings("unchecked")
-                                ConfigSection section = ConfigSection.ofRoot((Map<String, Object>) data);
-
-                                enable = section.getBoolean("enable", true);
-                                namespace = section.getString("namespace", namespace);
-                                description = section.getString("description");
-                                version = section.getString("version");
-                                author = section.getString("author");
-
-                                ConfigSection subpackSection = section.getSection("subpacks");
-                                if (subpackSection != null) {
-                                    for (String subpackId : subpackSection.keySet()) {
-                                        if (subpackSection.getBoolean(subpackId)) {
-                                            subPacks.add(subpackId);
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            this.plugin.logger().warn("Failed to load " + metaFile, e);
-                        } catch (Exception e) {
-                            this.plugin.logger().error("YAML syntax error in " + metaFile, e);
+                    String namespace = source.defaultNamespace();
+                    Pack pack;
+                    if (!Files.isDirectory(path)) {
+                        if (!source.isArchive()) {
+                            continue;
                         }
+                        if (Files.isDirectory(resourcesFolder.resolve(namespace))) {
+                            this.plugin.logger().warn("Skipping " + packName + ": resource folder " + namespace + " takes precedence");
+                            continue;
+                        }
+                        try {
+                            pack = this.loadResourceArchive(source);
+                        } catch (IOException | RuntimeException e) {
+                            this.plugin.logger().warn("Failed to load resource archive " + packName, e);
+                            continue;
+                        }
+                    } else {
+                        pack = this.readPack(path, namespace);
                     }
-                    Pack pack = new Pack(path, new PackMeta(author, description, version, namespace), enable, subPacks.toArray(new String[0]));
-                    this.loadedPacks.put(path.getFileName().toString(), pack);
-                    TranslationManager.info("resource.pack_loaded", pack.folder().getFileName().toString(), namespace);
+                    this.loadedPacks.put(packName, pack);
+                    TranslationManager.info("resource.pack_loaded", pack.name(), pack.namespace());
                 }
             }
         } catch (IOException e) {
             this.plugin.logger().error("Error loading packs", e);
         }
+        this.removeUnusedResourceArchives();
+    }
+
+    private Pack readPack(Path path, String namespace) {
+        if (!Identifier.isValidNamespace(namespace)) {
+            namespace = "minecraft";
+        }
+
+        String description = null;
+        String version = null;
+        String author = null;
+        boolean enable = true;
+        List<String> subPacks = new ArrayList<>(4);
+        Path metaFile = path.resolve("pack.yml");
+        if (Files.exists(metaFile) && Files.isRegularFile(metaFile)) {
+            LoadSettings settings = LoadSettings.builder()
+                    .setLabel(metaFile.toAbsolutePath().toString())
+                    .build();
+
+            StringKeyConstructor constructor = new StringKeyConstructor(settings, path);
+            Load load = new Load(settings, constructor);
+            try (InputStream is = Files.newInputStream(metaFile)) {
+                Object rawData = load.loadFromInputStream(is);
+                if (rawData instanceof Map<?, ?> data) {
+                    @SuppressWarnings("unchecked")
+                    ConfigSection section = ConfigSection.ofRoot((Map<String, Object>) data);
+
+                    enable = section.getBoolean("enable", true);
+                    namespace = section.getString("namespace", namespace);
+                    description = section.getString("description");
+                    version = section.getString("version");
+                    author = section.getString("author");
+
+                    ConfigSection subpackSection = section.getSection("subpacks");
+                    if (subpackSection != null) {
+                        for (String subpackId : subpackSection.keySet()) {
+                            if (subpackSection.getBoolean(subpackId)) {
+                                subPacks.add(subpackId);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                this.plugin.logger().warn("Failed to load " + metaFile, e);
+            } catch (Exception e) {
+                this.plugin.logger().error("YAML syntax error in " + metaFile, e);
+            }
+        }
+        return new Pack(path, new PackMeta(author, description, version, namespace), enable, subPacks.toArray(new String[0]));
     }
 
     public void saveDefaultConfigs(String path) throws IOException {
