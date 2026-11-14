@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 public final class ItemSettings {
     private static final Object NULL_VALUE = new Object();
+    private final Object[] customData;
     int fuelTime;
     int breakPower = -1;
     Set<Key> tags = Set.of();
@@ -57,7 +58,6 @@ public final class ItemSettings {
     String dropDisplay = Config.defaultDropDisplayFormat();
     @Nullable
     LegacyChatFormatter glowColor = null;
-    private final Object[] customData;
     boolean triggerAdvancement = false;
     Set<Key> allowedProjectiles = Set.of();
     EquipmentSetPart equipmentSetPart;

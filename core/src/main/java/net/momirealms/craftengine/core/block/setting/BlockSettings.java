@@ -7,14 +7,15 @@ import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.config.KnownResourceException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.Set;
 
 public final class BlockSettings {
+    private Object[] customData;
     boolean isRandomlyTicking;
     boolean burnable;
     int burnChance;
@@ -51,12 +52,25 @@ public final class BlockSettings {
     float jumpFactor = 1f;
     float bounceRestitution = 0f;
     DestroyStageDisplayEntitySetting destroyStageDisplay;
-    Map<CustomDataType<?>, Object> customData = new IdentityHashMap<>(4);
 
-    private BlockSettings() {}
+    private BlockSettings(Object[] customData) {
+        this.customData = customData;
+    }
 
     public static BlockSettings of() {
-        return new BlockSettings();
+        return new BlockSettings(CustomBlockSettingType.newDataArray());
+    }
+
+    @ApiStatus.Internal
+    public static BlockSettings ofEmptyBlock() {
+        return new BlockSettings(null);
+    }
+
+    @ApiStatus.Internal
+    public void initializeCustomData() {
+        if (this.customData == null) {
+            this.customData = CustomBlockSettingType.newDataArray();
+        }
     }
 
     public static BlockSettings fromConfig(ConfigSection section) {
@@ -90,7 +104,7 @@ public final class BlockSettings {
     }
 
     public static BlockSettings ofFullCopy(BlockSettings settings) {
-        BlockSettings newSettings = of();
+        BlockSettings newSettings = new BlockSettings(settings.customData.clone());
         newSettings.canOcclude = settings.canOcclude;
         newSettings.hardness = settings.hardness;
         newSettings.resistance = settings.resistance;
@@ -126,27 +140,29 @@ public final class BlockSettings {
         newSettings.bounceRestitution = settings.bounceRestitution;
         newSettings.destroyStageDisplay = settings.destroyStageDisplay;
         newSettings.isRaytraceBlocking = settings.isRaytraceBlocking;
-        newSettings.customData = new IdentityHashMap<>(settings.customData);
         return newSettings;
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getCustomData(CustomDataType<T> type) {
-        return (T) this.customData.get(type);
+    public <T> T getCustomData(CustomBlockSettingType<T> type) {
+        return (T) this.customData[type.id()];
     }
 
     public void clearCustomData() {
-        this.customData.clear();
+        Arrays.fill(this.customData, null);
     }
 
     @Nullable
     @SuppressWarnings("unchecked")
-    public <T> T removeCustomData(CustomDataType<?> type) {
-        return (T) this.customData.remove(type);
+    public <T> T removeCustomData(CustomBlockSettingType<?> type) {
+        int id = type.id();
+        Object value = this.customData[id];
+        this.customData[id] = null;
+        return (T) value;
     }
 
-    public <T> void addCustomData(CustomDataType<T> key, T value) {
-        this.customData.put(key, value);
+    public <T> void addCustomData(CustomBlockSettingType<T> key, T value) {
+        this.customData[key.id()] = value;
     }
 
     public Set<Key> tags() {

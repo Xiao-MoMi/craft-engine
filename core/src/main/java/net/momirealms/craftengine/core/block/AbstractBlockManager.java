@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.block.parser.BlockNbtParser;
 import net.momirealms.craftengine.core.block.property.Properties;
 import net.momirealms.craftengine.core.block.property.Property;
 import net.momirealms.craftengine.core.block.setting.BlockSettings;
+import net.momirealms.craftengine.core.block.setting.CustomBlockSettingType;
 import net.momirealms.craftengine.core.entity.culling.CullingData;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.loot.Loot;
@@ -424,6 +425,8 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         @SuppressWarnings("DuplicatedCode")
         @Override
         public void preProcess() {
+            CustomBlockSettingType.freeze();
+            EmptyBlockDefinition.STATE.settings().initializeCustomData();
             AbstractBlockManager.this.internalIdAllocator.reset(0, Config.serverSideBlocks() - 1);
             AbstractBlockManager.this.visualBlockStateAllocator.reset();
             try {
