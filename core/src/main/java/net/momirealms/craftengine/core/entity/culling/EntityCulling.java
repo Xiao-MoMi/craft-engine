@@ -343,7 +343,7 @@ public final class EntityCulling {
                 nextStepTimeY += stepSizeY;
                 blockIndex += stepDirectionY << 8;
                 changedSection = (localY & ~15) != 0;
-            } else if (nextStepTimeX < nextStepTimeY && nextStepTimeX < nextStepTimeZ) {
+            } else if (nextStepTimeX <= nextStepTimeY && nextStepTimeX < nextStepTimeZ) {
                 // X方向边界最近，水平移动
                 int localX = (currentBlockX & 15) + stepDirectionX;
                 currentBlockX += stepDirectionX;
