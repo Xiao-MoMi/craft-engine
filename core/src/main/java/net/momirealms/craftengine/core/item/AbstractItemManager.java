@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.item.customdata.*;
 import net.momirealms.craftengine.core.item.equipment.*;
 import net.momirealms.craftengine.core.item.network.GlobalNetworkItemProcessors;
 import net.momirealms.craftengine.core.item.processor.*;
+import net.momirealms.craftengine.core.item.setting.CustomItemSettingType;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
@@ -426,6 +427,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
         @Override
         public void preProcess() {
+            CustomItemSettingType.freeze();
             if (!this.idAllocators.isEmpty()) {
                 this.idAllocators.clear();
             }
