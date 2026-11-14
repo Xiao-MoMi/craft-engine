@@ -792,6 +792,8 @@ client-optimization:
     # Number of threads allocated for ray tracing operations
     # Higher values may improve performance on multi-core systems
     threads: 1
+    # Visibility check interval
+    check-interval: 1
     # Rate limiting for entity visibility updates
     # Prevents client FPS drops and network spikes when many entities appear simultaneously
     rate-limiting:

@@ -291,6 +291,7 @@ public final class Config {
     private boolean client_optimization$entity_culling$enable;
     private int client_optimization$entity_culling$view_distance;
     private int client_optimization$entity_culling$threads;
+    private volatile int client_optimization$entity_culling$check_interval;
     private boolean client_optimization$entity_culling$ray_tracing;
     private boolean client_optimization$entity_culling$update_display_view_range;
     private boolean client_optimization$entity_culling$keep_invisible_hitboxes;
@@ -780,6 +781,7 @@ public final class Config {
         }
         this.client_optimization$entity_culling$view_distance = config.getInt("client-optimization.entity-culling.view-distance", 64);
         this.client_optimization$entity_culling$threads = config.getInt("client-optimization.entity-culling.threads", 1);
+        this.client_optimization$entity_culling$check_interval = Math.max(1, config.getInt("client-optimization.entity-culling.check-interval", 1));
         this.client_optimization$entity_culling$ray_tracing = this.client_optimization$entity_culling$enable && config.getBoolean("client-optimization.entity-culling.ray-tracing", true);
         this.client_optimization$entity_culling$rate_limiting$enable = config.getBoolean("client-optimization.entity-culling.rate-limiting.enable", true);
         this.client_optimization$entity_culling$rate_limiting$bucket_size = config.getInt("client-optimization.entity-culling.rate-limiting.bucket-size", 300);
@@ -1711,6 +1713,10 @@ public final class Config {
 
     public static int entityCullingThreads() {
         return instance.client_optimization$entity_culling$threads;
+    }
+
+    public static int entityCullingCheckInterval() {
+        return instance.client_optimization$entity_culling$check_interval;
     }
 
     public static boolean enableEntityCullingRateLimiting() {

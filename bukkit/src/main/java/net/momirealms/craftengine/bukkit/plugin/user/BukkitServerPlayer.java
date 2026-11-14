@@ -236,6 +236,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private Vec3d thirdPersonCameraVec3;
     // 是否启用实体剔除
     private boolean enableEntityCulling;
+    private int entityCullingTicks;
     // 玩家眼睛所在位置
     private Vec3d eyeLocation;
     // 是否启用家具调试
@@ -858,6 +859,10 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
         boolean useRayTracing = Config.entityCullingRayTracing();
         if (this.enableEntityCulling) {
+            if (++this.entityCullingTicks < Config.entityCullingCheckInterval()) {
+                return;
+            }
+            this.entityCullingTicks = 0;
             for (CullableHolder cullableObject : this.trackedBlockEntityRenderers.values()) {
                 cullEntity(useRayTracing, cullableObject);
             }
