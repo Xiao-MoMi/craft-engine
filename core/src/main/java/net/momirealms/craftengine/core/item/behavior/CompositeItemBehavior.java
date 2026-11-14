@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.item.behavior;
 
 import net.momirealms.craftengine.core.block.behavior.BlockBreakResult;
+import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.entity.item.ItemEntity;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -79,5 +81,15 @@ public final class CompositeItemBehavior extends ItemBehavior {
             }
         }
         return BlockBreakResult.PASS;
+    }
+
+    @Override
+    public boolean onPickup(Entity entity, ItemEntity itemEntity) {
+        for (ItemBehavior behavior : this.behaviors) {
+            if (!behavior.onPickup(entity, itemEntity)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.item.behavior;
 
 import net.momirealms.craftengine.core.block.behavior.BlockBreakResult;
+import net.momirealms.craftengine.core.entity.Entity;
+import net.momirealms.craftengine.core.entity.item.ItemEntity;
 import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -28,6 +30,10 @@ public abstract class ItemBehavior {
 
     public BlockBreakResult onBreakBlock(World world, Player player, BlockPos pos) {
         return BlockBreakResult.PASS;
+    }
+
+    public boolean onPickup(Entity entity, ItemEntity itemEntity) {
+        return true;
     }
 
     @SuppressWarnings("unchecked")

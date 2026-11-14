@@ -5,4 +5,6 @@ import net.momirealms.craftengine.core.item.Item;
 public interface ItemEntity {
 
     Item getItem();
+
+    void setItem(Item item);
 }

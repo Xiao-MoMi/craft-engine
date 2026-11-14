@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.CustomBlockInteractEvent;
 import net.momirealms.craftengine.bukkit.entity.BukkitEntity;
+import net.momirealms.craftengine.bukkit.entity.BukkitItemEntity;
 import net.momirealms.craftengine.bukkit.entity.projectile.ProjectileItems;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.item.BukkitItemDefinition;
@@ -939,36 +940,59 @@ public final class ItemEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPickUpItem(EntityPickupItemEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
-        org.bukkit.entity.Item itemDrop = event.getItem();
-        ItemStack itemStack = itemDrop.getItemStack();
-        Item wrapped = this.itemManager.wrap(itemStack);
+        BukkitEntity entity = BukkitAdaptor.adapt(event.getEntity());
+        if (entity == null) {
+            return;
+        }
+        BukkitItemEntity itemEntity = (BukkitItemEntity) BukkitAdaptor.adapt(event.getItem());
+        Item item = itemEntity.getItem();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition != null && !itemDefinition.behavior().onPickup(entity, itemEntity)) {
+            event.setCancelled(true);
+            return;
+        }
+        if (!(entity instanceof BukkitServerPlayer player)) {
+            return;
+        }
+        if (itemDefinition != null) {
+            item = itemEntity.getItem();
+            itemDefinition = item.getDefinitionOrNull();
+        }
         // 低版本拙劣的inventory change替代品
         if (!VersionHelper.isOrAbove1_20_3) {
-            this.itemManager.unlockRecipeOnInventoryChanged(player, wrapped);
+            this.itemManager.unlockRecipeOnInventoryChanged(player.platformPlayer(), item);
         }
-        ItemDefinition itemDefinition = wrapped.getDefinitionOrNull();
-        if (itemDefinition == null) return;
-        BukkitServerPlayer serverPlayer = BukkitAdaptor.adapt(player);
-        if (Config.triggerUpdatePickUp() && itemDefinition.updater().isPresent()) {
-            ItemUpdateResult result = this.itemManager.updateItem(wrapped, () -> ItemBuildContext.of(serverPlayer));
-            if (result.updated()) {
-                itemDrop.setItemStack(ItemStackUtils.getBukkitStack(result.finalItem().minecraftItem()));
-            }
+        if (itemDefinition == null) {
+            return;
         }
+        this.updateItemOnPickup(player, itemEntity, item, itemDefinition);
+        this.executePickupFunctions(event, player, itemEntity, itemDefinition);
+    }
+
+    private void updateItemOnPickup(BukkitServerPlayer player, BukkitItemEntity itemEntity, Item item, ItemDefinition itemDefinition) {
+        if (!Config.triggerUpdatePickUp() || itemDefinition.updater().isEmpty()) {
+            return;
+        }
+        ItemUpdateResult result = this.itemManager.updateItem(item, () -> ItemBuildContext.of(player));
+        if (result.updated()) {
+            itemEntity.setItem(result.finalItem());
+        }
+    }
+
+    private void executePickupFunctions(EntityPickupItemEvent event, BukkitServerPlayer player, BukkitItemEntity itemEntity, ItemDefinition itemDefinition) {
         List<Function<Context>> functions = itemDefinition.eventFunctions(EventTrigger.PICK_UP);
-        if (!functions.isEmpty()) {
-            Cancellable dummy = Cancellable.dummy();
-            Function.execute(PlayerOptionalContext.of(serverPlayer, ContextHolder.builder(
-                    DirectContextParameters.ENTITY, BukkitAdaptor.adapt(itemDrop),
-                    DirectContextParameters.POSITION, LocationUtils.toWorldPosition(itemDrop.getLocation()),
-                    DirectContextParameters.EVENT, dummy
-            )
-                    .withOptionalParameter(DirectContextParameters.PLAYER, serverPlayer)
-                    .build()), functions);
-            if (dummy.isCancelled()) {
-                event.setCancelled(true);
-            }
+        if (functions.isEmpty()) {
+            return;
+        }
+        Cancellable cancellable = Cancellable.dummy();
+        PlayerOptionalContext context = PlayerOptionalContext.of(player, ContextHolder.builder(
+                DirectContextParameters.ENTITY, itemEntity,
+                DirectContextParameters.POSITION, itemEntity.position(),
+                DirectContextParameters.EVENT, cancellable
+        ));
+        Function.execute(context, functions);
+        if (cancellable.isCancelled()) {
+            event.setCancelled(true);
         }
     }
 
