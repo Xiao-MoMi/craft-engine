@@ -319,12 +319,14 @@ public final class EntityCulling {
         int currentBlockX = startingX;
         int currentBlockY = startingY;
         int currentBlockZ = startingZ;
+        OccludingSection section = this.getOccludingSection(currentBlockX, currentBlockY, currentBlockZ);
+        int blockIndex = (currentBlockY & 15) << 8 | (currentBlockZ & 15) << 4 | currentBlockX & 15;
 
         // 遍历射线路径上的所有方块
         for (; remainingSteps > 0; remainingSteps--) {
 
             // 检查当前方块是否遮挡视线
-            if (isOccluding(currentBlockX, currentBlockY, currentBlockZ)) {
+            if (section != null && section.isOccluding(blockIndex)) {
                 this.lastHitBlock[0] = currentBlockX;
                 this.lastHitBlock[1] = currentBlockY;
                 this.lastHitBlock[2] = currentBlockZ;
@@ -333,18 +335,33 @@ public final class EntityCulling {
 
             // 基于时间参数选择下一个要遍历的方块方向
             // 选择距离最近的方块边界作为下一步
+            boolean changedSection;
             if (nextStepTimeY < nextStepTimeX && nextStepTimeY < nextStepTimeZ) {
                 // Y方向边界最近，垂直移动
+                int localY = (currentBlockY & 15) + stepDirectionY;
                 currentBlockY += stepDirectionY;
                 nextStepTimeY += stepSizeY;
+                blockIndex += stepDirectionY << 8;
+                changedSection = (localY & ~15) != 0;
             } else if (nextStepTimeX < nextStepTimeY && nextStepTimeX < nextStepTimeZ) {
                 // X方向边界最近，水平移动
+                int localX = (currentBlockX & 15) + stepDirectionX;
                 currentBlockX += stepDirectionX;
                 nextStepTimeX += stepSizeX;
+                blockIndex += stepDirectionX;
+                changedSection = (localX & ~15) != 0;
             } else {
                 // Z方向边界最近，深度移动
+                int localZ = (currentBlockZ & 15) + stepDirectionZ;
                 currentBlockZ += stepDirectionZ;
                 nextStepTimeZ += stepSizeZ;
+                blockIndex += stepDirectionZ << 4;
+                changedSection = (localZ & ~15) != 0;
+            }
+            // section 内增量更新索引，仅跨边界且仍有方块待检测时重新定位。
+            if (changedSection && remainingSteps > 1) {
+                section = this.getOccludingSection(currentBlockX, currentBlockY, currentBlockZ);
+                blockIndex = (currentBlockY & 15) << 8 | (currentBlockZ & 15) << 4 | currentBlockX & 15;
             }
         }
 
@@ -379,7 +396,7 @@ public final class EntityCulling {
         return 0d;
     }
 
-    private boolean isOccluding(int x, int y, int z) {
+    private OccludingSection getOccludingSection(int x, int y, int z) {
         int chunkX = x >> 4;
         int chunkZ = z >> 4;
         ClientChunk trackedChunk;
@@ -395,13 +412,13 @@ public final class EntityCulling {
             this.lastVisitSectionY = Integer.MAX_VALUE;
         }
         if (trackedChunk == null) {
-            return false;
+            return null;
         }
         OccludingSection[] sections = trackedChunk.occludingSections;
         if (sections == null) {
-            return false;
+            return null;
         }
-        // DDA 连续步大多落在同一 section 内，section 级缓存省掉每次的索引换算和边界检查
+        // 相邻射线可以复用上次定位的 section。
         int sectionY = y >> 4;
         OccludingSection section;
         if (sectionY == this.lastVisitSectionY) {
@@ -412,10 +429,7 @@ public final class EntityCulling {
             this.lastVisitSection = section;
             this.lastVisitSectionY = sectionY;
         }
-        if (section == null) {
-            return false;
-        }
-        return section.isOccluding((y & 15) << 8 | (z & 15) << 4 | x & 15);
+        return section;
     }
 
     public void removeLastVisitChunkIfMatches(int chunkX, int chunkZ) {
