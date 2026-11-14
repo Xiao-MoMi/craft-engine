@@ -44,10 +44,12 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
     );
     private final JavaModelResources resources;
     private final BedrockItemIconRenderer renderer;
+    private final BedrockArmorResources armorResources;
 
     BedrockDisplayContextItems(JavaModelResources resources, BedrockItemIconRenderer renderer) {
         this.resources = resources;
         this.renderer = renderer;
+        this.armorResources = new BedrockArmorResources(resources);
     }
 
     @Override
@@ -57,11 +59,13 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             return null;
         }
         List<GeneratedItemVariant> output = new ObjectArrayList<>();
-        boolean headEquipment = isHeadEquipment(entry);
+        boolean hasArmor = BedrockArmorResources.hasAsset(entry);
+        BedrockArmorResources.Appearance armor = this.armorResources.resolve(entry, context.root());
+        boolean headEquipment = !hasArmor && isHeadEquipment(entry);
         for (BedrockItemPresentation plan : plans) {
             Key id = plan.id();
             Key headId = headEquipment ? Key.of(id.namespace(), id.value() + "_view_head") : null;
-            GeneratedItemVariant item = this.writeVariant(plan, headId, context);
+            GeneratedItemVariant item = this.writeVariant(plan, headId, armor, hasArmor, context);
             if (plan.worldAliases()) {
                 this.writeWorldAliases(item, context, output);
             }
@@ -75,10 +79,10 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
         return equipment != null && equipment.isJsonObject() && "head".equals(equipment.getAsJsonObject().get("slot").getAsString());
     }
 
-    private GeneratedItemVariant writeVariant(BedrockItemPresentation plan, @Nullable Key headId,
+    private GeneratedItemVariant writeVariant(BedrockItemPresentation plan, @Nullable Key headId, @Nullable BedrockArmorResources.Appearance armor, boolean hasArmor,
                                               BedrockItemGenerationContext context) throws IOException {
         EnumMap<ItemDisplayContext, ItemBindingRule> idleModels = plan.idleModels();
-        if (headId == null) {
+        if (headId == null && !hasArmor) {
             GeneratedItemVariant nativeItem = plan.equipment().tryWriteSpecialized(plan, this.resources, this.renderer, context);
             if (nativeItem != null) {
                 return GeneratedItemVariant.displayContextItem(nativeItem, idleModels, null);
@@ -96,7 +100,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             inventory = transparent(id, registration, context);
         }
 
-        this.writeEquipment(plan, headId, context);
+        this.writeEquipment(plan, headId, armor, hasArmor, context);
         return GeneratedItemVariant.displayContextItem(inventory, idleModels, headId);
     }
 
@@ -152,11 +156,12 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
     }
 
     private void writeEquipment(BedrockItemPresentation plan, @Nullable Key headId,
+                                @Nullable BedrockArmorResources.Appearance armor, boolean hasArmor,
                                 BedrockItemGenerationContext context) throws IOException {
         Key id = plan.id();
         BedrockWeaponGeometry mesh = new BedrockWeaponGeometry(this.resources.models(), this.resources.textures());
         JsonArray selectors = new JsonArray();
-        Map<Layer, List<String>> layers = collectEquipmentLayers(plan, selectors);
+        Map<Layer, List<String>> layers = collectEquipmentLayers(plan, selectors, hasArmor);
         List<Bedrock3DItemAttachables.Stage> stages = new ObjectArrayList<>(layers.size());
         List<BedrockItemAttachables.View> views = new ObjectArrayList<>(layers.size());
         boolean hasHandModel = false;
@@ -173,16 +178,19 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
         }
         BedrockEquipmentPose pose = plan.equipment().pose(plan.item());
         pose.scripts().addAll(selectors);
-        Bedrock3DItemAttachables.writeDisplayContexts(id, headId, stages, views, mesh.materials(), pose, context.root());
+        Bedrock3DItemAttachables.writeDisplayContexts(id, headId, stages, views, mesh.materials(), pose, armor, context.root());
         if (hasHandModel) {
             plan.equipment().registerHandModel(context.playerAnimations(), id, plan.item());
         }
     }
 
-    private static Map<Layer, List<String>> collectEquipmentLayers(BedrockItemPresentation plan, JsonArray selectors) {
+    private static Map<Layer, List<String>> collectEquipmentLayers(BedrockItemPresentation plan, JsonArray selectors, boolean hasArmor) {
         // 同一位置的同一模型部件只生成一次；任一使用条件成立时都应显示它。
         Map<Layer, List<String>> layers = new LinkedHashMap<>();
         for (ItemDisplayContext view : EQUIPMENT_VIEWS) {
+            if (hasArmor && view == ItemDisplayContext.HEAD) {
+                continue;
+            }
             String viewCondition = equippedView(view).condition;
             List<ItemBindingRule> rules = plan.variant().rules().get(view);
             String selector = "variable.ce_" + view.serializedName() + "_stage";

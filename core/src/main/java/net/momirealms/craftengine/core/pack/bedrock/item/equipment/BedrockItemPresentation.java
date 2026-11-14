@@ -25,7 +25,7 @@ record BedrockItemPresentation(ItemRegistrationPlan.Entry item,
         boolean explicitViews = DisplayContextVariants.usesDisplayContext(item);
         boolean worldAliases = explicitViews || item.definition().hasPlayerHead();
         List<? extends BedrockEquipmentBehavior> behaviors = BedrockEquipmentBehavior.forItem(item, worldAliases);
-        if (!worldAliases && behaviors.getFirst() == BedrockEquipmentBehavior.DEFAULT && (item.useBehavior().animation() == ItemBehaviorDescription.UseAnimation.NONE || !hasUseConditions(item.definition().rules()))) {
+        if (!BedrockArmorResources.hasAsset(item) && !worldAliases && behaviors.getFirst() == BedrockEquipmentBehavior.DEFAULT && (item.useBehavior().animation() == ItemBehaviorDescription.UseAnimation.NONE || !hasUseConditions(item.definition().rules()))) {
             // 静态物品沿用普通图标 / 方块路径，保留其染色、变体优先级和跳过原因。
             return null;
         }

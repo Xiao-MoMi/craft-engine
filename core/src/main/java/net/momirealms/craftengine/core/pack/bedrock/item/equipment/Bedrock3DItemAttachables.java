@@ -40,6 +40,7 @@ public final class Bedrock3DItemAttachables {
     private final JsonArray animate = new JsonArray();
     private List<BedrockItemAttachables.View> contextViews;
     private BedrockEquipmentPose contextPose;
+    private BedrockArmorResources.Appearance armor;
 
     private Bedrock3DItemAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
         this.id = id;
@@ -87,14 +88,18 @@ public final class Bedrock3DItemAttachables {
             this.renderControllers.add(name, controller);
             this.activeControllers.add(name);
         }
+        if (this.armor != null) {
+            this.armor.addResources(this.prefix, this.textureNames, this.geometryNames, this.renderControllers, this.activeControllers);
+        }
         writeFile("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
         writeFile("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
     }
 
-    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<BedrockItemAttachables.View> views, List<Material> materials, BedrockEquipmentPose pose, Path root) throws IOException {
+    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<BedrockItemAttachables.View> views, List<Material> materials, BedrockEquipmentPose pose, BedrockArmorResources.Appearance armor, Path root) throws IOException {
         Bedrock3DItemAttachables writer = new Bedrock3DItemAttachables(id, root, stages, materials, new JsonArray());
         writer.contextViews = views;
         writer.contextPose = pose;
+        writer.armor = armor;
         writer.writeMaterialLayers();
         JsonObject animations = writer.contextAnimations(pose);
         writer.writeAnimations(animations, animations.isEmpty() ? new JsonArray() : pose.animate());
@@ -259,6 +264,9 @@ public final class Bedrock3DItemAttachables {
         // pre_animation 先计算 ce_stage 等变量，动画和渲染控制器再用这些值选择当前姿态与几何。
         JsonObject scripts = GsonHelper.createObject("animate", this.animate);
         scripts.add("pre_animation", preAnimation);
+        if (this.armor != null) {
+            this.armor.addMaterialsAndScripts(renderMaterials, scripts);
+        }
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);

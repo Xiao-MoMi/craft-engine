@@ -18,6 +18,7 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
             DataComponentKeys.CONSUMABLE,
             DataComponentKeys.FOOD,
             DataComponentKeys.EQUIPPABLE,
+            DataComponentKeys.DYED_COLOR,
             DataComponentKeys.MAX_DAMAGE,
             DataComponentKeys.MAX_STACK_SIZE,
             DataComponentKeys.USE_COOLDOWN,
