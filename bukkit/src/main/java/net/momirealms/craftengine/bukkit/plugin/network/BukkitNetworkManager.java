@@ -575,6 +575,10 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                     plugin.logger().warn("Please uninstall AntiPopup or disable the 'disable-chat-report' option.");
                 }
             }
+            // 补发 recipes
+            if (VersionHelper.isOrAbove1_21_2) {
+                user.resendSkippedRecipeBook();
+            }
         }
     }
 

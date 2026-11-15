@@ -32,6 +32,7 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
         }
         BukkitServerPlayer player = (BukkitServerPlayer) user;
         if (!player.isOnline()) {
+            player.markRecipeBookResendPending();
             return;
         }
         FriendlyByteBuf buf = event.getBuffer();

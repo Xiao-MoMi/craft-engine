@@ -167,6 +167,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private ConnectionState decoderState = ConnectionState.HANDSHAKING; // inbound(decode|c2s)
     private ConnectionState encoderState = ConnectionState.HANDSHAKING; // outbound(encode|s2c)
     private boolean shouldProcessFinishConfiguration = true;
+    private boolean recipeBookResendPending;
     // some references
     private org.bukkit.entity.Player bukkitPlayer;
     private Object nmsPlayer;
@@ -289,6 +290,20 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
         this.culling = new EntityCulling(this);
         this.constantContext = PlayerOptionalContext.of(this);
+    }
+
+    public void markRecipeBookResendPending() {
+        this.recipeBookResendPending = true;
+    }
+
+    public void resendSkippedRecipeBook() {
+        if (!this.recipeBookResendPending) {
+            return;
+        }
+        this.recipeBookResendPending = false;
+        Object player = this.minecraftPlayer();
+        Object recipeBook = ServerPlayerProxy.INSTANCE.getRecipeBook(player);
+        ServerRecipeBookProxy.INSTANCE.sendInitialRecipeBook(recipeBook, player);
     }
 
     public void setPlayer(org.bukkit.entity.Player player) {
