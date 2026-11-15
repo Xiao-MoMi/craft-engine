@@ -265,7 +265,7 @@ public final class Bedrock3DItemAttachables {
         JsonObject scripts = GsonHelper.createObject("animate", this.animate);
         scripts.add("pre_animation", preAnimation);
         if (this.armor != null) {
-            this.armor.addMaterialsAndScripts(renderMaterials, scripts);
+            this.armor.addMaterialsAndScripts(renderMaterials, scripts, this.animationNames);
         }
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);

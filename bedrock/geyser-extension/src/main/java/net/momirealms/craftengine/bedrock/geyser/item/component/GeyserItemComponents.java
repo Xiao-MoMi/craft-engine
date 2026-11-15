@@ -73,7 +73,7 @@ final class GeyserItemComponents {
             case "legs" -> "slot.armor.legs";
             case "chest" -> "slot.armor.chest";
             case "head" -> "slot.armor.head";
-            case "body" -> "slot.armor";
+            case "body" -> "slot.armor.body";
             case "saddle" -> "slot.saddle";
             case "mainhand" -> "slot.weapon.mainhand";
             case "offhand" -> "slot.weapon.offhand";

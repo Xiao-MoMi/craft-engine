@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockAnimalEquipment;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 
@@ -7,11 +8,16 @@ import java.nio.file.Path;
 
 public final class BedrockItemGenerationContext {
     private final Path root;
+    private final BedrockAnimalEquipment animalEquipment = new BedrockAnimalEquipment();
     private final BedrockItemBlocks itemDisplayBlocks = new BedrockItemBlocks();
     private final BedrockPlayerAnimations playerAnimations = new BedrockPlayerAnimations();
 
     public BedrockItemGenerationContext(Path root) {
         this.root = root;
+    }
+
+    public BedrockAnimalEquipment animalEquipment() {
+        return this.animalEquipment;
     }
 
     public Path root() {

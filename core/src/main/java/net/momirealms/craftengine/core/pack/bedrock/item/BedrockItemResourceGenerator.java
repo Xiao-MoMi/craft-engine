@@ -51,6 +51,7 @@ public final class BedrockItemResourceGenerator {
         writeItemAtlas(root, items);
         context.itemDisplayBlocks().finish(root);
         context.playerAnimations().write(root);
+        context.animalEquipment().write(root);
     }
 
     private static void writeItemAtlas(Path root, Map<Key, List<GeneratedItemVariant>> items) throws IOException {

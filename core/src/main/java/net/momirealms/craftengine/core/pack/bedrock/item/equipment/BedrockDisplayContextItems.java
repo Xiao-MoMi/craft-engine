@@ -69,6 +69,9 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             if (plan.worldAliases()) {
                 this.writeWorldAliases(item, context, output);
             }
+            if (armor != null) {
+                armor.registerAnimals(id, context.animalEquipment());
+            }
             output.add(item);
         }
         return output;

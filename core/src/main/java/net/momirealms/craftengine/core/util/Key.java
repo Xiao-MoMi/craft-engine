@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.UnaryOperator;
 
 public final class Key {
-    private static final Cache<String, Key> CACHE = Caffeine.newBuilder().maximumSize(8192).build();
     public static final String CRAFTENGINE_NAMESPACE = "craftengine";
     public static final String MINECRAFT_NAMESPACE = "minecraft";
     public final String namespace;
@@ -51,7 +50,7 @@ public final class Key {
     }
 
     public static Key ofCached(String namespacedId) {
-        return CACHE.get(namespacedId, Key::of);
+        return KeyUtils.CACHE.get(namespacedId, Key::of);
     }
 
     public static Key minecraft(String namespacedId) {
