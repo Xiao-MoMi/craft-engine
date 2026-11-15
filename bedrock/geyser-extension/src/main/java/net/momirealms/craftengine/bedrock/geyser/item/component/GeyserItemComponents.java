@@ -5,8 +5,12 @@ import com.google.gson.JsonObject;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtMapBuilder;
 import org.cloudburstmc.nbt.NbtType;
+import org.geysermc.geyser.item.type.ArmorItem;
+import org.geysermc.geyser.registry.type.ItemMapping;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiConsumer;
 
 final class GeyserItemComponents {
@@ -89,6 +93,38 @@ final class GeyserItemComponents {
                         .putInt("protection", existing.getInt("protection")).putBoolean("dispensable", dispensable).build());
             }
         });
+    }
+
+    static GeyserItemComponentPatch armorTrim(String itemType) {
+        return (data, mappings) -> {
+            ItemMapping mapping = mappings.getMapping(itemType);
+            return mapping != null && mapping.getJavaItem() instanceof ArmorItem ? armorTrim(data, mapping.getBedrockIdentifier()) : data;
+        };
+    }
+
+    static NbtMap armorTrim(NbtMap data, String baseIdentifier) {
+        NbtMap components = data.getCompound("components");
+        String slot = components.getCompound("minecraft:wearable").getString("slot");
+        boolean playerArmor = switch (slot) {
+            case "slot.armor.head", "slot.armor.chest", "slot.armor.legs", "slot.armor.feet" -> true;
+            default -> false;
+        };
+        if (!playerArmor) {
+            return data;
+        }
+        List<String> tags = components.getList("item_tags", NbtType.STRING);
+        String baseTag = GeyserArmorTrimRecipes.baseTag(baseIdentifier);
+        if (tags.contains("minecraft:is_armor") && tags.contains("minecraft:trimmable_armors") && tags.contains(baseTag)) {
+            return data;
+        }
+        // 客户端以这些标签启用自定义盔甲的纹饰合成和锻造槽入口，仅发送 Trim NBT 不会生效。
+        List<String> updatedTags = new ArrayList<>(tags);
+        for (String tag : List.of("minecraft:is_armor", "minecraft:trimmable_armors", baseTag)) {
+            if (!updatedTags.contains(tag)) {
+                updatedTags.add(tag);
+            }
+        }
+        return data.toBuilder().putCompound("components", components.toBuilder().putList("item_tags", NbtType.STRING, updatedTags).build()).build();
     }
 
     static GeyserItemComponentPatch cooldown(JsonElement value, String itemType) {

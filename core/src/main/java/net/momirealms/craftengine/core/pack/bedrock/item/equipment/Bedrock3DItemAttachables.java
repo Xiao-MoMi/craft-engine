@@ -107,7 +107,7 @@ public final class Bedrock3DItemAttachables {
         if (headId != null) {
             // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
             attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
-            writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
+            writeFile("1.20.60", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
         }
     }
 
@@ -270,7 +270,7 @@ public final class Bedrock3DItemAttachables {
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);
-        writeFile("1.10.0", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
+        writeFile("1.20.60", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
         return attachable;
     }
 

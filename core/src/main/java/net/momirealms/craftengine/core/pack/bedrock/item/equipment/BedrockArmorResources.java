@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 
 final class BedrockArmorResources {
+    private static final List<String> TRIM_PATTERNS = List.of("bolt", "coast", "dune", "eye", "flow", "host", "raiser", "rib", "sentry",
+            "shaper", "silence", "snout", "spire", "tide", "vex", "ward", "wayfinder", "wild");
     private final JavaModelResources resources;
     private final Map<Key, JsonObject> definitions = new HashMap<>();
     private final Map<TextureKey, String> textures = new HashMap<>();
@@ -148,6 +150,10 @@ final class BedrockArmorResources {
             this.geometry = geometry;
             this.visibility = visibility;
         }
+
+        boolean supportsTrim() {
+            return this == HELMET || this == CHESTPLATE || this == LEGGINGS || this == BOOTS;
+        }
     }
 
     record Layer(Slot slot, String texture) {
@@ -183,6 +189,14 @@ final class BedrockArmorResources {
                 textures.addProperty(alias, layer.texture);
                 textures.addProperty("ce_equipment_glint", "textures/misc/enchanted_actor_glint");
                 geometries.addProperty(alias, layer.slot.geometry);
+                if (layer.slot.supportsTrim()) {
+                    // 客户端以 default 贴图合成 trim_path；护腿必须使用内层纹饰 UV，不能从自定义物品 ID 推断。
+                    textures.addProperty("default", layer.texture);
+                    geometries.addProperty("default", layer.slot.geometry);
+                    for (String pattern : TRIM_PATTERNS) {
+                        textures.addProperty(pattern + "_trim", "textures/trims/" + pattern + (layer.slot == Slot.LEGGINGS ? "_leggings" : ""));
+                    }
+                }
                 JsonObject controller = new JsonObject();
                 controller.addProperty("geometry", "Geometry." + alias);
                 JsonArray materials = new JsonArray();
@@ -191,7 +205,7 @@ final class BedrockArmorResources {
                 materials.add(material);
                 controller.add("materials", materials);
                 JsonArray textureList = new JsonArray();
-                textureList.add("Texture." + alias);
+                textureList.add(layer.slot.supportsTrim() ? "variable.has_trim ? variable.trim_path : Texture." + alias : "Texture." + alias);
                 textureList.add("Texture.ce_equipment_glint");
                 controller.add("textures", textureList);
                 String name = "controller.render." + prefix + '.' + alias;
