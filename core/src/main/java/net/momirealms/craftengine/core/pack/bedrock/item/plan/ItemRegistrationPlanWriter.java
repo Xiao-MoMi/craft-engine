@@ -44,6 +44,11 @@ public final class ItemRegistrationPlanWriter {
             entries.add(entryToJson(entry, variants));
         }
         result.add(ENTRIES, entries);
+        if (!generatedItems.elytraVariants().isEmpty()) {
+            JsonObject elytraVariants = new JsonObject();
+            generatedItems.elytraVariants().forEach((id, variant) -> elytraVariants.addProperty(id.asString(), variant));
+            result.add(ELYTRA_VARIANTS, elytraVariants);
+        }
         return GsonHelper.sortObjectKeys(result).getAsJsonObject();
     }
 

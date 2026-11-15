@@ -71,6 +71,11 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             }
             if (armor != null) {
                 armor.registerAnimals(id, context.animalEquipment());
+                for (BedrockArmorResources.Layer layer : armor.layers()) {
+                    if (layer.slot() == BedrockArmorResources.Slot.WINGS && item.generated()) {
+                        context.elytraEquipment().register(id, layer.texture());
+                    }
+                }
             }
             output.add(item);
         }

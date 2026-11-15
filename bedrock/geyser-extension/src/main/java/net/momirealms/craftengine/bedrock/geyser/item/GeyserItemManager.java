@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
+import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.util.Identifier;
@@ -28,6 +29,8 @@ public final class GeyserItemManager {
     private GeyserDyeProperties mainHandDye;
     private GeyserDyeProperties offHandDye;
     private boolean hasDyedItems;
+    private Map<String, Integer> elytraVariants = Map.of();
+    private GeyserIntEntityProperty elytraProperty;
 
     public GeyserItemManager(CraftEngineGeyserExtension extension) {
         this.extension = extension;
@@ -38,9 +41,16 @@ public final class GeyserItemManager {
         this.headIdentifiers.clear();
         this.extension.blockManager().clearBlockItems();
         this.hasDyedItems = false;
+        this.elytraVariants = Map.of();
         Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
         if (plan != null) {
             this.registerItems(plan, event, patches);
+            JsonObject elytra = plan.getAsJsonObject(ELYTRA_VARIANTS);
+            if (elytra != null) {
+                Map<String, Integer> variants = new HashMap<>();
+                elytra.entrySet().forEach(entry -> variants.put(entry.getKey(), entry.getValue().getAsInt()));
+                this.elytraVariants = Map.copyOf(variants);
+            }
         }
         patches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
         this.componentPatches = Map.copyOf(patches);
@@ -106,6 +116,10 @@ public final class GeyserItemManager {
     }
 
     public void registerProperties(GeyserDefineEntityPropertiesEvent event) {
+        if (!this.elytraVariants.isEmpty()) {
+            int max = this.elytraVariants.values().stream().mapToInt(Integer::intValue).max().orElse(0);
+            this.elytraProperty = event.registerIntegerProperty(Identifier.of("minecraft:player"), Identifier.of(ELYTRA_VARIANT_PROPERTY), 0, max, 0);
+        }
         if (this.hasDyedItems) {
             Identifier player = Identifier.of("minecraft:player");
             this.mainHandDye = GeyserDyeProperties.register(event, player, MAIN_HAND_DYE);
@@ -122,6 +136,10 @@ public final class GeyserItemManager {
             return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye);
         }
         return null;
+    }
+
+    public GeyserElytraEquipment initPlayerElytra(GeyserPlayer player) {
+        return this.elytraProperty == null ? null : GeyserElytraEquipment.install(player, this.elytraProperty, this.elytraVariants);
     }
 
     public GeyserItemRuntime initPlayer(GeyserPlayer player) {

@@ -32,7 +32,7 @@ public final class BedrockItemResourceGenerator {
         }
 
         writeSharedResources(context, items);
-        return new Result(items);
+        return new Result(items, context.elytraEquipment().variants());
     }
 
     private static List<GeneratedItemVariant> writeItem(ItemRegistrationPlan.Entry entry,
@@ -52,6 +52,7 @@ public final class BedrockItemResourceGenerator {
         context.itemDisplayBlocks().finish(root);
         context.playerAnimations().write(root);
         context.animalEquipment().write(root);
+        context.elytraEquipment().write(root);
     }
 
     private static void writeItemAtlas(Path root, Map<Key, List<GeneratedItemVariant>> items) throws IOException {
@@ -79,6 +80,6 @@ public final class BedrockItemResourceGenerator {
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(atlas), output);
     }
 
-    public record Result(Map<Key, List<GeneratedItemVariant>> variants) {
+    public record Result(Map<Key, List<GeneratedItemVariant>> variants, Map<Key, Integer> elytraVariants) {
     }
 }

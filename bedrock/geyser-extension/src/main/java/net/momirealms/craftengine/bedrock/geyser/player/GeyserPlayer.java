@@ -7,6 +7,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserElytraEquipment;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserNetworkManager;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketHandler;
@@ -33,6 +34,7 @@ public final class GeyserPlayer {
     private GeyserSidebarConnection sidebar;
     private GeyserItemRuntime items;
     private GeyserHeldDye heldDye;
+    private GeyserElytraEquipment elytra;
     private BlockBreakHandler originalBlockBreakHandler;
     private BlockBreakHandler blockBreakHandler;
     private boolean placed;
@@ -51,6 +53,7 @@ public final class GeyserPlayer {
         this.extension.blockManager().initPlayer(this);
         this.heldDye = this.extension.itemManager().initPlayerDye(this);
         this.items = this.extension.itemManager().initPlayer(this);
+        this.elytra = this.extension.itemManager().initPlayerElytra(this);
         this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
         this.packetHandler = new GeyserPacketHandler(this);
@@ -169,6 +172,9 @@ public final class GeyserPlayer {
         this.session.executeInEventLoop(() -> {
             if (this.heldDye != null) {
                 this.heldDye.close();
+            }
+            if (this.elytra != null) {
+                this.elytra.close();
             }
             if (this.items != null) {
                 this.items.close();
