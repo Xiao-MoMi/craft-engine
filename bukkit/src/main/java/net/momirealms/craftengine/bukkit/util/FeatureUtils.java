@@ -8,7 +8,7 @@ public final class FeatureUtils {
     private FeatureUtils() {}
 
     public static Object createConfiguredFeatureKey(Key id) {
-        return ResourceKeyProxy.INSTANCE.create(RegistriesProxy.CONFIGURED_FEATURE, KeyUtils.toIdentifier(id));
+        return ResourceKeyProxy.INSTANCE.create(RegistryUtils.CONFIGURED_FEATURE, KeyUtils.toIdentifier(id));
     }
 
     public static Object createPlacedFeatureKey(Key id) {

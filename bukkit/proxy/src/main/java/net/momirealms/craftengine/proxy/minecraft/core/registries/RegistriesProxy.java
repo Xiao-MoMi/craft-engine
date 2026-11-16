@@ -19,7 +19,6 @@ public interface RegistriesProxy {
     Object RECIPE_TYPE = INSTANCE.getRecipeType();
     Object DIMENSION_TYPE = INSTANCE.getDimensionType();
     Object DIMENSION = INSTANCE.getDimension();
-    Object CONFIGURED_FEATURE = INSTANCE.getConfiguredFeature();
     Object PLACED_FEATURE = INSTANCE.getPlacedFeature();
     Object TRIM_PATTERN = INSTANCE.getTrimPattern();
     Object TRIM_MATERIAL = INSTANCE.getTrimMaterial();
@@ -68,8 +67,11 @@ public interface RegistriesProxy {
     @FieldGetter(name = "DIMENSION", isStatic = true)
     Object getDimension();
 
-    @FieldGetter(name = {"FEATURE", "CONFIGURED_FEATURE"}, isStatic = true)
-    Object getConfiguredFeature();
+    @FieldGetter(name = "CONFIGURED_FEATURE", isStatic = true, activeIf = "max_version=26.2")
+    Object getConfiguredFeature$0();
+
+    @FieldGetter(name = "FEATURE", isStatic = true, activeIf = "min_version=26.3")
+    Object getConfiguredFeature$1();
 
     @FieldGetter(name = "PLACED_FEATURE", isStatic = true)
     Object getPlacedFeature();

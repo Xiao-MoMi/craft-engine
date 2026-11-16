@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class RegistryUtils {
+    public static final Object CONFIGURED_FEATURE = VersionHelper.isOrAbove26_3
+            ? RegistriesProxy.INSTANCE.getConfiguredFeature$1()
+            : RegistriesProxy.INSTANCE.getConfiguredFeature$0();
+
     private RegistryUtils() {}
 
     public static int currentBlockRegistrySize() {

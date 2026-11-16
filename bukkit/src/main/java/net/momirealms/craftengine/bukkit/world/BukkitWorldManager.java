@@ -142,7 +142,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
 
     @Override
     public void load() {
-        this.cachedConfiguredFeaturesSuggestion = RegistryProxy.INSTANCE.keySet(RegistryUtils.lookupOrThrow(RegistriesProxy.CONFIGURED_FEATURE))
+        this.cachedConfiguredFeaturesSuggestion = RegistryProxy.INSTANCE.keySet(RegistryUtils.lookupOrThrow(RegistryUtils.CONFIGURED_FEATURE))
                 .stream()
                 .map(it -> Suggestion.suggestion(it.toString()))
                 .toList();
@@ -280,7 +280,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     public Object configuredFeatureHolderById(Key id) {
         Object holder = this.configuredFeatures.get(id);
         if (holder == null) {
-            Object registry = RegistryUtils.lookupOrThrow(RegistriesProxy.CONFIGURED_FEATURE);
+            Object registry = RegistryUtils.lookupOrThrow(RegistryUtils.CONFIGURED_FEATURE);
             holder = RegistryUtils.getHolder(registry, FeatureUtils.createConfiguredFeatureKey(id));
         }
         return holder;
