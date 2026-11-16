@@ -27,10 +27,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class BedrockSpearBehavior extends BedrockEquipmentBehavior {
-    static final BedrockSpearBehavior INSTANCE = new BedrockSpearBehavior();
+final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
+    static final BedrockSpearRenderStrategy INSTANCE = new BedrockSpearRenderStrategy();
 
-    private BedrockSpearBehavior() {
+    private BedrockSpearRenderStrategy() {
     }
 
     @Override

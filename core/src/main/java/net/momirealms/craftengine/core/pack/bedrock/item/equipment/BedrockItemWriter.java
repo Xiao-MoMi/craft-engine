@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
@@ -14,30 +15,28 @@ import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconR
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
-import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
 public final class BedrockItemWriter {
     private final JavaModelResources resources;
     private final BedrockItemIconRenderer renderer;
-    private final BedrockDisplayContextItems equipmentItems;
+    private final BedrockDisplayContextItems displayContextItems;
 
     public BedrockItemWriter(JavaModelResources resources, BedrockItemIconRenderer renderer) {
         this.resources = resources;
         this.renderer = renderer;
-        this.equipmentItems = new BedrockDisplayContextItems(resources, renderer);
+        this.displayContextItems = new BedrockDisplayContextItems(resources, renderer);
     }
 
     public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
         // 是个特殊的模型，比如弓
-        List<BedrockItemPresentation> presentations = BedrockItemPresentation.plan(entry);
+        List<BedrockItemPresentation> presentations = BedrockItemPresentation.plan(entry, this.resources.models());
         if (presentations != null) {
-            return this.equipmentItems.write(entry, presentations, context);
+            return this.displayContextItems.write(entry, presentations, context);
         }
 
         // 按照标准流程生成
@@ -50,7 +49,11 @@ public final class BedrockItemWriter {
             ItemBindingRule rule = rules.get(i);
             Key id = size == 1 ? bedrockId : bedrockId.withSameNamespace(bedrockId.value() + "_variant_" + i);
             try {
-                variants.add(this.writeVariant(entry, context, id, rule, type));
+                GeneratedItemVariant variant = this.writeVariant(entry, context, id, rule, type);
+                if (variant.displayBlock() != null) {
+                    this.displayContextItems.writeWorldAlias(variant, rule, ItemDisplayContext.ON_SHELF, context, variants);
+                }
+                variants.add(variant);
             } catch (BedrockResourceException exception) {
                 TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", id.asString(), entry.itemModel().asString(), rule.sourcePath(), exception.getLocalizedMessage());
             }
@@ -73,40 +76,18 @@ public final class BedrockItemWriter {
             throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", rule.target().toString());
         }
         List<JavaModel> models = new ObjectArrayList<>(parts.size());
-        // 复合模型的各个部件有不同的手持变换，需要分别保留它们的位置、旋转和缩放
-        boolean separateHandPoses = false;
         for (ItemBindingRule part : parts) {
             // 没法支持 special 那些东西
             if (!(part.target() instanceof ItemRenderTarget.Model target)) {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.composite_child", part.sourcePath());
             }
             JavaModel model = target.resolve(this.resources.models());
-            if (!models.isEmpty() && !model.display().equals(models.getFirst().display())) {
-                validateDisplay(models.getFirst(), model, type);
-                separateHandPoses = true;
-            }
             models.add(model);
         }
         return switch (type) {
             case BLOCK -> this.writeDisplayBlock(entry, context, id, rule, parts);
-            case ITEM -> this.writeIcon(context, id, rule, parts, models, separateHandPoses);
+            case ITEM -> this.writeIcon(context, id, rule, parts, models);
         };
-    }
-
-    private static void validateDisplay(JavaModel first, JavaModel model, ItemRenderType type) {
-        for (DisplayPosition view : DisplayPosition.values()) {
-            if (first.display().get(view).equals(model.display().get(view))) {
-                continue;
-            }
-            boolean handheld = switch (view) {
-                // 变换不同，但属于四个手持位置，且类型是 ITEM
-                case FIRSTPERSON_RIGHTHAND, FIRSTPERSON_LEFTHAND, THIRDPERSON_RIGHTHAND, THIRDPERSON_LEFTHAND -> true;
-                default -> false;
-            };
-            if (!handheld || type != ItemRenderType.ITEM) {
-                throw new BedrockResourceException("resource_pack.bedrock.reason.model_transforms", view.name().toLowerCase(Locale.ROOT), first.id().asString(), model.id().asString());
-            }
-        }
     }
 
     private GeneratedItemVariant writeDisplayBlock(ResolvedItemBinding entry,
@@ -137,8 +118,7 @@ public final class BedrockItemWriter {
                                            Key id,
                                            ItemBindingRule rule,
                                            List<ItemBindingRule> parts,
-                                           List<JavaModel> models,
-                                           boolean separateHandPoses) throws IOException {
+                                           List<JavaModel> models) throws IOException {
         List<BedrockTexture> images = new ObjectArrayList<>(parts.size());
         for (ItemBindingRule part : parts) {
             BedrockTexture image = this.renderer.render((ItemRenderTarget.Model) part.target());
@@ -150,10 +130,8 @@ public final class BedrockItemWriter {
         BedrockTexture icon = BedrockTexture.composite(images);
         String texture = icon.write(context.root(), "textures/" + id.namespace() + '/' + id.value() + "/icon");
         // 除了背包图标，是否还需要生成手持 attachable
-        boolean attachable = separateHandPoses || (!models.isEmpty() && this.renderer.needsHandheldAttachable(models.getFirst()));
-        if (separateHandPoses) {
-            BedrockItemAttachables.writeComposite(id, models, images, context.root());
-        } else if (attachable) {
+        boolean attachable = !models.isEmpty() && this.renderer.needsHandheldAttachable(models.getFirst());
+        if (attachable) {
             BedrockItemAttachables.write(id, models.getFirst(), icon.image(), texture, context.root());
         }
         return GeneratedItemVariant.icon(id, rule, texture, attachable);

@@ -23,14 +23,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-final class BedrockCrossbowBehavior extends BedrockEquipmentBehavior {
-    static final List<BedrockCrossbowBehavior> STATES = List.of(new BedrockCrossbowBehavior("none"), new BedrockCrossbowBehavior("arrow"), new BedrockCrossbowBehavior("rocket"));
+final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
+    static final List<BedrockCrossbowRenderStrategy> STATES = List.of(new BedrockCrossbowRenderStrategy("none"), new BedrockCrossbowRenderStrategy("arrow"), new BedrockCrossbowRenderStrategy("rocket"));
     private final String ammunition;
     private final boolean charged;
     private final List<ItemBindingCondition> stateConditions;
     private final JsonPrimitive value;
 
-    private BedrockCrossbowBehavior(String ammunition) {
+    private BedrockCrossbowRenderStrategy(String ammunition) {
         this.ammunition = ammunition;
         this.value = new JsonPrimitive(ammunition);
         this.charged = !ammunition.equals("none");

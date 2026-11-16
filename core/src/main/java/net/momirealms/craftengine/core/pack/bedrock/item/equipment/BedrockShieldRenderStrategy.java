@@ -8,10 +8,10 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBindin
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.util.Key;
 
-final class BedrockShieldBehavior extends BedrockEquipmentBehavior {
-    static final BedrockShieldBehavior INSTANCE = new BedrockShieldBehavior();
+final class BedrockShieldRenderStrategy extends BedrockItemRenderStrategy {
+    static final BedrockShieldRenderStrategy INSTANCE = new BedrockShieldRenderStrategy();
 
-    private BedrockShieldBehavior() {
+    private BedrockShieldRenderStrategy() {
     }
 
     @Override

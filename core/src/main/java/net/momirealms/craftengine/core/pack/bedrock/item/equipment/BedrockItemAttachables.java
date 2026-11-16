@@ -8,7 +8,6 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
-import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
@@ -44,38 +43,13 @@ public final class BedrockItemAttachables {
 
     public static void write(Key id, JavaModel model, BufferedImage image, String texture, Path root) throws IOException {
         BedrockItemAttachment attachment = new BedrockItemAttachment(id);
-        addStaticPart(attachment, model, image, texture, -1);
+        String geometryId = "geometry." + attachment.prefix;
+        JsonArray cubes = new JsonArray();
+        BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, 0, image.getWidth(), image.getHeight());
+        displayAnimations(model, "animation." + attachment.prefix + '.', -1, attachment.animations, attachment.animationNames, attachment.animate);
+        attachment.addGeometry("default", geometryId, texture, displayGeometry(model, cubes, geometryId, MODEL_RADIUS));
         attachment.showInHand("controller.render.item_default");
         attachment.write(root, null);
-    }
-
-    static void writeComposite(Key id, List<JavaModel> models, List<BedrockTexture> images, Path root) throws IOException {
-        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
-        JsonObject controllers = new JsonObject();
-        for (int i = 0; i < models.size(); i++) {
-            String alias = "part_" + i;
-            String texture = "textures/" + id.namespace() + '/' + id.value() + "/" + alias;
-            BufferedImage image = images.get(i).image();
-            ImageUtils.writePng(image, root.resolve(texture + ".png"));
-            addStaticPart(attachment, models.get(i), image, texture, i);
-            // 所有部件同时可见，各自的动画只作用于本部件的骨骼。
-            String controller = "controller.render." + attachment.prefix + "." + alias;
-            controllers.add(controller, renderController("Geometry." + alias, "Texture." + alias));
-            attachment.showInHand(controller);
-        }
-        writeControllers(controllers, attachment.controllerPath(root));
-        attachment.write(root, null);
-    }
-
-    private static void addStaticPart(BedrockItemAttachment attachment, JavaModel model, BufferedImage image, String texture, int layer) {
-        String alias = layer < 0 ? "default" : "part_" + layer;
-        String prefix = layer < 0 ? attachment.prefix : attachment.prefix + "_" + alias;
-        String bonePrefix = layer < 0 ? "" : alias + "_";
-        String geometryId = "geometry." + prefix;
-        JsonArray cubes = new JsonArray();
-        BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, Math.max(0, layer), image.getWidth(), image.getHeight());
-        displayAnimations(model, "animation." + prefix + '.', -1, bonePrefix, attachment.animations, attachment.animationNames, attachment.animate);
-        attachment.addGeometry(alias, geometryId, texture, displayGeometry(model, cubes, geometryId, MODEL_RADIUS, bonePrefix));
     }
 
     public static void writeBow(Key id, List<Stage> stages, int idleStage, int maximumUseTicks, Path root) throws IOException {
@@ -187,12 +161,6 @@ public final class BedrockItemAttachables {
         JsonObject definitions = new JsonObject();
         definitions.add(id, controller);
         writeControllers(definitions, path);
-    }
-
-    private static JsonObject renderController(String geometry, String texture) {
-        JsonObject controller = new JsonObject();
-        addRenderBindings(controller, geometry, texture);
-        return controller;
     }
 
     private static void addRenderBindings(JsonObject controller, String geometry, String texture) {

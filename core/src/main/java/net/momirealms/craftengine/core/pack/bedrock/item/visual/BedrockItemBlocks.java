@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
@@ -16,7 +17,9 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
+import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+import org.joml.Matrix3d;
 import org.joml.Vector3f;
 
 import java.io.IOException;
@@ -30,6 +33,8 @@ import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextu
 public final class BedrockItemBlocks {
     private final BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
     private final JsonObject blocks = new JsonObject();
+    private final Map<TextureKey, String> textureTiles = new HashMap<>();
+    private final Map<GeometryKey, List<Geometry>> geometries = new HashMap<>();
 
     private static BedrockElementGeometry.Material bindTexture(TextureKey key,
                                                                Map<TextureKey, BedrockElementGeometry.Material> bindings,
@@ -63,10 +68,16 @@ public final class BedrockItemBlocks {
             JavaModel model = target.resolve(resolver);
             if (displayModel == null) {
                 displayModel = model;
-            } else if (view != null && !Objects.equals(model.display().get(view), displayModel.display().get(view))) {
-                throw new BedrockResourceException("resource_pack.bedrock.reason.part_transforms", String.valueOf(view));
             }
             Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
+            if (view != null) {
+                JavaModel.Transform reference = displayModel.display().getOrDefault(view, JavaModel.Transform.IDENTITY);
+                JavaModel.Transform display = model.display().getOrDefault(view, JavaModel.Transform.IDENTITY);
+                if (!reference.equals(display)) {
+                    // 提取首部件的公共 display，其余部件只烘焙相对变换，便于不同场景复用几何。
+                    transformation = new Matrix4f(BedrockModelTransform.relativeDisplay(reference, display)).mul(transformation);
+                }
+            }
             BedrockModelTransform.uniformScale(transformation);
             JsonArray part;
             if (model.kind() == JavaModel.GeometryKind.GENERATED) {
@@ -96,24 +107,58 @@ public final class BedrockItemBlocks {
         }
         // 合并后统一缩小，避免各子模型分别适配尺寸而改变相对位置。
         float geometryScale = BedrockElementGeometry.fit(cubes).scale();
-        JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, geometryScale, view);
+        JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, cubes, geometryScale, view);
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
         for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
-            String tile = name + "/layer_" + index;
-            this.atlas.write(images.get(index++), entry.getKey().color(), tile, root);
+            String tile = this.textureTiles.get(entry.getKey());
+            if (tile == null) {
+                tile = name + "/layer_" + index;
+                this.atlas.write(images.get(index), entry.getKey().color(), tile, root);
+                this.textureTiles.put(entry.getKey(), tile);
+            }
             materials.put(entry.getValue().name(), tile);
+            index++;
         }
         return this.writeGeometry(item, cubes, transforms, materials, root);
     }
 
     private DisplayBlock writeGeometry(Key item, JsonArray cubes, JsonObject transforms, Map<String, String> materials, Path root) throws IOException {
+        GeometryKey key = new GeometryKey(cubes, materials);
+        List<Geometry> candidates = this.geometries.computeIfAbsent(key, ignored -> new ArrayList<>());
+        for (Geometry candidate : candidates) {
+            if (compatibleTransforms(candidate.transforms(), transforms)) {
+                transforms.entrySet().forEach(entry -> candidate.transforms().add(entry.getKey(), entry.getValue()));
+                this.writeGeometryFile(candidate.display(), cubes, candidate.transforms(), root);
+                return candidate.display();
+            }
+        }
         String name = item.namespace() + '/' + item.value();
         String identifier = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(item) + ".block"; // 展示方块几何标识，与手持几何区分
+        DisplayBlock display = new DisplayBlock(name, identifier, materials);
+        this.writeGeometryFile(display, cubes, transforms, root);
+        candidates.add(new Geometry(display, transforms));
 
+        JsonObject block = new JsonObject();
+        block.addProperty("sound", "wood");
+        this.blocks.add("geyser_custom:" + name, block);
+        return display;
+    }
+
+    private static boolean compatibleTransforms(JsonObject first, JsonObject second) {
+        for (Map.Entry<String, JsonElement> entry : second.entrySet()) {
+            JsonElement existing = first.get(entry.getKey());
+            if (existing != null && !existing.equals(entry.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void writeGeometryFile(DisplayBlock display, JsonArray cubes, JsonObject transforms, Path root) throws IOException {
         // 几何描述
         JsonObject description = new JsonObject();
-        description.addProperty("identifier", identifier); // 供方块引用的几何 ID
+        description.addProperty("identifier", display.geometry()); // 供方块引用的几何 ID
         description.addProperty("texture_width", 16); // U 坐标尺度，不是实际贴图宽度
         description.addProperty("texture_height", 16); // V 坐标尺度，不是实际贴图高度
 
@@ -139,18 +184,12 @@ public final class BedrockItemBlocks {
         JsonObject file = new JsonObject();
         file.addProperty(FORMAT_VERSION, "1.21.0"); // 几何格式版本
         file.add("minecraft:geometry", geometries); // 几何定义入口
-        Path geometryPath = root.resolve("models/blocks/" + name + ".geo.json"); // 几何文件输出路径
+        Path geometryPath = root.resolve("models/blocks/" + display.name() + ".geo.json"); // 几何文件输出路径
         Files.createDirectories(geometryPath.getParent()); // 创建模型目录
         GsonHelper.writeJsonFile(file, geometryPath); // 写出几何文件
-
-        // blocks.json 中的方块配置
-        JsonObject block = new JsonObject();
-        block.addProperty("sound", "wood"); // 使用木质方块音效
-        this.blocks.add("geyser_custom:" + name, block); // 匹配 Geyser 注册的方块标识
-        return new DisplayBlock(name, identifier, materials);
     }
 
-    private JsonObject displayTransforms(JavaModel model, float geometryScale, DisplayPosition view) {
+    private JsonObject displayTransforms(JavaModel model, JsonArray cubes, float geometryScale, DisplayPosition view) {
         JsonObject transforms = new JsonObject();
         for (DisplayPosition position : DisplayPosition.values()) {
             if (view == null ? position == DisplayPosition.ON_SHELF : position != view) {
@@ -158,12 +197,32 @@ public final class BedrockItemBlocks {
             }
             JavaModel.Transform transform = model.display().getOrDefault(position, JavaModel.Transform.IDENTITY);
             Vector3f scale = new Vector3f(transform.scale()).div(geometryScale);
+            Vector3f rotation = transform.rotation();
+            Vector3f translation = transform.translation();
+            if (position == DisplayPosition.ON_SHELF) {
+                // Java 置物架按最终整组包围盒垂直居中，且其外层缩放是基岩 fixed 路径的一半。
+                Vector3f radians = new Vector3f(rotation).mul((float) (Math.PI / 180));
+                Matrix4f displayMatrix = new Matrix4f().translation(translation)
+                        .rotateXYZ(radians.x, radians.y, radians.z).scale(scale).translate(-8, -8, -8);
+                float centerY = 0;
+                if (!cubes.isEmpty()) {
+                    Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
+                    Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
+                    BedrockElementGeometry.bounds(cubes, minimum, maximum, displayMatrix);
+                    centerY = (minimum.y + maximum.y) * 0.5f;
+                }
+                // 几何已转换为基岩坐标；补偿置物架朝向时，要连同公共 display 一起变换。
+                rotation = BedrockModelTransform.rotationAngles(new Matrix3d().rotationY(Math.PI)
+                        .scale(-1, 1, 1).rotateXYZ(radians.x, radians.y, radians.z).scale(-1, 1, 1));
+                translation = new Vector3f(translation.x, translation.y - centerY, -translation.z).mul(0.5f);
+                scale.mul(0.5f);
+            }
             if (scale.x < 0 || scale.y < 0 || scale.z < 0 || scale.x > 4 || scale.y > 4 || scale.z > 4) {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.display_scale", position.name(), scale.toString());
             }
             JsonObject display = new JsonObject();
-            display.add("rotation", VectorUtils.toJson(transform.rotation()));
-            display.add("translation", VectorUtils.toJson(transform.translation()));
+            display.add("rotation", VectorUtils.toJson(rotation));
+            display.add("translation", VectorUtils.toJson(translation));
             display.add("scale", VectorUtils.toJson(scale));
             display.add("rotation_pivot", VectorUtils.toJson(0, 0, 0));
             display.add("scale_pivot", VectorUtils.toJson(0, 0, 0));
@@ -190,6 +249,12 @@ public final class BedrockItemBlocks {
     }
 
     private record TextureKey(Texture texture, int color) {
+    }
+
+    private record GeometryKey(JsonArray cubes, Map<String, String> materials) {
+    }
+
+    private record Geometry(DisplayBlock display, JsonObject transforms) {
     }
 
     public record DisplayBlock(String name, String geometry, Map<String, String> materials) {

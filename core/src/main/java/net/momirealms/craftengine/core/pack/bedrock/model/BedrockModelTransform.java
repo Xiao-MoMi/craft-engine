@@ -33,6 +33,31 @@ public final class BedrockModelTransform {
         return matrix.equals(IDENTITY, 0.000001f);
     }
 
+    public static Matrix4fc relativeDisplay(JavaModel.Transform reference, JavaModel.Transform target) {
+        if (reference.equals(target)) {
+            return IDENTITY;
+        }
+        // display 作用于居中模型；转回 0..1 的模型坐标后，再与各部件的局部矩阵相乘。
+        Matrix4f relative = new Matrix4f().translation(0.5f, 0.5f, 0.5f)
+                .mul(displayMatrix(reference).invert())
+                .mul(displayMatrix(target))
+                .translate(-0.5f, -0.5f, -0.5f);
+        uniformScale(relative);
+        // 消除公共变换求逆产生的浮点尾差，使相同的部件相对姿态命中同一份几何。
+        for (int column = 0; column < 4; column++) {
+            for (int row = 0; row < 4; row++) {
+                relative.set(column, row, (float) (Math.rint(relative.get(column, row) * 1_000_000.0) / 1_000_000.0));
+            }
+        }
+        return relative;
+    }
+
+    private static Matrix4f displayMatrix(JavaModel.Transform transform) {
+        return new Matrix4f().translation(new Vector3f(transform.translation()).div(16))
+                .rotateXYZ(transform.rotation().x * RADIANS, transform.rotation().y * RADIANS, transform.rotation().z * RADIANS)
+                .scale(transform.scale());
+    }
+
     public static float uniformScale(Matrix4fc matrix) {
         Vector3f x = new Vector3f(matrix.m00(), matrix.m01(), matrix.m02());
         Vector3f y = new Vector3f(matrix.m10(), matrix.m11(), matrix.m12());

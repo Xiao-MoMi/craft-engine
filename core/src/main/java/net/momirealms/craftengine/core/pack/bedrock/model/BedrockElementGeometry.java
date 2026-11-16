@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix3f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.util.Locale;
@@ -120,6 +121,10 @@ public final class BedrockElementGeometry {
     }
 
     private static void bounds(JsonArray cubes, Vector3f minimum, Vector3f maximum) {
+        bounds(cubes, minimum, maximum, null);
+    }
+
+    public static void bounds(JsonArray cubes, Vector3f minimum, Vector3f maximum, Matrix4fc transformation) {
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
             Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
@@ -136,6 +141,9 @@ public final class BedrockElementGeometry {
                 point.set(origin).add((corner & 1) == 0 ? 0 : size.x, (corner & 2) == 0 ? 0 : size.y, (corner & 4) == 0 ? 0 : size.z);
                 rotation.transform(point.sub(pivot)).add(pivot);
                 point.set(8 - point.x, point.y, point.z + 8);
+                if (transformation != null) {
+                    transformation.transformPosition(point);
+                }
                 minimum.min(point);
                 maximum.max(point);
             }

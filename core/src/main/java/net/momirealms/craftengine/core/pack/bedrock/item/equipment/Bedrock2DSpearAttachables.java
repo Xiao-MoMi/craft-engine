@@ -65,7 +65,7 @@ public final class Bedrock2DSpearAttachables {
         JsonArray animate = new JsonArray();
         animate.add("held");
         animate.add("hit_controller");
-        JsonArray preAnimation = BedrockEquipmentBehavior.useScripts(plan.item().useBehavior());
+        JsonArray preAnimation = BedrockItemRenderStrategy.useScripts(plan.item().useBehavior());
         preAnimation.add(BedrockItemAttachables.stageSelection(conditions, Function.identity()));
         JsonObject scripts = new JsonObject();
         scripts.add("pre_animation", preAnimation);

@@ -8,10 +8,10 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.IOException;
 
-final class BedrockTridentBehavior extends BedrockEquipmentBehavior {
-    static final BedrockTridentBehavior INSTANCE = new BedrockTridentBehavior();
+final class BedrockTridentRenderStrategy extends BedrockItemRenderStrategy {
+    static final BedrockTridentRenderStrategy INSTANCE = new BedrockTridentRenderStrategy();
 
-    private BedrockTridentBehavior() {
+    private BedrockTridentRenderStrategy() {
     }
 
     @Override

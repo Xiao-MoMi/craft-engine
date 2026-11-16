@@ -21,10 +21,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-final class BedrockBowBehavior extends BedrockEquipmentBehavior {
-    static final BedrockBowBehavior INSTANCE = new BedrockBowBehavior();
+final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
+    static final BedrockBowRenderStrategy INSTANCE = new BedrockBowRenderStrategy();
 
-    private BedrockBowBehavior() {
+    private BedrockBowRenderStrategy() {
     }
 
     @Override

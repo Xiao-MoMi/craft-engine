@@ -30,8 +30,8 @@ final class DisplayContextVariants {
      * 将 Java 模型规则按物品栈条件划分为基岩物品变体。每个变体保存各显示位置可用的模型规则。
      * 例如，只有手持模型随耐久变化时，会按耐久划分变体，但这些变体仍共用同一个背包模型。
      */
-    static List<Variant> collect(ResolvedItemBinding entry, BedrockEquipmentBehavior equipment, boolean explicitViews) {
-        List<PreparedRule> rules = prepareRules(entry.definition().rules(), equipment);
+    static List<Variant> collect(ResolvedItemBinding entry, BedrockItemRenderStrategy strategy, boolean explicitViews) {
+        List<PreparedRule> rules = prepareRules(entry.definition().rules(), strategy);
         Map<ViewBranches, List<ItemDisplayContext>> contextsByBranches = new LinkedHashMap<>();
         if (!explicitViews) {
             // Java 没有按显示位置分支时，只对公共规则做一次分组。
@@ -44,17 +44,17 @@ final class DisplayContextVariants {
             }
         }
 
-        List<Variant> variants = List.of(new Variant(equipment.stateConditions(), new EnumMap<>(ItemDisplayContext.class)));
+        List<Variant> variants = List.of(new Variant(strategy.stateConditions(), new EnumMap<>(ItemDisplayContext.class)));
         for (Map.Entry<ViewBranches, List<ItemDisplayContext>> group : contextsByBranches.entrySet()) {
             variants = mergeVariants(variants, group.getKey(), group.getValue());
         }
         return variants;
     }
 
-    private static List<PreparedRule> prepareRules(List<ItemBindingRule> rules, BedrockEquipmentBehavior equipment) {
+    private static List<PreparedRule> prepareRules(List<ItemBindingRule> rules, BedrockItemRenderStrategy strategy) {
         List<PreparedRule> prepared = new ArrayList<>(rules.size());
         for (ItemBindingRule rule : rules) {
-            if (!equipment.accepts(rule)) {
+            if (!strategy.accepts(rule)) {
                 continue;
             }
             List<ItemBindingCondition> stackConditions = new ObjectArrayList<>();
@@ -62,7 +62,7 @@ final class DisplayContextVariants {
             boolean matchesFallback = true;
             for (ItemBindingCondition condition : rule.conditions()) {
                 // 显示位置由 branchesForView 筛选，使用状态由手持模型处理，两者都不区分物品变体。
-                if (isDisplayCondition(condition) || equipment.isEquipmentCondition(condition)) {
+                if (isDisplayCondition(condition) || strategy.isEquipmentCondition(condition)) {
                     continue;
                 }
                 // 是否为不支持的 condition 类型
@@ -170,12 +170,11 @@ final class DisplayContextVariants {
     }
 
     record Variant(List<ItemBindingCondition> conditions, // 哪种物品栈会选中这个变体
-                   EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules // 选中这个变体后，各个显示位置用哪些模型规则
-    ) {
+                   EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules) { // 选中这个变体后，各个显示位置用哪些模型规则
 
-        ItemBindingRule idle(ItemDisplayContext view, BedrockEquipmentBehavior equipment) {
+        ItemBindingRule idle(ItemDisplayContext view, BedrockItemRenderStrategy strategy) {
             for (ItemBindingRule rule : this.rules.get(view)) {
-                if (equipment.matchesIdle(rule)) {
+                if (strategy.matchesIdle(rule)) {
                     return rule;
                 }
             }

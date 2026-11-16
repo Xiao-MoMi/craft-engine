@@ -17,6 +17,8 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ public final class Bedrock3DItemAttachables {
     private final JsonArray activeControllers = new JsonArray();
     private final JsonArray animate = new JsonArray();
     private List<BedrockItemAttachables.View> contextViews;
+    private int[] contextGeometryIndices;
     private BedrockEquipmentPose contextPose;
     private BedrockArmorResources.Appearance armor;
 
@@ -100,6 +103,7 @@ public final class Bedrock3DItemAttachables {
         writer.contextViews = views;
         writer.contextPose = pose;
         writer.armor = armor;
+        writer.groupContextGeometries();
         writer.writeMaterialLayers();
         JsonObject animations = writer.contextAnimations(pose);
         writer.writeAnimations(animations, animations.isEmpty() ? new JsonArray() : pose.animate());
@@ -108,6 +112,31 @@ public final class Bedrock3DItemAttachables {
             // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
             attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
             writeFile("1.20.60", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
+        }
+    }
+
+    private void groupContextGeometries() {
+        this.contextGeometryIndices = new int[this.stages.size()];
+        Map<ContextGeometry, List<ContextGroup>> groups = new HashMap<>();
+        for (int index = 0; index < this.stages.size(); index++) {
+            Stage stage = this.stages.get(index);
+            BedrockItemAttachables.View view = this.contextViews.get(index);
+            ContextGeometry key = new ContextGeometry(stage.model(), stage.cubes(), this.contextPose.views().contains(view));
+            List<ContextGroup> candidates = groups.computeIfAbsent(key, ignored -> new ArrayList<>());
+            ContextGroup selected = null;
+            for (ContextGroup candidate : candidates) {
+                if (!candidate.views().contains(view)) {
+                    selected = candidate;
+                    break;
+                }
+            }
+            // 不同场景互斥，可共用骨骼；同一场景的部件可能同时出现，必须保持独立。
+            if (selected == null) {
+                selected = new ContextGroup(index, EnumSet.noneOf(BedrockItemAttachables.View.class));
+                candidates.add(selected);
+            }
+            selected.views().add(view);
+            this.contextGeometryIndices[index] = selected.index();
         }
     }
 
@@ -134,15 +163,17 @@ public final class Bedrock3DItemAttachables {
             }
             String alias = "stage_" + index + '_' + layerName;
             if (this.contextViews != null) {
-                // Composite parts can have different display transforms and be visible simultaneously.
-                String geometryId = "geometry." + this.prefix + '.' + alias;
-                String prefix = "p" + index + "_";
-                JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.model(), cubes, geometryId, modelRadius(cubes), prefix);
-                if (this.contextPose.views().contains(this.contextViews.get(index)) && !this.contextPose.bones().isEmpty()) {
-                    // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
-                    insertPoseBones(geometry, prefix, this.contextPose.bones());
+                int geometryIndex = this.contextGeometryIndices[index];
+                String geometryId = "geometry." + this.prefix + ".stage_" + geometryIndex + '_' + layerName;
+                if (geometryIndex == index) {
+                    String prefix = "p" + geometryIndex + "_";
+                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.model(), cubes, geometryId, modelRadius(cubes), prefix);
+                    if (this.contextPose.views().contains(this.contextViews.get(index)) && !this.contextPose.bones().isEmpty()) {
+                        // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
+                        insertPoseBones(geometry, prefix, this.contextPose.bones());
+                    }
+                    this.geometries.add(geometry);
                 }
-                this.geometries.add(geometry);
                 this.geometryNames.addProperty(alias, geometryId);
             } else {
                 this.registerGeometry(alias, cubes, stage.model(), layerGeometries);
@@ -210,7 +241,7 @@ public final class Bedrock3DItemAttachables {
             for (int i = 0; i < this.contextViews.size(); i++) {
                 if (pose.views().contains(this.contextViews.get(i))) {
                     for (Map.Entry<String, JsonElement> bone : animation.getAsJsonObject("bones").entrySet()) {
-                        bones.add("p" + i + "_" + bone.getKey(), bone.getValue());
+                        bones.add("p" + this.contextGeometryIndices[i] + "_" + bone.getKey(), bone.getValue());
                     }
                 }
             }
@@ -230,7 +261,7 @@ public final class Bedrock3DItemAttachables {
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
             if (this.contextViews != null) {
-                BedrockItemAttachables.contextAnimation(this.contextViews.get(index), stage.model(), animationPrefix, "p" + index + "_", stage.condition(), animations, this.animationNames, this.animate);
+                BedrockItemAttachables.contextAnimation(this.contextViews.get(index), stage.model(), animationPrefix, "p" + this.contextGeometryIndices[index] + "_", stage.condition(), animations, this.animationNames, this.animate);
             } else {
                 BedrockItemAttachables.displayAnimations(stage.model(), animationPrefix, index, animations, this.animationNames, this.animate);
             }
@@ -367,6 +398,12 @@ public final class Bedrock3DItemAttachables {
     }
 
     public record Stage(JavaModel model, JsonArray cubes, String condition) {
+    }
+
+    private record ContextGeometry(JavaModel model, JsonArray cubes, boolean posed) {
+    }
+
+    private record ContextGroup(int index, EnumSet<BedrockItemAttachables.View> views) {
     }
 
     public record Material(TextureData data, int color, Integer dyeColor) {

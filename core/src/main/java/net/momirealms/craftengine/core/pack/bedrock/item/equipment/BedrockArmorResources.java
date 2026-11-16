@@ -23,8 +23,10 @@ import java.util.List;
 import java.util.Map;
 
 final class BedrockArmorResources {
-    private static final List<String> TRIM_PATTERNS = List.of("bolt", "coast", "dune", "eye", "flow", "host", "raiser", "rib", "sentry",
-            "shaper", "silence", "snout", "spire", "tide", "vex", "ward", "wayfinder", "wild");
+    private static final List<String> TRIM_PATTERNS = List.of(
+            "bolt", "coast", "dune", "eye", "flow", "host", "raiser", "rib", "sentry",
+            "shaper", "silence", "snout", "spire", "tide", "vex", "ward", "wayfinder", "wild"
+    );
     private final JavaModelResources resources;
     private final Map<Key, JsonObject> definitions = new HashMap<>();
     private final Map<TextureKey, String> textures = new HashMap<>();
