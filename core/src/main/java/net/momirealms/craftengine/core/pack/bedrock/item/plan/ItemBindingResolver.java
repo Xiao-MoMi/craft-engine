@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.behavior.BlockItem;
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -39,6 +40,7 @@ public final class ItemBindingResolver {
         if (definition != null && headTexture != null) {
             definition = definition.withHeadSkin(headTexture);
         }
+        ItemBehavior itemBehavior = serverItem.getBehavior().orElse(null);
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),
@@ -47,7 +49,7 @@ public final class ItemBindingResolver {
                 definition,
                 behavior,
                 properties,
-                serverItem.getBehavior().orElse(null) instanceof BlockItem
+                itemBehavior != null && itemBehavior.getFirst(BlockItem.class) != null
         );
     }
 }

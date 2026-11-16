@@ -53,11 +53,10 @@ public final class ItemRegistrationPlanWriter {
     }
 
     private static JsonObject entryToJson(ItemRegistrationPlan.Entry entry, List<GeneratedItemVariant> variants) {
-        ResolvedItemBinding binding = entry.source();
         JsonObject json = new JsonObject();
         json.addProperty(BEDROCK_IDENTIFIER, entry.bedrockId().asString());
         json.addProperty(ITEM_TYPE, entry.javaItemType().asString());
-        json.addProperty(ITEM_ID, binding.itemId().asString());
+        json.addProperty(ITEM_ID, entry.itemId().asString());
         json.addProperty(MODEL, entry.definitionId().asString());
 
         if (!entry.properties().components().isEmpty()) {
@@ -76,7 +75,7 @@ public final class ItemRegistrationPlanWriter {
 
         JsonObject behavior = new JsonObject();
         behavior.add("use", GsonHelper.get().toJsonTree(entry.useBehavior()));
-        if (binding.placesBlock()) {
+        if (entry.placesBlock()) {
             behavior.addProperty(PLACES_BLOCK, true);
         }
         json.add(CLIENT_BEHAVIOR, behavior);

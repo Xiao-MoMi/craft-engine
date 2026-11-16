@@ -34,7 +34,7 @@ final class BedrockArmorResources {
     }
 
     static boolean hasAsset(ItemRegistrationPlan.Entry entry) {
-        JsonElement value = entry.wornProperties().components().get(DataComponentKeys.EQUIPPABLE);
+        JsonElement value = entry.properties().components().get(DataComponentKeys.EQUIPPABLE);
         return value != null && value.isJsonObject() && value.getAsJsonObject().has("asset_id");
     }
 
@@ -43,7 +43,7 @@ final class BedrockArmorResources {
         if (!hasAsset(entry)) {
             return null;
         }
-        JsonObject equipment = entry.wornProperties().components().get(DataComponentKeys.EQUIPPABLE).getAsJsonObject();
+        JsonObject equipment = entry.properties().components().get(DataComponentKeys.EQUIPPABLE).getAsJsonObject();
         try {
             String equipmentSlot = equipment.get("slot").getAsString();
             Key asset = Key.of(equipment.get("asset_id").getAsString());
@@ -59,7 +59,7 @@ final class BedrockArmorResources {
             if (layers == null) {
                 return null;
             }
-            Integer dye = dye(entry.wornProperties().components().get(DataComponentKeys.DYED_COLOR));
+            Integer dye = dye(entry.properties().components().get(DataComponentKeys.DYED_COLOR));
             List<Layer> appearances = new ArrayList<>();
             for (Slot slot : Slot.values()) {
                 if (!slot.equipmentSlot.equals(equipmentSlot) || !layers.has(slot.layer)) {

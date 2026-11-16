@@ -33,12 +33,11 @@ public final class ItemRegistrationPlanGenerator {
         for (ItemDefinition definition : orderedItems) {
             try {
                 Item item = definition.buildItem(ItemBuildContext.empty());
-                ResolvedItemBinding binding = resolver.resolve(item, null, ItemPacketSource.CONTAINER);
+                ResolvedItemBinding binding = resolver.resolve(item, null, ItemPacketSource.GENERIC);
                 if (binding.itemModel() == null || binding.definition() == null) {
                     continue;
                 }
-                ResolvedItemBinding worn = resolver.resolve(item, null, ItemPacketSource.SET_EQUIPMENT);
-                entries.add(createEntry(binding, worn.clientProperties()));
+                entries.add(createEntry(binding));
             } catch (Throwable t) {
                 TranslationManager.warn("resource_pack.bedrock.item.binding", definition.id().asString(), definition.material().asString(), t.toString());
             }
@@ -46,18 +45,19 @@ public final class ItemRegistrationPlanGenerator {
         return new ItemRegistrationPlan(entries);
     }
 
-    private static Entry createEntry(ResolvedItemBinding binding, ItemRegistrationProperties wornProperties) {
+    private static Entry createEntry(ResolvedItemBinding binding) {
         // 使用原始物品 ID，避免 Java 模型混淆改变基岩资源名称。
         Key itemId = binding.itemId();
         Key bedrockId = Key.ce(itemId.namespace() + '/' + itemId.value());
         return new Entry(
                 bedrockId,
+                itemId,
                 binding.clientItemType(),
                 binding.itemModel(),
                 binding.definition(),
                 binding.clientProperties(),
-                binding,
-                wornProperties
+                binding.clientBehavior(),
+                binding.placesBlock()
         );
     }
 }
