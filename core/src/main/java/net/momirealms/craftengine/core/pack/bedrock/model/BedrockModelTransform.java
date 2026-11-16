@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.model.definition.Transformation;
+import net.momirealms.craftengine.core.util.MatrixDecomposition;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.*;
 
@@ -43,7 +44,7 @@ public final class BedrockModelTransform {
                 .mul(displayMatrix(reference).invert())
                 .mul(displayMatrix(target))
                 .translate(-0.5f, -0.5f, -0.5f);
-        uniformScale(relative);
+        validate(relative);
         // 消除公共变换求逆产生的浮点尾差，使相同的部件相对姿态命中同一份几何。
         for (int column = 0; column < 4; column++) {
             for (int row = 0; row < 4; row++) {
@@ -60,22 +61,64 @@ public final class BedrockModelTransform {
     }
 
     public static float uniformScale(Matrix4fc matrix) {
-        // 三列分别是变换后的坐标轴；等长且两两垂直才是“旋转 + 等比缩放”，否则包含拉伸或错切。
+        validate(matrix);
+        if (!canBakeCubes(matrix)) {
+            throw new BedrockResourceException("resource_pack.bedrock.reason.nonuniform_transform");
+        }
+        return new Vector3f(matrix.m00(), matrix.m01(), matrix.m02()).length();
+    }
+
+    public static void validate(Matrix4fc matrix) {
+        if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1) {
+            throw new BedrockResourceException("resource_pack.bedrock.reason.affine_transform");
+        }
+    }
+
+    public static boolean canBakeCubes(Matrix4fc matrix) {
+        if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1) {
+            return false;
+        }
+        // 等长且两两垂直的列向量才可直接烘焙所有 cube；其他仿射矩阵交给骨骼或逐面转换。
         Vector3f x = new Vector3f(matrix.m00(), matrix.m01(), matrix.m02());
         Vector3f y = new Vector3f(matrix.m10(), matrix.m11(), matrix.m12());
         Vector3f z = new Vector3f(matrix.m20(), matrix.m21(), matrix.m22());
-        float scale = x.length();
-        // 行列式必须为正，排除镜像反射；最后一行必须保持仿射形式，排除透视变换。
-        if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1 || scale <= 0 || matrix.determinant3x3() <= 0) {
-            throw new BedrockResourceException("resource_pack.bedrock.reason.affine_transform");
+        float squared = x.lengthSquared();
+        float tolerance = squared * 0.00001f;
+        return squared > 0 && matrix.determinant3x3() > 0
+                && Math.abs(y.lengthSquared() - squared) <= tolerance && Math.abs(z.lengthSquared() - squared) <= tolerance
+                && Math.abs(x.dot(y)) <= tolerance && Math.abs(x.dot(z)) <= tolerance && Math.abs(y.dot(z)) <= tolerance;
+    }
+
+    public static Matrix4f bedrockMatrix(Matrix4fc transformation, float geometryScale) {
+        validate(transformation);
+        Matrix4f coordinates = new Matrix4f().translation(8 * geometryScale, 8 * (1 - geometryScale), -8 * geometryScale)
+                .scale(-16 * geometryScale, 16 * geometryScale, 16 * geometryScale);
+        return new Matrix4f(coordinates).mul(transformation).mul(coordinates.invert());
+    }
+
+    public static void addBones(JsonArray bones, JsonObject channels, String parent, String prefix, JsonArray cubes, Matrix4fc matrix) {
+        MatrixDecomposition.Result parts = MatrixDecomposition.decompose(new Matrix3d(matrix));
+        // T·U·S·Vᵀ：每层只承担一种变换，明确固定次序，不依赖单骨骼内各动画通道的组合次序。
+        // 全部以零点为支点，避免父子 pivot 的补偿再次引入平移。
+        String[] suffixes = {"translation", "left", "scale", "right"};
+        String[] properties = {"position", "rotation", "scale", "rotation"};
+        Vector3f[] values = {new Vector3f(matrix.m30(), matrix.m31(), matrix.m32()), rotationAngles(parts.left()),
+                new Vector3f(parts.scale()), rotationAngles(parts.right())};
+        for (int index = 0; index < suffixes.length; index++) {
+            String name = prefix + "affine_" + suffixes[index];
+            JsonObject bone = new JsonObject();
+            bone.addProperty("name", name);
+            bone.addProperty("parent", parent);
+            bone.add("pivot", VectorUtils.toJson(0, 0, 0));
+            if (index == suffixes.length - 1) {
+                bone.add("cubes", cubes);
+            }
+            bones.add(bone);
+            JsonObject channel = new JsonObject();
+            channel.add(properties[index], VectorUtils.toJson(values[index]));
+            channels.add(name, channel);
+            parent = name;
         }
-        x.div(scale);
-        y.div(scale);
-        z.div(scale);
-        if (Math.abs(y.lengthSquared() - 1) > 0.00001f || Math.abs(z.lengthSquared() - 1) > 0.00001f || Math.abs(x.dot(y)) > 0.00001f || Math.abs(x.dot(z)) > 0.00001f || Math.abs(y.dot(z)) > 0.00001f) {
-            throw new BedrockResourceException("resource_pack.bedrock.reason.nonuniform_transform");
-        }
-        return scale;
     }
 
     public static void apply(JsonArray cubes, Matrix4fc transformation, float geometryScale) {
@@ -84,14 +127,8 @@ public final class BedrockModelTransform {
         }
         float scale = uniformScale(transformation);
         // Java 在 display 居中之后乘入局部矩阵，局部坐标仍为 0..1；同时还原已有的几何缩小。
-        Matrix4f coordinates = new Matrix4f()
-                .translation(
-                        8 * geometryScale,
-                        8 * (1 - geometryScale),
-                        -8 * geometryScale)
-                .scale(-16 * geometryScale, 16 * geometryScale, 16 * geometryScale);
         // C × M × C⁻¹ 将 Java 局部变换换算到当前基岩几何坐标，不能把两套坐标下的矩阵直接相乘。
-        Matrix4f matrix = new Matrix4f(coordinates).mul(transformation).mul(new Matrix4f(coordinates).invert());
+        Matrix4f matrix = bedrockMatrix(transformation, geometryScale);
         Quaternionf rotation = matrix.getUnnormalizedRotation(new Quaternionf());
         Matrix3d cubeRotation = new Matrix3d();
         for (JsonElement value : cubes) {

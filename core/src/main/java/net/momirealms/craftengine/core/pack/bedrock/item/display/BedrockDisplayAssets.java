@@ -10,12 +10,15 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -53,10 +56,10 @@ final class BedrockDisplayAssets {
             return ++this.shapes;
         }
         BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures());
-        List<JsonArray> partsCubes = new ArrayList<>(parts.size());
+        List<BedrockItemGeometry> partsCubes = new ArrayList<>(parts.size());
         for (BedrockItemDisplayGenerator.Part part : parts) {
             ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
-            partsCubes.add((part.geometry() == null ? mesh.build(rule, true) : mesh.build(rule, true, part.geometry())).cubes());
+            partsCubes.add(part.geometry() == null ? mesh.build(rule, true) : mesh.build(rule, true, part.geometry()));
         }
         if (mesh.materials().isEmpty()) {
             return 0;
@@ -70,9 +73,9 @@ final class BedrockDisplayAssets {
             String geometry = "geometry." + this.name + "." + alias;
             JsonArray bones = rig();
             for (int i = 0; i < parts.size(); i++) {
-                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partsCubes.get(i), "layer" + layer);
+                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partsCubes.get(i).cubes(), "layer" + layer);
                 if (!cubes.isEmpty()) {
-                    addPart(bones, channels, i, parts.get(i), cubes);
+                    addPart(bones, channels, i, parts.get(i), cubes, partsCubes.get(i).transformation());
                 }
             }
             JsonObject description = new JsonObject();
@@ -120,7 +123,7 @@ final class BedrockDisplayAssets {
         return bone;
     }
 
-    private static void addPart(JsonArray bones, JsonObject channels, int index, BedrockItemDisplayGenerator.Part part, JsonArray cubes) {
+    private static void addPart(JsonArray bones, JsonObject channels, int index, BedrockItemDisplayGenerator.Part part, JsonArray cubes, Matrix4fc transformation) {
         // 物品几何的中心在 (0,8,0)，展示实体的原点在 (0,0,0)。
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
@@ -135,10 +138,17 @@ final class BedrockDisplayAssets {
         JsonObject x = bone(prefix + "x", "model_z");
         JsonObject y = bone(prefix + "y", prefix + "x");
         JsonObject z = bone(prefix + "z", prefix + "y");
-        z.add("cubes", cubes);
         bones.add(x);
         bones.add(y);
         bones.add(z);
+        if (BedrockModelTransform.isIdentity(transformation)) {
+            z.add("cubes", cubes);
+        } else {
+            // cubes 已向下移 8，局部矩阵也必须换到展示实体的坐标原点。
+            Matrix4f local = new Matrix4f().translation(0, -8, 0)
+                    .mul(BedrockModelTransform.bedrockMatrix(transformation, 1)).translate(0, 8, 0);
+            BedrockModelTransform.addBones(bones, channels, prefix + "z", prefix, cubes, local);
+        }
         JavaModel.Transform pose = part.display();
         if (!pose.equals(JavaModel.Transform.IDENTITY)) {
             int side = part.mirrored() ? -1 : 1;

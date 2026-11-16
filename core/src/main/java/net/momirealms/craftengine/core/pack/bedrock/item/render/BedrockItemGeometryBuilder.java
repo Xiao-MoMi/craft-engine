@@ -40,12 +40,15 @@ public final class BedrockItemGeometryBuilder {
 
     public BedrockItemGeometry build(ItemBindingRule rule, boolean preserveDye, JavaModel model) throws IOException {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
-        BedrockModelTransform.uniformScale(transformation);
+        BedrockModelTransform.validate(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
         JsonArray cubes = this.geometry(model, target, preserveDye);
-        // 将规则的局部变换烘焙进几何，模型的 display 留给各渲染出口应用。
-        BedrockModelTransform.apply(cubes, transformation, 1);
-        return new BedrockItemGeometry(model, cubes);
+        // 等比变换沿用紧凑的 cubes；拉伸、反射、错切和零缩放保留给骨骼，避免改动 UV。
+        if (BedrockModelTransform.canBakeCubes(transformation)) {
+            BedrockModelTransform.apply(cubes, transformation, 1);
+            transformation = BedrockModelTransform.compose(List.of());
+        }
+        return new BedrockItemGeometry(model, cubes, transformation);
     }
 
     public List<BedrockItemGeometry.Material> materials() {

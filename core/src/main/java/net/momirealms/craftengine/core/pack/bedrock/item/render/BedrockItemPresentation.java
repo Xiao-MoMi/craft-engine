@@ -7,9 +7,10 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingConditi
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockDyedItem;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockDyedItem;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -32,7 +33,8 @@ record BedrockItemPresentation(ResolvedItemBinding item,
         boolean contextual = BedrockEquipmentResources.hasAsset(item) || separateWorldViews
                 || strategies.getFirst() != BedrockItemRenderStrategy.DEFAULT
                 || item.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.NONE
-                || hasUseConditions(item.definition().rules()) || BedrockDyedItem.hasDye(item.definition().rules());
+                || hasUseConditions(item.definition().rules()) || BedrockDyedItem.hasDye(item.definition().rules())
+                || requiresAffineBones(item.definition().rules());
 
         Key base = item.bedrockId();
         List<BedrockItemPresentation> result = new ObjectArrayList<>();
@@ -59,6 +61,18 @@ record BedrockItemPresentation(ResolvedItemBinding item,
     static boolean hasUseConditions(List<ItemBindingRule> rules) {
         for (ItemBindingRule rule : rules) {
             if (rule.hasCondition(BedrockItemAttachables::isUseCondition)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean requiresAffineBones(List<ItemBindingRule> rules) {
+        for (ItemBindingRule rule : rules) {
+            if (!rule.transformations().isEmpty() && !BedrockModelTransform.canBakeCubes(BedrockModelTransform.compose(rule.transformations()))) {
+                return true;
+            }
+            if (rule.target() instanceof ItemRenderTarget.Composite composite && requiresAffineBones(composite.parts())) {
                 return true;
             }
         }

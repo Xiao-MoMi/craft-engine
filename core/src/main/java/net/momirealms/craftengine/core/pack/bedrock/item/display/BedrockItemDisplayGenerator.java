@@ -204,7 +204,7 @@ public final class BedrockItemDisplayGenerator {
             if (geometry == null && model.kind() == JavaModel.GeometryKind.ELEMENTS && model.elements().isEmpty()) {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.geometry", id.asString());
             }
-            BedrockModelTransform.uniformScale(BedrockModelTransform.compose(transforms));
+            BedrockModelTransform.validate(BedrockModelTransform.compose(transforms));
             JavaModel mesh = geometry == null ? model : geometry;
             if (mesh.kind() == JavaModel.GeometryKind.GENERATED) {
                 for (JavaModel.Texture texture : resources.models().resolveLayers(mesh)) {

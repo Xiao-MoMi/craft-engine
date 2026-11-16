@@ -5,11 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 
 import java.util.Map;
 
-// 只保存模型与局部变换烘焙后的几何；场景、显示条件和骨骼由各渲染出口决定。
-public record BedrockItemGeometry(JavaModel model, JsonArray cubes) {
+// cubes 无法直接表达的仿射变换保留在 transformation 中，由实体骨骼或图标投影应用。
+public record BedrockItemGeometry(JavaModel model, JsonArray cubes, Matrix4fc transformation) {
     public static JsonArray selectMaterialFaces(JsonArray source, String material) {
         // 一个立方体的不同面可能属于不同材质层，只复制当前层的面，原始几何留给后续层使用。
         JsonArray cubes = new JsonArray();

@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -14,6 +16,8 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.io.IOException;
@@ -39,6 +43,7 @@ public final class BedrockItem3DAttachables {
     private final JsonObject renderControllers = new JsonObject();
     private final JsonArray activeControllers = new JsonArray();
     private final JsonArray animate = new JsonArray();
+    private final JsonObject localChannels = new JsonObject();
     private int[] contextGeometryIndices;
     private BedrockAttachablePose contextPose;
     private BedrockEquipmentResources.Appearance armor;
@@ -153,7 +158,7 @@ public final class BedrockItem3DAttachables {
         );
 
         // 各阶段共用这一层的贴图。每个有可见面的阶段各自注册控制器，由 ce_stage 选中当前阶段。
-        Map<JsonArray, JsonObject> layerGeometries = new HashMap<>();
+        Map<LocalGeometry, JsonObject> layerGeometries = new HashMap<>();
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
             JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
@@ -167,16 +172,17 @@ public final class BedrockItem3DAttachables {
                 // 共享阶段只登记别名；骨骼和几何由组内首个阶段写一次，动画也使用同一个前缀。
                 if (geometryIndex == index) {
                     String prefix = "p" + geometryIndex + "_";
-                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId, modelRadius(cubes), prefix);
+                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId, modelRadius(cubes, stage.geometry().transformation()), prefix);
                     if (this.contextPose.views().contains(stage.view()) && !this.contextPose.bones().isEmpty()) {
                         // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
                         insertPoseBones(geometry, prefix, this.contextPose.bones());
                     }
+                    this.addLocalTransform(geometry, stage.geometry().transformation(), prefix);
                     this.geometries.add(geometry);
                 }
                 this.geometryNames.addProperty(alias, geometryId);
             } else {
-                this.registerGeometry(alias, cubes, stage.geometry().model(), layerGeometries);
+                this.registerGeometry(alias, cubes, stage.geometry(), layerGeometries);
             }
             String controllerId = "controller.render." + this.prefix + '.' + alias;
             this.renderControllers.add(controllerId, renderController(alias, material.data().animation(), frames, defaultFrames));
@@ -186,12 +192,15 @@ public final class BedrockItem3DAttachables {
         }
     }
 
-    private void registerGeometry(String alias, JsonArray cubes, JavaModel model, Map<JsonArray, JsonObject> layerGeometries) {
-        float radius = modelRadius(cubes);
-        JsonObject geometry = layerGeometries.get(cubes);
+    private void registerGeometry(String alias, JsonArray cubes, BedrockItemGeometry source, Map<LocalGeometry, JsonObject> layerGeometries) {
+        JavaModel model = source.model();
+        float radius = modelRadius(cubes, source.transformation());
+        LocalGeometry key = new LocalGeometry(cubes, source.transformation());
+        JsonObject geometry = layerGeometries.get(key);
         if (geometry == null) {
             geometry = createGeometry("geometry." + this.prefix + '.' + alias, cubes, model, radius, this.poseBones);
-            layerGeometries.put(cubes, geometry);
+            this.addLocalTransform(geometry, source.transformation(), alias + "_");
+            layerGeometries.put(key, geometry);
             this.geometries.add(geometry);
         } else {
             // 同一组面可用于不同的手持姿态，裁剪范围要覆盖每个阶段的 display。
@@ -271,6 +280,14 @@ public final class BedrockItem3DAttachables {
             animations.add(name, pose.getValue());
             this.animationNames.addProperty(pose.getKey(), name);
         }
+        if (!this.localChannels.isEmpty()) {
+            JsonObject local = new JsonObject();
+            local.addProperty("loop", true);
+            local.add("bones", this.localChannels);
+            animations.add(animationPrefix + "local", local);
+            this.animationNames.addProperty("local", animationPrefix + "local");
+            this.animate.add("local");
+        }
         this.animate.addAll(poseAnimate);
         ResourcePackUtils.writeBedrockJson("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
     }
@@ -316,21 +333,30 @@ public final class BedrockItem3DAttachables {
         return color;
     }
 
-    private static float modelRadius(JsonArray cubes) {
-        float radius = 0;
-        for (JsonElement value : cubes) {
-            JsonObject cube = value.getAsJsonObject();
-            Vector3f halfSize = VectorUtils.vector3f(cube.getAsJsonArray("size")).mul(0.5f);
-            Vector3f center = VectorUtils.vector3f(cube.getAsJsonArray("origin")).add(halfSize);
-            float distance = center.distance(0, 8, 0);
-            if (cube.has("rotation")) {
-                Vector3f pivot = VectorUtils.vector3f(cube.getAsJsonArray("pivot"));
-                // 原始元素可绕任意支点旋转，包围球还需覆盖中心绕支点的轨迹。
-                distance = center.distance(pivot) + pivot.distance(0, 8, 0);
-            }
-            radius = Math.max(radius, distance + halfSize.length());
+    private void addLocalTransform(JsonObject geometry, Matrix4fc transformation, String prefix) {
+        if (BedrockModelTransform.isIdentity(transformation)) {
+            return;
         }
-        return radius;
+        JsonArray bones = geometry.getAsJsonArray("bones");
+        for (JsonElement value : bones) {
+            JsonObject bone = value.getAsJsonObject();
+            if (bone.has("cubes")) {
+                JsonArray cubes = bone.remove("cubes").getAsJsonArray();
+                BedrockModelTransform.addBones(bones, this.localChannels, bone.get("name").getAsString(), prefix,
+                        cubes, BedrockModelTransform.bedrockMatrix(transformation, 1));
+                break;
+            }
+        }
+    }
+
+    private static float modelRadius(JsonArray cubes, Matrix4fc transformation) {
+        if (cubes.isEmpty()) {
+            return 0;
+        }
+        Vector3f minimum = new Vector3f(Float.POSITIVE_INFINITY);
+        Vector3f maximum = new Vector3f(Float.NEGATIVE_INFINITY);
+        BedrockElementGeometry.bounds(cubes, minimum, maximum, new Matrix4f().scaling(16).mul(transformation).scale(1f / 16));
+        return minimum.sub(8, 8, 8).absolute().max(maximum.sub(8, 8, 8).absolute()).length();
     }
 
     private static JsonObject createGeometry(String identifier, JsonArray cubes, JavaModel model, float radius, JsonArray poseBones) {
@@ -371,6 +397,9 @@ public final class BedrockItem3DAttachables {
         public Stage(BedrockItemGeometry geometry, String condition) {
             this(geometry, condition, null);
         }
+    }
+
+    private record LocalGeometry(JsonArray cubes, Matrix4fc transformation) {
     }
 
     private record ContextGeometry(BedrockItemGeometry geometry, boolean posed) {

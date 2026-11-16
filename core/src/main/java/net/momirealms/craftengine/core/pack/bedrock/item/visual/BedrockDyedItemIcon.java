@@ -76,7 +76,8 @@ final class BedrockDyedItemIcon {
         Matrix4f view = new Matrix4f().translation(gui.translation())
                 .rotateXYZ(gui.rotation().x * RADIANS, gui.rotation().y * RADIANS, gui.rotation().z * RADIANS)
                 .scale(gui.scale()).translate(-8, -8, -8);
-        // 复用手持几何：generated 挤出、element 旋转和规则局部变换均已烘焙，图标与模型不会各算一套。
+        // 局部矩阵使用 0..1 坐标；未烘焙进 cubes 的部分必须在元素旋转之前应用。
+        view.scale(16).mul(geometry.transformation()).scale(1f / 16);
         for (JsonElement value : geometry.cubes()) {
             JsonObject cube = value.getAsJsonObject();
             Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));

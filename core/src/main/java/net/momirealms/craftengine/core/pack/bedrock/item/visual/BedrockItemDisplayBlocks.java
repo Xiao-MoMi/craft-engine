@@ -33,7 +33,8 @@ import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextu
 public final class BedrockItemDisplayBlocks {
     private final BedrockTerrainAtlas atlas;
     private final JsonObject blockDefinitions;
-    private final Map<TextureKey, String> textureTiles = new HashMap<>();
+    private final Map<BedrockItemGeometry.Material, String> textureTiles = new HashMap<>();
+    private final BedrockAffineFaces affineFaces = new BedrockAffineFaces();
     private final Map<GeometryKey, List<Geometry>> geometries = new HashMap<>();
 
     public BedrockItemDisplayBlocks(BedrockTerrainAtlas atlas, JsonObject blockDefinitions) {
@@ -48,7 +49,7 @@ public final class BedrockItemDisplayBlocks {
     public DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root, DisplayPosition view) throws IOException {
         String name = item.namespace() + '/' + item.value();
         Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
-        List<TextureData> images = new ArrayList<>();
+        Map<String, BedrockItemGeometry.Material> images = new LinkedHashMap<>();
         JsonArray cubes = new JsonArray();
         JavaModel displayModel = null;
         for (ItemBindingRule rule : models) {
@@ -56,6 +57,17 @@ public final class BedrockItemDisplayBlocks {
             JavaModel model = target.resolve(resolver);
             if (displayModel == null) {
                 displayModel = model;
+                if (view != null) {
+                    JavaModel.Transform display = model.display().getOrDefault(view, JavaModel.Transform.IDENTITY);
+                    Vector3f scale = display.scale();
+                    if (scale.x <= 0 || scale.y <= 0 || scale.z <= 0) {
+                        Map<DisplayPosition, JavaModel.Transform> displays = new EnumMap<>(DisplayPosition.class);
+                        displays.putAll(model.display());
+                        // 零缩放不能求逆；有符号缩放也不写入方块 display，统一烘焙到部件里。
+                        displays.put(view, new JavaModel.Transform(display.rotation(), display.translation(), new Vector3f(1)));
+                        displayModel = new JavaModel(model.id(), model.kind(), model.textures(), model.elements(), displays, model.guiLight());
+                    }
+                }
             }
             Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
             if (view != null) {
@@ -66,7 +78,7 @@ public final class BedrockItemDisplayBlocks {
                     transformation = new Matrix4f(BedrockModelTransform.relativeDisplay(reference, display)).mul(transformation);
                 }
             }
-            BedrockModelTransform.uniformScale(transformation);
+            BedrockModelTransform.validate(transformation);
             JsonArray part;
             if (model.kind() == JavaModel.GeometryKind.GENERATED) {
                 part = new JsonArray();
@@ -90,23 +102,21 @@ public final class BedrockItemDisplayBlocks {
             } else {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.geometry", model.id().asString());
             }
-            BedrockModelTransform.apply(part, transformation, 1);
-            cubes.addAll(part);
+            cubes.addAll(this.affineFaces.transform(part, transformation, images));
         }
         // 合并后统一缩小，避免各子模型分别适配尺寸而改变相对位置。
         float geometryScale = BedrockElementGeometry.fit(cubes).scale();
         JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, cubes, geometryScale, view);
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
-        // bindings 与 images 按首次遇到材质的顺序同步建立，迭代时必须保持这个顺序才能取对纹理。
-        for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
-            String tile = this.textureTiles.get(entry.getKey());
+        for (Map.Entry<String, BedrockItemGeometry.Material> entry : images.entrySet()) {
+            String tile = this.textureTiles.get(entry.getValue());
             if (tile == null) {
                 tile = name + "/layer_" + index;
-                this.atlas.write(images.get(index), entry.getKey().color(), tile, root);
-                this.textureTiles.put(entry.getKey(), tile);
+                this.atlas.write(entry.getValue().data(), entry.getValue().color(), tile, root);
+                this.textureTiles.put(entry.getValue(), tile);
             }
-            materials.put(entry.getValue().name(), tile);
+            materials.put(entry.getKey(), tile);
             index++;
         }
         return this.writeGeometry(item, cubes, transforms, materials, root);
@@ -114,7 +124,7 @@ public final class BedrockItemDisplayBlocks {
 
     private static BedrockElementGeometry.Material bindTexture(TextureKey key,
                                                                Map<TextureKey, BedrockElementGeometry.Material> bindings,
-                                                               List<TextureData> images,
+                                                               Map<String, BedrockItemGeometry.Material> images,
                                                                JavaPackTextureSource textures) throws IOException {
         BedrockElementGeometry.Material material = bindings.get(key);
         if (material == null) {
@@ -124,7 +134,7 @@ public final class BedrockItemDisplayBlocks {
             float size = Math.max(width, height);
             material = new BedrockElementGeometry.Material("layer" + bindings.size(), width / size, height / size);
             bindings.put(key, material);
-            images.add(data);
+            images.put(material.name(), new BedrockItemGeometry.Material(data, key.color()));
         }
         return material;
     }
