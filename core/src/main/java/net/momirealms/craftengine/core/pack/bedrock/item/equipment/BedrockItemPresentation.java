@@ -19,14 +19,17 @@ record BedrockItemPresentation(ResolvedItemBinding item,
                                EnumMap<ItemDisplayContext, ItemBindingRule> idleModels,
                                BedrockEquipmentBehavior equipment,
                                boolean explicitViews,
-                               boolean worldAliases) {
+                               boolean separateWorldViews) {
     @Nullable
     static List<BedrockItemPresentation> plan(ResolvedItemBinding item) {
         boolean explicitViews = DisplayContextVariants.usesDisplayContext(item);
-        boolean worldAliases = explicitViews || item.definition().hasPlayerHead();
-        List<? extends BedrockEquipmentBehavior> behaviors = BedrockEquipmentBehavior.forItem(item, worldAliases);
-        if (!BedrockArmorResources.hasAsset(item) && !worldAliases && behaviors.getFirst() == BedrockEquipmentBehavior.DEFAULT && (item.useBehavior().animation() == ItemBehaviorDescription.UseAnimation.NONE || !hasUseConditions(item.definition().rules()))) {
-            // 静态物品沿用普通图标 / 方块路径，保留其染色、变体优先级和跳过原因。
+        boolean separateWorldViews = explicitViews || item.definition().hasPlayerHead();
+        List<? extends BedrockEquipmentBehavior> behaviors = BedrockEquipmentBehavior.forItem(item, separateWorldViews);
+        // 静态物品沿用普通图标
+        if (!BedrockArmorResources.hasAsset(item) // 没有需要处理的装备外观资源
+                && !separateWorldViews  // 不需要为掉落物、展示框、置物架分别生成外观
+                && behaviors.getFirst() == BedrockEquipmentBehavior.DEFAULT  // 没有启用弓、弩、盾、三叉戟等专用行为
+                && (item.useBehavior().animation() == ItemBehaviorDescription.UseAnimation.NONE || !hasUseConditions(item.definition().rules()))) { // 不需要按使用状态生成外观
             return null;
         }
 
@@ -43,7 +46,7 @@ record BedrockItemPresentation(ResolvedItemBinding item,
                 }
                 ItemBindingRule gui = idleModels.get(ItemDisplayContext.GUI);
                 ItemBindingRule registration = new ItemBindingRule(variant.conditions(), gui.target(), gui.transformations(), gui.sourcePath());
-                result.add(new BedrockItemPresentation(item, id, registration, variant, idleModels, behavior, explicitViews, worldAliases));
+                result.add(new BedrockItemPresentation(item, id, registration, variant, idleModels, behavior, explicitViews, separateWorldViews));
             }
         }
         return result;

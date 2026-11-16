@@ -62,7 +62,7 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     }
 
     @Override
-    protected List<WorldBlockSource> collectBedrockWorldBlocks() {
+    protected List<WorldBlockSource> collectGeyserWorldBlockSources() {
         return BukkitWorldBlockSources.collect(this.plugin.blockManager().loadedBlocks().values());
     }
 

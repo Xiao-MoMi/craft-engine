@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
+import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockAnimalEquipment;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockElytraEquipment;
-import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 
 import java.nio.file.Path;

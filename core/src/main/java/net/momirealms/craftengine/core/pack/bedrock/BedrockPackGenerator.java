@@ -51,6 +51,7 @@ public final class BedrockPackGenerator {
             JavaModelResources modelResources = new JavaModelResources(resources);
             // 物品
             BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root);
+
             JsonObject itemDisplays = BedrockItemDisplays.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
             ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems, itemDisplays);
             // 方块

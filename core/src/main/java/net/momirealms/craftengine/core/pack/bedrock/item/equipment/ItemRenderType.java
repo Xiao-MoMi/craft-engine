@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 
 enum ItemRenderType {
-    ITEM, BLOCK, UNKNOWN;
+    ITEM, BLOCK;
 
     static ItemRenderType classify(ItemModelDefinitionBinding definition, BedrockItemIconRenderer renderer) throws IOException {
         return classify(definition.rules(), renderer);
@@ -17,7 +17,6 @@ enum ItemRenderType {
 
     private static ItemRenderType classify(List<ItemBindingRule> rules, BedrockItemIconRenderer renderer) throws IOException {
         boolean block = false;
-        boolean unknown = false;
         // 任意分支含模型变换或无法渲染成图标，整个定义都使用展示方块。
         for (ItemBindingRule rule : rules) {
             block |= !rule.transformations().isEmpty();
@@ -27,11 +26,11 @@ enum ItemRenderType {
                 case ItemRenderTarget.Composite composite -> {
                     ItemRenderType type = classify(composite.parts(), renderer);
                     block |= type == BLOCK;
-                    unknown |= type == UNKNOWN;
                 }
-                case ItemRenderTarget.Builtin builtin -> unknown |= builtin != ItemRenderTarget.Builtin.EMPTY;
+                case ItemRenderTarget.Builtin ignored -> {
+                }
             }
         }
-        return block ? BLOCK : (unknown ? UNKNOWN : ITEM);
+        return block ? BLOCK : ITEM;
     }
 }

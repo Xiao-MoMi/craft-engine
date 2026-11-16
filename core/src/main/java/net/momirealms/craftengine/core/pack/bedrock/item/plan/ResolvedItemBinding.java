@@ -6,8 +6,8 @@ import org.jetbrains.annotations.Nullable;
 public record ResolvedItemBinding(Key itemId,
                                   Key serverItemType,
                                   Key clientItemType,
-                                  @Nullable Key itemModel,
-                                  @Nullable ItemModelDefinitionBinding definition,
+                                  Key itemModel,
+                                  ItemModelDefinitionBinding definition, // 可能为空，但是空的不会参与生成
                                   ItemBehaviorDescription clientBehavior,
                                   ItemRegistrationProperties clientProperties) {
 

@@ -27,6 +27,10 @@ public final class Key {
         return this.value;
     }
 
+    public Key withSameNamespace(String value) {
+        return new Key(this.namespace, value);
+    }
+
     public static Key withCraftEngineNamespace(String value) {
         return new Key(CRAFTENGINE_NAMESPACE, value);
     }

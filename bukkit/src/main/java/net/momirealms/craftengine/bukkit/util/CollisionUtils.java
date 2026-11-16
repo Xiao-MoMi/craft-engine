@@ -19,8 +19,7 @@ public final class CollisionUtils {
     private CollisionUtils() {}
 
     public static AABB fromMinecraftAabb(Object box) {
-        return new AABB(AABBProxy.INSTANCE.getMinX(box), AABBProxy.INSTANCE.getMinY(box), AABBProxy.INSTANCE.getMinZ(box),
-                AABBProxy.INSTANCE.getMaxX(box), AABBProxy.INSTANCE.getMaxY(box), AABBProxy.INSTANCE.getMaxZ(box));
+        return new AABB(AABBProxy.INSTANCE.getMinX(box), AABBProxy.INSTANCE.getMinY(box), AABBProxy.INSTANCE.getMinZ(box), AABBProxy.INSTANCE.getMaxX(box), AABBProxy.INSTANCE.getMaxY(box), AABBProxy.INSTANCE.getMaxZ(box));
     }
 
     /**

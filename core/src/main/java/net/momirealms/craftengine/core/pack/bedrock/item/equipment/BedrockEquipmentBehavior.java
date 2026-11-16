@@ -15,31 +15,29 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 class BedrockEquipmentBehavior {
     static final BedrockEquipmentBehavior DEFAULT = new BedrockEquipmentBehavior();
+    private static final List<BedrockEquipmentBehavior> DEFAULT_BEHAVIORS = List.of(DEFAULT);
+    private static final Map<Key, BiFunction<ResolvedItemBinding, Boolean, List<? extends BedrockEquipmentBehavior>>> BEHAVIORS = new HashMap<>();
 
-    static List<? extends BedrockEquipmentBehavior> forItem(ResolvedItemBinding entry, boolean hasViewModels) {
-        Key type = entry.clientItemType();
-        if (type.equals(ItemKeys.CROSSBOW) && entry.chargeDuration() != null && entry.chargeDuration().value() > 0) {
-            return BedrockCrossbowBehavior.STATES;
-        }
-        if (type.equals(ItemKeys.BOW) && (hasViewModels || BedrockItemPresentation.hasUseConditions(entry.definition().rules()))) {
-            return List.of(BedrockBowBehavior.INSTANCE);
-        }
-        if (type.equals(ItemKeys.SHIELD)) {
-            return List.of(BedrockShieldBehavior.INSTANCE);
-        }
-        if (type.equals(ItemKeys.TRIDENT)) {
-            return List.of(BedrockTridentBehavior.INSTANCE);
-        }
+    static {
+        BEHAVIORS.put(ItemKeys.CROSSBOW, (entry, separateWorldViews) -> BedrockCrossbowBehavior.STATES);
+        BEHAVIORS.put(ItemKeys.BOW, (entry, separateWorldViews) -> List.of(BedrockBowBehavior.INSTANCE));
+        BEHAVIORS.put(ItemKeys.SHIELD, (entry, separateWorldViews) -> List.of(BedrockShieldBehavior.INSTANCE));
+        BEHAVIORS.put(ItemKeys.TRIDENT, (entry, separateWorldViews) -> List.of(BedrockTridentBehavior.INSTANCE));
         for (Key spear : ItemKeys.SPEARS) {
-            if (type.equals(spear)) {
-                return List.of(BedrockSpearBehavior.INSTANCE);
-            }
+            BEHAVIORS.put(spear, (entry, separateWorldViews) -> List.of(BedrockSpearBehavior.INSTANCE));
         }
-        return List.of(DEFAULT);
+    }
+
+    static List<? extends BedrockEquipmentBehavior> forItem(ResolvedItemBinding entry, boolean separateWorldViews) {
+        BiFunction<ResolvedItemBinding, Boolean, List<? extends BedrockEquipmentBehavior>> behavior = BEHAVIORS.get(entry.clientItemType());
+        return behavior != null ? behavior.apply(entry, separateWorldViews) : DEFAULT_BEHAVIORS;
     }
 
     boolean accepts(ItemBindingRule rule) {

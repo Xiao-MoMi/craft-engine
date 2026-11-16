@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
@@ -63,7 +64,7 @@ public final class BedrockItemBlocks {
             if (displayModel == null) {
                 displayModel = model;
             } else if (view != null && !Objects.equals(model.display().get(view), displayModel.display().get(view))) {
-                throw new UnsupportedOperationException("Composite parts have different " + view + " transforms");
+                throw new BedrockResourceException("resource_pack.bedrock.reason.part_transforms", String.valueOf(view));
             }
             Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
             BedrockModelTransform.uniformScale(transformation);
@@ -88,7 +89,7 @@ public final class BedrockItemBlocks {
                 }
                 part = BedrockElementGeometry.convert(model, faces);
             } else {
-                throw new UnsupportedOperationException("Unsupported model geometry: " + model.id());
+                throw new BedrockResourceException("resource_pack.bedrock.reason.geometry", model.id().asString());
             }
             BedrockModelTransform.apply(part, transformation, 1);
             cubes.addAll(part);
@@ -158,7 +159,7 @@ public final class BedrockItemBlocks {
             JavaModel.Transform transform = model.display().getOrDefault(position, JavaModel.Transform.IDENTITY);
             Vector3f scale = new Vector3f(transform.scale()).div(geometryScale);
             if (scale.x < 0 || scale.y < 0 || scale.z < 0 || scale.x > 4 || scale.y > 4 || scale.z > 4) {
-                throw new UnsupportedOperationException("Display scale exceeds Bedrock [0, 4] in " + position + ": " + scale);
+                throw new BedrockResourceException("resource_pack.bedrock.reason.display_scale", position.name(), scale.toString());
             }
             JsonObject display = new JsonObject();
             display.add("rotation", VectorUtils.toJson(transform.rotation()));

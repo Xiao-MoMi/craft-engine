@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.item.component;
 
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtType;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
@@ -11,9 +11,9 @@ import org.cloudburstmc.protocol.bedrock.packet.CraftingDataPacket;
 import org.cloudburstmc.protocol.bedrock.packet.ItemComponentPacket;
 import org.geysermc.geyser.registry.type.ItemMappings;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import com.google.gson.JsonArray;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
@@ -71,7 +72,7 @@ public final class BedrockWeaponGeometry {
             }
             return BedrockElementGeometry.convert(model, faces);
         }
-        throw new UnsupportedOperationException("Unsupported item model geometry: " + model.id());
+        throw new BedrockResourceException("resource_pack.bedrock.reason.geometry", model.id().asString());
     }
 
     private BedrockElementGeometry.Material material(JavaModel.Texture texture, ItemRenderTarget.Model target, int tintIndex, boolean preserveDye) throws IOException {

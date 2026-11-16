@@ -139,9 +139,6 @@ public final class ItemRegistrationPlanWriter {
         }
         resources.addProperty(ATTACHABLE, variant.attachable());
         resources.addProperty(GENERATED, variant.generated());
-        if (variant.unsupportedReason() != null) {
-            resources.addProperty(UNSUPPORTED_REASON, variant.unsupportedReason());
-        }
         return resources;
     }
 }

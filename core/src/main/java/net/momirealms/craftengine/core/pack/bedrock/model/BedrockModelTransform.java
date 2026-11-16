@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.model;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.model.definition.Transformation;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.*;
@@ -38,13 +39,13 @@ public final class BedrockModelTransform {
         Vector3f z = new Vector3f(matrix.m20(), matrix.m21(), matrix.m22());
         float scale = x.length();
         if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1 || scale <= 0 || matrix.determinant3x3() <= 0) {
-            throw new UnsupportedOperationException("Model transformation requires an affine matrix with positive uniform scale");
+            throw new BedrockResourceException("resource_pack.bedrock.reason.affine_transform");
         }
         x.div(scale);
         y.div(scale);
         z.div(scale);
         if (Math.abs(y.lengthSquared() - 1) > 0.00001f || Math.abs(z.lengthSquared() - 1) > 0.00001f || Math.abs(x.dot(y)) > 0.00001f || Math.abs(x.dot(z)) > 0.00001f || Math.abs(y.dot(z)) > 0.00001f) {
-            throw new UnsupportedOperationException("Non-uniform scale and shear in model transformations are not supported");
+            throw new BedrockResourceException("resource_pack.bedrock.reason.nonuniform_transform");
         }
         return scale;
     }

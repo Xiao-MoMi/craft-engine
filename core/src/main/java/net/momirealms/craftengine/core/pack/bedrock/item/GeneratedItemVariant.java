@@ -14,7 +14,6 @@ public record GeneratedItemVariant(Key id,
                                    @Nullable BedrockItemBlocks.DisplayBlock displayBlock,
                                    boolean attachable,
                                    @Nullable Integer dyeColor,
-                                   @Nullable String unsupportedReason,
                                    Map<ItemDisplayContext, ItemBindingRule> displayModels,
                                    @Nullable ItemDisplayContext worldView,
                                    @Nullable Key headId) {
@@ -24,29 +23,24 @@ public record GeneratedItemVariant(Key id,
                                 @Nullable String iconTexture,
                                 @Nullable BedrockItemBlocks.DisplayBlock displayBlock,
                                 boolean attachable,
-                                @Nullable Integer dyeColor,
-                                @Nullable String unsupportedReason) {
-        this(id, rule, iconTexture, displayBlock, attachable, dyeColor, unsupportedReason, Map.of(), null, null);
+                                @Nullable Integer dyeColor) {
+        this(id, rule, iconTexture, displayBlock, attachable, dyeColor, Map.of(), null, null);
     }
 
     public static GeneratedItemVariant icon(Key id, ItemBindingRule rule, String texture, boolean attachable) {
-        return new GeneratedItemVariant(id, rule, texture, null, attachable, null, null);
+        return new GeneratedItemVariant(id, rule, texture, null, attachable, null);
     }
 
     public static GeneratedItemVariant block(Key id, ItemBindingRule rule, BedrockItemBlocks.DisplayBlock display, boolean attachable) {
-        return new GeneratedItemVariant(id, rule, null, display, attachable, null, null);
-    }
-
-    public static GeneratedItemVariant skipped(Key id, ItemBindingRule rule, @Nullable String reason) {
-        return new GeneratedItemVariant(id, rule, null, null, false, null, reason);
+        return new GeneratedItemVariant(id, rule, null, display, attachable, null);
     }
 
     public static GeneratedItemVariant worldAlias(GeneratedItemVariant visual, ItemDisplayContext view) {
-        return new GeneratedItemVariant(visual.id(), visual.rule(), visual.iconTexture(), visual.displayBlock(), false, visual.dyeColor(), null, Map.of(), view, null);
+        return new GeneratedItemVariant(visual.id(), visual.rule(), visual.iconTexture(), visual.displayBlock(), false, visual.dyeColor(), Map.of(), view, null);
     }
 
     public static GeneratedItemVariant displayContextItem(GeneratedItemVariant inventory, Map<ItemDisplayContext, ItemBindingRule> models, @Nullable Key headId) {
-        return new GeneratedItemVariant(inventory.id(), inventory.rule(), inventory.iconTexture(), inventory.displayBlock(), true, inventory.dyeColor(), null, models, null, headId);
+        return new GeneratedItemVariant(inventory.id(), inventory.rule(), inventory.iconTexture(), inventory.displayBlock(), true, inventory.dyeColor(), models, null, headId);
     }
 
     public boolean generated() {

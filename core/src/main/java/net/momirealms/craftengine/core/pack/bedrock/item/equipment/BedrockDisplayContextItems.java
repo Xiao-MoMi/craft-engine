@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * 根据 Java 物品的显示位置规则，生成背包外观、手持和头部的 attachable，以及掉落物、展示框和置物架使用的别名。
  */
-final class BedrockDisplayContextItems implements BedrockItemHandler {
+final class BedrockDisplayContextItems {
     private static final List<ItemDisplayContext> EQUIPMENT_VIEWS = List.of(
             ItemDisplayContext.FIRST_PERSON_RIGHT_HAND,
             ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
@@ -52,12 +52,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
         this.armorResources = new BedrockArmorResources(resources);
     }
 
-    @Override
-    public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
-        List<BedrockItemPresentation> plans = BedrockItemPresentation.plan(entry);
-        if (plans == null) {
-            return null;
-        }
+    List<GeneratedItemVariant> write(ResolvedItemBinding entry, List<BedrockItemPresentation> plans, BedrockItemGenerationContext context) throws IOException {
         List<GeneratedItemVariant> output = new ObjectArrayList<>();
         boolean hasArmor = BedrockArmorResources.hasAsset(entry);
         BedrockArmorResources.Appearance armor = this.armorResources.resolve(entry, context.root());
@@ -66,7 +61,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
             Key id = plan.id();
             Key headId = headEquipment ? Key.of(id.namespace(), id.value() + "_view_head") : null;
             GeneratedItemVariant item = this.writeVariant(plan, headId, armor, hasArmor, context);
-            if (plan.worldAliases()) {
+            if (plan.separateWorldViews()) {
                 this.writeWorldAliases(item, context, output);
             }
             if (armor != null) {
@@ -101,7 +96,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
         ItemBindingRule registration = plan.registration();
         GeneratedItemVariant inventory;
         try {
-            inventory = this.writeVisual(id, registration, gui, plan.worldAliases() ? DisplayPosition.GUI : null, context);
+            inventory = this.writeVisual(id, registration, gui, plan.separateWorldViews() ? DisplayPosition.GUI : null, context);
         } catch (UnsupportedOperationException | IOException e) {
             // 背包外观生成失败时用透明图标完成注册，手持和世界模型仍可独立生成。
             warn(id, ItemDisplayContext.GUI, e);

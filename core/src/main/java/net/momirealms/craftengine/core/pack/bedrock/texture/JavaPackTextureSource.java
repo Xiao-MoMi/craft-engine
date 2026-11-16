@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.momirealms.craftengine.core.pack.atlas.Atlas;
 import net.momirealms.craftengine.core.pack.atlas.UnstitchSource;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
@@ -165,7 +166,7 @@ public final class JavaPackTextureSource {
         try (InputStream input = this.pack.openResource(ResourcePackUtils.texturePath(skin))) {
             BufferedImage image = input == null ? null : ClientPngReader.read(input);
             if (image == null || (image.getWidth() != image.getHeight() && image.getWidth() != 2 * image.getHeight())) {
-                throw new UnsupportedOperationException("Missing or invalid player head texture: " + skin);
+                throw new BedrockResourceException("resource_pack.bedrock.reason.head_texture", skin.toString());
             }
             if (image.getWidth() != image.getHeight()) {
                 BufferedImage square = new BufferedImage(image.getWidth(), image.getWidth(), BufferedImage.TYPE_INT_ARGB);

@@ -25,45 +25,51 @@ public final class BukkitWorldBlockSources {
     }
 
     public static List<WorldBlockSource> collect(Collection<BlockDefinition> definitions) {
-        List<BlockDefinition> ordered = new ObjectArrayList<>(definitions);
-        ordered.sort(Comparator.comparing(block -> block.id().asString()));
-        List<WorldBlockSource> result = new ObjectArrayList<>();
-        Object context = CollisionContextProxy.INSTANCE.empty();
-        for (BlockDefinition block : ordered) {
-            int index = 0;
+        List<BlockDefinition> orderedDefinitions = new ObjectArrayList<>(definitions);
+        orderedDefinitions.sort(Comparator.comparing(block -> block.id().asString()));
+        List<WorldBlockSource> sources = new ObjectArrayList<>();
+        Object collisionContext = CollisionContextProxy.INSTANCE.empty();
+        for (BlockDefinition block : orderedDefinitions) {
+            int stateIndex = 0;
             for (ImmutableBlockState state : block.variantProvider().states()) {
-                Object nms = state.customBlockState().minecraftState();
-                Object collision = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
-                List<Object> boxes = VoxelShapeProxy.INSTANCE.toAabbs(collision);
-                List<AABB> collisionBoxes = new ArrayList<>(boxes.size());
-                for (Object box : boxes) {
-                    collisionBoxes.add(CollisionUtils.fromMinecraftAabb(box));
-                }
-                Object selection = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, context);
-                AABB selectionBox = VoxelShapeProxy.INSTANCE.isEmpty(selection) ? null : CollisionUtils.fromMinecraftAabb(VoxelShapeProxy.INSTANCE.bounds(selection));
-                int lightDampening = VersionHelper.isOrAbove1_21_2
-                        ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$1(nms)
-                        : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(nms, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO);
-                result.add(
-                        new WorldBlockSource(
-                                block.id(),
-                                index++,
-                                state.customBlockState().registryId(),
-                                new BukkitVanillaBlockStateWrapper(
-                                        nms,
-                                        state.customBlockState().registryId()
-                                ).getAsString(),
-                                state.visualBlockState(),
-                                state.settings().hardness(),
-                                state.settings().luminance(),
-                                lightDampening,
-                                state.settings().friction(),
-                                collisionBoxes,
-                                selectionBox
-                        )
-                );
+                sources.add(createSource(block, state, stateIndex++, collisionContext));
             }
         }
-        return result;
+        return sources;
+    }
+
+    private static WorldBlockSource createSource(BlockDefinition block, ImmutableBlockState state, int stateIndex, Object collisionContext) {
+        Object minecraftState = state.customBlockState().minecraftState();
+        Object collisionShape = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getCollisionShape(minecraftState, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, collisionContext);
+        List<Object> minecraftCollisionBoxes = VoxelShapeProxy.INSTANCE.toAabbs(collisionShape);
+        List<AABB> collisionBoxes = new ArrayList<>(minecraftCollisionBoxes.size());
+        for (Object box : minecraftCollisionBoxes) {
+            collisionBoxes.add(CollisionUtils.fromMinecraftAabb(box));
+        }
+
+        Object selectionShape = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(
+                minecraftState, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO, collisionContext);
+        AABB selectionBox = VoxelShapeProxy.INSTANCE.isEmpty(selectionShape)
+                ? null
+                : CollisionUtils.fromMinecraftAabb(VoxelShapeProxy.INSTANCE.bounds(selectionShape));
+        int lightDampening = VersionHelper.isOrAbove1_21_2
+                ? BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightDampening$1(minecraftState)
+                : BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightBlock(minecraftState, EmptyBlockGetterProxy.GETTER_INSTANCE, BlockPosProxy.ZERO);
+
+        int serverStateId = state.customBlockState().registryId();
+        String serverState = new BukkitVanillaBlockStateWrapper(minecraftState, serverStateId).getAsString();
+        return new WorldBlockSource(
+                block.id(),
+                stateIndex,
+                serverStateId,
+                serverState,
+                state.visualBlockState(),
+                state.settings().hardness(),
+                state.settings().luminance(),
+                lightDampening,
+                state.settings().friction(),
+                collisionBoxes,
+                selectionBox
+        );
     }
 }

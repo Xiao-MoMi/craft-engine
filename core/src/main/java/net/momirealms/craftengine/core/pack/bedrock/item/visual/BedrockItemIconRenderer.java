@@ -16,11 +16,7 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
@@ -80,27 +76,33 @@ public final class BedrockItemIconRenderer {
 
     @Nullable
     private List<TextureData> resolveIconLayers(JavaModel model) throws IOException {
+        // 几何类型是 GENERATED
         if (model.kind() != GeometryKind.GENERATED) {
             return null;
         }
+        // guiLight 与原版 item/generated 一致
         JavaModel vanilla = this.vanillaIconModel();
         if (model.guiLight() != vanilla.guiLight()) {
             return null;
         }
+        // 非手持位置的显示变换与原版一致
         for (Map.Entry<DisplayPosition, Transform> entry : model.display().entrySet()) {
             if (!HANDHELD_POSITIONS.contains(entry.getKey()) && !entry.getValue().equals(vanilla.display().get(entry.getKey()))) {
                 return null;
             }
         }
+        // 至少存在一层纹理
         List<Texture> layers = this.models.resolveLayers(model);
         if (layers.isEmpty()) {
             return null;
         }
+        // 所有纹理都没有 forceTranslucent 标记
         for (Texture texture : layers) {
             if (texture.forceTranslucent()) {
                 return null;
             }
         }
+        // 所有纹理都没有动画
         List<TextureData> data = new ArrayList<>(layers.size());
         for (Texture texture : layers) {
             TextureData layer = this.textures.read(texture, TextureUsage.ITEM);

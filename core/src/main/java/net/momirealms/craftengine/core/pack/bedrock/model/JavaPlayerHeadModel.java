@@ -14,10 +14,9 @@ final class JavaPlayerHeadModel {
     }
 
     static JavaModel create(JavaModel base, Key skin, boolean legacyPose) {
-        // 26.1 起，原版物品 JSON 自己平移并翻转头颅；此前由特殊渲染器完成这一步。
+        // 26.1 起，原版物品 JSON 自己平移并翻转头颅；此前由特殊模型渲染器完成这一步
         float center = legacyPose ? 8 : 0;
-        JavaModel.Rotation rotation = new JavaModel.Rotation(new Vector3f(center, 0, center),
-                legacyPose ? new Vector3f(0, 180, 0) : new Vector3f(0, 0, 180), false);
+        JavaModel.Rotation rotation = new JavaModel.Rotation(new Vector3f(center, 0, center), legacyPose ? new Vector3f(0, 180, 0) : new Vector3f(0, 0, 180), false);
         JavaModel.Texture texture = new JavaModel.Texture(skin, false, true);
         List<JavaModel.Element> elements = List.of(layer(texture, center, rotation, false), layer(texture, center, rotation, true));
         return new JavaModel(base.id(), JavaModel.GeometryKind.ELEMENTS, Map.of(), elements, base.display(), base.guiLight());
@@ -33,8 +32,7 @@ final class JavaPlayerHeadModel {
         faces.put(Direction.WEST, face(texture, u + 4, 2, u + 6, 4));
         faces.put(Direction.UP, face(texture, u + 4, 2, u + 2, 0));
         faces.put(Direction.DOWN, face(texture, u + 6, 2, u + 4, 0));
-        return new JavaModel.Element(new Vector3f(center - 4 - padding, -padding, center - 4 - padding),
-                new Vector3f(center + 4 + padding, 8 + padding, center + 4 + padding), faces, rotation);
+        return new JavaModel.Element(new Vector3f(center - 4 - padding, -padding, center - 4 - padding), new Vector3f(center + 4 + padding, 8 + padding, center + 4 + padding), faces, rotation);
     }
 
     private static JavaModel.Face face(JavaModel.Texture texture, float u1, float v1, float u2, float v2) {

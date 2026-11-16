@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockDefaultItemHandler;
+import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockItemWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
@@ -24,26 +24,20 @@ public final class BedrockItemResourceGenerator {
 
     public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root) throws IOException {
         BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(resources);
-        BedrockDefaultItemHandler defaultHandler = new BedrockDefaultItemHandler(resources, renderer);
+        BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root);
 
         Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
         for (ResolvedItemBinding entry : plan.entries()) {
-            items.put(entry.bedrockId(), writeItem(entry, context, defaultHandler));
+            try {
+                items.put(entry.bedrockId(), itemWriter.write(entry, context));
+            } catch (Throwable t) {
+                throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + t.getMessage(), t);
+            }
         }
 
         writeSharedResources(context, items);
         return new Result(items, context.elytraEquipment().variants());
-    }
-
-    private static List<GeneratedItemVariant> writeItem(ResolvedItemBinding entry,
-                                                        BedrockItemGenerationContext context,
-                                                        BedrockDefaultItemHandler defaultHandler) throws IOException {
-        try {
-            return defaultHandler.write(entry, context);
-        } catch (IOException | RuntimeException exception) {
-            throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + exception.getMessage(), exception);
-        }
     }
 
     private static void writeSharedResources(BedrockItemGenerationContext context, Map<Key, List<GeneratedItemVariant>> items) throws IOException {

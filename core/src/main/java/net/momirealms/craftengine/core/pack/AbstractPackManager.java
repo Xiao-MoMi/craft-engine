@@ -194,7 +194,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     protected abstract ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException;
 
-    protected abstract List<WorldBlockSource> collectBedrockWorldBlocks();
+    protected abstract List<WorldBlockSource> collectGeyserWorldBlockSources();
 
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
@@ -1186,7 +1186,7 @@ public abstract class AbstractPackManager implements PackManager {
                 BedrockPackGenerator.generate(
                         resources,
                         AbstractPackManager.this.generateGeyserItemPlan(resources),
-                        AbstractPackManager.this.collectBedrockWorldBlocks(),
+                        AbstractPackManager.this.collectGeyserWorldBlockSources(),
                         outputPath,
                         dataPath
                 );
