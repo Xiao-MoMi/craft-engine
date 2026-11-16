@@ -31,10 +31,14 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockItemBlocks {
-    private final BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
+    private final BedrockTerrainAtlas atlas;
     private final JsonObject blocks = new JsonObject();
     private final Map<TextureKey, String> textureTiles = new HashMap<>();
     private final Map<GeometryKey, List<Geometry>> geometries = new HashMap<>();
+
+    public BedrockItemBlocks(BedrockTerrainAtlas atlas) {
+        this.atlas = atlas;
+    }
 
     private static BedrockElementGeometry.Material bindTexture(TextureKey key,
                                                                Map<TextureKey, BedrockElementGeometry.Material> bindings,
@@ -239,7 +243,6 @@ public final class BedrockItemBlocks {
         if (this.blocks.isEmpty()) {
             return;
         }
-        this.atlas.finish(root);
         JsonArray version = new JsonArray();
         version.add(1);
         version.add(1);

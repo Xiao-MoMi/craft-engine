@@ -5,16 +5,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockItemAttachables;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.*;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.definition.Transformation;
-import net.momirealms.craftengine.core.pack.model.definition.select.DisplayContextSelectProperty;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tints;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
@@ -30,7 +29,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
@@ -64,7 +62,7 @@ public final class BedrockItemDisplays {
                 Set<String> reported = new HashSet<>();
                 for (ItemDisplayContext context : ItemDisplayContext.values()) {
                     int shape = 0;
-                    ItemBindingRule rule = select(entry, variant, context);
+                    ItemBindingRule rule = variant.displayModels().get(context);
                     if (rule != null) {
                         // 每种展示上下文先选 Java 分支，再应用该模型的 display；NONE 使用恒等变换。
                         try {
@@ -77,8 +75,8 @@ public final class BedrockItemDisplays {
                                 }
                                 shape = existing;
                             }
-                        } catch (UnsupportedOperationException | UncheckedIOException e) {
-                            String reason = e.toString();
+                        } catch (BedrockResourceException e) {
+                            String reason = e.getLocalizedMessage();
                             if (reported.add(reason)) {
                                 TranslationManager.warn("resource_pack.bedrock.item.display_skipped", variant.id().asString(), context.serializedName(), reason);
                             }
@@ -118,7 +116,7 @@ public final class BedrockItemDisplays {
                         converted.add(vanillaParts(resources, entry.getValue().getAsJsonObject("model"), context, List.of()));
                     }
                 }
-            } catch (UnsupportedOperationException | IOException exception) {
+            } catch (BedrockResourceException exception) {
                 converted = List.of();
             }
             for (ItemDisplayContext context : ItemDisplayContext.values()) {
@@ -204,7 +202,7 @@ public final class BedrockItemDisplays {
                 geometry = JavaDisplaySpecialModels.create(resources, model, special);
             }
             if (geometry == null && model.kind() == JavaModel.GeometryKind.ELEMENTS && model.elements().isEmpty()) {
-                throw new UnsupportedOperationException("Empty vanilla display model " + id);
+                throw new BedrockResourceException("resource_pack.bedrock.reason.geometry", id.asString());
             }
             BedrockModelTransform.uniformScale(BedrockModelTransform.compose(transforms));
             JavaModel mesh = geometry == null ? model : geometry;
@@ -250,7 +248,7 @@ public final class BedrockItemDisplays {
             selected = node.getAsJsonObject("fallback");
         }
         if (selected == null) {
-            throw new UnsupportedOperationException("Unsupported vanilla display node " + type);
+            throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", type);
         }
         return vanillaParts(resources, selected, context, transforms);
     }
@@ -347,34 +345,8 @@ public final class BedrockItemDisplays {
         return appearances.size() - 1;
     }
 
-    @Nullable
-    private static ItemBindingRule select(ResolvedItemBinding entry, GeneratedItemVariant variant, ItemDisplayContext context) {
-        if (!variant.displayModels().isEmpty()) {
-            return variant.displayModels().get(context);
-        }
-        JsonPrimitive view = new JsonPrimitive(context.serializedName());
-        for (ItemBindingRule rule : entry.definition().rules()) {
-            if (!BedrockItemAttachables.matchesIdle(rule)) {
-                continue;
-            }
-            boolean matches = true;
-            for (ItemBindingCondition condition : rule.conditions()) {
-                if (condition instanceof ItemBindingCondition.SelectMatch select && select.property() instanceof DisplayContextSelectProperty) {
-                    matches &= select.matches(view);
-                } else if (!BedrockItemAttachables.isUseCondition(condition)) {
-                    // Geyser 已根据实际物品栈选中注册变体；不能拿其它耐久、染色或组件分支替代它。
-                    matches &= variant.rule().conditions().contains(condition);
-                }
-            }
-            if (matches) {
-                return rule;
-            }
-        }
-        return null;
-    }
-
     @SuppressWarnings("DeconstructionCanBeUsed")
-    private static List<Part> parts(JavaModelResources resources, ItemBindingRule rule, ItemDisplayContext context) {
+    private static List<Part> parts(JavaModelResources resources, ItemBindingRule rule, ItemDisplayContext context) throws IOException {
         List<ItemBindingRule> children = rule.target() instanceof ItemRenderTarget.Composite composite ? composite.parts() : List.of(rule);
         List<Part> parts = new ArrayList<>(children.size());
         DisplayPosition position = context == ItemDisplayContext.NONE ? null : DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT));
@@ -382,12 +354,7 @@ public final class BedrockItemDisplays {
             if (!(child.target() instanceof ItemRenderTarget.Model target)) {
                 return List.of();
             }
-            JavaModel model;
-            try {
-                model = target.resolve(resources.models());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            JavaModel model = target.resolve(resources.models());
             JavaModel.Transform transform = position == null ? JavaModel.Transform.IDENTITY : model.display().get(position);
             boolean mirrored = (position == DisplayPosition.FIRSTPERSON_LEFTHAND || position == DisplayPosition.THIRDPERSON_LEFTHAND);
             parts.add(new Part(target, child.transformations(), transform, mirrored));

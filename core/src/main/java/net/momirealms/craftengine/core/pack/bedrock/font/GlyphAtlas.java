@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
@@ -14,18 +16,21 @@ final class GlyphAtlas {
     private static final int FIRST_BITMAP_PAGE = 0xE3;
     private static final int LAST_BITMAP_PAGE = 0xF8;
 
-    private final Map<Glyph, Integer> codepoints = new HashMap<>();
+    private final Map<Glyph, Allocation> allocations = new HashMap<>();
     private final Map<Glyph, GlyphMetrics> metrics = new HashMap<>();
     private final Set<Glyph> unsupported = new HashSet<>();
     private final List<GlyphPage> pages = new ArrayList<>();
 
-    boolean canFitFont(Key font, int[] codepoints, Int2ObjectMap<Glyph> glyphs) {
+    @Nullable
+    Int2ObjectMap<Allocation> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
+        int[] codepoints = glyphs.keySet().toIntArray();
+        IntArrays.quickSort(codepoints);
         // 多个字符可能引用同一字形，估算本字体所需空间时只计一个槽位。
         Set<Glyph> pending = new LinkedHashSet<>();
         for (int codepoint : codepoints) {
             Glyph glyph = glyphs.get(codepoint);
             // 原生字符和纯间距字符无需绘制；此前已分配码位的字形可以复用原槽位。
-            if (glyph == null || glyph.nativeText() || glyph.advanceOnly() || this.codepoints.containsKey(glyph) || this.unsupported.contains(glyph)) {
+            if (glyph == null || glyph.nativeText() || glyph.advanceOnly() || this.allocations.containsKey(glyph) || this.unsupported.contains(glyph)) {
                 continue;
             }
             // 测量得到的格子尺寸可供其他字体复用；失败也会记录，避免同一字形反复测量和告警。
@@ -40,7 +45,28 @@ final class GlyphAtlas {
             }
             pending.add(glyph);
         }
-        return this.hasRoomFor(pending);
+        // 容量检查通过后才分配，保证容量不足的字体不消耗任何槽位。
+        if (!this.hasRoomFor(pending)) {
+            TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
+            return null;
+        }
+        Int2ObjectMap<Allocation> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
+        for (int codepoint : codepoints) {
+            Glyph glyph = glyphs.get(codepoint);
+            if (glyph == null) {
+                continue;
+            }
+            float advance = glyph.advance();
+            if (glyph.nativeText()) {
+                result.put(codepoint, new Allocation(codepoint, advance, (int) advance, 0));
+            } else if (glyph.advanceOnly()) {
+                boolean ordinarySpace = codepoint == ' ' && advance == 4;
+                result.put(codepoint, new Allocation(ordinarySpace ? ' ' : -1, advance, ordinarySpace ? 4 : 0, 0));
+            } else if (!this.unsupported.contains(glyph)) {
+                result.put(codepoint, this.allocateBitmap(glyph));
+            }
+        }
+        return result;
     }
 
     private boolean hasRoomFor(Set<Glyph> pending) {
@@ -65,20 +91,16 @@ final class GlyphAtlas {
         return true;
     }
 
-    @Nullable
-    GlyphMetrics metricsFor(Glyph glyph) {
-        return this.metrics.get(glyph);
-    }
-
-    int codepointFor(Glyph glyph, GlyphMetrics metrics) {
-        Integer existing = this.codepoints.get(glyph);
+    private Allocation allocateBitmap(Glyph glyph) {
+        Allocation existing = this.allocations.get(glyph);
         if (existing != null) {
             return existing;
         }
+        GlyphMetrics metrics = this.metrics.get(glyph);
         GlyphPage page = this.pageWithFreeSlot(metrics.cellSize());
-        int codepoint = page.add(glyph, metrics);
-        this.codepoints.put(glyph, codepoint);
-        return codepoint;
+        Allocation allocation = new Allocation(page.add(glyph, metrics), glyph.advance(), metrics.advance(), 1);
+        this.allocations.put(glyph, allocation);
+        return allocation;
     }
 
     private GlyphPage pageWithFreeSlot(int cellSize) {
@@ -96,5 +118,8 @@ final class GlyphAtlas {
         for (GlyphPage page : this.pages) {
             page.write(directory);
         }
+    }
+
+    record Allocation(int character, float advance, int renderedAdvance, int bearing) {
     }
 }

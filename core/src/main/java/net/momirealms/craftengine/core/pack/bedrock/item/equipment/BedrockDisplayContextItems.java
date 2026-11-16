@@ -5,8 +5,10 @@ import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
@@ -61,11 +63,7 @@ final class BedrockDisplayContextItems {
             Key id = plan.id();
             Key headId = headEquipment ? Key.of(id.namespace(), id.value() + "_view_head") : null;
             GeneratedItemVariant item = this.writeVariant(plan, headId, armor, hasArmor, context);
-            if (plan.separateWorldViews()) {
-                this.writeWorldAliases(item, context, output);
-            } else if (item.displayBlock() != null) {
-                this.writeWorldAlias(item, item.displayModels().get(ItemDisplayContext.ON_SHELF), ItemDisplayContext.ON_SHELF, context, output);
-            }
+            this.writeWorldAliases(item, plan.separateWorldViews(), context, output);
             if (armor != null) {
                 armor.registerAnimals(id, context.animalEquipment());
                 for (BedrockArmorResources.Layer layer : armor.layers()) {
@@ -95,24 +93,27 @@ final class BedrockDisplayContextItems {
         }
         ItemBindingRule gui = idleModels.get(ItemDisplayContext.GUI);
         Key id = plan.id();
-        ItemBindingRule registration = plan.registration();
+        List<ItemBindingCondition> conditions = plan.variant().conditions();
         GeneratedItemVariant inventory;
         try {
-            inventory = this.writeVisual(id, registration, gui, plan.separateWorldViews() ? DisplayPosition.GUI : null, context);
-        } catch (UnsupportedOperationException | IOException e) {
+            inventory = this.writeVisual(id, conditions, gui, plan.separateWorldViews() ? DisplayPosition.GUI : null, context);
+        } catch (BedrockResourceException e) {
             // 背包外观生成失败时用透明图标完成注册，手持和世界模型仍可独立生成。
             warn(id, ItemDisplayContext.GUI, e);
-            inventory = transparent(id, registration, context);
+            inventory = transparent(id, conditions, context);
         }
 
         this.writeEquipment(plan, headId, armor, hasArmor, context);
         return GeneratedItemVariant.displayContextItem(inventory, idleModels, headId);
     }
 
-    private void writeWorldAliases(GeneratedItemVariant item, BedrockItemGenerationContext context, List<GeneratedItemVariant> output) {
+    void writeWorldAliases(GeneratedItemVariant item, boolean separateWorldViews, BedrockItemGenerationContext context, List<GeneratedItemVariant> output) throws IOException {
         ItemBindingRule gui = item.displayModels().get(ItemDisplayContext.GUI);
         for (ItemDisplayContext view : WORLD_VIEWS) {
             ItemBindingRule rule = item.displayModels().get(view);
+            if (rule == null || (!separateWorldViews && (view != ItemDisplayContext.ON_SHELF || item.displayBlock() == null))) {
+                continue;
+            }
             // 世界模型和变换与背包图标相同时可直接复用主物品。三维展示方块仍需按该位置生成姿态。
             if (item.displayBlock() == null && rule.target().equals(gui.target()) && rule.transformations().equals(gui.transformations())) {
                 continue;
@@ -125,33 +126,33 @@ final class BedrockDisplayContextItems {
                          ItemBindingRule rule,
                          ItemDisplayContext view,
                          BedrockItemGenerationContext context,
-                         List<GeneratedItemVariant> output) {
+                         List<GeneratedItemVariant> output) throws IOException {
         Key id = item.id();
         Key alias = Key.of(id.namespace(), id.value() + "_view_" + view.serializedName());
         try {
-            GeneratedItemVariant visual = this.writeVisual(alias, item.rule(), rule, DisplayPosition.valueOf(view.name()), context);
+            GeneratedItemVariant visual = this.writeVisual(alias, item.conditions(), rule, DisplayPosition.valueOf(view.name()), context);
             output.add(GeneratedItemVariant.worldAlias(visual, view));
-        } catch (UnsupportedOperationException | IOException e) {
+        } catch (BedrockResourceException e) {
             warn(id, view, e);
         }
     }
 
     private GeneratedItemVariant writeVisual(Key id,
-                                             ItemBindingRule registration,
+                                             List<ItemBindingCondition> conditions,
                                              ItemBindingRule model,
                                              @Nullable DisplayPosition view,
                                              BedrockItemGenerationContext context) throws IOException {
         List<ItemBindingRule> parts = modelParts(model);
         if (parts.isEmpty()) {
-            return transparent(id, registration, context);
+            return transparent(id, conditions, context);
         }
         // 只有所有部件都能画成图标时才合成贴图，否则交给展示方块保留整组模型的变换。
         BedrockTexture icon = this.renderIcon(parts);
         if (icon != null) {
-            return writeIcon(id, registration, icon, context);
+            return writeIcon(id, conditions, icon, context);
         }
         BedrockItemBlocks.DisplayBlock block = context.itemDisplayBlocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root(), view);
-        return GeneratedItemVariant.block(id, registration, block, false);
+        return GeneratedItemVariant.block(id, conditions, block, false);
     }
 
     @Nullable
@@ -178,22 +179,20 @@ final class BedrockDisplayContextItems {
         JsonArray selectors = new JsonArray();
         Map<Layer, List<String>> layers = collectEquipmentLayers(plan, selectors, hasArmor);
         List<Bedrock3DItemAttachables.Stage> stages = new ObjectArrayList<>(layers.size());
-        List<BedrockItemAttachables.View> views = new ObjectArrayList<>(layers.size());
         boolean hasHandModel = false;
         for (Map.Entry<Layer, List<String>> entry : layers.entrySet()) {
             Layer layer = entry.getKey();
             try {
                 Bedrock3DItemAttachables.Stage stage = mesh.createStage(layer.part(), String.join(" || ", entry.getValue()));
-                stages.add(stage);
-                views.add(equippedView(layer.view()));
+                stages.add(stage.inView(equippedView(layer.view())));
                 hasHandModel |= layer.view() != ItemDisplayContext.HEAD && !stage.cubes().isEmpty();
-            } catch (UnsupportedOperationException | IOException e) {
+            } catch (BedrockResourceException e) {
                 warn(id, layer.view(), e);
             }
         }
         BedrockEquipmentPose pose = plan.strategy().pose(plan.item());
         pose.scripts().addAll(selectors);
-        Bedrock3DItemAttachables.writeDisplayContexts(id, headId, stages, views, mesh.materials(), pose, armor, context.root());
+        Bedrock3DItemAttachables.writeDisplayContexts(id, headId, stages, mesh.materials(), pose, armor, context.root());
         if (hasHandModel) {
             plan.strategy().registerHandModel(context.playerAnimations(), id, plan.item());
         }
@@ -221,7 +220,7 @@ final class BedrockDisplayContextItems {
                     for (ItemBindingRule part : modelParts(rule)) {
                         layers.computeIfAbsent(new Layer(view, part), ignored -> new ObjectArrayList<>()).add(condition);
                     }
-                } catch (UnsupportedOperationException e) {
+                } catch (BedrockResourceException e) {
                     warn(plan.id(), view, e);
                 }
             }
@@ -251,22 +250,22 @@ final class BedrockDisplayContextItems {
         List<ItemBindingRule> parts = rule.target() instanceof ItemRenderTarget.Composite composite ? composite.parts() : List.of(rule);
         for (ItemBindingRule part : parts) {
             if (!(part.target() instanceof ItemRenderTarget.Model)) {
-                throw new UnsupportedOperationException("Unsupported display model at " + part.sourcePath());
+                throw new BedrockResourceException("resource_pack.bedrock.reason.composite_child", part.sourcePath());
             }
         }
         return parts;
     }
 
-    private static GeneratedItemVariant transparent(Key id, ItemBindingRule registration, BedrockItemGenerationContext context) throws IOException {
-        return writeIcon(id, registration, new BedrockTexture(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)), context);
+    private static GeneratedItemVariant transparent(Key id, List<ItemBindingCondition> conditions, BedrockItemGenerationContext context) throws IOException {
+        return writeIcon(id, conditions, new BedrockTexture(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)), context);
     }
 
-    private static GeneratedItemVariant writeIcon(Key id, ItemBindingRule registration, BedrockTexture image, BedrockItemGenerationContext context) throws IOException {
+    private static GeneratedItemVariant writeIcon(Key id, List<ItemBindingCondition> conditions, BedrockTexture image, BedrockItemGenerationContext context) throws IOException {
         String path = image.write(context.root(), "textures/" + id.namespace() + '/' + id.value() + "/icon");
-        return GeneratedItemVariant.icon(id, registration, path, false);
+        return GeneratedItemVariant.icon(id, conditions, path, false);
     }
 
-    private static void warn(Key id, ItemDisplayContext view, Exception e) {
-        TranslationManager.warn("resource_pack.bedrock.item.display_skipped", id.asString(), view.serializedName(), e.toString());
+    private static void warn(Key id, ItemDisplayContext view, BedrockResourceException e) {
+        TranslationManager.warn("resource_pack.bedrock.item.display_skipped", id.asString(), view.serializedName(), e.getLocalizedMessage());
     }
 }

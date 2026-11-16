@@ -91,7 +91,7 @@ public final class ItemRegistrationPlanWriter {
         if (variant.worldView() != null) {
             json.addProperty("world_view", variant.worldView().name());
         }
-        List<ItemBindingCondition> conditions = variant.rule().conditions();
+        List<ItemBindingCondition> conditions = variant.conditions();
         JsonArray matches = new JsonArray(conditions.size());
         for (ItemBindingCondition condition : conditions) {
             matches.add(conditionToJson(condition));

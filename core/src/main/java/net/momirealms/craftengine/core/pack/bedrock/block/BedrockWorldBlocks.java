@@ -29,20 +29,20 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 public final class BedrockWorldBlocks {
     private final JavaPackTextureSource textures;
     private final JavaBlockModelResolver models;
-    private final BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
+    private final BedrockTerrainAtlas atlas;
 
-    private BedrockWorldBlocks(JavaModelResources resources) {
+    private BedrockWorldBlocks(JavaModelResources resources, BedrockTerrainAtlas atlas) {
+        this.atlas = atlas;
         this.textures = resources.textures();
         this.models = new JavaBlockModelResolver(resources);
     }
 
-    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root) throws IOException {
-        return new BedrockWorldBlocks(resources).writeBlocks(sources, root);
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas) throws IOException {
+        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root);
     }
 
     private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root) throws IOException {
         Map<String, List<WorldBlockSource>> groups = groupByVisualState(sources);
-        this.atlas.read(root);
         Path blockFile = root.resolve("blocks.json");
         JsonObject blocks = Files.isRegularFile(blockFile) ? GsonHelper.readJsonObjectFromFile(blockFile) : new JsonObject();
         JsonArray entries = new JsonArray(groups.size());
@@ -59,7 +59,6 @@ public final class BedrockWorldBlocks {
         if (!entries.isEmpty()) {
             blocks.add(FORMAT_VERSION, VectorUtils.toJson(1, 1, 0));
             GsonHelper.writeJsonFile(blocks, blockFile);
-            this.atlas.finish(root);
         }
         return entries;
     }

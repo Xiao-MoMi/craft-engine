@@ -18,7 +18,6 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -54,12 +53,7 @@ final class BedrockDisplayAssets {
         List<JsonArray> partsCubes = new ArrayList<>(parts.size());
         for (BedrockItemDisplays.Part part : parts) {
             ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
-            try {
-                partsCubes.add((part.geometry() == null ? mesh.createStage(rule, "1", true)
-                        : mesh.createStage(rule, "1", true, part.geometry())).cubes());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            partsCubes.add((part.geometry() == null ? mesh.createStage(rule, "1", true) : mesh.createStage(rule, "1", true, part.geometry())).cubes());
         }
         if (mesh.materials().isEmpty()) {
             return 0;

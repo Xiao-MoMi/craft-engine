@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
@@ -85,7 +86,7 @@ final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
         if (idle < 0) {
             return null;
         }
-        BedrockCrossbowStates.State state = new BedrockCrossbowStates.State(plan.id(), this.charged, rules, idle, plan.registration());
+        BedrockCrossbowStates.State state = new BedrockCrossbowStates.State(plan.id(), this.charged, rules, idle, plan.variant().conditions());
         GeneratedItemVariant flat = writeFlat(plan.item(), state, resources.models(), renderer, context);
         return flat != null ? flat : write3D(plan.item(), state, resources, context);
     }
@@ -121,7 +122,7 @@ final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
         }
         Bedrock2DCrossbowAttachables.write(state, stages, entry.useBehavior(), context.root());
         context.playerAnimations().register2DCrossbow(state.id(), state.charged(), entry.chargeDuration().value());
-        return GeneratedItemVariant.icon(state.id(), state.registration(), stages.get(state.idle()).texture(), true);
+        return GeneratedItemVariant.icon(state.id(), state.conditions(), stages.get(state.idle()).texture(), true);
     }
 
     private static GeneratedItemVariant write3D(ResolvedItemBinding entry, BedrockCrossbowStates.State state,
@@ -134,11 +135,11 @@ final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
                 stages.add(geometry.createStage(rule, BedrockCrossbowStates.condition(rule)));
             }
             display = context.itemDisplayBlocks().write(state.id(), List.of(state.rules().get(state.idle())), resources.models(), resources.textures(), context.root());
-        } catch (UnsupportedOperationException exception) {
+        } catch (BedrockResourceException exception) {
             return null;
         }
         Bedrock3DCrossbowAttachables.write(state.id(), stages, geometry.materials(), state, entry.useBehavior(), context.root());
         context.playerAnimations().register3DCrossbow(state.id(), state.charged(), entry.chargeDuration().value());
-        return GeneratedItemVariant.block(state.id(), state.registration(), display, true);
+        return GeneratedItemVariant.block(state.id(), state.conditions(), display, true);
     }
 }

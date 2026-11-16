@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaTextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -36,12 +37,12 @@ public final class BedrockVanillaTextures {
     private BedrockVanillaTextures() {
     }
 
-    public static void write(JavaResourcePack resources, Path root) throws IOException {
+    public static void write(JavaResourcePack resources, Path root, BedrockTerrainAtlas atlas) throws IOException {
         VanillaTextureContext context = new VanillaTextureContext(resources, root, new VanillaTextureRegistry());
         for (BedrockTextureConverter converter : CONVERTERS) {
             converter.convert(context);
         }
-        context.textures().write(root);
+        context.textures().contributeTo(atlas);
     }
 
     private static Rules readRules() {

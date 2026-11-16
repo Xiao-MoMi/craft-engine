@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 
@@ -9,23 +10,27 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FLIPBOOK_TEXTURES;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.TERRAIN_TEXTURE_ATLAS;
 
 public final class BedrockTerrainAtlas {
-    private JsonObject terrain = new JsonObject();
-    private JsonArray flipbooks = new JsonArray();
+    private final JsonObject terrain = new JsonObject();
+    private final Map<String, JsonObject> flipbooks = new LinkedHashMap<>();
 
-    public void read(Path root) throws IOException {
-        Path atlas = root.resolve(TERRAIN_TEXTURE_ATLAS);
-        if (Files.isRegularFile(atlas)) {
-            this.terrain = GsonHelper.readJsonObjectFromFile(atlas).getAsJsonObject("texture_data");
+    public void addFallbackFlipbook(JsonObject entry) {
+        String key = flipbookKey(entry);
+        JsonObject previous = this.flipbooks.putIfAbsent(key, entry);
+        if (previous != null && !previous.equals(entry)) {
+            CraftEngine.instance().logger().warn("Keeping existing Bedrock flipbook " + key);
         }
-        Path animations = root.resolve(FLIPBOOK_TEXTURES);
-        if (Files.isRegularFile(animations)) {
-            this.flipbooks = GsonHelper.readJsonFromFile(animations).getAsJsonArray();
-        }
+    }
+
+    private static String flipbookKey(JsonObject entry) {
+        int index = entry.has("atlas_index") ? entry.get("atlas_index").getAsInt() : 0;
+        return entry.get("atlas_tile").getAsString() + ':' + Math.max(0, index);
     }
 
     public void write(TextureData data, int color, String tile, Path root) throws IOException {
@@ -62,7 +67,7 @@ public final class BedrockTerrainAtlas {
             flipbook.addProperty("flipbook_texture", path + "_anim");
             flipbook.addProperty("ticks_per_frame", interval);
             flipbook.addProperty("blend_frames", false);
-            this.flipbooks.add(flipbook);
+            this.flipbooks.put(flipbookKey(flipbook), flipbook);
             first = strip.getSubimage(0, 0, size, size);
         }
         if (first.getWidth() != size || first.getHeight() != size) {
@@ -75,17 +80,21 @@ public final class BedrockTerrainAtlas {
     }
 
     public void finish(Path root) throws IOException {
-        if (this.terrain.isEmpty()) {
-            return;
+        if (!this.terrain.isEmpty()) {
+            JsonObject atlas = new JsonObject();
+            atlas.addProperty("resource_pack_name", "craftengine");
+            atlas.addProperty("texture_name", "atlas.terrain");
+            atlas.addProperty("padding", 8);
+            atlas.addProperty("num_mip_levels", 4);
+            atlas.add("texture_data", this.terrain);
+            Files.createDirectories(root.resolve(TERRAIN_TEXTURE_ATLAS).getParent());
+            GsonHelper.writeJsonFile(atlas, root.resolve(TERRAIN_TEXTURE_ATLAS));
         }
-        JsonObject atlas = new JsonObject();
-        atlas.addProperty("resource_pack_name", "craftengine");
-        atlas.addProperty("texture_name", "atlas.terrain");
-        atlas.addProperty("padding", 8);
-        atlas.addProperty("num_mip_levels", 4);
-        atlas.add("texture_data", this.terrain);
-        Files.createDirectories(root.resolve(TERRAIN_TEXTURE_ATLAS).getParent());
-        GsonHelper.writeJsonFile(atlas, root.resolve(TERRAIN_TEXTURE_ATLAS));
-        GsonHelper.writeJsonFile(this.flipbooks, root.resolve(FLIPBOOK_TEXTURES));
+        if (!this.terrain.isEmpty() || !this.flipbooks.isEmpty()) {
+            JsonArray animations = new JsonArray(this.flipbooks.size());
+            this.flipbooks.values().forEach(animations::add);
+            Files.createDirectories(root.resolve(FLIPBOOK_TEXTURES).getParent());
+            GsonHelper.writeJsonFile(animations, root.resolve(FLIPBOOK_TEXTURES));
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -41,7 +42,7 @@ final class BedrockArmorResources {
     }
 
     @Nullable
-    Appearance resolve(ResolvedItemBinding entry, Path root) {
+    Appearance resolve(ResolvedItemBinding entry, Path root) throws IOException {
         if (!hasAsset(entry)) {
             return null;
         }
@@ -79,8 +80,8 @@ final class BedrockArmorResources {
                 appearances.add(new Layer(slot, texture));
             }
             return appearances.isEmpty() ? null : new Appearance(List.copyOf(appearances));
-        } catch (IOException | RuntimeException exception) {
-            TranslationManager.warn("resource_pack.bedrock.item.armor_skipped", entry.bedrockId().asString(), equipment.toString(), exception.toString());
+        } catch (BedrockResourceException exception) {
+            TranslationManager.warn("resource_pack.bedrock.item.armor_skipped", entry.bedrockId().asString(), equipment.toString(), exception.getLocalizedMessage());
             return null;
         }
     }
@@ -97,12 +98,12 @@ final class BedrockArmorResources {
             Key path = Key.of(texture.namespace(), "entity/equipment/" + layerType + '/' + texture.value());
             TextureData data = this.resources.textures().read(new JavaModel.Texture(path, false, false, true), TextureUsage.ITEM);
             if (data.animation() != null) {
-                throw new UnsupportedOperationException("Animated armor texture " + path);
+                throw new BedrockResourceException("resource_pack.bedrock.reason.armor_animation", path.asString());
             }
             BufferedImage image = data.image();
             boolean rectangular = !layerType.equals("horse_body");
             if (image.getWidth() != image.getHeight() * (rectangular ? 2 : 1)) {
-                throw new UnsupportedOperationException("Unexpected equipment texture aspect ratio for " + path);
+                throw new BedrockResourceException("resource_pack.bedrock.reason.armor_aspect_ratio", path.asString());
             }
             images.add(color == 0xffffff ? image : ImageUtils.multiplyColor(image, color));
         }

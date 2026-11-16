@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
@@ -66,7 +67,7 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
             Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
             try {
                 BedrockModelTransform.uniformScale(transformation);
-            } catch (UnsupportedOperationException exception) {
+            } catch (BedrockResourceException exception) {
                 return null;
             }
             ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
@@ -83,7 +84,7 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
         }
         BedrockItemAttachables.writeBow(plan.id(), stages, idle, plan.item().useBehavior().maximumDuration().value(), context.root());
         context.playerAnimations().registerBow(plan.id());
-        return GeneratedItemVariant.icon(plan.id(), plan.registration(), stages.get(idle).texture(), true);
+        return GeneratedItemVariant.icon(plan.id(), plan.variant().conditions(), stages.get(idle).texture(), true);
     }
 
     private static GeneratedItemVariant write3D(BedrockItemPresentation plan, int idle, JavaModelResources resources, BedrockItemGenerationContext context) throws IOException {
@@ -98,11 +99,11 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
             }
             // 背包和掉落使用待机 display，手持几何不缩到方块范围。
             display = context.itemDisplayBlocks().write(plan.id(), List.of(idleRule), resources.models(), resources.textures(), context.root());
-        } catch (UnsupportedOperationException exception) {
+        } catch (BedrockResourceException exception) {
             return null;
         }
         Bedrock3DBowAttachables.write(plan.id(), stages, geometry.materials(), plan.item().useBehavior().maximumDuration().value(), context.root());
         context.playerAnimations().registerBowUsingJavaPose(plan.id());
-        return GeneratedItemVariant.block(plan.id(), plan.registration(), display, true);
+        return GeneratedItemVariant.block(plan.id(), plan.variant().conditions(), display, true);
     }
 }

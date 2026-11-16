@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
@@ -50,9 +49,8 @@ public final class BedrockItemWriter {
             Key id = size == 1 ? bedrockId : bedrockId.withSameNamespace(bedrockId.value() + "_variant_" + i);
             try {
                 GeneratedItemVariant variant = this.writeVariant(entry, context, id, rule, type);
-                if (variant.displayBlock() != null) {
-                    this.displayContextItems.writeWorldAlias(variant, rule, ItemDisplayContext.ON_SHELF, context, variants);
-                }
+                variant = variant.withDisplayModels(BedrockItemPresentation.ordinaryDisplayModels(entry, variant.conditions()));
+                this.displayContextItems.writeWorldAliases(variant, false, context, variants);
                 variants.add(variant);
             } catch (BedrockResourceException exception) {
                 TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", id.asString(), entry.itemModel().asString(), rule.sourcePath(), exception.getLocalizedMessage());
@@ -103,7 +101,7 @@ public final class BedrockItemWriter {
         }
         BedrockItemBlocks.DisplayBlock display = context.itemDisplayBlocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
         if (!BedrockAnimatedGeneratedItemAttachables.write(id, rule, this.resources.models(), this.resources.textures(), context.root())) {
-            return GeneratedItemVariant.block(id, rule, display, false);
+            return GeneratedItemVariant.block(id, rule.conditions(), display, false);
         }
         ItemBehaviorDescription behavior = entry.clientBehavior();
         if (behavior.use().animation() == ItemBehaviorDescription.UseAnimation.NONE
@@ -111,7 +109,7 @@ public final class BedrockItemWriter {
                 && behavior.interact().animation() == ItemBehaviorDescription.SwingAnimation.WHACK) {
             context.playerAnimations().registerItemUsingJavaSwing(id);
         }
-        return GeneratedItemVariant.block(id, rule, display, true);
+        return GeneratedItemVariant.block(id, rule.conditions(), display, true);
     }
 
     private GeneratedItemVariant writeIcon(BedrockItemGenerationContext context,
@@ -134,6 +132,6 @@ public final class BedrockItemWriter {
         if (attachable) {
             BedrockItemAttachables.write(id, models.getFirst(), icon.image(), texture, context.root());
         }
-        return GeneratedItemVariant.icon(id, rule, texture, attachable);
+        return GeneratedItemVariant.icon(id, rule.conditions(), texture, attachable);
     }
 }

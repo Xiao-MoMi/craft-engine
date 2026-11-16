@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPl
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -48,17 +49,19 @@ public final class BedrockPackGenerator {
             Path itemPlanPath = root.resolve(RegistrationPlanKind.ITEM.file());
             Files.createDirectories(itemPlanPath.getParent());
 
+            BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
             JavaModelResources modelResources = new JavaModelResources(resources);
             // 物品
-            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root);
+            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root, atlas);
 
             JsonObject itemDisplays = BedrockItemDisplays.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
             ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems, itemDisplays);
             // 方块
             Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
-            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root);
+            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root, atlas);
             BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blocks, blockPlanPath);
-            BedrockVanillaTextures.write(resources, root);
+            BedrockVanillaTextures.write(resources, root, atlas);
+            atlas.finish(root);
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             // 字体文件

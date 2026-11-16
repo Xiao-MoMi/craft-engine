@@ -79,7 +79,7 @@ public final class BedrockDyedItem {
         Bedrock3DItemAttachables.Stage stage = new Bedrock3DItemAttachables.Stage(model, cubes, "1");
         Bedrock3DItemAttachables.write(id, List.of(stage), geometry.materials(), scripts, new JsonArray(), new JsonObject(), new JsonArray(), context.root());
         BedrockItemBlocks.DisplayBlock block = entry.clientBehavior().placesBlock() ? context.itemDisplayBlocks().write(id, List.of(rule), models, textures, context.root()) : null;
-        return new GeneratedItemVariant(id, rule, texture, block, true, defaultColor);
+        return new GeneratedItemVariant(id, rule.conditions(), texture, block, true, defaultColor);
     }
 
     private static String handColor(String property) {

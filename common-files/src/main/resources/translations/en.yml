@@ -339,6 +339,8 @@ resource_pack.bedrock.font.skipped_provider: "Skipped unsupported provider <arg:
 resource_pack.bedrock.font.space: "Invalid advance for character '<arg:0>'"
 resource_pack.bedrock.font.spacing: "Empty or subpixel bitmap spacing is unsupported"
 resource_pack.bedrock.item.binding: "Could not bind item <arg:0> (material <arg:1>) for Bedrock: <arg:2>"
+resource_pack.bedrock.reason.armor_animation: "Animated armor textures are unsupported: <arg:0>"
+resource_pack.bedrock.reason.armor_aspect_ratio: "Unexpected equipment texture aspect ratio: <arg:0>"
 resource_pack.bedrock.reason.render_target: "Unsupported render target: <arg:0>"
 resource_pack.bedrock.reason.composite_child: "Unsupported composite child: <arg:0>"
 resource_pack.bedrock.reason.static_icon: "Model cannot be rendered as a static icon: <arg:0>"

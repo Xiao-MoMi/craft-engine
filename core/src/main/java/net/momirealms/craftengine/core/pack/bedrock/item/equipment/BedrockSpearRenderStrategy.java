@@ -38,7 +38,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
                                              JavaModelResources resources,
                                              BedrockItemIconRenderer renderer,
                                              BedrockItemGenerationContext context) throws IOException {
-        ItemBindingRule inventory = plan.registration();
+        ItemBindingRule inventory = plan.idleModels().get(ItemDisplayContext.GUI);
         if (!inventory.transformations().isEmpty() || !(inventory.target() instanceof ItemRenderTarget.Model target)) {
             return null;
         }
@@ -79,7 +79,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
         String path = "textures/" + plan.id().namespace() + '/' + plan.id().value() + "/icon";
         ImageUtils.writePng(icon.image(), context.root().resolve(path + ".png"));
         Bedrock2DSpearAttachables.write(plan, conditions, stages, context.root());
-        return GeneratedItemVariant.icon(plan.id(), inventory, path, true);
+        return GeneratedItemVariant.icon(plan.id(), plan.variant().conditions(), path, true);
     }
 
     @Override

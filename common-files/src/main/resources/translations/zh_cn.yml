@@ -339,6 +339,8 @@ resource_pack.bedrock.font.skipped_provider: "字体 <arg:0> 的 providers[<arg:
 resource_pack.bedrock.font.space: "字符“<arg:0>”的前进宽度无效"
 resource_pack.bedrock.font.spacing: "不支持空白或小于一个像素的位图间距"
 resource_pack.bedrock.item.binding: "无法为基岩版绑定物品 <arg:0>（材质 <arg:1>）：<arg:2>"
+resource_pack.bedrock.reason.armor_animation: "不支持动画盔甲纹理：<arg:0>"
+resource_pack.bedrock.reason.armor_aspect_ratio: "装备纹理宽高比不符合要求：<arg:0>"
 resource_pack.bedrock.reason.render_target: "不支持的渲染目标：<arg:0>"
 resource_pack.bedrock.reason.composite_child: "不支持的复合模型子节点：<arg:0>"
 resource_pack.bedrock.reason.static_icon: "模型无法渲染为静态图标：<arg:0>"

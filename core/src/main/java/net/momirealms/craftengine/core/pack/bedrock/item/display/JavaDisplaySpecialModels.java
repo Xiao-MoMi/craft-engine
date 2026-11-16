@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.display;
 
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.util.Direction;
@@ -36,7 +37,7 @@ final class JavaDisplaySpecialModels {
                 elements.add(cube(texture, 32, 0, 0, -0.5f, -4, -0.5f, 1, 4, 1, rotation));
                 elements.add(cube(texture, 32, 4, 3, 1.5f, -3, -0.5f, 1, 4, 1, rotation));
             }
-            default -> throw new UnsupportedOperationException("Unsupported special display model " + type);
+            default -> throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", type);
         }
         return new JavaModel(base.id(), JavaModel.GeometryKind.ELEMENTS, Map.of(), elements, base.display(), base.guiLight());
     }

@@ -72,6 +72,6 @@ final class BedrockCrossbowStates {
         return scripts;
     }
 
-    record State(Key id, boolean charged, List<ItemBindingRule> rules, int idle, ItemBindingRule registration) {
+    record State(Key id, boolean charged, List<ItemBindingRule> rules, int idle, List<ItemBindingCondition> conditions) {
     }
 }

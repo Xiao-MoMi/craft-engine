@@ -2,12 +2,10 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -65,38 +63,14 @@ public final class BedrockFontGenerator {
     }
 
     private static void addFont(Key font, Int2ObjectMap<Glyph> glyphs, GlyphAtlas atlas, JsonObject layouts) {
-        int[] codepoints = glyphs.keySet().toIntArray();
-        IntArrays.quickSort(codepoints);
-
-        // 先检查整套字体所需的槽位。容量不足时整套跳过，以免生成一半映射后才用完码位。
-        if (!atlas.canFitFont(font, codepoints, glyphs)) {
-            TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
+        Int2ObjectMap<GlyphAtlas.Allocation> allocations = atlas.allocateFont(font, glyphs);
+        if (allocations == null) {
             return;
         }
-
         JsonObject layout = new JsonObject();
-        for (int codepoint : codepoints) {
-            Glyph glyph = glyphs.get(codepoint);
-            if (glyph == null) {
-                continue;
-            }
-            String key = Integer.toHexString(codepoint);
-            if (glyph.nativeText()) {
-                // 基岩原生字符沿用原码位，只记录标题布局所需的字宽。
-                float advance = glyph.advance();
-                layout.add(key, layoutGlyph(codepoint, advance, (int) advance, 0));
-            } else if (glyph.advanceOnly()) {
-                // 普通空格可直接显示；其余间距只移动布局光标，-1 表示不输出字符。
-                float advance = glyph.advance();
-                boolean ordinarySpace = codepoint == ' ' && advance == 4;
-                layout.add(key, layoutGlyph(ordinarySpace ? ' ' : -1, advance, ordinarySpace ? 4 : 0, 0));
-            } else {
-                GlyphMetrics metrics = atlas.metricsFor(glyph);
-                if (metrics != null) {
-                    int target = atlas.codepointFor(glyph, metrics);
-                    layout.add(key, layoutGlyph(target, glyph.advance(), metrics.advance(), 1));
-                }
-            }
+        for (Int2ObjectMap.Entry<GlyphAtlas.Allocation> entry : allocations.int2ObjectEntrySet()) {
+            GlyphAtlas.Allocation glyph = entry.getValue();
+            layout.add(Integer.toHexString(entry.getIntKey()), layoutGlyph(glyph.character(), glyph.advance(), glyph.renderedAdvance(), glyph.bearing()));
         }
         if (!layout.isEmpty()) {
             layouts.add(font.asString(), layout);

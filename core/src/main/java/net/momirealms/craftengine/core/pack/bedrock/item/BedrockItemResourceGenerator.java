@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPl
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -22,16 +23,16 @@ public final class BedrockItemResourceGenerator {
     private BedrockItemResourceGenerator() {
     }
 
-    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root) throws IOException {
+    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root, BedrockTerrainAtlas atlas) throws IOException {
         BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(resources);
         BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
-        BedrockItemGenerationContext context = new BedrockItemGenerationContext(root);
+        BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas);
 
         Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
         for (ResolvedItemBinding entry : plan.entries()) {
             try {
                 items.put(entry.bedrockId(), itemWriter.write(entry, context));
-            } catch (Throwable t) {
+            } catch (IOException | RuntimeException t) {
                 throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + t.getMessage(), t);
             }
         }

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
@@ -12,13 +13,12 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 record BedrockItemPresentation(ResolvedItemBinding item,
                                Key id,
-                               ItemBindingRule registration,
                                DisplayContextVariants.Variant variant,
                                EnumMap<ItemDisplayContext, ItemBindingRule> idleModels,
                                BedrockItemRenderStrategy strategy,
@@ -49,9 +49,7 @@ record BedrockItemPresentation(ResolvedItemBinding item,
                 for (ItemDisplayContext view : ItemDisplayContext.values()) {
                     idleModels.put(view, variant.idle(view, strategy));
                 }
-                ItemBindingRule gui = idleModels.get(ItemDisplayContext.GUI);
-                ItemBindingRule registration = new ItemBindingRule(variant.conditions(), gui.target(), gui.transformations(), gui.sourcePath());
-                result.add(new BedrockItemPresentation(item, id, registration, variant, idleModels, strategy, explicitViews, separateWorldViews));
+                result.add(new BedrockItemPresentation(item, id, variant, idleModels, strategy, explicitViews, separateWorldViews));
             }
         }
         return result;
@@ -84,6 +82,29 @@ record BedrockItemPresentation(ResolvedItemBinding item,
             }
         }
         return false;
+    }
+
+    static Map<ItemDisplayContext, ItemBindingRule> ordinaryDisplayModels(ResolvedItemBinding item, List<ItemBindingCondition> conditions) {
+        for (ItemBindingRule rule : item.definition().rules()) {
+            if (!BedrockItemAttachables.matchesIdle(rule)) {
+                continue;
+            }
+            boolean matches = true;
+            for (ItemBindingCondition condition : rule.conditions()) {
+                if (!BedrockItemAttachables.isUseCondition(condition) && !conditions.contains(condition)) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) {
+                EnumMap<ItemDisplayContext, ItemBindingRule> models = new EnumMap<>(ItemDisplayContext.class);
+                for (ItemDisplayContext view : ItemDisplayContext.values()) {
+                    models.put(view, rule);
+                }
+                return models;
+            }
+        }
+        return Map.of();
     }
 
     int sharedModelIdleIndex() {
