@@ -14,7 +14,6 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
-import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,12 +46,7 @@ record BedrockItemPresentation(ResolvedItemBinding item,
             for (int z = 0, size2 = variants.size(); z < size2; z++) {
                 Key id = strategy.variantId(size2 == 1 ? base : base.withSameNamespace(base.value() + "_variant_" + z));
                 DisplayContextVariants.Variant variant = variants.get(z);
-                // 预选各显示位置的闲置规则
-                EnumMap<ItemDisplayContext, ItemBindingRule> idleRules = new EnumMap<>(ItemDisplayContext.class);
-                for (ItemDisplayContext view : ItemDisplayContext.values()) {
-                    idleRules.put(view, variant.idle(view, strategy));
-                }
-                result.add(new BedrockItemPresentation(item, id, variant.conditions(), variant.rules(), idleRules, strategy, explicitViews, separateWorldViews));
+                result.add(new BedrockItemPresentation(item, id, variant.conditions(), variant.rules(), variant.idleRules(strategy), strategy, explicitViews, separateWorldViews));
             }
         }
         return new Plan(contextual, result);

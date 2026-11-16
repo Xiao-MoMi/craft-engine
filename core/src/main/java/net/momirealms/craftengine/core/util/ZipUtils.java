@@ -26,6 +26,10 @@ public final class ZipUtils {
     }
 
     public static void compress(Path in, Path out, boolean storePng) throws IOException {
+        compress(in, out, storePng, true);
+    }
+
+    public static void compress(Path in, Path out, boolean storePng, boolean includeDirectories) throws IOException {
         byte[] crcBuffer = storePng ? new byte[8192] : null;
         CRC32 crc = storePng ? new CRC32() : null;
         try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out), ZIP_OUTPUT_BUFFER_SIZE);
@@ -34,7 +38,7 @@ public final class ZipUtils {
             Files.walkFileTree(in, new SimpleFileVisitor<>() {
                 @Override
                 public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
-                    if (!dir.equals(in)) {
+                    if (includeDirectories && !dir.equals(in)) {
                         String relativePath = in.relativize(dir).toString().replace("\\", "/") + "/";
                         ZipEntry entry = new ZipEntry(relativePath);
                         entry.setTime(0L);

@@ -77,6 +77,9 @@ public final class BedrockPackGenerator {
             BedrockGuiGenerator.write(resources, root);
             BedrockSidebarGenerator.write(resources, root);
 
+            BedrockResourceSharing.share(root);
+            BedrockDefinitionBundler.bundle(root, Config.bedrockMaxDefinitionsPerFile());
+
             // 元数据
             JsonObject manifest = manifest();
             GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
@@ -100,8 +103,8 @@ public final class BedrockPackGenerator {
                     Files.move(root.resolve(file), target);
                 }
                 GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
-                ZipUtils.compress(root, temporaryPack);
-                ZipUtils.compress(data, temporaryData);
+                ZipUtils.compress(root, temporaryPack, false, false);
+                ZipUtils.compress(data, temporaryData, false, false);
                 Files.move(temporaryPack, packDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                 Files.move(temporaryData, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } finally {

@@ -145,8 +145,16 @@ public final class BedrockItemDisplayBlocks {
         for (Geometry candidate : candidates) {
             // 相同几何可补充尚未使用的场景姿态；已有场景姿态冲突时必须另建，避免覆盖旧物品的外观。
             if (compatibleTransforms(candidate.transforms(), transforms)) {
-                transforms.entrySet().forEach(entry -> candidate.transforms().add(entry.getKey(), entry.getValue()));
-                this.writeGeometryFile(candidate.display(), cubes, candidate.transforms(), root);
+                boolean changed = false;
+                for (Map.Entry<String, JsonElement> entry : transforms.entrySet()) {
+                    if (!candidate.transforms().has(entry.getKey())) {
+                        candidate.transforms().add(entry.getKey(), entry.getValue());
+                        changed = true;
+                    }
+                }
+                if (changed) {
+                    this.writeGeometryFile(candidate.display(), cubes, candidate.transforms(), root);
+                }
                 return candidate.display();
             }
         }

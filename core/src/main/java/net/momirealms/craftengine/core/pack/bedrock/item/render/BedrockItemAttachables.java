@@ -83,7 +83,11 @@ public final class BedrockItemAttachables {
     }
 
     static <T> String stageSelection(String variable, List<T> stages, Function<T, String> condition) {
-        StringBuilder script = new StringBuilder(variable).append(" = ");
+        return variable + " = " + stageSelectionExpression(stages, condition) + ';';
+    }
+
+    static <T> String stageSelectionExpression(List<T> stages, Function<T, String> condition) {
+        StringBuilder script = new StringBuilder();
         for (int i = 0; i < stages.size(); i++) {
             script.append('(').append(condition.apply(stages.get(i))).append(") ? ").append(i).append(" : (");
         }
@@ -91,7 +95,7 @@ public final class BedrockItemAttachables {
         for (int i = 0; i < stages.size(); i++) {
             script.append(')');
         }
-        return script.append(';').toString();
+        return script.toString();
     }
 
     public static Matrix4f firstPersonSlotMatrix() {

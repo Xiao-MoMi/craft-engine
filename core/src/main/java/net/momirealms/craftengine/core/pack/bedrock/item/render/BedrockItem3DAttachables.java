@@ -158,30 +158,20 @@ public final class BedrockItem3DAttachables {
         );
 
         // 各阶段共用这一层的贴图。每个有可见面的阶段各自注册控制器，由 ce_stage 选中当前阶段。
-        Map<LocalGeometry, JsonObject> layerGeometries = new HashMap<>();
+        Map<LocalGeometry, JsonObject> layerGeometries = this.contextPose == null ? new HashMap<>() : null;
+        JsonArray[] contextCubes = this.contextPose == null ? null : new JsonArray[this.stages.size()];
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
-            JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
-            if (cubes.isEmpty()) {
-                continue;
-            }
             String alias = "stage_" + index + '_' + layerName;
-            if (this.contextPose != null) {
-                int geometryIndex = this.contextGeometryIndices[index];
-                String geometryId = "geometry." + this.prefix + ".stage_" + geometryIndex + '_' + layerName;
-                // 共享阶段只登记别名；骨骼和几何由组内首个阶段写一次，动画也使用同一个前缀。
-                if (geometryIndex == index) {
-                    String prefix = "p" + geometryIndex + "_";
-                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId, modelRadius(cubes, stage.geometry().transformation()), prefix);
-                    if (this.contextPose.views().contains(stage.view()) && !this.contextPose.bones().isEmpty()) {
-                        // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
-                        insertPoseBones(geometry, prefix, this.contextPose.bones());
-                    }
-                    this.addLocalTransform(geometry, stage.geometry().transformation(), prefix);
-                    this.geometries.add(geometry);
+            if (contextCubes != null) {
+                if (!this.registerContextGeometry(index, layerName, alias, contextCubes)) {
+                    continue;
                 }
-                this.geometryNames.addProperty(alias, geometryId);
             } else {
+                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
+                if (cubes.isEmpty()) {
+                    continue;
+                }
                 this.registerGeometry(alias, cubes, stage.geometry(), layerGeometries);
             }
             String controllerId = "controller.render." + this.prefix + '.' + alias;
@@ -190,6 +180,34 @@ public final class BedrockItem3DAttachables {
             active.addProperty(controllerId, this.contextPose != null ? stage.condition() : "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + index);
             this.activeControllers.add(active);
         }
+    }
+
+    private boolean registerContextGeometry(int index, String layerName, String alias, JsonArray[] contextCubes) {
+        Stage stage = this.stages.get(index);
+        int geometryIndex = this.contextGeometryIndices[index];
+        JsonArray cubes = contextCubes[geometryIndex];
+        if (cubes == null) {
+            cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
+            contextCubes[geometryIndex] = cubes;
+        }
+        if (cubes.isEmpty()) {
+            return false;
+        }
+        String geometryId = "geometry." + this.prefix + ".stage_" + geometryIndex + '_' + layerName;
+        // 缓存仅属于当前材质层；首阶段写出几何，后续场景只登记别名，不修改共享 cubes。
+        if (geometryIndex == index) {
+            String prefix = "p" + geometryIndex + "_";
+            JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId,
+                    modelRadius(cubes, stage.geometry().transformation()), prefix);
+            if (this.contextPose.views().contains(stage.view()) && !this.contextPose.bones().isEmpty()) {
+                // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
+                insertPoseBones(geometry, prefix, this.contextPose.bones());
+            }
+            this.addLocalTransform(geometry, stage.geometry().transformation(), prefix);
+            this.geometries.add(geometry);
+        }
+        this.geometryNames.addProperty(alias, geometryId);
+        return true;
     }
 
     private void registerGeometry(String alias, JsonArray cubes, BedrockItemGeometry source, Map<LocalGeometry, JsonObject> layerGeometries) {

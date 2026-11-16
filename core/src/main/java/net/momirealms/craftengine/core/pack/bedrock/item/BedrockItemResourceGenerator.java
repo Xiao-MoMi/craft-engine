@@ -28,7 +28,7 @@ public final class BedrockItemResourceGenerator {
         BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas, blockDefinitions);
 
-        Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
+        Map<Key, List<GeneratedItemVariant>> items = LinkedHashMap.newLinkedHashMap(plan.entries().size());
         for (ResolvedItemBinding entry : plan.entries()) {
             try {
                 items.put(entry.bedrockId(), itemWriter.write(entry, context));

@@ -310,6 +310,7 @@ public final class Config {
     private List<Pattern> bedrock$resource_pack$exclude_fonts = List.of();
     private int bedrock$resource_pack$item_icon_size;
     private int bedrock$resource_pack$display_dye_max_layers;
+    private int bedrock$resource_pack$max_definitions_per_file;
     private String bedrock$additional_identification$name_prefix;
     private boolean bedrock$additional_identification$floodgate_uuid;
     private boolean bedrock$additional_identification$geyser_brand;
@@ -803,6 +804,7 @@ public final class Config {
         this.bedrock$resource_pack$exclude_fonts = config.getPatterns("bedrock.resource-pack.exclude-fonts");
         this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64, 1, Integer.MAX_VALUE);
         this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16, 1, Integer.MAX_VALUE);
+        this.bedrock$resource_pack$max_definitions_per_file = config.getInt("bedrock.resource-pack.max-definitions-per-file", 32, 0, Integer.MAX_VALUE);
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
@@ -1559,6 +1561,10 @@ public final class Config {
 
     public static int bedrockDisplayDyeMaxLayers() {
         return instance.bedrock$resource_pack$display_dye_max_layers;
+    }
+
+    public static int bedrockMaxDefinitionsPerFile() {
+        return instance.bedrock$resource_pack$max_definitions_per_file;
     }
 
     public static String sacrificedVanillaArmorType() {

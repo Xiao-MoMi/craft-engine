@@ -26,8 +26,11 @@ public record BedrockItemGeometry(JavaModel model, JsonArray cubes, Matrix4fc tr
                 }
             }
             if (!faces.isEmpty()) {
-                JsonObject cube = original.deepCopy();
-                cube.add("uv", faces);
+                JsonObject cube = new JsonObject();
+                // UV 已按材质筛选，不能再复制整套 UV 后立即丢弃。
+                for (Map.Entry<String, JsonElement> entry : original.entrySet()) {
+                    cube.add(entry.getKey(), entry.getKey().equals("uv") ? faces : entry.getValue().deepCopy());
+                }
                 cubes.add(cube);
             }
         }

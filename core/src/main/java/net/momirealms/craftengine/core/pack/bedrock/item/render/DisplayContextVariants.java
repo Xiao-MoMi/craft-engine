@@ -177,13 +177,25 @@ final class DisplayContextVariants {
     record Variant(List<ItemBindingCondition> conditions, // 哪种物品栈会选中这个变体
                    EnumMap<ItemDisplayContext, List<ItemBindingRule>> rules) { // 选中这个变体后，各个显示位置用哪些模型规则
 
-        ItemBindingRule idle(ItemDisplayContext view, BedrockItemRenderStrategy strategy) {
-            for (ItemBindingRule rule : this.rules.get(view)) {
-                if (strategy.matchesIdle(rule)) {
-                    return rule;
+        EnumMap<ItemDisplayContext, ItemBindingRule> idleRules(BedrockItemRenderStrategy strategy) {
+            EnumMap<ItemDisplayContext, ItemBindingRule> result = new EnumMap<>(ItemDisplayContext.class);
+            Map<List<ItemBindingRule>, ItemBindingRule> selected = new IdentityHashMap<>();
+            // 多个场景共享规则列表实例；闲置选择只取决于列表和当前策略，与场景无关。
+            for (Map.Entry<ItemDisplayContext, List<ItemBindingRule>> entry : this.rules.entrySet()) {
+                ItemBindingRule idle = selected.get(entry.getValue());
+                if (idle == null) {
+                    idle = EMPTY;
+                    for (ItemBindingRule rule : entry.getValue()) {
+                        if (strategy.matchesIdle(rule)) {
+                            idle = rule;
+                            break;
+                        }
+                    }
+                    selected.put(entry.getValue(), idle);
                 }
+                result.put(entry.getKey(), idle);
             }
-            return EMPTY;
+            return result;
         }
     }
 }
