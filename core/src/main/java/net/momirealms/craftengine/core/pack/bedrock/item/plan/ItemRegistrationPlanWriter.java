@@ -39,7 +39,7 @@ public final class ItemRegistrationPlanWriter {
         result.addProperty(SOURCE_VERSION, VersionHelper.MINECRAFT_VERSION.version());
 
         JsonArray entries = new JsonArray(plan.entries().size());
-        for (ItemRegistrationPlan.Entry entry : plan.entries()) {
+        for (ResolvedItemBinding entry : plan.entries()) {
             List<GeneratedItemVariant> variants = generatedItems.variants().getOrDefault(entry.bedrockId(), List.of());
             entries.add(entryToJson(entry, variants));
         }
@@ -52,17 +52,17 @@ public final class ItemRegistrationPlanWriter {
         return GsonHelper.sortObjectKeys(result).getAsJsonObject();
     }
 
-    private static JsonObject entryToJson(ItemRegistrationPlan.Entry entry, List<GeneratedItemVariant> variants) {
+    private static JsonObject entryToJson(ResolvedItemBinding entry, List<GeneratedItemVariant> variants) {
         JsonObject json = new JsonObject();
         json.addProperty(BEDROCK_IDENTIFIER, entry.bedrockId().asString());
-        json.addProperty(ITEM_TYPE, entry.javaItemType().asString());
+        json.addProperty(ITEM_TYPE, entry.clientItemType().asString());
         json.addProperty(ITEM_ID, entry.itemId().asString());
-        json.addProperty(MODEL, entry.definitionId().asString());
+        json.addProperty(MODEL, entry.itemModel().asString());
 
-        if (!entry.properties().components().isEmpty()) {
+        if (!entry.clientProperties().components().isEmpty()) {
             JsonObject components = new JsonObject();
             // 显式的 JSON null 表示移除原版组件。
-            entry.properties().components().forEach((key, value) -> components.add(key.asString(), value));
+            entry.clientProperties().components().forEach((key, value) -> components.add(key.asString(), value));
             json.add(COMPONENTS, components);
         }
 
@@ -75,7 +75,7 @@ public final class ItemRegistrationPlanWriter {
 
         JsonObject behavior = new JsonObject();
         behavior.add("use", GsonHelper.get().toJsonTree(entry.useBehavior()));
-        if (entry.placesBlock()) {
+        if (entry.clientBehavior().placesBlock()) {
             behavior.addProperty(PLACES_BLOCK, true);
         }
         json.add(CLIENT_BEHAVIOR, behavior);

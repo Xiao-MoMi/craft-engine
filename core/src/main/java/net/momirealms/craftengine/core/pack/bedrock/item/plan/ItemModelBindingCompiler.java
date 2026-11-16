@@ -17,30 +17,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class ItemBindingCompiler {
+public final class ItemModelBindingCompiler {
     private static final Key DEFAULT_HEAD_TEXTURE = Key.minecraft("entity/player/wide/steve");
 
-    private ItemBindingCompiler() {
+    private ItemModelBindingCompiler() {
     }
 
-    public static Map<Key, ItemDefinitionBinding> compile(JavaResourcePack pack) throws IOException {
-        Map<Key, ItemDefinitionBinding> bindings = new LinkedHashMap<>();
+    public static Map<Key, ItemModelDefinitionBinding> compile(JavaResourcePack pack) throws IOException {
+        Map<Key, ItemModelDefinitionBinding> bindings = new LinkedHashMap<>();
         for (Map.Entry<Key, JsonObject> entry : pack.itemDefinitions().entrySet()) {
             bindings.put(entry.getKey(), compile(entry.getKey(), entry.getValue()));
         }
         return bindings;
     }
 
-    public static ItemDefinitionBinding compile(Key definitionId, JsonObject json) throws IOException {
+    public static ItemModelDefinitionBinding compile(Key definitionId, JsonObject json) throws IOException {
         ModernItemModel definition;
         try {
             definition = ModernItemModel.fromJson(json);
-        } catch (IllegalArgumentException | IllegalStateException | NullPointerException exception) {
-            throw new IOException("Failed to parse item definition " + definitionId + " at " + ResourcePackUtils.itemDefinitionPath(definitionId) + ": " + exception.getMessage(), exception);
+        } catch (Throwable t) {
+            throw new IOException("Failed to parse item definition " + definitionId + " at " + ResourcePackUtils.itemDefinitionPath(definitionId) + ": " + t.getMessage(), t);
         }
         Builder builder = new Builder();
         builder.visit(definition.model(), "$.model");
-        return new ItemDefinitionBinding(
+        return new ItemModelDefinitionBinding(
                 definitionId,
                 definition.handAnimationOnSwap(),
                 definition.oversizedInGui(),

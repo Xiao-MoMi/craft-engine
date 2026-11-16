@@ -2,6 +2,8 @@ package net.momirealms.craftengine.bukkit.pack.bedrock.item;
 
 import net.momirealms.craftengine.bukkit.util.RegistryUtils;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.behavior.BlockItem;
+import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription.*;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorReader;
@@ -15,8 +17,8 @@ public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
     private static final int CROSSBOW_BASE_CHARGE_TICKS = 25;
 
     @Override
-    public ItemBehaviorDescription read(Item item) {
-        Object stack = item.minecraftItem();
+    public ItemBehaviorDescription read(Item serverItem, Item clientItem) {
+        Object stack = clientItem.minecraftItem();
         Object itemType = ItemStackProxy.INSTANCE.getItem(stack);
         UseAnimation animation = UseAnimation.fromNative(((Enum<?>) ItemStackProxy.INSTANCE.getUseAnimation(stack)).name(), VersionHelper.MINECRAFT_VERSION);
         Use use = new Use(animation,
@@ -36,7 +38,13 @@ public final class BukkitItemBehaviorReader implements ItemBehaviorReader {
             attack = Swing.LEGACY;
             interact = attack;
         }
-        return new ItemBehaviorDescription(use, attack, interact);
+        ItemBehavior itemBehavior = serverItem.getBehavior().orElse(null);
+        return new ItemBehaviorDescription(
+                use,
+                attack,
+                interact,
+                itemBehavior != null && itemBehavior.getFirst(BlockItem.class) != null
+        );
     }
 
     private int maximumDuration(Object stack, Object itemType) {

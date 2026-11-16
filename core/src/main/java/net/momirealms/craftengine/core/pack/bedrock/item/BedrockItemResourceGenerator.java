@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockDefaultItemHandler;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -27,7 +28,7 @@ public final class BedrockItemResourceGenerator {
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root);
 
         Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
-        for (ItemRegistrationPlan.Entry entry : plan.entries()) {
+        for (ResolvedItemBinding entry : plan.entries()) {
             items.put(entry.bedrockId(), writeItem(entry, context, defaultHandler));
         }
 
@@ -35,13 +36,13 @@ public final class BedrockItemResourceGenerator {
         return new Result(items, context.elytraEquipment().variants());
     }
 
-    private static List<GeneratedItemVariant> writeItem(ItemRegistrationPlan.Entry entry,
+    private static List<GeneratedItemVariant> writeItem(ResolvedItemBinding entry,
                                                         BedrockItemGenerationContext context,
                                                         BedrockDefaultItemHandler defaultHandler) throws IOException {
         try {
             return defaultHandler.write(entry, context);
         } catch (IOException | RuntimeException exception) {
-            throw new IOException("Failed to generate item resources for " + entry.definitionId() + " at " + ResourcePackUtils.itemDefinitionPath(entry.definitionId()) + ": " + exception.getMessage(), exception);
+            throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + exception.getMessage(), exception);
         }
     }
 

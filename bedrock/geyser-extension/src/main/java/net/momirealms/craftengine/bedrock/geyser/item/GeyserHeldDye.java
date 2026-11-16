@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket;

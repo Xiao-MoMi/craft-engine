@@ -17,8 +17,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisp
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
-import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ZipUtils;

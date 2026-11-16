@@ -3,7 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.IOException;
@@ -15,7 +15,7 @@ final class BedrockTridentBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) throws IOException {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) throws IOException {
         if (entry.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.TRIDENT) {
             return super.pose(entry);
         }

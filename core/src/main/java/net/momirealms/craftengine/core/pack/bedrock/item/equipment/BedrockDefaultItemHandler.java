@@ -5,8 +5,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationCo
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockDyedItem;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
@@ -32,7 +32,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     }
 
     @Override
-    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
         List<GeneratedItemVariant> contextual = this.equipmentItems.write(entry, context);
         if (contextual != null) {
             return contextual;
@@ -40,9 +40,10 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
         List<ItemBindingRule> rules = entry.definition().rules();
         ItemRenderType type = ItemRenderType.classify(entry.definition(), this.renderer);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(rules.size());
+        Key bedrockId = entry.bedrockId();
         for (int i = 0; i < rules.size(); i++) {
             ItemBindingRule rule = rules.get(i);
-            Key id = rules.size() == 1 ? entry.bedrockId() : Key.of(entry.bedrockId().namespace(), entry.bedrockId().value() + "_variant_" + i);
+            Key id = rules.size() == 1 ? bedrockId : Key.of(bedrockId.namespace(), bedrockId.value() + "_variant_" + i);
             try {
                 variants.add(this.writeVariant(entry, context, id, rule, type));
             } catch (UnsupportedOperationException exception) {
@@ -54,7 +55,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
     }
 
     @SuppressWarnings("DeconstructionCanBeUsed")
-    private GeneratedItemVariant writeVariant(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context, Key id,
+    private GeneratedItemVariant writeVariant(ResolvedItemBinding entry, BedrockItemGenerationContext context, Key id,
                                                ItemBindingRule rule, ItemRenderType type) throws IOException {
         List<ItemBindingRule> parts;
         if (rule.target() instanceof ItemRenderTarget.Model) {
@@ -101,7 +102,7 @@ public final class BedrockDefaultItemHandler implements BedrockItemHandler {
         }
     }
 
-    private GeneratedItemVariant writeDisplayBlock(ItemRegistrationPlan.Entry entry,
+    private GeneratedItemVariant writeDisplayBlock(ResolvedItemBinding entry,
                                                    BedrockItemGenerationContext context,
                                                    Key id,
                                                    ItemBindingRule rule,

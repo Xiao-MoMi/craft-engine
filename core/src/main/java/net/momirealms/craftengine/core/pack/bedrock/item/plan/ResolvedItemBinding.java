@@ -7,8 +7,20 @@ public record ResolvedItemBinding(Key itemId,
                                   Key serverItemType,
                                   Key clientItemType,
                                   @Nullable Key itemModel,
-                                  @Nullable ItemDefinitionBinding definition,
+                                  @Nullable ItemModelDefinitionBinding definition,
                                   ItemBehaviorDescription clientBehavior,
-                                  ItemRegistrationProperties clientProperties,
-                                  boolean placesBlock) {
+                                  ItemRegistrationProperties clientProperties) {
+
+    public Key bedrockId() {
+        return Key.ce(this.itemId.namespace() + '/' + this.itemId.value());
+    }
+
+    public ItemBehaviorDescription.Use useBehavior() {
+        return this.clientBehavior.use();
+    }
+
+    @Nullable
+    public ItemBehaviorDescription.Ticks chargeDuration() {
+        return this.useBehavior().chargeDuration();
+    }
 }

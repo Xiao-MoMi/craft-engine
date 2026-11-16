@@ -9,8 +9,8 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
-import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
+import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.util.Identifier;

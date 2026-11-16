@@ -8,7 +8,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayer
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.util.Key;
@@ -20,8 +20,8 @@ import java.util.List;
 class BedrockEquipmentBehavior {
     static final BedrockEquipmentBehavior DEFAULT = new BedrockEquipmentBehavior();
 
-    static List<? extends BedrockEquipmentBehavior> forItem(ItemRegistrationPlan.Entry entry, boolean hasViewModels) {
-        Key type = entry.javaItemType();
+    static List<? extends BedrockEquipmentBehavior> forItem(ResolvedItemBinding entry, boolean hasViewModels) {
+        Key type = entry.clientItemType();
         if (type.equals(ItemKeys.CROSSBOW) && entry.chargeDuration() != null && entry.chargeDuration().value() > 0) {
             return BedrockCrossbowBehavior.STATES;
         }
@@ -72,11 +72,11 @@ class BedrockEquipmentBehavior {
         return null;
     }
 
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) throws IOException {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) throws IOException {
         return BedrockEquipmentPose.withoutBones(useScripts(entry.useBehavior()));
     }
 
-    void registerHandModel(BedrockPlayerAnimations animations, Key id, ItemRegistrationPlan.Entry entry) {
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
     }
 
     static JsonArray useScripts(ItemBehaviorDescription.Use use) {

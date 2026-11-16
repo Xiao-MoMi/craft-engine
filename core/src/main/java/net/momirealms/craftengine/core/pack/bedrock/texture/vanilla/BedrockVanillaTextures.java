@@ -1,23 +1,17 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 
 import com.google.gson.JsonElement;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaTextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.util.ClientPngReader;
-import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.ImageUtils;
-import net.momirealms.craftengine.core.util.MinecraftVersion;
-import net.momirealms.craftengine.core.util.MiscUtils;
-import net.momirealms.craftengine.core.util.ResourcePackUtils;
+import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.AlphaComposite;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;

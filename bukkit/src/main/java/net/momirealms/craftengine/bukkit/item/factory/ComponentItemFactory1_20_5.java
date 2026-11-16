@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.momirealms.craftengine.bukkit.item.ComponentItemWrapper;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
 import net.momirealms.craftengine.bukkit.util.*;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.attribute.vanilla.VanillaAttributeModifier;
 import net.momirealms.craftengine.core.item.ItemType;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;

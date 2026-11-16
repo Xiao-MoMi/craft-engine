@@ -2,8 +2,6 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
-import net.momirealms.craftengine.core.item.behavior.BlockItem;
-import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -12,14 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public final class ItemBindingResolver {
-    private final Map<Key, ItemDefinitionBinding> definitions;
+    private final Map<Key, ItemModelDefinitionBinding> definitions;
     private final ItemBehaviorReader behaviorReader;
     private final ItemRegistrationReader registrationReader;
 
-    public ItemBindingResolver(Map<Key, ItemDefinitionBinding> definitions,
+    public ItemBindingResolver(Map<Key, ItemModelDefinitionBinding> definitions,
                                ItemBehaviorReader behaviorReader,
                                ItemRegistrationReader registrationReader) {
-        this.definitions = Map.copyOf(definitions);
+        this.definitions = definitions;
         this.behaviorReader = behaviorReader;
         this.registrationReader = registrationReader;
     }
@@ -33,14 +31,13 @@ public final class ItemBindingResolver {
         Key itemModel = VersionHelper.isOrAbove1_21_2
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
-        ItemDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
-        ItemBehaviorDescription behavior = this.behaviorReader.read(clientItem);
+        ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
+        ItemBehaviorDescription behavior = this.behaviorReader.read(serverItem, clientItem);
         ItemRegistrationProperties properties = this.registrationReader.read(clientItem, behavior);
         Key headTexture = properties.headTexture();
         if (definition != null && headTexture != null) {
             definition = definition.withHeadSkin(headTexture);
         }
-        ItemBehavior itemBehavior = serverItem.getBehavior().orElse(null);
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),
@@ -48,8 +45,7 @@ public final class ItemBindingResolver {
                 itemModel,
                 definition,
                 behavior,
-                properties,
-                itemBehavior != null && itemBehavior.getFirst(BlockItem.class) != null
+                properties
         );
     }
 }

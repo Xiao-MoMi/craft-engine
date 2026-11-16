@@ -3,8 +3,8 @@ package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 
-record BedrockItemPresentation(ItemRegistrationPlan.Entry item,
+record BedrockItemPresentation(ResolvedItemBinding item,
                                Key id,
                                ItemBindingRule registration,
                                DisplayContextVariants.Variant variant,
@@ -21,7 +21,7 @@ record BedrockItemPresentation(ItemRegistrationPlan.Entry item,
                                boolean explicitViews,
                                boolean worldAliases) {
     @Nullable
-    static List<BedrockItemPresentation> plan(ItemRegistrationPlan.Entry item) {
+    static List<BedrockItemPresentation> plan(ResolvedItemBinding item) {
         boolean explicitViews = DisplayContextVariants.usesDisplayContext(item);
         boolean worldAliases = explicitViews || item.definition().hasPlayerHead();
         List<? extends BedrockEquipmentBehavior> behaviors = BedrockEquipmentBehavior.forItem(item, worldAliases);

@@ -1,7 +1,5 @@
 package net.momirealms.craftengine.core.util;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.UnaryOperator;

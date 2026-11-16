@@ -17,7 +17,7 @@ final class DisplayContextVariants {
     private DisplayContextVariants() {
     }
 
-    static boolean usesDisplayContext(ItemRegistrationPlan.Entry entry) {
+    static boolean usesDisplayContext(ResolvedItemBinding entry) {
         for (ItemBindingRule rule : entry.definition().rules()) {
             if (rule.hasCondition(DisplayContextVariants::isDisplayCondition)) {
                 return true;
@@ -30,7 +30,7 @@ final class DisplayContextVariants {
      * 将 Java 模型规则按物品栈条件划分为基岩物品变体。每个变体保存各显示位置可用的模型规则。
      * 例如，只有手持模型随耐久变化时，会按耐久划分变体，但这些变体仍共用同一个背包模型。
      */
-    static List<Variant> collect(ItemRegistrationPlan.Entry entry, BedrockEquipmentBehavior equipment, boolean explicitViews) {
+    static List<Variant> collect(ResolvedItemBinding entry, BedrockEquipmentBehavior equipment, boolean explicitViews) {
         List<PreparedRule> rules = prepareRules(entry.definition().rules(), equipment);
         Map<ViewBranches, List<ItemDisplayContext>> contextsByBranches = new LinkedHashMap<>();
         if (!explicitViews) {
@@ -79,7 +79,7 @@ final class DisplayContextVariants {
         return prepared;
     }
 
-    private static ViewBranches branchesForView(ItemRegistrationPlan.Entry entry, List<PreparedRule> rules, ItemDisplayContext context) {
+    private static ViewBranches branchesForView(ResolvedItemBinding entry, List<PreparedRule> rules, ItemDisplayContext context) {
         Map<List<ItemBindingCondition>, List<ItemBindingRule>> branches = new LinkedHashMap<>();
         String viewName = context.serializedName();
         JsonPrimitive view = new JsonPrimitive(viewName);

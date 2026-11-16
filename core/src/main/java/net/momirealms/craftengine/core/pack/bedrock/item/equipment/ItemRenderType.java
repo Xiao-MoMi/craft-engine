@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
 
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemDefinitionBinding;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemModelDefinitionBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 
@@ -11,7 +11,7 @@ import java.util.List;
 enum ItemRenderType {
     ITEM, BLOCK, UNKNOWN;
 
-    static ItemRenderType classify(ItemDefinitionBinding definition, BedrockItemIconRenderer renderer) throws IOException {
+    static ItemRenderType classify(ItemModelDefinitionBinding definition, BedrockItemIconRenderer renderer) throws IOException {
         return classify(definition.rules(), renderer);
     }
 

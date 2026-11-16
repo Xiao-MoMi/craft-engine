@@ -8,10 +8,7 @@ import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockItemAttachables;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.*;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -57,7 +54,7 @@ public final class BedrockItemDisplays {
         JsonArray appearances = new JsonArray();
         appearances.add(new JsonArray());
         JsonObject items = new JsonObject();
-        for (ItemRegistrationPlan.Entry entry : plan.entries()) {
+        for (ResolvedItemBinding entry : plan.entries()) {
             for (GeneratedItemVariant variant : generated.variants().getOrDefault(entry.bedrockId(), List.of())) {
                 if (!variant.generated() || variant.worldView() != null) {
                     continue;
@@ -351,7 +348,7 @@ public final class BedrockItemDisplays {
     }
 
     @Nullable
-    private static ItemBindingRule select(ItemRegistrationPlan.Entry entry, GeneratedItemVariant variant, ItemDisplayContext context) {
+    private static ItemBindingRule select(ResolvedItemBinding entry, GeneratedItemVariant variant, ItemDisplayContext context) {
         if (!variant.displayModels().isEmpty()) {
             return variant.displayModels().get(context);
         }

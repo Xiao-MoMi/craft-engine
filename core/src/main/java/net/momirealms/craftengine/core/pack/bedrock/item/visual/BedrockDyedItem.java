@@ -7,8 +7,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables;
 import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockWeaponGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
@@ -37,7 +37,7 @@ public final class BedrockDyedItem {
     }
 
     @Nullable
-    public static GeneratedItemVariant write(ItemRegistrationPlan.Entry entry,
+    public static GeneratedItemVariant write(ResolvedItemBinding entry,
                                              Key id,
                                              ItemBindingRule rule,
                                              ItemRenderTarget.Model target,
@@ -78,7 +78,7 @@ public final class BedrockDyedItem {
         scripts.add("variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + handColor(OFF_HAND_DYE) + ") : (" + handColor(MAIN_HAND_DYE) + ");");
         Bedrock3DItemAttachables.Stage stage = new Bedrock3DItemAttachables.Stage(model, cubes, "1");
         Bedrock3DItemAttachables.write(id, List.of(stage), geometry.materials(), scripts, new JsonArray(), new JsonObject(), new JsonArray(), context.root());
-        BedrockItemBlocks.DisplayBlock block = entry.placesBlock() ? context.itemDisplayBlocks().write(id, List.of(rule), models, textures, context.root()) : null;
+        BedrockItemBlocks.DisplayBlock block = entry.clientBehavior().placesBlock() ? context.itemDisplayBlocks().write(id, List.of(rule), models, textures, context.root()) : null;
         return new GeneratedItemVariant(id, rule, texture, block, true, defaultColor, null);
     }
 

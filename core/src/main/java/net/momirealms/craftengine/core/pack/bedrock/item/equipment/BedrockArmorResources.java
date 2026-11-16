@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -33,17 +33,17 @@ final class BedrockArmorResources {
         this.resources = resources;
     }
 
-    static boolean hasAsset(ItemRegistrationPlan.Entry entry) {
-        JsonElement value = entry.properties().components().get(DataComponentKeys.EQUIPPABLE);
+    static boolean hasAsset(ResolvedItemBinding entry) {
+        JsonElement value = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
         return value != null && value.isJsonObject() && value.getAsJsonObject().has("asset_id");
     }
 
     @Nullable
-    Appearance resolve(ItemRegistrationPlan.Entry entry, Path root) {
+    Appearance resolve(ResolvedItemBinding entry, Path root) {
         if (!hasAsset(entry)) {
             return null;
         }
-        JsonObject equipment = entry.properties().components().get(DataComponentKeys.EQUIPPABLE).getAsJsonObject();
+        JsonObject equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE).getAsJsonObject();
         try {
             String equipmentSlot = equipment.get("slot").getAsString();
             Key asset = Key.of(equipment.get("asset_id").getAsString());
@@ -59,7 +59,7 @@ final class BedrockArmorResources {
             if (layers == null) {
                 return null;
             }
-            Integer dye = dye(entry.properties().components().get(DataComponentKeys.DYED_COLOR));
+            Integer dye = dye(entry.clientProperties().components().get(DataComponentKeys.DYED_COLOR));
             List<Layer> appearances = new ArrayList<>();
             for (Slot slot : Slot.values()) {
                 if (!slot.equipmentSlot.equals(equipmentSlot) || !layers.has(slot.layer)) {

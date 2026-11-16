@@ -6,8 +6,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
@@ -91,16 +91,16 @@ final class BedrockCrossbowBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
         return Bedrock3DCrossbowAttachables.pose(BedrockCrossbowStates.useScripts(this.charged, entry.useBehavior()), entry.useBehavior(), this.charged);
     }
 
     @Override
-    void registerHandModel(BedrockPlayerAnimations animations, Key id, ItemRegistrationPlan.Entry entry) {
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
         animations.register3DCrossbow(id, this.charged, entry.chargeDuration().value());
     }
 
-    private static GeneratedItemVariant writeFlat(ItemRegistrationPlan.Entry entry, BedrockCrossbowStates.State state,
+    private static GeneratedItemVariant writeFlat(ResolvedItemBinding entry, BedrockCrossbowStates.State state,
                                                   JavaModelResolver models, BedrockItemIconRenderer renderer, BedrockItemGenerationContext context) throws IOException {
         List<BedrockItemAttachables.Stage> stages = new ArrayList<>(state.rules().size());
         for (int i = 0; i < state.rules().size(); i++) {
@@ -124,7 +124,7 @@ final class BedrockCrossbowBehavior extends BedrockEquipmentBehavior {
         return GeneratedItemVariant.icon(state.id(), state.registration(), stages.get(state.idle()).texture(), true);
     }
 
-    private static GeneratedItemVariant write3D(ItemRegistrationPlan.Entry entry, BedrockCrossbowStates.State state,
+    private static GeneratedItemVariant write3D(ResolvedItemBinding entry, BedrockCrossbowStates.State state,
                                                 JavaModelResources resources, BedrockItemGenerationContext context) throws IOException {
         BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(resources.models(), resources.textures());
         List<Bedrock3DItemAttachables.Stage> stages = new ArrayList<>(state.rules().size());

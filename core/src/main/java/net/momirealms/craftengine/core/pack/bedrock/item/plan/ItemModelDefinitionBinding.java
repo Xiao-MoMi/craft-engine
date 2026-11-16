@@ -5,13 +5,13 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.ArrayList;
 import java.util.List;
 
-public record ItemDefinitionBinding(Key definitionId,
-                                    boolean handAnimationOnSwap,
-                                    boolean oversizedInGui,
-                                    float swapAnimationScale,
-                                    List<ItemBindingRule> rules /* 全部变体分支 */) {
+public record ItemModelDefinitionBinding(Key definitionId,
+                                         boolean handAnimationOnSwap,
+                                         boolean oversizedInGui,
+                                         float swapAnimationScale,
+                                         List<ItemBindingRule> rules /* 全部变体分支 */) {
 
-    public ItemDefinitionBinding {
+    public ItemModelDefinitionBinding {
         rules = List.copyOf(rules);
     }
 
@@ -24,9 +24,9 @@ public record ItemDefinitionBinding(Key definitionId,
         return false;
     }
 
-    ItemDefinitionBinding withHeadSkin(Key skin) {
+    ItemModelDefinitionBinding withHeadSkin(Key skin) {
         List<ItemBindingRule> updated = bindHeadSkin(this.rules, skin);
-        return updated == this.rules ? this : new ItemDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, updated);
+        return updated == this.rules ? this : new ItemModelDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, updated);
     }
 
     @SuppressWarnings("DeconstructionCanBeUsed")

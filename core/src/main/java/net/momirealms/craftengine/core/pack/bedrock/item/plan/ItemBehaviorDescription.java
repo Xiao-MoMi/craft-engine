@@ -5,7 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 public record ItemBehaviorDescription(Use use,
                                       Swing attack,
-                                      Swing interact) {
+                                      Swing interact,
+                                      boolean placesBlock) {
 
     public enum UseAnimation {
         NONE,

@@ -5,8 +5,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationCo
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
@@ -44,12 +44,12 @@ final class BedrockBowBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
         return Bedrock3DBowAttachables.bowPose(useScripts(entry.useBehavior()));
     }
 
     @Override
-    void registerHandModel(BedrockPlayerAnimations animations, Key id, ItemRegistrationPlan.Entry entry) {
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
         animations.registerBowUsingJavaPose(id);
     }
 

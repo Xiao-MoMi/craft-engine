@@ -8,8 +8,8 @@ import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -53,7 +53,7 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
     }
 
     @Override
-    public List<GeneratedItemVariant> write(ItemRegistrationPlan.Entry entry, BedrockItemGenerationContext context) throws IOException {
+    public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
         List<BedrockItemPresentation> plans = BedrockItemPresentation.plan(entry);
         if (plans == null) {
             return null;
@@ -82,8 +82,8 @@ final class BedrockDisplayContextItems implements BedrockItemHandler {
         return output;
     }
 
-    private static boolean isHeadEquipment(ItemRegistrationPlan.Entry entry) {
-        JsonElement equipment = entry.properties().components().get(DataComponentKeys.EQUIPPABLE);
+    private static boolean isHeadEquipment(ResolvedItemBinding entry) {
+        JsonElement equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
         return equipment != null && equipment.isJsonObject() && "head".equals(equipment.getAsJsonObject().get("slot").getAsString());
     }
 

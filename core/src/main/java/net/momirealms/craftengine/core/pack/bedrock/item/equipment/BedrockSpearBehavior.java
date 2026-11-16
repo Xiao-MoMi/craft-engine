@@ -10,8 +10,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
@@ -83,7 +83,7 @@ final class BedrockSpearBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) throws IOException {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) throws IOException {
         JsonArray bones = new JsonArray();
         String parent = "ce_slot";
         // Java 第三人称先应用突刺，再应用使用姿态；两组独立骨骼允许动作同时存在。
@@ -111,14 +111,14 @@ final class BedrockSpearBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    void registerHandModel(BedrockPlayerAnimations animations, Key id, ItemRegistrationPlan.Entry entry) {
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
         animations.registerSpearUsingJavaPose(id, poseScripts(entry));
     }
 
-    private static List<String> poseScripts(ItemRegistrationPlan.Entry entry) {
+    private static List<String> poseScripts(ResolvedItemBinding entry) {
         List<String> scripts = new ArrayList<>(7);
         ItemBehaviorDescription behavior = entry.clientBehavior();
-        JsonElement component = entry.properties().components().get(DataComponentKeys.KINETIC_WEAPON);
+        JsonElement component = entry.clientProperties().components().get(DataComponentKeys.KINETIC_WEAPON);
         JsonObject kinetic = component == null || component.isJsonNull() ? null : component.getAsJsonObject();
         scripts.add("variable.ce_spear_delay = " + (kinetic == null || !kinetic.has("delay_ticks") ? 0 : kinetic.get("delay_ticks").getAsInt()) + ";");
         for (String phase : List.of("dismount", "knockback", "damage")) {

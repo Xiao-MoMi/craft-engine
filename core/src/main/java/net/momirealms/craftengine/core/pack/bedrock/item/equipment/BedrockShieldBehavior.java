@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -32,7 +32,7 @@ final class BedrockShieldBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    BedrockEquipmentPose pose(ItemRegistrationPlan.Entry entry) {
+    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
         JsonArray scripts = new JsonArray();
         // Geyser 用 EMERGING 区分是哪只手在格挡。
         scripts.add("variable.ce_using_item = query.blocking && ((context.item_slot == 'main_hand' && !query.is_emerging) || (context.item_slot == 'off_hand' && query.is_emerging));");
@@ -40,7 +40,7 @@ final class BedrockShieldBehavior extends BedrockEquipmentBehavior {
     }
 
     @Override
-    void registerHandModel(BedrockPlayerAnimations animations, Key id, ItemRegistrationPlan.Entry entry) {
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
         animations.registerShieldUsingJavaPose(id);
     }
 }
