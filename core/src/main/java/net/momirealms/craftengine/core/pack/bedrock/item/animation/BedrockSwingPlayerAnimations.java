@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockItemAttachables;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemAttachables;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import org.joml.Matrix4f;

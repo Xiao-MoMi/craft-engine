@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CrossBowPullingRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.*;
@@ -24,8 +25,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
-
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 
 public final class BedrockItemAttachables {
     private static final float RADIANS = (float) (Math.PI / 180);
@@ -42,7 +41,7 @@ public final class BedrockItemAttachables {
     }
 
     public static void write(Key id, JavaModel model, BufferedImage image, String texture, Path root) throws IOException {
-        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
+        BedrockItemAttachableBuilder attachment = new BedrockItemAttachableBuilder(id);
         String geometryId = "geometry." + attachment.prefix;
         JsonArray cubes = new JsonArray();
         BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, 0, image.getWidth(), image.getHeight());
@@ -53,7 +52,7 @@ public final class BedrockItemAttachables {
     }
 
     public static void writeBow(Key id, List<Stage> stages, int idleStage, int maximumUseTicks, Path root) throws IOException {
-        BedrockItemAttachment attachment = new BedrockItemAttachment(id);
+        BedrockItemAttachableBuilder attachment = new BedrockItemAttachableBuilder(id);
         JsonArray geometryFrames = new JsonArray();
         JsonArray textureFrames = new JsonArray();
         int pullingStages = 0;
@@ -75,9 +74,7 @@ public final class BedrockItemAttachables {
             textureFrames.add("Texture." + alias);
         }
         bowAnimations(id, attachment.animations, attachment.animationNames, attachment.animate);
-        String controller = "controller.render." + attachment.prefix;
-        writeController(controller, geometryFrames, textureFrames, attachment.controllerPath(root));
-        attachment.controllers.add(GsonHelper.createObject(controller, new JsonPrimitive("(" + BedrockItemAttachment.IN_HAND + ") && variable.ce_stage >= 0")));
+        attachment.writeStageController(root, geometryFrames, textureFrames);
         attachment.write(root, bowScripts(stageSelection(stages, Stage::condition), maximumUseTicks));
     }
 
@@ -97,14 +94,18 @@ public final class BedrockItemAttachables {
         return script.append(';').toString();
     }
 
+    public static Matrix4f firstPersonSlotMatrix() {
+        SlotPose pose = SlotPose.firstPerson(false);
+        // 原生骨骼坐标反转 Y；slot 的 pivot 相对绑定骨骼低 16 个模型单位。
+        return new Matrix4f().translation(pose.translation.x, 16 - pose.translation.y, pose.translation.z)
+                .rotateZYX(pose.rotation.z * RADIANS, pose.rotation.y * RADIANS, pose.rotation.x * RADIANS)
+                .scale(pose.scale);
+    }
+
     static JsonArray bowScripts(String stageSelection, int maximumUseTicks) {
-        JsonArray preAnimation = new JsonArray();
-        // 原版弓使用主手 tick 查询；通用 item_in_use_duration 在部分客户端的单位与文档不一致。
-        preAnimation.add("variable.ce_using_item = context.item_slot == 'main_hand' && query.is_using_item && query.main_hand_item_use_duration > 0;");
-        preAnimation.add("variable.ce_use_ticks = variable.ce_using_item ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration) : 0;");
-        preAnimation.add("variable.ce_charge_amount = variable.ce_using_item ? math.clamp((variable.ce_use_ticks + query.frame_alpha - 1) / 10, 0, 1) : 0;");
-        // Geyser 的最大使用时长可能不同于 Java；remaining 必须按来源物品计算。
-        preAnimation.add("variable.ce_remaining_ticks = variable.ce_using_item ? math.max(0, " + maximumUseTicks + " - variable.ce_use_ticks) : 0;");
+        JsonArray preAnimation = BedrockItemRenderStrategy.useScripts(maximumUseTicks, true);
+        // 保留原有输出顺序：using、ticks、charge、remaining、stage。
+        preAnimation.asList().add(2, new JsonPrimitive(BedrockItemRenderStrategy.CHARGE_AMOUNT_SCRIPT));
         preAnimation.add(stageSelection);
         return preAnimation;
     }
@@ -127,15 +128,27 @@ public final class BedrockItemAttachables {
         return true;
     }
 
-    @SuppressWarnings("DeconstructionCanBeUsed")
     static String useCondition(ItemBindingRule rule) {
+        return useCondition(rule, false);
+    }
+
+    @SuppressWarnings("DeconstructionCanBeUsed")
+    static String useCondition(ItemBindingRule rule, boolean includeCrossbowPull) {
         StringBuilder expression = new StringBuilder("1");
         for (ItemBindingCondition condition : rule.conditions()) {
             if (condition instanceof ItemBindingCondition.BooleanMatch match && match.property() instanceof UsingItemConditionProperty) {
                 expression.append(match.expected() ? " && variable.ce_using_item" : " && !variable.ce_using_item");
-            } else if (condition instanceof ItemBindingCondition.NumericRange range && range.property() instanceof UseDurationRangeDispatchProperty duration) {
-                String ticks = duration.remaining() ? "variable.ce_remaining_ticks" : "variable.ce_use_ticks";
-                String value = "(" + ticks + " * " + range.scale() + ")";
+            } else if (condition instanceof ItemBindingCondition.NumericRange range) {
+                String variable;
+                if (range.property() instanceof UseDurationRangeDispatchProperty duration) {
+                    variable = duration.remaining() ? "variable.ce_remaining_ticks" : "variable.ce_use_ticks";
+                } else if (includeCrossbowPull && range.property() instanceof CrossBowPullingRangeDispatchProperty) {
+                    variable = "variable.ce_pull";
+                } else {
+                    continue;
+                }
+                // 各使用属性只负责选变量，缩放和左闭右开的区间比较共用一套生成逻辑。
+                String value = "(" + variable + " * " + range.scale() + ")";
                 if (range.minInclusive() != null) {
                     expression.append(" && ").append(value).append(" >= ").append(range.minInclusive());
                 }
@@ -160,7 +173,7 @@ public final class BedrockItemAttachables {
         addRenderBindings(controller, "array.stage_geometries[variable.ce_stage]", "array.stage_textures[variable.ce_stage]");
         JsonObject definitions = new JsonObject();
         definitions.add(id, controller);
-        writeControllers(definitions, path);
+        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", definitions, path);
     }
 
     private static void addRenderBindings(JsonObject controller, String geometry, String texture) {
@@ -174,13 +187,6 @@ public final class BedrockItemAttachables {
         textures.add(texture);
         textures.add("Texture.enchanted");
         controller.add("textures", textures);
-    }
-
-    private static void writeControllers(JsonObject definitions, Path path) throws IOException {
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.10.0");
-        file.add("render_controllers", definitions);
-        BedrockItemAttachment.writeJson(file, path);
     }
 
     static void displayAnimations(JavaModel model, String prefix, int stage, JsonObject animations, JsonObject names, JsonArray animate) {
@@ -300,9 +306,6 @@ public final class BedrockItemAttachables {
         return geometry;
     }
 
-    public record Stage(JavaModel model, BufferedImage image, String texture, String condition, Matrix4fc transformation) {
-    }
-
     static Matrix4f bowPose(float x, float z) {
         return new Matrix4f().translation(x, 1, z).rotateZYX(90 * RADIANS, -135 * RADIANS, 0).translate(-6, 0, -6);
     }
@@ -388,12 +391,7 @@ public final class BedrockItemAttachables {
         return animation;
     }
 
-    public static Matrix4f firstPersonSlotMatrix() {
-        SlotPose pose = SlotPose.firstPerson(false);
-        // 原生骨骼坐标反转 Y；slot 的 pivot 相对绑定骨骼低 16 个模型单位。
-        return new Matrix4f().translation(pose.translation.x, 16 - pose.translation.y, pose.translation.z)
-                .rotateZYX(pose.rotation.z * RADIANS, pose.rotation.y * RADIANS, pose.rotation.x * RADIANS)
-                .scale(pose.scale);
+    public record Stage(JavaModel model, BufferedImage image, String texture, String condition, Matrix4fc transformation) {
     }
 
     private record SlotPose(Vector3f rotation, Vector3f translation, float scale) {

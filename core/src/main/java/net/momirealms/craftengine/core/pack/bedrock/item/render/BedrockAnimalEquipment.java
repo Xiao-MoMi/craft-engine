@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -54,7 +54,10 @@ public final class BedrockAnimalEquipment {
             description.getAsJsonObject("textures").addProperty(alias, entry.getValue());
             textures.add("Texture." + alias);
             selection.append("query.is_item_name_any('slot.armor.body', 0, '")
-                    .append(entry.getKey().asString()).append("') ? ").append(index).append(" : ");
+                    .append(entry.getKey().asString())
+                    .append("') ? ")
+                    .append(index)
+                    .append(" : ");
         }
         selection.append("0;");
         description.getAsJsonObject("scripts").getAsJsonArray("pre_animation").add(selection.toString());

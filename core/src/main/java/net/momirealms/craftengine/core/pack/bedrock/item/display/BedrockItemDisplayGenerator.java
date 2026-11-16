@@ -33,11 +33,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
-public final class BedrockItemDisplays {
+public final class BedrockItemDisplayGenerator {
     private static final Key TRIDENT_ICON = Key.minecraft("item/trident");
     private static final Transformation SPECIAL_MODEL_FLIP = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, -1, -1), new Quaternionf());
 
-    private BedrockItemDisplays() {
+    private BedrockItemDisplayGenerator() {
     }
 
     public static JsonObject write(JavaModelResources resources,
@@ -67,7 +67,8 @@ public final class BedrockItemDisplays {
                         // 每种展示上下文先选 Java 分支，再应用该模型的 display；NONE 使用恒等变换。
                         try {
                             List<Part> parts = parts(resources, rule, context);
-                            if (!parts.isEmpty()) {
+                            if (!parts.isEmpty() || rule.target() == ItemRenderTarget.Builtin.EMPTY
+                                    || (rule.target() instanceof ItemRenderTarget.Composite composite && composite.parts().isEmpty())) {
                                 Integer existing = indices.get(parts);
                                 if (existing == null) {
                                     existing = appearance(assets, parts, meshes, appearances);
@@ -142,8 +143,7 @@ public final class BedrockItemDisplays {
         List<Transformation> transforms = new ArrayList<>();
         Key model = vanillaModel(node, context, transforms, resources.pack().version());
         Map<DisplayPosition, JavaModel.Transform> display = model == null ? Map.of() : resources.models().resolveVanillaDisplay(model);
-        JavaModel.Transform transform = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY
-                : display.getOrDefault(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)), JavaModel.Transform.IDENTITY);
+        JavaModel.Transform transform = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY : display.getOrDefault(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)), JavaModel.Transform.IDENTITY);
         boolean mirrored = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         int side = mirrored ? -1 : 1;
         JsonArray pose = new JsonArray();
@@ -307,6 +307,12 @@ public final class BedrockItemDisplays {
     }
 
     private static int appearance(BedrockDisplayAssets assets, List<Part> parts, Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
+        if (parts.isEmpty()) {
+            JsonArray pose = new JsonArray();
+            pose.add(assets.add(parts));
+            appearances.add(pose);
+            return appearances.size() - 1;
+        }
         Part first = parts.getFirst();
         boolean sharedPose = true;
         for (int i = 1; i < parts.size(); i++) {

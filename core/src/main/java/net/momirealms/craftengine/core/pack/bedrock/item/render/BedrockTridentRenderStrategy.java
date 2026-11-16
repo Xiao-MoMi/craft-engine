@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -15,13 +15,13 @@ final class BedrockTridentRenderStrategy extends BedrockItemRenderStrategy {
     }
 
     @Override
-    BedrockEquipmentPose pose(ResolvedItemBinding entry) throws IOException {
+    BedrockAttachablePose pose(ResolvedItemBinding entry) throws IOException {
         if (entry.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.TRIDENT) {
             return super.pose(entry);
         }
         JsonObject source = GsonHelper.readJsonFromResource("/bedrock/item/trident/charge.pose.json").getAsJsonObject();
         JsonArray scripts = useScripts(entry.useBehavior());
         scripts.addAll(source.getAsJsonArray("pre_animation"));
-        return new BedrockEquipmentPose(scripts, source.getAsJsonArray("bones"), source.getAsJsonObject("animations"), source.getAsJsonArray("animate"), BedrockEquipmentPose.FIRST_PERSON_MAIN);
+        return new BedrockAttachablePose(scripts, source.getAsJsonArray("bones"), source.getAsJsonObject("animations"), source.getAsJsonArray("animate"), BedrockAttachablePose.FIRST_PERSON_MAIN);
     }
 }

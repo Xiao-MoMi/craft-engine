@@ -350,6 +350,8 @@ resource_pack.bedrock.reason.affine_transform: "模型变换需要具有正值�
 resource_pack.bedrock.reason.nonuniform_transform: "模型变换不支持非等比缩放和错切"
 resource_pack.bedrock.reason.head_texture: "玩家头颅贴图缺失或无效：<arg:0>"
 resource_pack.bedrock.item.variant_skipped: "已跳过模型 <arg:1> 在 <arg:2> 处的基岩版物品变体 <arg:0>：<arg:3>"
+resource_pack.bedrock.item.condition_fallback: "基岩版物品 <arg:0> 的 <arg:1> 场景无法求值条件 <arg:2>，已使用默认状态（布尔 false、选择 fallback、数值 0）。"
+resource_pack.bedrock.reason.tint_source: "尚不支持动态染色源 <arg:0>"
 resource_pack.bedrock.item.display_skipped: "已跳过物品 <arg:0> 在 <arg:1> 上下文中的基岩版展示模型：<arg:2>"
 resource_pack.bedrock.item.armor_skipped: "已跳过物品 <arg:0> 的基岩版盔甲，装备配置为 <arg:1>：<arg:2>"
 resource_pack.bedrock.sidebar.match: "Sidebar profile 必须配置 objective-id 或 title-contains。"

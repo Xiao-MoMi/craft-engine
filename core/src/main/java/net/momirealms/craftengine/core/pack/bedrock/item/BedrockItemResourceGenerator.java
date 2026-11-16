@@ -2,9 +2,9 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockItemWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemWriter;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
@@ -23,10 +23,10 @@ public final class BedrockItemResourceGenerator {
     private BedrockItemResourceGenerator() {
     }
 
-    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root, BedrockTerrainAtlas atlas) throws IOException {
+    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root, BedrockTerrainAtlas atlas, JsonObject blockDefinitions) throws IOException {
         BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(resources);
         BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
-        BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas);
+        BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas, blockDefinitions);
 
         Map<Key, List<GeneratedItemVariant>> items = new LinkedHashMap<>();
         for (ResolvedItemBinding entry : plan.entries()) {
@@ -43,9 +43,8 @@ public final class BedrockItemResourceGenerator {
 
     private static void writeSharedResources(BedrockItemGenerationContext context, Map<Key, List<GeneratedItemVariant>> items) throws IOException {
         Path root = context.root();
-        // 所有变体生成后，将图标及其染色遮罩的纹理路径汇总到 textures/item_texture.json。
+        // 所有变体生成后，将图标及其染色遮罩的纹理路径汇总到 textures/item_texture.json
         writeItemAtlas(root, items);
-        context.itemDisplayBlocks().finish(root);
         context.playerAnimations().write(root);
         context.animalEquipment().write(root);
         context.elytraEquipment().write(root);

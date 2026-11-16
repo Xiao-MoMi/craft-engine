@@ -1,18 +1,17 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockWeaponGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
-import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
+import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
@@ -24,62 +23,68 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.MAIN_HAND_DYE
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.OFF_HAND_DYE;
 
 public final class BedrockDyedItem {
+    private static final Key DYE = Key.minecraft("dye");
+
     private BedrockDyedItem() {
     }
 
-    private static boolean hasDyeTint(ItemRenderTarget.Model target, JavaPackTextureSource textures) {
-        for (Tint tint : target.tints()) {
-            if (textures.dyeColor(tint) != null) {
+    @SuppressWarnings("DeconstructionCanBeUsed")
+    public static boolean hasDye(List<ItemBindingRule> rules) {
+        for (ItemBindingRule rule : rules) {
+            if (rule.target() instanceof ItemRenderTarget.Model model) {
+                for (Tint tint : model.tints()) {
+                    if (tint instanceof SimpleDefaultTint source && source.type().equals(DYE)) {
+                        return true;
+                    }
+                }
+            } else if (rule.target() instanceof ItemRenderTarget.Composite composite && hasDye(composite.parts())) {
                 return true;
             }
         }
         return false;
     }
 
+    @SuppressWarnings("DeconstructionCanBeUsed")
     @Nullable
-    public static GeneratedItemVariant write(ResolvedItemBinding entry,
-                                             Key id,
-                                             ItemBindingRule rule,
-                                             ItemRenderTarget.Model target,
-                                             JavaModelResolver models,
-                                             JavaPackTextureSource textures,
-                                             BedrockItemGenerationContext context) throws IOException {
-        if (!hasDyeTint(target, textures)) {
-            return null;
-        }
-        JavaModel model = target.resolve(models);
-        if (model.kind() != JavaModel.GeometryKind.ELEMENTS) {
-            return null;
-        }
-        BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(models, textures);
-        JsonArray cubes = geometry.dyedGeometry(model, target);
-        Integer defaultColor = null;
-        for (Bedrock3DItemAttachables.Material material : geometry.materials()) {
-            if (material.data().animation() != null) {
-                return null;
-            }
-            if (material.dyeColor() != null) {
-                if (defaultColor != null && !defaultColor.equals(material.dyeColor())) {
-                    return null;
+    public static Integer defaultColor(List<ItemBindingRule> rules, JavaPackTextureSource textures) {
+        for (ItemBindingRule rule : rules) {
+            if (rule.target() instanceof ItemRenderTarget.Model model) {
+                for (Tint tint : model.tints()) {
+                    Integer color = textures.dyeColor(tint);
+                    if (color != null) {
+                        return color;
+                    }
                 }
-                defaultColor = material.dyeColor();
+            } else if (rule.target() instanceof ItemRenderTarget.Composite composite) {
+                Integer color = defaultColor(composite.parts(), textures);
+                if (color != null) {
+                    return color;
+                }
             }
         }
-        if (defaultColor == null) {
-            return null;
+        return null;
+    }
+
+    public static GeneratedItemVariant writeIcon(Key id,
+                                                 List<ItemBindingCondition> conditions,
+                                                 List<ItemBindingRule> parts,
+                                                 JavaModelResources resources,
+                                                 BedrockItemGenerationContext context,
+                                                 DisplayPosition view,
+                                                 int defaultColor) throws IOException {
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(resources.models(), resources.textures());
+        BedrockDyedItemIcon icon = new BedrockDyedItemIcon(Config.bedrockItemIconSize());
+        for (ItemBindingRule part : parts) {
+            BedrockItemGeometry geometry = mesh.build(part, true);
+            icon.render(geometry, mesh.materials(), view);
         }
         String texture = "textures/" + id.namespace() + '/' + id.value() + "/icon";
-        BedrockDyedItemIcon icon = new BedrockDyedItemIcon(Config.bedrockItemIconSize());
-        icon.render(model, target, textures);
         icon.write(context.root(), texture);
+        return new GeneratedItemVariant(id, conditions, texture, null, false, defaultColor);
+    }
 
-        JsonArray scripts = new JsonArray();
-        scripts.add("variable.ce_stage = 0;");
-        scripts.add("variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + handColor(OFF_HAND_DYE) + ") : (" + handColor(MAIN_HAND_DYE) + ");");
-        Bedrock3DItemAttachables.Stage stage = new Bedrock3DItemAttachables.Stage(model, cubes, "1");
-        Bedrock3DItemAttachables.write(id, List.of(stage), geometry.materials(), scripts, new JsonArray(), new JsonObject(), new JsonArray(), context.root());
-        BedrockItemBlocks.DisplayBlock block = entry.clientBehavior().placesBlock() ? context.itemDisplayBlocks().write(id, List.of(rule), models, textures, context.root()) : null;
-        return new GeneratedItemVariant(id, rule.conditions(), texture, block, true, defaultColor);
+    public static String colorScript() {
+        return "variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + handColor(OFF_HAND_DYE) + ") : (context.item_slot == 'main_hand' ? (" + handColor(MAIN_HAND_DYE) + ") : -1);";
     }
 
     private static String handColor(String property) {

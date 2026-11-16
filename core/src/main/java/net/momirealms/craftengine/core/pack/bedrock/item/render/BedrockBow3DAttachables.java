@@ -1,9 +1,9 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables.Material;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables.Stage;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItem3DAttachables.Stage;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
@@ -11,29 +11,29 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class Bedrock3DBowAttachables {
+public final class BedrockBow3DAttachables {
     private static final String USE_X = "ce_bow_use_x";
     private static final String USE_Y = "ce_bow_use_y";
     private static final String USE_Z = "ce_bow_use_z";
     private static final String CHARGE = "ce_bow_charge";
     private static final String AIM = "ce_bow_aim";
 
-    private Bedrock3DBowAttachables() {
+    private BedrockBow3DAttachables() {
     }
 
     public static void write(Key id, List<Stage> stages, List<Material> materials, int maximumUseTicks, Path root) throws IOException {
         JsonArray scripts = BedrockItemAttachables.bowScripts(BedrockItemAttachables.stageSelection(stages, Stage::condition), maximumUseTicks);
-        BedrockEquipmentPose pose = bowPose(scripts);
-        Bedrock3DItemAttachables.write(id, stages, materials, scripts, pose.bones(), pose.animations(), pose.animate(), root);
+        BedrockAttachablePose pose = bowPose(scripts);
+        BedrockItem3DAttachables.write(id, stages, materials, scripts, pose.bones(), pose.animations(), pose.animate(), root);
     }
 
-    static BedrockEquipmentPose bowPose(JsonArray preAnimation) {
+    static BedrockAttachablePose bowPose(JsonArray preAnimation) {
         JsonObject animations = new JsonObject();
         JsonArray animate = new JsonArray();
         JsonObject animatedBones = new JsonObject();
         addAnimatedBones(animatedBones);
         addUseAnimation(preAnimation, animations, animate, animatedBones);
-        return new BedrockEquipmentPose(preAnimation, poseBones(), animations, animate, BedrockEquipmentPose.FIRST_PERSON_MAIN);
+        return new BedrockAttachablePose(preAnimation, poseBones(), animations, animate, BedrockAttachablePose.FIRST_PERSON_MAIN);
     }
 
     private static JsonArray poseBones() {

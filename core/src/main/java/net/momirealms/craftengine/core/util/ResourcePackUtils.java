@@ -1,8 +1,27 @@
 package net.momirealms.craftengine.core.util;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public final class ResourcePackUtils {
 
     private ResourcePackUtils() {
+    }
+
+    public static void writeJson(JsonElement json, Path path) throws IOException {
+        Files.createDirectories(path.getParent());
+        GsonHelper.writeJsonFile(json, path);
+    }
+
+    public static void writeBedrockJson(String version, String key, JsonElement value, Path path) throws IOException {
+        JsonObject file = new JsonObject();
+        file.addProperty("format_version", version);
+        file.add(key, value);
+        writeJson(file, path);
     }
 
     public static String vanillaTexturePath(String texture) {

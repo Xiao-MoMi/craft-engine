@@ -1,6 +1,7 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
@@ -9,7 +10,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingConditi
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -78,22 +79,19 @@ final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
     @Override
     GeneratedItemVariant tryWriteSpecialized(BedrockItemPresentation plan, JavaModelResources resources, BedrockItemIconRenderer renderer,
                                      BedrockItemGenerationContext context) throws IOException {
-        if (plan.explicitViews()) {
-            return null;
-        }
-        List<ItemBindingRule> rules = plan.sharedRules();
+        List<ItemBindingRule> rules = plan.rulesByContext().get(ItemDisplayContext.GUI);
         int idle = plan.sharedModelIdleIndex();
         if (idle < 0) {
             return null;
         }
-        BedrockCrossbowStates.State state = new BedrockCrossbowStates.State(plan.id(), this.charged, rules, idle, plan.variant().conditions());
+        BedrockCrossbowStates.State state = new BedrockCrossbowStates.State(plan.id(), this.charged, rules, idle, plan.conditions());
         GeneratedItemVariant flat = writeFlat(plan.item(), state, resources.models(), renderer, context);
         return flat != null ? flat : write3D(plan.item(), state, resources, context);
     }
 
     @Override
-    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
-        return Bedrock3DCrossbowAttachables.pose(BedrockCrossbowStates.useScripts(this.charged, entry.useBehavior()), entry.useBehavior(), this.charged);
+    BedrockAttachablePose pose(ResolvedItemBinding entry) {
+        return BedrockCrossbow3DAttachables.pose(BedrockCrossbowStates.useScripts(this.charged, entry.useBehavior()), entry.useBehavior(), this.charged);
     }
 
     @Override
@@ -120,25 +118,25 @@ final class BedrockCrossbowRenderStrategy extends BedrockItemRenderStrategy {
         for (BedrockItemAttachables.Stage stage : stages) {
             ImageUtils.writePng(stage.image(), context.root().resolve(stage.texture() + ".png"));
         }
-        Bedrock2DCrossbowAttachables.write(state, stages, entry.useBehavior(), context.root());
+        BedrockCrossbow2DAttachables.write(state, stages, entry.useBehavior(), context.root());
         context.playerAnimations().register2DCrossbow(state.id(), state.charged(), entry.chargeDuration().value());
         return GeneratedItemVariant.icon(state.id(), state.conditions(), stages.get(state.idle()).texture(), true);
     }
 
     private static GeneratedItemVariant write3D(ResolvedItemBinding entry, BedrockCrossbowStates.State state,
                                                 JavaModelResources resources, BedrockItemGenerationContext context) throws IOException {
-        BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(resources.models(), resources.textures());
-        List<Bedrock3DItemAttachables.Stage> stages = new ArrayList<>(state.rules().size());
-        BedrockItemBlocks.DisplayBlock display;
+        BedrockItemGeometryBuilder geometry = new BedrockItemGeometryBuilder(resources.models(), resources.textures());
+        List<BedrockItem3DAttachables.Stage> stages = new ArrayList<>(state.rules().size());
+        BedrockItemDisplayBlocks.DisplayBlock display;
         try {
             for (ItemBindingRule rule : state.rules()) {
-                stages.add(geometry.createStage(rule, BedrockCrossbowStates.condition(rule)));
+                stages.add(new BedrockItem3DAttachables.Stage(geometry.build(rule), BedrockCrossbowStates.condition(rule)));
             }
             display = context.itemDisplayBlocks().write(state.id(), List.of(state.rules().get(state.idle())), resources.models(), resources.textures(), context.root());
         } catch (BedrockResourceException exception) {
             return null;
         }
-        Bedrock3DCrossbowAttachables.write(state.id(), stages, geometry.materials(), state, entry.useBehavior(), context.root());
+        BedrockCrossbow3DAttachables.write(state.id(), stages, geometry.materials(), state, entry.useBehavior(), context.root());
         context.playerAnimations().register3DCrossbow(state.id(), state.charged(), entry.chargeDuration().value());
         return GeneratedItemVariant.block(state.id(), state.conditions(), display, true);
     }

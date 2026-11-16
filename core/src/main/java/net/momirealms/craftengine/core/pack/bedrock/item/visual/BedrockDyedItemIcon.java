@@ -1,13 +1,14 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
-import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.ImageUtils;
+import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -15,6 +16,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 final class BedrockDyedItemIcon {
@@ -32,14 +35,10 @@ final class BedrockDyedItemIcon {
         Arrays.fill(this.depths, Float.NEGATIVE_INFINITY);
     }
 
-    private static float maxAbs(float x, float y, float z) {
-        return Math.max(Math.abs(x), Math.max(Math.abs(y), Math.abs(z)));
-    }
-
-    private static int sample(BufferedImage image, JavaModel.Face face, float horizontal, float vertical) {
+    private static int sample(BufferedImage image, JavaModel.Uv uv, int rotation, float horizontal, float vertical) {
         float u = horizontal;
         float v = vertical;
-        switch (face.rotation()) {
+        switch (rotation) {
             case 90 -> {
                 u = vertical;
                 v = 1 - horizontal;
@@ -53,13 +52,12 @@ final class BedrockDyedItemIcon {
                 v = horizontal;
             }
         }
-        JavaModel.Uv uv = face.uv();
         int x = (int) Math.floor((uv.u1() + u * (uv.u2() - uv.u1())) * image.getWidth() / 16);
         int y = (int) Math.floor((uv.v1() + v * (uv.v2() - uv.v1())) * image.getHeight() / 16);
         return image.getRGB(Math.floorMod(x, image.getWidth()), Math.floorMod(y, image.getHeight()));
     }
 
-    private Vector3f project(JavaModel.Element element, Direction face, Matrix4f pose, int u, int v) {
+    private Vector3f project(Vector3f from, Vector3f size, Direction face, Matrix4f pose, int u, int v) {
         Vector3f corner = switch (face) {
             case SOUTH -> new Vector3f(u, 1 - v, 1);
             case NORTH -> new Vector3f(1 - u, 1 - v, 0);
@@ -68,46 +66,60 @@ final class BedrockDyedItemIcon {
             case UP -> new Vector3f(u, 1, v);
             case DOWN -> new Vector3f(u, 0, 1 - v);
         };
-        corner.mul(new Vector3f(element.to()).sub(element.from())).add(element.from());
+        corner.mul(size).add(from);
         pose.transformPosition(corner);
         return corner.set((8 + corner.x) * this.size / 16, (8 - corner.y) * this.size / 16, corner.z);
     }
 
-    void render(JavaModel model, ItemRenderTarget.Model target, JavaPackTextureSource textures) throws IOException {
-        JavaModel.Transform gui = model.display().get(DisplayPosition.GUI);
+    void render(BedrockItemGeometry geometry, List<BedrockItemGeometry.Material> materials, DisplayPosition position) {
+        JavaModel.Transform gui = geometry.model().display().getOrDefault(position, JavaModel.Transform.IDENTITY);
         Matrix4f view = new Matrix4f().translation(gui.translation())
                 .rotateXYZ(gui.rotation().x * RADIANS, gui.rotation().y * RADIANS, gui.rotation().z * RADIANS)
                 .scale(gui.scale()).translate(-8, -8, -8);
-        for (JavaModel.Element element : model.elements()) {
+        // 复用手持几何：generated 挤出、element 旋转和规则局部变换均已烘焙，图标与模型不会各算一套。
+        for (JsonElement value : geometry.cubes()) {
+            JsonObject cube = value.getAsJsonObject();
+            Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
+            Vector3f size = VectorUtils.vector3f(cube.getAsJsonArray("size"));
+            Vector3f from = new Vector3f(8 - origin.x - size.x, origin.y, origin.z + 8);
             Matrix4f pose = new Matrix4f(view);
-            JavaModel.Rotation rotation = element.rotation();
-            if (rotation != null) {
-                Vector3f angles = rotation.angles();
-                Matrix4f local = new Matrix4f().rotationZYX(angles.z * RADIANS, angles.y * RADIANS, angles.x * RADIANS);
-                if (rotation.rescale()) {
-                    local.scale(1 / maxAbs(local.m00(), local.m01(), local.m02()), 1 / maxAbs(local.m10(), local.m11(), local.m12()), 1 / maxAbs(local.m20(), local.m21(), local.m22()));
-                }
-                pose.translate(rotation.origin()).mul(local).translate(-rotation.origin().x, -rotation.origin().y, -rotation.origin().z);
+            if (cube.has("rotation")) {
+                Vector3f pivot = VectorUtils.vector3f(cube.getAsJsonArray("pivot"));
+                pivot.set(8 - pivot.x, pivot.y, pivot.z + 8);
+                Vector3f angles = VectorUtils.vector3f(cube.getAsJsonArray("rotation")).mul(RADIANS);
+                pose.translate(pivot).rotateZYX(angles.z, -angles.y, -angles.x).translate(-pivot.x, -pivot.y, -pivot.z);
             }
-            for (Map.Entry<Direction, JavaModel.Face> entry : element.faces().entrySet()) {
-                JavaModel.Face face = entry.getValue();
-                Tint tint = face.tintIndex() >= 0 && face.tintIndex() < target.tints().size() ? target.tints().get(face.tintIndex()) : null;
-                int color = tint == null ? 0xffffff : textures.resolveTint(tint);
-                this.drawFace(element, entry.getKey(), pose, face, textures.read(face.texture(), TextureUsage.ITEM).image(), color, tint != null && textures.dyeColor(tint) != null);
+            for (Map.Entry<String, JsonElement> entry : cube.getAsJsonObject("uv").entrySet()) {
+                Direction direction = Direction.valueOf(entry.getKey().toUpperCase(Locale.ROOT));
+                JsonObject face = entry.getValue().getAsJsonObject();
+                BedrockItemGeometry.Material material = materials.get(Integer.parseInt(face.get("material_instance").getAsString().substring(5)));
+                JsonArray uv = face.getAsJsonArray("uv");
+                JsonArray span = face.getAsJsonArray("uv_size");
+                float u = uv.get(0).getAsFloat();
+                float v = uv.get(1).getAsFloat();
+                float endU = u + span.get(0).getAsFloat();
+                float endV = v + span.get(1).getAsFloat();
+                JavaModel.Uv coordinates = direction.axis() == Direction.Axis.Y
+                        ? new JavaModel.Uv(endU, endV, u, v) : new JavaModel.Uv(u, v, endU, endV);
+                int rotation = face.has("uv_rotation") ? face.get("uv_rotation").getAsInt() : 0;
+                boolean dyed = material.dyeColor() != null;
+                this.drawFace(from, size, direction, pose, coordinates, rotation, material.data().image(), dyed ? material.dyeColor() : material.color(), dyed);
             }
         }
     }
 
-    private void drawFace(JavaModel.Element element,
+    private void drawFace(Vector3f from,
+                          Vector3f size,
                           Direction face,
                           Matrix4f pose,
-                          JavaModel.Face source,
+                          JavaModel.Uv uv,
+                          int rotation,
                           BufferedImage texture,
                           int color,
                           boolean dyeable) {
-        Vector3f origin = this.project(element, face, pose, 0, 0);
-        Vector3f across = this.project(element, face, pose, 1, 0).sub(origin);
-        Vector3f down = this.project(element, face, pose, 0, 1).sub(origin);
+        Vector3f origin = this.project(from, size, face, pose, 0, 0);
+        Vector3f across = this.project(from, size, face, pose, 1, 0).sub(origin);
+        Vector3f down = this.project(from, size, face, pose, 0, 1).sub(origin);
         float determinant = across.x * down.y - across.y * down.x;
         if (determinant <= 0.00001f) {
             return;
@@ -127,7 +139,7 @@ final class BedrockDyedItemIcon {
                 if (u < 0 || u >= 1 || v < 0 || v >= 1 || depth < this.depths[index]) {
                     continue;
                 }
-                int pixel = sample(texture, source, u, v);
+                int pixel = sample(texture, uv, rotation, u, v);
                 if ((pixel >>> 24) == 0) {
                     continue;
                 }

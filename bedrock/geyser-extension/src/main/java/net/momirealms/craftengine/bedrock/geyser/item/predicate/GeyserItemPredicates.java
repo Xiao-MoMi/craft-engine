@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bedrock.geyser.item.predicate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import org.geysermc.geyser.api.predicate.MinecraftPredicate;
 import org.geysermc.geyser.api.predicate.context.item.ChargedProjectile;
 import org.geysermc.geyser.api.predicate.context.item.ItemPredicateContext;
@@ -47,12 +48,16 @@ public final class GeyserItemPredicates {
             return new Selected(condition.get(EXPECTED).getAsBoolean());
         }
         MinecraftPredicate<ItemPredicateContext> predicate = switch (property) {
+            case "custom_model_data" -> {
+                int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                yield context -> context.customModelDataFlag(index);
+            }
             case "broken" -> ItemConditionPredicate.BROKEN;
             case "damaged" -> context -> !context.unbreakable() && context.maxDamage() > 0 && context.damage() > 0;
             case "fishing_rod/cast" -> ItemConditionPredicate.FISHING_ROD_CAST;
             case "has_component" -> {
                 if (condition.has("ignore_default") && condition.get("ignore_default").getAsBoolean()) {
-                    throw new UnsupportedOperationException("Geyser API cannot distinguish default components: " + condition);
+                    throw new UnsupportedOperationException(GeyserTranslationManager.message("item.reason.default_components"));
                 }
                 yield ItemConditionPredicate.hasComponent(Identifier.of(condition.get("component").getAsString()));
             }
@@ -72,6 +77,11 @@ public final class GeyserItemPredicates {
         List<MinecraftPredicate<ItemPredicateContext>> predicates = new ArrayList<>();
         for (JsonElement value : condition.getAsJsonArray(VALUES)) {
             predicates.add(switch (property) {
+                case "custom_model_data" -> {
+                    int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                    String expected = value.getAsString();
+                    yield context -> expected.equals(context.customModelDataString(index));
+                }
                 case "trim_material" -> ItemMatchPredicate.trimMaterial(Identifier.of(value.getAsString()));
                 case "charge_type" -> ItemMatchPredicate.chargeType(ChargedProjectile.ChargeType.valueOf(value.getAsString().toUpperCase(Locale.ROOT)));
                 default -> throw unsupported(property);
@@ -89,10 +99,19 @@ public final class GeyserItemPredicates {
     }
 
     private static MinecraftPredicate<ItemPredicateContext> readRange(JsonObject condition, String property) {
-        boolean normalize = !condition.has("normalize") || condition.get("normalize").getAsBoolean();
         ToDoubleFunction<ItemPredicateContext> value = switch (property) {
-            case "damage" -> context -> normalize ? (float) context.damage() / Math.max(1, context.maxDamage()) : context.damage();
-            case "count" -> context -> normalize ? (float) context.count() / context.maxStackSize() : context.count();
+            case "custom_model_data" -> {
+                int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                yield context -> context.customModelDataFloat(index);
+            }
+            case "damage" -> {
+                boolean normalize = !condition.has("normalize") || condition.get("normalize").getAsBoolean();
+                yield context -> normalize ? (float) context.damage() / Math.max(1, context.maxDamage()) : context.damage();
+            }
+            case "count" -> {
+                boolean normalize = !condition.has("normalize") || condition.get("normalize").getAsBoolean();
+                yield context -> normalize ? (float) context.count() / context.maxStackSize() : context.count();
+            }
             case "bundle/fullness" -> ItemPredicateContext::bundleFullness;
             default -> throw unsupported(property);
         };
@@ -106,9 +125,7 @@ public final class GeyserItemPredicates {
     }
 
     private static UnsupportedOperationException unsupported(String property) {
-        return new UnsupportedOperationException(property.equals("custom_model_data")
-                ? "custom_model_data branch mapping is not enabled"
-                : "Geyser API does not expose the item model property: " + property);
+        return new UnsupportedOperationException(GeyserTranslationManager.message("item.reason.condition", property));
     }
 
     public static boolean requiresSession(MinecraftPredicate<? super ItemPredicateContext> predicate) {

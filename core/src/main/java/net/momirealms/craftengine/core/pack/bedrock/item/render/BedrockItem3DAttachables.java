@@ -1,13 +1,14 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -24,9 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
-
-public final class Bedrock3DItemAttachables {
+public final class BedrockItem3DAttachables {
     private final Key id;
     private final Path root;
     private final String resource;
@@ -42,10 +40,10 @@ public final class Bedrock3DItemAttachables {
     private final JsonArray activeControllers = new JsonArray();
     private final JsonArray animate = new JsonArray();
     private int[] contextGeometryIndices;
-    private BedrockEquipmentPose contextPose;
-    private BedrockArmorResources.Appearance armor;
+    private BedrockAttachablePose contextPose;
+    private BedrockEquipmentResources.Appearance armor;
 
-    private Bedrock3DItemAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
+    private BedrockItem3DAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
         this.id = id;
         this.root = root;
         this.resource = id.namespace() + '/' + id.value();
@@ -63,10 +61,26 @@ public final class Bedrock3DItemAttachables {
                       JsonObject poseAnimations,
                       JsonArray poseAnimate,
                       Path root) throws IOException {
-        Bedrock3DItemAttachables writer = new Bedrock3DItemAttachables(id, root, stages, materials, poseBones);
+        BedrockItem3DAttachables writer = new BedrockItem3DAttachables(id, root, stages, materials, poseBones);
         writer.writeMaterialLayers();
         writer.writeAnimations(poseAnimations, poseAnimate);
         writer.writeAttachable(preAnimation);
+    }
+
+    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<Material> materials, BedrockAttachablePose pose, BedrockEquipmentResources.Appearance armor, Path root) throws IOException {
+        BedrockItem3DAttachables writer = new BedrockItem3DAttachables(id, root, stages, materials, new JsonArray());
+        writer.contextPose = pose;
+        writer.armor = armor;
+        writer.groupContextGeometries();
+        writer.writeMaterialLayers();
+        JsonObject animations = writer.contextAnimations(pose);
+        writer.writeAnimations(animations, animations.isEmpty() ? new JsonArray() : pose.animate());
+        JsonObject attachable = writer.writeAttachable(pose.scripts());
+        if (headId != null) {
+            // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
+            attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
+            ResourcePackUtils.writeBedrockJson("1.20.60", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
+        }
     }
 
     // 逐层写出贴图，再将各层的几何和渲染控制器分别汇总到该物品的 .geo.json 和 .render_controllers.json 文件中
@@ -76,7 +90,7 @@ public final class Bedrock3DItemAttachables {
             this.writeMaterialLayer(layer, this.materials.get(layer));
         }
         if (this.contextPose != null && this.activeControllers.isEmpty()) {
-            // An item can have a GUI icon and an explicit empty model in every equipment slot.
+            // 物品可以有背包图标，但所有装备位置都显式为空；仍需生成空几何供 attachable 引用。
             String mesh = "geometry." + this.prefix + ".empty";
             JsonObject geometry = new JsonObject();
             geometry.add("description", GsonHelper.createObject("identifier", new JsonPrimitive(mesh)));
@@ -94,33 +108,19 @@ public final class Bedrock3DItemAttachables {
         if (this.armor != null) {
             this.armor.addResources(this.prefix, this.textureNames, this.geometryNames, this.renderControllers, this.activeControllers);
         }
-        writeFile("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
-        writeFile("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
-    }
-
-    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<Material> materials, BedrockEquipmentPose pose, BedrockArmorResources.Appearance armor, Path root) throws IOException {
-        Bedrock3DItemAttachables writer = new Bedrock3DItemAttachables(id, root, stages, materials, new JsonArray());
-        writer.contextPose = pose;
-        writer.armor = armor;
-        writer.groupContextGeometries();
-        writer.writeMaterialLayers();
-        JsonObject animations = writer.contextAnimations(pose);
-        writer.writeAnimations(animations, animations.isEmpty() ? new JsonArray() : pose.animate());
-        JsonObject attachable = writer.writeAttachable(pose.scripts());
-        if (headId != null) {
-            // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
-            attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
-            writeFile("1.20.60", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
-        }
+        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
     }
 
     private void groupContextGeometries() {
+        // 每个阶段映射到负责写出几何的首个阶段；控制器仍按原阶段生成，保留各自的显示条件。
         this.contextGeometryIndices = new int[this.stages.size()];
         Map<ContextGeometry, List<ContextGroup>> groups = new HashMap<>();
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
             BedrockItemAttachables.View view = stage.view();
-            ContextGeometry key = new ContextGeometry(stage.model(), stage.cubes(), this.contextPose.views().contains(view));
+            // posed 也参与分组：插入了使用动作骨骼的几何不能与未插入的版本共用。
+            ContextGeometry key = new ContextGeometry(stage.geometry(), this.contextPose.views().contains(view));
             List<ContextGroup> candidates = groups.computeIfAbsent(key, ignored -> new ArrayList<>());
             ContextGroup selected = null;
             for (ContextGroup candidate : candidates) {
@@ -156,7 +156,7 @@ public final class Bedrock3DItemAttachables {
         Map<JsonArray, JsonObject> layerGeometries = new HashMap<>();
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
-            JsonArray cubes = selectMaterialFaces(stage.cubes(), layerName);
+            JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
             if (cubes.isEmpty()) {
                 continue;
             }
@@ -164,9 +164,10 @@ public final class Bedrock3DItemAttachables {
             if (this.contextPose != null) {
                 int geometryIndex = this.contextGeometryIndices[index];
                 String geometryId = "geometry." + this.prefix + ".stage_" + geometryIndex + '_' + layerName;
+                // 共享阶段只登记别名；骨骼和几何由组内首个阶段写一次，动画也使用同一个前缀。
                 if (geometryIndex == index) {
                     String prefix = "p" + geometryIndex + "_";
-                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.model(), cubes, geometryId, modelRadius(cubes), prefix);
+                    JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId, modelRadius(cubes), prefix);
                     if (this.contextPose.views().contains(stage.view()) && !this.contextPose.bones().isEmpty()) {
                         // 每个部件有独立的挂点；蓄力变换作用于该部件的 Java display 变换之前。
                         insertPoseBones(geometry, prefix, this.contextPose.bones());
@@ -175,7 +176,7 @@ public final class Bedrock3DItemAttachables {
                 }
                 this.geometryNames.addProperty(alias, geometryId);
             } else {
-                this.registerGeometry(alias, cubes, stage.model(), layerGeometries);
+                this.registerGeometry(alias, cubes, stage.geometry().model(), layerGeometries);
             }
             String controllerId = "controller.render." + this.prefix + '.' + alias;
             this.renderControllers.add(controllerId, renderController(alias, material.data().animation(), frames, defaultFrames));
@@ -232,7 +233,7 @@ public final class Bedrock3DItemAttachables {
         return controller;
     }
 
-    private JsonObject contextAnimations(BedrockEquipmentPose pose) {
+    private JsonObject contextAnimations(BedrockAttachablePose pose) {
         JsonObject result = new JsonObject();
         for (Map.Entry<String, JsonElement> action : pose.animations().entrySet()) {
             JsonObject animation = action.getValue().getAsJsonObject();
@@ -260,9 +261,9 @@ public final class Bedrock3DItemAttachables {
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
             if (this.contextPose != null) {
-                BedrockItemAttachables.contextAnimation(stage.view(), stage.model(), animationPrefix, "p" + this.contextGeometryIndices[index] + "_", stage.condition(), animations, this.animationNames, this.animate);
+                BedrockItemAttachables.contextAnimation(stage.view(), stage.geometry().model(), animationPrefix, "p" + this.contextGeometryIndices[index] + "_", stage.condition(), animations, this.animationNames, this.animate);
             } else {
-                BedrockItemAttachables.displayAnimations(stage.model(), animationPrefix, index, animations, this.animationNames, this.animate);
+                BedrockItemAttachables.displayAnimations(stage.geometry().model(), animationPrefix, index, animations, this.animationNames, this.animate);
             }
         }
         for (Map.Entry<String, JsonElement> pose : poseAnimations.entrySet()) {
@@ -271,7 +272,7 @@ public final class Bedrock3DItemAttachables {
             this.animationNames.addProperty(pose.getKey(), name);
         }
         this.animate.addAll(poseAnimate);
-        writeFile("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
     }
 
     private JsonObject writeAttachable(JsonArray preAnimation) throws IOException {
@@ -300,7 +301,7 @@ public final class Bedrock3DItemAttachables {
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);
-        writeFile("1.20.60", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
+        ResourcePackUtils.writeBedrockJson("1.20.60", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
         return attachable;
     }
 
@@ -313,29 +314,6 @@ public final class Bedrock3DItemAttachables {
         color.addProperty("b", "math.mod(" + rgb + ", 256) / 255");
         color.addProperty("a", 1);
         return color;
-    }
-
-    public static JsonArray selectMaterialFaces(JsonArray source, String material) {
-        // 一个立方体的不同面可能属于不同材质层，只复制当前层的面，原始几何留给后续层使用。
-        JsonArray cubes = new JsonArray();
-        for (JsonElement value : source) {
-            JsonObject original = value.getAsJsonObject();
-            JsonObject faces = new JsonObject();
-            for (Map.Entry<String, JsonElement> entry : original.getAsJsonObject("uv").entrySet()) {
-                JsonObject face = entry.getValue().getAsJsonObject();
-                if (face.get("material_instance").getAsString().equals(material)) {
-                    JsonObject selected = face.deepCopy();
-                    selected.remove("material_instance");
-                    faces.add(entry.getKey(), selected);
-                }
-            }
-            if (!faces.isEmpty()) {
-                JsonObject cube = original.deepCopy();
-                cube.add("uv", faces);
-                cubes.add(cube);
-            }
-        }
-        return cubes;
     }
 
     private static float modelRadius(JsonArray cubes) {
@@ -388,33 +366,16 @@ public final class Bedrock3DItemAttachables {
         geometry.add("bones", bones);
     }
 
-    private static void writeFile(String version, String key, JsonElement value, Path path) throws IOException {
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, version);
-        file.add(key, value);
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(file, path);
-    }
-
-    public record Stage(JavaModel model, JsonArray cubes, String condition, @Nullable BedrockItemAttachables.View view) {
-        public Stage(JavaModel model, JsonArray cubes, String condition) {
-            this(model, cubes, condition, null);
-        }
-
-        Stage inView(BedrockItemAttachables.View view) {
-            return new Stage(this.model, this.cubes, this.condition, view);
+    public record Stage(BedrockItemGeometry geometry, String condition, @Nullable BedrockItemAttachables.View view) {
+        // 普通阶段靠 ce_stage 选择，view 为 null；场景阶段直接绑定具体的手持或头部位置。
+        public Stage(BedrockItemGeometry geometry, String condition) {
+            this(geometry, condition, null);
         }
     }
 
-    private record ContextGeometry(JavaModel model, JsonArray cubes, boolean posed) {
+    private record ContextGeometry(BedrockItemGeometry geometry, boolean posed) {
     }
 
     private record ContextGroup(int index, EnumSet<BedrockItemAttachables.View> views) {
-    }
-
-    public record Material(TextureData data, int color, Integer dyeColor) {
-        public Material(TextureData data, int color) {
-            this(data, color, null);
-        }
     }
 }

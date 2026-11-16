@@ -21,6 +21,7 @@ public final class BedrockTerrainAtlas {
     private final Map<String, JsonObject> flipbooks = new LinkedHashMap<>();
 
     public void addFallbackFlipbook(JsonObject entry) {
+        // 原版转换结果只补充缺项；物品和世界方块已登记的自定义动画优先，发生冲突时保留原条目。
         String key = flipbookKey(entry);
         JsonObject previous = this.flipbooks.putIfAbsent(key, entry);
         if (previous != null && !previous.equals(entry)) {
@@ -29,6 +30,7 @@ public final class BedrockTerrainAtlas {
     }
 
     private static String flipbookKey(JsonObject entry) {
+        // 未指定 atlas_index 与显式指定 0 指向同一个槽位，必须使用相同的去重键。
         int index = entry.has("atlas_index") ? entry.get("atlas_index").getAsInt() : 0;
         return entry.get("atlas_tile").getAsString() + ':' + Math.max(0, index);
     }

@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
@@ -19,37 +19,37 @@ import java.util.Map;
 
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
-public final class BedrockWeaponGeometry {
+public final class BedrockItemGeometryBuilder {
     private final JavaModelResolver models;
     private final JavaPackTextureSource textures;
     private final Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
-    private final List<Bedrock3DItemAttachables.Material> materials = new ArrayList<>();
+    private final List<BedrockItemGeometry.Material> materials = new ArrayList<>();
 
-    public BedrockWeaponGeometry(JavaModelResolver models, JavaPackTextureSource textures) {
+    public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures) {
         this.models = models;
         this.textures = textures;
     }
 
-    public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition) throws IOException {
-        return this.createStage(rule, condition, false);
+    public BedrockItemGeometry build(ItemBindingRule rule) throws IOException {
+        return this.build(rule, false);
     }
 
-    public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition, boolean preserveDye) throws IOException {
-        return this.createStage(rule, condition, preserveDye, ((ItemRenderTarget.Model) rule.target()).resolve(this.models));
+    public BedrockItemGeometry build(ItemBindingRule rule, boolean preserveDye) throws IOException {
+        return this.build(rule, preserveDye, ((ItemRenderTarget.Model) rule.target()).resolve(this.models));
     }
 
-    public Bedrock3DItemAttachables.Stage createStage(ItemBindingRule rule, String condition, boolean preserveDye, JavaModel model) throws IOException {
+    public BedrockItemGeometry build(ItemBindingRule rule, boolean preserveDye, JavaModel model) throws IOException {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
         BedrockModelTransform.uniformScale(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
         JsonArray cubes = this.geometry(model, target, preserveDye);
-        // 将规则的局部变换烘焙进几何，模型的手持 display 由挂点骨骼应用。
+        // 将规则的局部变换烘焙进几何，模型的 display 留给各渲染出口应用。
         BedrockModelTransform.apply(cubes, transformation, 1);
-        return new Bedrock3DItemAttachables.Stage(model, cubes, condition);
+        return new BedrockItemGeometry(model, cubes);
     }
 
-    public JsonArray dyedGeometry(JavaModel model, ItemRenderTarget.Model target) throws IOException {
-        return this.geometry(model, target, true);
+    public List<BedrockItemGeometry.Material> materials() {
+        return this.materials;
     }
 
     private JsonArray geometry(JavaModel model, ItemRenderTarget.Model target, boolean preserveDye) throws IOException {
@@ -83,14 +83,10 @@ public final class BedrockWeaponGeometry {
         BedrockElementGeometry.Material material = this.bindings.get(key);
         if (material == null) {
             material = new BedrockElementGeometry.Material("layer" + this.materials.size(), 1, 1);
-            this.materials.add(new Bedrock3DItemAttachables.Material(this.textures.read(key.texture(), TextureUsage.ITEM), key.color(), key.dyeColor()));
+            this.materials.add(new BedrockItemGeometry.Material(this.textures.read(key.texture(), TextureUsage.ITEM), key.color(), key.dyeColor()));
             this.bindings.put(key, material);
         }
         return material;
-    }
-
-    public List<Bedrock3DItemAttachables.Material> materials() {
-        return this.materials;
     }
 
     private record TextureKey(JavaModel.Texture texture, int color, Integer dyeColor) {

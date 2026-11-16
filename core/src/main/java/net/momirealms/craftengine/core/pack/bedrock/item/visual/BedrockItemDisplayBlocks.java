@@ -17,9 +17,9 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
+import org.joml.Matrix3d;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
-import org.joml.Matrix3d;
 import org.joml.Vector3f;
 
 import java.io.IOException;
@@ -30,31 +30,15 @@ import java.util.*;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
-public final class BedrockItemBlocks {
+public final class BedrockItemDisplayBlocks {
     private final BedrockTerrainAtlas atlas;
-    private final JsonObject blocks = new JsonObject();
+    private final JsonObject blockDefinitions;
     private final Map<TextureKey, String> textureTiles = new HashMap<>();
     private final Map<GeometryKey, List<Geometry>> geometries = new HashMap<>();
 
-    public BedrockItemBlocks(BedrockTerrainAtlas atlas) {
+    public BedrockItemDisplayBlocks(BedrockTerrainAtlas atlas, JsonObject blockDefinitions) {
         this.atlas = atlas;
-    }
-
-    private static BedrockElementGeometry.Material bindTexture(TextureKey key,
-                                                               Map<TextureKey, BedrockElementGeometry.Material> bindings,
-                                                               List<TextureData> images,
-                                                               JavaPackTextureSource textures) throws IOException {
-        BedrockElementGeometry.Material material = bindings.get(key);
-        if (material == null) {
-            TextureData data = textures.read(key.texture(), TextureUsage.ITEM);
-            int width = data.image().getWidth();
-            int height = data.image().getHeight();
-            float size = Math.max(width, height);
-            material = new BedrockElementGeometry.Material("layer" + bindings.size(), width / size, height / size);
-            bindings.put(key, material);
-            images.add(data);
-        }
-        return material;
+        this.blockDefinitions = blockDefinitions;
     }
 
     public DisplayBlock write(Key item, List<ItemBindingRule> models, JavaModelResolver resolver, JavaPackTextureSource textures, Path root) throws IOException {
@@ -114,6 +98,7 @@ public final class BedrockItemBlocks {
         JsonObject transforms = displayModel == null ? new JsonObject() : this.displayTransforms(displayModel, cubes, geometryScale, view);
         Map<String, String> materials = new LinkedHashMap<>();
         int index = 0;
+        // bindings 与 images 按首次遇到材质的顺序同步建立，迭代时必须保持这个顺序才能取对纹理。
         for (Map.Entry<TextureKey, BedrockElementGeometry.Material> entry : bindings.entrySet()) {
             String tile = this.textureTiles.get(entry.getKey());
             if (tile == null) {
@@ -127,10 +112,28 @@ public final class BedrockItemBlocks {
         return this.writeGeometry(item, cubes, transforms, materials, root);
     }
 
+    private static BedrockElementGeometry.Material bindTexture(TextureKey key,
+                                                               Map<TextureKey, BedrockElementGeometry.Material> bindings,
+                                                               List<TextureData> images,
+                                                               JavaPackTextureSource textures) throws IOException {
+        BedrockElementGeometry.Material material = bindings.get(key);
+        if (material == null) {
+            TextureData data = textures.read(key.texture(), TextureUsage.ITEM);
+            int width = data.image().getWidth();
+            int height = data.image().getHeight();
+            float size = Math.max(width, height);
+            material = new BedrockElementGeometry.Material("layer" + bindings.size(), width / size, height / size);
+            bindings.put(key, material);
+            images.add(data);
+        }
+        return material;
+    }
+
     private DisplayBlock writeGeometry(Key item, JsonArray cubes, JsonObject transforms, Map<String, String> materials, Path root) throws IOException {
         GeometryKey key = new GeometryKey(cubes, materials);
         List<Geometry> candidates = this.geometries.computeIfAbsent(key, ignored -> new ArrayList<>());
         for (Geometry candidate : candidates) {
+            // 相同几何可补充尚未使用的场景姿态；已有场景姿态冲突时必须另建，避免覆盖旧物品的外观。
             if (compatibleTransforms(candidate.transforms(), transforms)) {
                 transforms.entrySet().forEach(entry -> candidate.transforms().add(entry.getKey(), entry.getValue()));
                 this.writeGeometryFile(candidate.display(), cubes, candidate.transforms(), root);
@@ -145,7 +148,7 @@ public final class BedrockItemBlocks {
 
         JsonObject block = new JsonObject();
         block.addProperty("sound", "wood");
-        this.blocks.add("geyser_custom:" + name, block);
+        this.blockDefinitions.add("geyser_custom:" + name, block);
         return display;
     }
 
@@ -200,11 +203,12 @@ public final class BedrockItemBlocks {
                 continue;
             }
             JavaModel.Transform transform = model.display().getOrDefault(position, JavaModel.Transform.IDENTITY);
+            // 几何为满足基岩边界已整体缩小，这里抵消该缩放，恢复 Java display 期望的显示尺寸
             Vector3f scale = new Vector3f(transform.scale()).div(geometryScale);
             Vector3f rotation = transform.rotation();
             Vector3f translation = transform.translation();
             if (position == DisplayPosition.ON_SHELF) {
-                // Java 置物架按最终整组包围盒垂直居中，且其外层缩放是基岩 fixed 路径的一半。
+                // Java 置物架按最终整组包围盒垂直居中，且其外层缩放是基岩 fixed 路径的一半
                 Vector3f radians = new Vector3f(rotation).mul((float) (Math.PI / 180));
                 Matrix4f displayMatrix = new Matrix4f().translation(translation)
                         .rotateXYZ(radians.x, radians.y, radians.z).scale(scale).translate(-8, -8, -8);
@@ -215,7 +219,7 @@ public final class BedrockItemBlocks {
                     BedrockElementGeometry.bounds(cubes, minimum, maximum, displayMatrix);
                     centerY = (minimum.y + maximum.y) * 0.5f;
                 }
-                // 几何已转换为基岩坐标；补偿置物架朝向时，要连同公共 display 一起变换。
+                // 几何已转换为基岩坐标；补偿置物架朝向时，要连同公共 display 一起变换
                 rotation = BedrockModelTransform.rotationAngles(new Matrix3d().rotationY(Math.PI)
                         .scale(-1, 1, 1).rotateXYZ(radians.x, radians.y, radians.z).scale(-1, 1, 1));
                 translation = new Vector3f(translation.x, translation.y - centerY, -translation.z).mul(0.5f);
@@ -233,22 +237,10 @@ public final class BedrockItemBlocks {
             if (position == DisplayPosition.GUI) {
                 display.addProperty("fit_to_frame", false);
             }
-            // In geometry 1.21.0 the shelf inherits fixed. Its visual-only item can use that slot independently.
+            // 1.21.0 几何格式中置物架继承 fixed；独立外观可以使用该槽位，不会覆盖主物品的展示框姿态
             transforms.add(position == DisplayPosition.ON_SHELF ? "fixed" : position.name().toLowerCase(Locale.ROOT), display);
         }
         return transforms;
-    }
-
-    public void finish(Path root) throws IOException {
-        if (this.blocks.isEmpty()) {
-            return;
-        }
-        JsonArray version = new JsonArray();
-        version.add(1);
-        version.add(1);
-        version.add(0);
-        this.blocks.add(FORMAT_VERSION, version);
-        GsonHelper.writeJsonFile(this.blocks, root.resolve("blocks.json"));
     }
 
     private record TextureKey(Texture texture, int color) {

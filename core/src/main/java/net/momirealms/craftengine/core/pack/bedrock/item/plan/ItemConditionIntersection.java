@@ -12,6 +12,7 @@ public final class ItemConditionIntersection {
 
     @Nullable
     public static List<ItemBindingCondition> intersect(List<ItemBindingCondition> conditions, List<ItemBindingCondition> additional) {
+        // 空列表表示没有限制；null 表示条件冲突、没有任何物品栈能满足，调用方不能将两者混用。
         if (additional.isEmpty()) {
             return conditions;
         }
@@ -98,6 +99,7 @@ public final class ItemConditionIntersection {
     }
 
     private static double lowerBound(ItemBindingCondition.NumericRange range) {
+        // 负 scale 会翻转不等号方向；排除的端点用相邻 float 表示，保留原区间的开闭语义。
         if (range.scale() > 0) {
             return range.minInclusive() == null ? Double.NEGATIVE_INFINITY : thresholdInput(range.minInclusive(), range.scale());
         }
@@ -113,6 +115,7 @@ public final class ItemConditionIntersection {
 
     private static float thresholdInput(float threshold, float positiveScale) {
         // Geyser 以 float 乘法判断阈值。直接除以 scale 会在临界点丢失舍入信息。
+        // 二分寻找乘积首次达到阈值的 float；当两端已是相邻浮点数时结束，避免用近似 epsilon 改变边界。
         float low = -Float.MAX_VALUE;
         float high = Float.MAX_VALUE;
         if (low * positiveScale >= threshold) {

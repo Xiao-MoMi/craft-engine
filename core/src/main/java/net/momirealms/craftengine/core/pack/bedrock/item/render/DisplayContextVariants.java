@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
@@ -27,23 +27,25 @@ final class DisplayContextVariants {
     }
 
     /**
-     * 将 Java 模型规则按物品栈条件划分为基岩物品变体。每个变体保存各显示位置可用的模型规则。
-     * 例如，只有手持模型随耐久变化时，会按耐久划分变体，但这些变体仍共用同一个背包模型。
+     * 将 Java 模型规则按物品栈条件划分为基岩物品变体。每个变体保存各显示位置可用的模型规则
+     * 例如，只有手持模型随耐久变化时，会按耐久划分变体，但这些变体仍共用同一个背包模型
      */
     static List<Variant> collect(ResolvedItemBinding entry, BedrockItemRenderStrategy strategy, boolean explicitViews) {
         List<PreparedRule> rules = prepareRules(entry.definition().rules(), strategy);
         Map<ViewBranches, List<ItemDisplayContext>> contextsByBranches = new LinkedHashMap<>();
         if (!explicitViews) {
-            // Java 没有按显示位置分支时，只对公共规则做一次分组。
+            // Java 没有按显示位置分支时，只对公共规则做一次分组
             ViewBranches shared = branchesForView(entry, rules, ItemDisplayContext.GUI);
             contextsByBranches.put(shared, List.of(ItemDisplayContext.values()));
         } else {
+            // 分支内容相同的显示位置共用一组输入，避免重复参与后面的条件交集组合
             for (ItemDisplayContext context : ItemDisplayContext.values()) {
                 ViewBranches branches = branchesForView(entry, rules, context);
                 contextsByBranches.computeIfAbsent(branches, ignored -> new ObjectArrayList<>(1)).add(context);
             }
         }
 
+        // 先固定策略自身的注册状态（如弩的装填类型），再逐组加入各显示位置的物品栈条件
         List<Variant> variants = List.of(new Variant(strategy.stateConditions(), new EnumMap<>(ItemDisplayContext.class)));
         for (Map.Entry<ViewBranches, List<ItemDisplayContext>> group : contextsByBranches.entrySet()) {
             variants = mergeVariants(variants, group.getKey(), group.getValue());
@@ -61,7 +63,7 @@ final class DisplayContextVariants {
             List<String> unsupportedProperties = new ObjectArrayList<>();
             boolean matchesFallback = true;
             for (ItemBindingCondition condition : rule.conditions()) {
-                // 显示位置由 branchesForView 筛选，使用状态由手持模型处理，两者都不区分物品变体。
+                // 显示位置由 branchesForView 筛选，使用状态由手持模型处理，两者都不区分物品变体
                 if (isDisplayCondition(condition) || strategy.isEquipmentCondition(condition)) {
                     continue;
                 }
@@ -80,6 +82,7 @@ final class DisplayContextVariants {
     }
 
     private static ViewBranches branchesForView(ResolvedItemBinding entry, List<PreparedRule> rules, ItemDisplayContext context) {
+        // 同一物品栈条件下可以有多个使用状态；列表保留 Java 分支顺序，交给后续阶段选择器处理
         Map<List<ItemBindingCondition>, List<ItemBindingRule>> branches = new LinkedHashMap<>();
         String viewName = context.serializedName();
         JsonPrimitive view = new JsonPrimitive(viewName);
@@ -88,10 +91,10 @@ final class DisplayContextVariants {
             if (!matchesView(rule.binding(), view)) {
                 continue;
             }
-            // 每种不支持的属性在当前显示位置只警告一次，即使触发警告的规则随后被跳过。
+            // 每种不支持的属性在当前显示位置只警告一次，即使触发警告的规则随后被跳过
             for (String property : rule.unsupportedProperties()) {
                 if (reported.add(property)) {
-                    TranslationManager.warn("resource_pack.bedrock.item.display_skipped", entry.bedrockId().asString(), viewName, property);
+                    TranslationManager.warn("resource_pack.bedrock.item.condition_fallback", entry.bedrockId().asString(), viewName, property);
                 }
             }
             if (rule.matchesFallback()) {
@@ -99,7 +102,7 @@ final class DisplayContextVariants {
             }
         }
         if (branches.isEmpty()) {
-            // 这个位置没有可用模型。保留空模型分支，让其他位置的模型仍能参与组合。
+            // 这个位置没有可用模型。保留空模型分支，让其他位置的模型仍能参与组合
             branches.put(List.of(), List.of(EMPTY));
         }
         return new ViewBranches(branches);
@@ -109,7 +112,7 @@ final class DisplayContextVariants {
         List<Variant> combined = new ObjectArrayList<>();
         for (Variant variant : variants) {
             for (Map.Entry<List<ItemBindingCondition>, List<ItemBindingRule>> branch : branches.byStackConditions().entrySet()) {
-                // 只有能同时满足各显示位置条件的物品栈，才需要一个共同的注册变体。
+                // 只有能同时满足各显示位置条件的物品栈，才需要一个共同的注册变体
                 List<ItemBindingCondition> conditions = ItemConditionIntersection.intersect(variant.conditions(), branch.getKey());
                 if (conditions == null) {
                     continue;
@@ -146,13 +149,15 @@ final class DisplayContextVariants {
         }
         String property = json.get("property").getAsString();
         return switch (property) {
-            case "broken", "damaged", "selected", "fishing_rod/cast", "trim_material", "context_dimension", "charge_type", "damage", "count", "bundle/fullness" -> null;
+            case "broken", "damaged", "selected", "fishing_rod/cast", "trim_material", "context_dimension", "charge_type", "damage", "count", "bundle/fullness", "custom_model_data" -> null;
             case "has_component" -> json.has("ignore_default") && json.get("ignore_default").getAsBoolean() ? property : null;
             default -> property;
         };
     }
 
     private static boolean fallback(ItemBindingCondition condition) {
+        // 无法在基岩侧求值的属性按默认状态选择：布尔取 false，select 走排除分支，数值取 0。
+        // 不能简单删除这些条件，否则原本互斥的模型分支可能被同时保留。
         return switch (condition) {
             case ItemBindingCondition.BooleanMatch match -> !match.expected();
             case ItemBindingCondition.SelectMatch match -> match.negated();

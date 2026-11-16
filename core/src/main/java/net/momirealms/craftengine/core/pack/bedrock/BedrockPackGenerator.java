@@ -13,7 +13,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
-import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplays;
+import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplayGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.VectorUtils;
 import net.momirealms.craftengine.core.util.ZipUtils;
 
 import java.io.IOException;
@@ -50,18 +51,24 @@ public final class BedrockPackGenerator {
             Files.createDirectories(itemPlanPath.getParent());
 
             BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
+            JsonObject blockDefinitions = new JsonObject();
             JavaModelResources modelResources = new JavaModelResources(resources);
             // 物品
-            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root, atlas);
+            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root, atlas, blockDefinitions);
 
-            JsonObject itemDisplays = BedrockItemDisplays.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
+            JsonObject itemDisplays = BedrockItemDisplayGenerator.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
             ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems, itemDisplays);
             // 方块
             Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
-            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root, atlas);
+            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root, atlas, blockDefinitions);
             BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blocks, blockPlanPath);
             BedrockVanillaTextures.write(resources, root, atlas);
             atlas.finish(root);
+            // 展示方块与世界方块共用 blocks.json，全部收集后统一写出，避免生成阶段之间读回文件。
+            if (!blockDefinitions.isEmpty()) {
+                blockDefinitions.add(BedrockPackLayout.FORMAT_VERSION, VectorUtils.toJson(1, 1, 0));
+                GsonHelper.writeJsonFile(blockDefinitions, root.resolve("blocks.json"));
+            }
             // 翻译文件
             GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
             // 字体文件

@@ -1,7 +1,6 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
@@ -12,19 +11,16 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSourc
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
-import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.BitSet;
 import java.util.List;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockAnimatedGeneratedItemAttachables {
@@ -119,7 +115,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         bones.add(child);
         JsonArray geometries = new JsonArray();
         geometries.add(geometry);
-        writeFile("1.16.0", "minecraft:geometry", geometries, root.resolve("models/entity/" + resource + ".geo.json"));
+        ResourcePackUtils.writeBedrockJson("1.16.0", "minecraft:geometry", geometries, root.resolve("models/entity/" + resource + ".geo.json"));
 
         JsonObject animations = new JsonObject();
         JsonObject names = new JsonObject();
@@ -136,7 +132,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         animations.add(animationPrefix + "mesh_pose", poseAnimation);
         names.addProperty("mesh_pose", animationPrefix + "mesh_pose");
         animate.add("mesh_pose");
-        writeFile("1.8.0", "animations", animations, root.resolve("animations/" + resource + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson("1.8.0", "animations", animations, root.resolve("animations/" + resource + ".animation.json"));
 
         JsonObject controller = new JsonObject();
         controller.addProperty("geometry", "Geometry.default");
@@ -156,7 +152,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         controller.add("materials", selectedMaterials);
         JsonObject controllers = new JsonObject();
         controllers.add(controllerId, controller);
-        writeFile("1.10.0", "render_controllers", controllers, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", controllers, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
 
         JsonObject attachment = new JsonObject();
         attachment.addProperty("identifier", id.asString());
@@ -179,14 +175,6 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         attachment.add("render_controllers", activeControllers);
         JsonObject attachable = new JsonObject();
         attachable.add("description", attachment);
-        writeFile("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
-    }
-
-    private static void writeFile(String version, String key, JsonElement value, Path path) throws IOException {
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, version);
-        file.add(key, value);
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(file, path);
+        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
     }
 }

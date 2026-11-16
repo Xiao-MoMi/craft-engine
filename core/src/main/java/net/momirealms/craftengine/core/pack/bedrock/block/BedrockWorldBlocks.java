@@ -37,28 +37,22 @@ public final class BedrockWorldBlocks {
         this.models = new JavaBlockModelResolver(resources);
     }
 
-    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas) throws IOException {
-        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root);
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, JsonObject blockDefinitions) throws IOException {
+        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root, blockDefinitions);
     }
 
-    private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root) throws IOException {
+    private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root, JsonObject blockDefinitions) throws IOException {
         Map<String, List<WorldBlockSource>> groups = groupByVisualState(sources);
-        Path blockFile = root.resolve("blocks.json");
-        JsonObject blocks = Files.isRegularFile(blockFile) ? GsonHelper.readJsonObjectFromFile(blockFile) : new JsonObject();
         JsonArray entries = new JsonArray(groups.size());
         for (Map.Entry<String, List<WorldBlockSource>> group : groups.entrySet()) {
             try {
-                entries.add(this.writeGroup(group.getKey(), group.getValue(), blocks, root));
+                entries.add(this.writeGroup(group.getKey(), group.getValue(), blockDefinitions, root));
             } catch (UnsupportedOperationException exception) {
                 // 同一显示状态只能注册一套方块属性；跳过整组，避免其他状态误用首个状态的碰撞箱。
                 for (WorldBlockSource source : group.getValue()) {
                     TranslationManager.warn("resource_pack.bedrock.block.skipped", source.id().asString(), Integer.toString(source.stateIndex()), exception.getLocalizedMessage());
                 }
             }
-        }
-        if (!entries.isEmpty()) {
-            blocks.add(FORMAT_VERSION, VectorUtils.toJson(1, 1, 0));
-            GsonHelper.writeJsonFile(blocks, blockFile);
         }
         return entries;
     }

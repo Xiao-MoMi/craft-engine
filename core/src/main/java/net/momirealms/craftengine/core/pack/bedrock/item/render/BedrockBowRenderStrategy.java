@@ -1,6 +1,7 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
@@ -8,7 +9,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayer
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemBlocks;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
@@ -33,7 +34,7 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
                                              JavaModelResources resources,
                                              BedrockItemIconRenderer renderer,
                                              BedrockItemGenerationContext context) throws IOException {
-        if (plan.explicitViews() || !BedrockItemPresentation.hasUseConditions(plan.sharedRules())) {
+        if (!BedrockItemPresentation.hasUseConditions(plan.rulesByContext().get(ItemDisplayContext.GUI))) {
             return null;
         }
         int idle = plan.sharedModelIdleIndex();
@@ -45,8 +46,8 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
     }
 
     @Override
-    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
-        return Bedrock3DBowAttachables.bowPose(useScripts(entry.useBehavior()));
+    BedrockAttachablePose pose(ResolvedItemBinding entry) {
+        return BedrockBow3DAttachables.bowPose(useScripts(entry.useBehavior()));
     }
 
     @Override
@@ -55,7 +56,7 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
     }
 
     private static GeneratedItemVariant writeFlat(BedrockItemPresentation plan, int idle, JavaModelResolver models, BedrockItemIconRenderer renderer, BedrockItemGenerationContext context) throws IOException {
-        List<ItemBindingRule> rules = plan.sharedRules();
+        List<ItemBindingRule> rules = plan.rulesByContext().get(ItemDisplayContext.GUI);
         ItemBindingRule idleRule = rules.get(idle);
         // 待机变换也影响背包和掉落显示，交给默认方块路径，不能只改手持模型。
         if (!idleRule.transformations().isEmpty()) {
@@ -84,26 +85,26 @@ final class BedrockBowRenderStrategy extends BedrockItemRenderStrategy {
         }
         BedrockItemAttachables.writeBow(plan.id(), stages, idle, plan.item().useBehavior().maximumDuration().value(), context.root());
         context.playerAnimations().registerBow(plan.id());
-        return GeneratedItemVariant.icon(plan.id(), plan.variant().conditions(), stages.get(idle).texture(), true);
+        return GeneratedItemVariant.icon(plan.id(), plan.conditions(), stages.get(idle).texture(), true);
     }
 
     private static GeneratedItemVariant write3D(BedrockItemPresentation plan, int idle, JavaModelResources resources, BedrockItemGenerationContext context) throws IOException {
-        List<ItemBindingRule> rules = plan.sharedRules();
-        BedrockWeaponGeometry geometry = new BedrockWeaponGeometry(resources.models(), resources.textures());
-        List<Bedrock3DItemAttachables.Stage> stages = new ArrayList<>(rules.size());
+        List<ItemBindingRule> rules = plan.rulesByContext().get(ItemDisplayContext.GUI);
+        BedrockItemGeometryBuilder geometry = new BedrockItemGeometryBuilder(resources.models(), resources.textures());
+        List<BedrockItem3DAttachables.Stage> stages = new ArrayList<>(rules.size());
         ItemBindingRule idleRule = rules.get(idle);
-        BedrockItemBlocks.DisplayBlock display;
+        BedrockItemDisplayBlocks.DisplayBlock display;
         try {
             for (ItemBindingRule rule : rules) {
-                stages.add(geometry.createStage(rule, BedrockItemAttachables.useCondition(rule)));
+                stages.add(new BedrockItem3DAttachables.Stage(geometry.build(rule), BedrockItemAttachables.useCondition(rule)));
             }
             // 背包和掉落使用待机 display，手持几何不缩到方块范围。
             display = context.itemDisplayBlocks().write(plan.id(), List.of(idleRule), resources.models(), resources.textures(), context.root());
         } catch (BedrockResourceException exception) {
             return null;
         }
-        Bedrock3DBowAttachables.write(plan.id(), stages, geometry.materials(), plan.item().useBehavior().maximumDuration().value(), context.root());
+        BedrockBow3DAttachables.write(plan.id(), stages, geometry.materials(), plan.item().useBehavior().maximumDuration().value(), context.root());
         context.playerAnimations().registerBowUsingJavaPose(plan.id());
-        return GeneratedItemVariant.block(plan.id(), plan.variant().conditions(), display, true);
+        return GeneratedItemVariant.block(plan.id(), plan.conditions(), display, true);
     }
 }

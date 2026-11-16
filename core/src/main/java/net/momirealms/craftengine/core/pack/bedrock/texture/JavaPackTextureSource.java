@@ -74,7 +74,7 @@ public final class JavaPackTextureSource {
             int y = (int) ((1 - downfall * temperature) * 255);
             return this.grassColormap.getRGB(x, y) & 0xffffff;
         }
-        return WHITE;
+        throw new BedrockResourceException("resource_pack.bedrock.reason.tint_source", tint.get().get("type").getAsString());
     }
 
     @Nullable

@@ -37,7 +37,8 @@ public final class BedrockModelTransform {
         if (reference.equals(target)) {
             return IDENTITY;
         }
-        // display 作用于居中模型；转回 0..1 的模型坐标后，再与各部件的局部矩阵相乘。
+        // 公共 display 在外层应用，因此部件只需烘焙 reference⁻¹ × target。
+        // 两侧的 ±0.5 将居中 display 坐标转回 0..1 的模型坐标，再与部件局部矩阵相乘。
         Matrix4f relative = new Matrix4f().translation(0.5f, 0.5f, 0.5f)
                 .mul(displayMatrix(reference).invert())
                 .mul(displayMatrix(target))
@@ -59,10 +60,12 @@ public final class BedrockModelTransform {
     }
 
     public static float uniformScale(Matrix4fc matrix) {
+        // 三列分别是变换后的坐标轴；等长且两两垂直才是“旋转 + 等比缩放”，否则包含拉伸或错切。
         Vector3f x = new Vector3f(matrix.m00(), matrix.m01(), matrix.m02());
         Vector3f y = new Vector3f(matrix.m10(), matrix.m11(), matrix.m12());
         Vector3f z = new Vector3f(matrix.m20(), matrix.m21(), matrix.m22());
         float scale = x.length();
+        // 行列式必须为正，排除镜像反射；最后一行必须保持仿射形式，排除透视变换。
         if (!matrix.isFinite() || matrix.m03() != 0 || matrix.m13() != 0 || matrix.m23() != 0 || matrix.m33() != 1 || scale <= 0 || matrix.determinant3x3() <= 0) {
             throw new BedrockResourceException("resource_pack.bedrock.reason.affine_transform");
         }
@@ -87,6 +90,7 @@ public final class BedrockModelTransform {
                         8 * (1 - geometryScale),
                         -8 * geometryScale)
                 .scale(-16 * geometryScale, 16 * geometryScale, 16 * geometryScale);
+        // C × M × C⁻¹ 将 Java 局部变换换算到当前基岩几何坐标，不能把两套坐标下的矩阵直接相乘。
         Matrix4f matrix = new Matrix4f(coordinates).mul(transformation).mul(new Matrix4f(coordinates).invert());
         Quaternionf rotation = matrix.getUnnormalizedRotation(new Quaternionf());
         Matrix3d cubeRotation = new Matrix3d();

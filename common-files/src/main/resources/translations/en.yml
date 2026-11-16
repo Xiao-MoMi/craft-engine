@@ -350,6 +350,8 @@ resource_pack.bedrock.reason.affine_transform: "Model transformation requires an
 resource_pack.bedrock.reason.nonuniform_transform: "Non-uniform scale and shear in model transformations are not supported"
 resource_pack.bedrock.reason.head_texture: "Missing or invalid player head texture: <arg:0>"
 resource_pack.bedrock.item.variant_skipped: "Skipped Bedrock item variant <arg:0> for model <arg:1> at <arg:2>: <arg:3>"
+resource_pack.bedrock.item.condition_fallback: "Bedrock item <arg:0> in <arg:1> cannot evaluate <arg:2>; using its default state (false, select fallback, or numeric 0)."
+resource_pack.bedrock.reason.tint_source: "Dynamic tint source <arg:0> is not supported yet"
 resource_pack.bedrock.item.display_skipped: "Skipped the Bedrock display model for <arg:0> in context <arg:1>: <arg:2>"
 resource_pack.bedrock.item.armor_skipped: "Skipped the Bedrock armor for <arg:0> with equipment <arg:1>: <arg:2>"
 resource_pack.bedrock.sidebar.match: "A sidebar profile requires objective-id or title-contains."

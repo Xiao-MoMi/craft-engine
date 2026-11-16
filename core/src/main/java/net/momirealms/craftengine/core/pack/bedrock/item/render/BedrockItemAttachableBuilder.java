@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -9,12 +9,9 @@ import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
-
-final class BedrockItemAttachment {
+final class BedrockItemAttachableBuilder {
     static final String IN_HAND = "context.item_slot == 'main_hand' || context.item_slot == 'off_hand'";
 
     private final Key id;
@@ -28,7 +25,7 @@ final class BedrockItemAttachment {
     final JsonArray animate = new JsonArray();
     final JsonArray controllers = new JsonArray();
 
-    BedrockItemAttachment(Key id) {
+    BedrockItemAttachableBuilder(Key id) {
         this.id = id;
         this.resource = id.namespace() + '/' + id.value();
         this.prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
@@ -45,20 +42,20 @@ final class BedrockItemAttachment {
         this.controllers.add(GsonHelper.createObject(controller, new JsonPrimitive(IN_HAND)));
     }
 
-    Path controllerPath(Path root) {
-        return root.resolve("render_controllers/" + this.resource + ".render_controllers.json");
+    void writeStageController(Path root, JsonArray geometryFrames, JsonArray textureFrames) throws IOException {
+        String controller = "controller.render." + this.prefix;
+        BedrockItemAttachables.writeController(controller, geometryFrames, textureFrames, root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
+        // 没有匹配阶段时 ce_stage 为 -1，必须关闭控制器，避免数组取到错误模型。
+        this.controllers.add(GsonHelper.createObject(controller, new JsonPrimitive("(" + IN_HAND + ") && variable.ce_stage >= 0")));
     }
 
     void write(Path root, @Nullable JsonArray preAnimation) throws IOException {
-        JsonObject geometryFile = new JsonObject();
-        geometryFile.addProperty(FORMAT_VERSION, "1.16.0");
-        geometryFile.add("minecraft:geometry", this.geometries);
-        writeJson(geometryFile, root.resolve("models/entity/" + this.resource + ".geo.json"));
-
-        JsonObject animationFile = new JsonObject();
-        animationFile.addProperty(FORMAT_VERSION, preAnimation == null ? "1.8.0" : "1.10.0");
-        animationFile.add("animations", this.animations);
-        writeJson(animationFile, root.resolve("animations/" + this.resource + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson("1.16.0", "minecraft:geometry", this.geometries,
+                root.resolve("models/entity/" + this.resource + ".geo.json"));
+        // 仅引用原版动画的弩、矛没有本地动画定义，无需额外输出空文件。
+        if (!this.animations.isEmpty()) {
+            ResourcePackUtils.writeBedrockJson(preAnimation == null ? "1.8.0" : "1.10.0", "animations", this.animations, root.resolve("animations/" + this.resource + ".animation.json"));
+        }
 
         JsonObject description = new JsonObject();
         description.addProperty("identifier", this.id.asString());
@@ -76,14 +73,6 @@ final class BedrockItemAttachment {
         }
         description.add("scripts", scripts);
         description.add("render_controllers", this.controllers);
-        JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.10.0");
-        file.add("minecraft:attachable", GsonHelper.createObject("description", description));
-        writeJson(file, root.resolve("attachables/" + this.resource + ".attachable.json"));
-    }
-
-    static void writeJson(JsonObject json, Path path) throws IOException {
-        Files.createDirectories(path.getParent());
-        GsonHelper.writeJsonFile(json, path);
+        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:attachable", GsonHelper.createObject("description", description), root.resolve("attachables/" + this.resource + ".attachable.json"));
     }
 }

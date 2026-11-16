@@ -1,10 +1,10 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables.Material;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables.Stage;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItem3DAttachables.Stage;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
@@ -12,23 +12,23 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class Bedrock3DCrossbowAttachables {
+public final class BedrockCrossbow3DAttachables {
     private static final String USE_X = "ce_crossbow_use_x";
     private static final String USE_Y = "ce_crossbow_use_y";
     private static final String USE_Z = "ce_crossbow_use_z";
     private static final String CHARGE = "ce_crossbow_charge";
     private static final String AIM = "ce_crossbow_aim";
 
-    private Bedrock3DCrossbowAttachables() {
+    private BedrockCrossbow3DAttachables() {
     }
 
     static void write(Key id, List<Stage> stages, List<Material> materials, BedrockCrossbowStates.State state, ItemBehaviorDescription.Use use, Path root) throws IOException {
         JsonArray scripts = BedrockCrossbowStates.scripts(state, use);
-        BedrockEquipmentPose pose = pose(scripts, use, state.charged());
-        Bedrock3DItemAttachables.write(id, stages, materials, scripts, pose.bones(), pose.animations(), pose.animate(), root);
+        BedrockAttachablePose pose = pose(scripts, use, state.charged());
+        BedrockItem3DAttachables.write(id, stages, materials, scripts, pose.bones(), pose.animations(), pose.animate(), root);
     }
 
-    static BedrockEquipmentPose pose(JsonArray preAnimation, ItemBehaviorDescription.Use use, boolean chargedState) {
+    static BedrockAttachablePose pose(JsonArray preAnimation, ItemBehaviorDescription.Use use, boolean chargedState) {
         JsonArray bones = new JsonArray();
         bones.add(useBone(USE_X, "ce_slot"));
         bones.add(useBone(USE_Y, USE_X));
@@ -52,7 +52,7 @@ public final class Bedrock3DCrossbowAttachables {
             charged.addProperty("java_crossbow_charged", "context.is_first_person && context.item_slot == 'main_hand' && variable.attack_time < 0.001");
             animate.add(charged);
         }
-        return new BedrockEquipmentPose(preAnimation, bones, animations, animate, BedrockEquipmentPose.FIRST_PERSON_MAIN);
+        return new BedrockAttachablePose(preAnimation, bones, animations, animate, BedrockAttachablePose.FIRST_PERSON_MAIN);
     }
 
     private static JsonObject useBone(String name, String parent) {

@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -38,7 +38,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
                                              JavaModelResources resources,
                                              BedrockItemIconRenderer renderer,
                                              BedrockItemGenerationContext context) throws IOException {
-        ItemBindingRule inventory = plan.idleModels().get(ItemDisplayContext.GUI);
+        ItemBindingRule inventory = plan.idleRules().get(ItemDisplayContext.GUI);
         if (!inventory.transformations().isEmpty() || !(inventory.target() instanceof ItemRenderTarget.Model target)) {
             return null;
         }
@@ -49,7 +49,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
         Map<ItemBindingRule, StringBuilder> hands = new LinkedHashMap<>();
         for (ItemDisplayContext view : List.of(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.THIRD_PERSON_LEFT_HAND)) {
-            for (ItemBindingRule rule : plan.variant().rules().get(view)) {
+            for (ItemBindingRule rule : plan.rulesByContext().get(view)) {
                 if (rule.target() == ItemRenderTarget.Builtin.EMPTY) {
                     continue;
                 }
@@ -60,7 +60,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
                 if (!views.isEmpty()) {
                     views.append(" || ");
                 }
-                views.append('(').append(BedrockDisplayContextItems.equippedView(view).condition).append(')');
+                views.append('(').append(BedrockItemContextWriter.equippedView(view).condition).append(')');
             }
         }
         if (hands.isEmpty()) {
@@ -78,12 +78,12 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
         }
         String path = "textures/" + plan.id().namespace() + '/' + plan.id().value() + "/icon";
         ImageUtils.writePng(icon.image(), context.root().resolve(path + ".png"));
-        Bedrock2DSpearAttachables.write(plan, conditions, stages, context.root());
-        return GeneratedItemVariant.icon(plan.id(), plan.variant().conditions(), path, true);
+        BedrockSpear2DAttachables.write(plan, conditions, stages, context.root());
+        return GeneratedItemVariant.icon(plan.id(), plan.conditions(), path, true);
     }
 
     @Override
-    BedrockEquipmentPose pose(ResolvedItemBinding entry) throws IOException {
+    BedrockAttachablePose pose(ResolvedItemBinding entry) throws IOException {
         JsonArray bones = new JsonArray();
         String parent = "ce_slot";
         // Java 第三人称先应用突刺，再应用使用姿态；两组独立骨骼允许动作同时存在。
@@ -107,7 +107,7 @@ final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
         // Java 缓动公式在资源中显式计算，不能假定 Molang 同名函数与 Java 等价。
         scripts.addAll(source.getAsJsonArray("pre_animation"));
         JsonArray animate = source.getAsJsonArray("animate");
-        return new BedrockEquipmentPose(scripts, bones, source.getAsJsonObject("animations"), animate, BedrockEquipmentPose.HANDS);
+        return new BedrockAttachablePose(scripts, bones, source.getAsJsonObject("animations"), animate, BedrockAttachablePose.HANDS);
     }
 
     @Override

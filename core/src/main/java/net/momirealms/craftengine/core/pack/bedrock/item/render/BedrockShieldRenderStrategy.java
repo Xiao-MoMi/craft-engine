@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
@@ -32,11 +32,11 @@ final class BedrockShieldRenderStrategy extends BedrockItemRenderStrategy {
     }
 
     @Override
-    BedrockEquipmentPose pose(ResolvedItemBinding entry) {
+    BedrockAttachablePose pose(ResolvedItemBinding entry) {
         JsonArray scripts = new JsonArray();
         // Geyser 用 EMERGING 区分是哪只手在格挡。
         scripts.add("variable.ce_using_item = query.blocking && ((context.item_slot == 'main_hand' && !query.is_emerging) || (context.item_slot == 'off_hand' && query.is_emerging));");
-        return BedrockEquipmentPose.withoutBones(scripts);
+        return BedrockAttachablePose.withoutBones(scripts);
     }
 
     @Override

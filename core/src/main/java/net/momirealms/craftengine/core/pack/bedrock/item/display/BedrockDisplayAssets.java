@@ -6,19 +6,18 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.Bedrock3DItemAttachables;
-import net.momirealms.craftengine.core.pack.bedrock.item.equipment.BedrockWeaponGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
-import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -48,12 +47,16 @@ final class BedrockDisplayAssets {
         this.name = name;
     }
 
-    int add(List<BedrockItemDisplays.Part> parts) throws IOException {
-        BedrockWeaponGeometry mesh = new BedrockWeaponGeometry(this.resources.models(), this.resources.textures());
+    int add(List<BedrockItemDisplayGenerator.Part> parts) throws IOException {
+        if (parts.isEmpty()) {
+            // shape 0 会显示原物品；显式 empty 需要一个没有绘制控制器的独立 shape。
+            return ++this.shapes;
+        }
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures());
         List<JsonArray> partsCubes = new ArrayList<>(parts.size());
-        for (BedrockItemDisplays.Part part : parts) {
+        for (BedrockItemDisplayGenerator.Part part : parts) {
             ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
-            partsCubes.add((part.geometry() == null ? mesh.createStage(rule, "1", true) : mesh.createStage(rule, "1", true, part.geometry())).cubes());
+            partsCubes.add((part.geometry() == null ? mesh.build(rule, true) : mesh.build(rule, true, part.geometry())).cubes());
         }
         if (mesh.materials().isEmpty()) {
             return 0;
@@ -67,7 +70,7 @@ final class BedrockDisplayAssets {
             String geometry = "geometry." + this.name + "." + alias;
             JsonArray bones = rig();
             for (int i = 0; i < parts.size(); i++) {
-                JsonArray cubes = Bedrock3DItemAttachables.selectMaterialFaces(partsCubes.get(i), "layer" + layer);
+                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partsCubes.get(i), "layer" + layer);
                 if (!cubes.isEmpty()) {
                     addPart(bones, channels, i, parts.get(i), cubes);
                 }
@@ -80,7 +83,7 @@ final class BedrockDisplayAssets {
             file.add("bones", bones);
             geometries.add(file);
             this.geometryNames.addProperty(alias, geometry);
-            Bedrock3DItemAttachables.Material material = mesh.materials().get(layer);
+            BedrockItemGeometry.Material material = mesh.materials().get(layer);
             if (material.dyeColor() == null) {
                 this.addDraw(shape, layer, alias, material.data(), material.color(), DyePass.NONE);
             } else {
@@ -88,7 +91,7 @@ final class BedrockDisplayAssets {
                 this.addDyeMasks(shape, layer, alias, material.data(), bones);
             }
         }
-        this.write("models/entity/" + this.name + "/s" + shape + ".geo.json", "1.21.0", "minecraft:geometry", geometries);
+        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/s" + shape + ".geo.json"));
         if (!channels.isEmpty()) {
             String alias = "s" + shape;
             this.animation(alias, channels);
@@ -117,7 +120,7 @@ final class BedrockDisplayAssets {
         return bone;
     }
 
-    private static void addPart(JsonArray bones, JsonObject channels, int index, BedrockItemDisplays.Part part, JsonArray cubes) {
+    private static void addPart(JsonArray bones, JsonObject channels, int index, BedrockItemDisplayGenerator.Part part, JsonArray cubes) {
         // 物品几何的中心在 (0,8,0)，展示实体的原点在 (0,0,0)。
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
@@ -261,7 +264,7 @@ final class BedrockDisplayAssets {
         empty.add("bones", emptyBones);
         JsonArray geometries = new JsonArray();
         geometries.add(empty);
-        this.write("models/entity/" + this.name + "/empty.geo.json", "1.21.0", "minecraft:geometry", geometries);
+        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/empty.geo.json"));
         this.writeControllers();
         JsonObject held = new JsonObject();
         held.addProperty("geometry", "Geometry.empty");
@@ -313,7 +316,7 @@ final class BedrockDisplayAssets {
         description.add("animations", this.animationNames);
         description.add("scripts", BedrockDisplayInterpolation.scripts(this.animate));
         description.add("render_controllers", this.activeControllers);
-        this.write("entity/" + this.name + ".entity.json", "1.10.0", "minecraft:client_entity", createObject("description", description));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:client_entity", createObject("description", description), this.root.resolve("entity/" + this.name + ".entity.json"));
         JsonObject heldDescription = new JsonObject();
         heldDescription.addProperty("identifier", "craftengine:" + this.name + "_held");
         heldDescription.addProperty("enable_attachables", true);
@@ -344,9 +347,9 @@ final class BedrockDisplayAssets {
         JsonArray heldControllers = new JsonArray();
         heldControllers.add("controller.render.default");
         heldDescription.add("render_controllers", heldControllers);
-        this.write("entity/" + this.name + "_held.entity.json", "1.10.0", "minecraft:client_entity", createObject("description", heldDescription));
-        this.write("animations/" + this.name + ".animation.json", "1.10.0", "animations", this.animations);
-        this.write("render_controllers/" + this.name + ".json", "1.10.0", "render_controllers", this.controllers);
+        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:client_entity", createObject("description", heldDescription), this.root.resolve("entity/" + this.name + "_held.entity.json"));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "animations", this.animations, this.root.resolve("animations/" + this.name + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", this.controllers, this.root.resolve("render_controllers/" + this.name + ".json"));
     }
 
     private static JsonObject interpolatedVector(String channel, String group) {
@@ -371,15 +374,6 @@ final class BedrockDisplayAssets {
         animation.addProperty("loop", true);
         this.animationNames.addProperty(alias, id);
         this.animations.add(id, animation);
-    }
-
-    private void write(String path, String version, String key, JsonElement value) throws IOException {
-        JsonObject json = new JsonObject();
-        json.addProperty("format_version", version);
-        json.add(key, value);
-        Path output = this.root.resolve(path);
-        Files.createDirectories(output.getParent());
-        GsonHelper.writeJsonFile(json, output);
     }
 
     private static JsonObject displayColor(int shade) {

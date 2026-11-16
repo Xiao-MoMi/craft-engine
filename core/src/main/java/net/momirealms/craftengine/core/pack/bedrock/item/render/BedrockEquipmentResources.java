@@ -1,4 +1,4 @@
-package net.momirealms.craftengine.core.pack.bedrock.item.equipment;
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class BedrockArmorResources {
+final class BedrockEquipmentResources {
     private static final List<String> TRIM_PATTERNS = List.of(
             "bolt", "coast", "dune", "eye", "flow", "host", "raiser", "rib", "sentry",
             "shaper", "silence", "snout", "spire", "tide", "vex", "ward", "wayfinder", "wild"
@@ -32,7 +32,7 @@ final class BedrockArmorResources {
     private final Map<Key, JsonObject> definitions = new HashMap<>();
     private final Map<TextureKey, String> textures = new HashMap<>();
 
-    BedrockArmorResources(JavaModelResources resources) {
+    BedrockEquipmentResources(JavaModelResources resources) {
         this.resources = resources;
     }
 

@@ -74,6 +74,8 @@ public final class GeyserItemManager {
             Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
                 GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.extension.blockManager().displayBlocks());
+                skipped += converted.skipped();
+                failed += converted.failed();
                 JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
                 boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
                 for (CustomItemDefinition definition : converted.definitions()) {
