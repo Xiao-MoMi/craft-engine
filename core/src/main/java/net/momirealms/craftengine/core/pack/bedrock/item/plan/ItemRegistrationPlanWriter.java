@@ -137,6 +137,11 @@ public final class ItemRegistrationPlanWriter {
         if (variant.dyeColor() != null) {
             resources.addProperty(DYE_COLOR, variant.dyeColor());
         }
+        if (!variant.tintSources().isEmpty()) {
+            JsonObject sources = new JsonObject();
+            variant.tintSources().forEach((view, source) -> sources.addProperty(view.serializedName(), source));
+            resources.add("tint_sources", sources);
+        }
         resources.addProperty(ATTACHABLE, variant.attachable());
         resources.addProperty(GENERATED, variant.generated());
         return resources;

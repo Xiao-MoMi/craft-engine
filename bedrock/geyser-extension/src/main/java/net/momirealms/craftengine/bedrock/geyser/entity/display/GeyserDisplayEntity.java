@@ -38,7 +38,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
     private boolean dirty = true;
     private DisplayPose sent;
     private GeyserItemDisplays.Appearance sentAppearance;
-    private int dyeColor = -1;
+    private GeyserItemStack displayItem;
     private int sentDyeColor = -1;
     private float sentYaw;
     private float sentPitch;
@@ -70,7 +70,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.dirty = true;
         ItemData translated = stack == null || stack.getAmount() <= 0 ? ItemData.AIR : ItemTranslator.translateToBedrock(this.session, stack);
         this.model = this.displays.resolve(translated);
-        this.dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
+        this.displayItem = GeyserItemStack.from(this.session, stack);
         this.equipment = ItemData.AIR;
         this.heldItemType = BedrockHeldItemType.NATIVE;
         if (this.model == null && translated != ItemData.AIR
@@ -79,9 +79,6 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
             if (this.model != null && this.model.appearance(0).shape() == 0) {
                 this.equipment = translated;
                 this.heldItemType = GeyserHeldItemTypes.resolve(translated, this.session.getItemMappings().getMapping(stack).isBlock());
-            }
-            if (this.model != null) {
-                this.dyeColor = GeyserDyeProperties.color(GeyserItemStack.from(this.session, stack));
             }
         }
     }
@@ -94,7 +91,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
     void block(int stateId) {
         this.dirty = true;
         this.context = 0;
-        this.dyeColor = -1;
+        this.displayItem = null;
         this.equipment = ItemData.AIR;
         this.heldItemType = BedrockHeldItemType.NATIVE;
         BlockState state = BlockState.of(stateId);
@@ -156,6 +153,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.dirty = false;
         this.updateEquipment(false);
         GeyserItemDisplays.Appearance appearance = this.model == null ? GeyserItemDisplays.Appearance.EMPTY : this.model.appearance(this.context);
+        int dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(this.displayItem, appearance.customModelDataColorIndex());
         boolean changeCarrier = this.model != null && this.carrier != this.model.carrier();
         if (changeCarrier) {
             this.carrier = this.model.carrier();
@@ -166,15 +164,15 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         float renderYaw = this.billboard == 1 || this.billboard == 3 ? this.session.getPlayerEntity().getYaw() + 180 : this.yaw;
         float renderPitch = this.billboard == 2 || this.billboard == 3 ? -this.session.getPlayerEntity().getPitch() : this.pitch;
         boolean heldItemChanged = changeCarrier || this.heldItemType != this.sentHeldItemType;
-        if (!interpolationChanged && !changeCarrier && !heldItemChanged && pose.equals(this.sent) && appearance == this.sentAppearance && this.dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
+        if (!interpolationChanged && !changeCarrier && !heldItemChanged && pose.equals(this.sent) && appearance == this.sentAppearance && dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
             return;
         }
         DisplayPose previous = changeCarrier ? null : this.sent;
         boolean modelChanged = changeCarrier || appearance != this.sentAppearance;
-        boolean dyeChanged = changeCarrier || this.sent == null || this.dyeColor != this.sentDyeColor;
+        boolean dyeChanged = changeCarrier || this.sent == null || dyeColor != this.sentDyeColor;
         int interpolation = interpolationChanged ? this.transform.consume(!this.valid || changeCarrier || this.sent == null) : -1;
         this.updatePropertiesBatched(batch -> {
-            this.carrier.write(batch, pose, previous, appearance, modelChanged, this.dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay());
+            this.carrier.write(batch, pose, previous, appearance, modelChanged, dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay());
             if (heldItemChanged) {
                 this.carrier.heldItemType(batch, this.heldItemType);
             }
@@ -182,7 +180,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.sent = pose;
         this.sentAppearance = appearance;
         this.sentHeldItemType = this.heldItemType;
-        this.sentDyeColor = this.dyeColor;
+        this.sentDyeColor = dyeColor;
         this.sentYaw = renderYaw;
         this.sentPitch = renderPitch;
         if (changeCarrier && this.valid) {

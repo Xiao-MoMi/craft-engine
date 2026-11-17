@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.pack;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.api.event.AsyncExternalItemModelsCollectEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackCacheEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackPrepareEvent;
@@ -11,9 +12,13 @@ import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.PackCacheData;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
+import net.momirealms.craftengine.core.plugin.compatibility.ModelProvider;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanGenerator;
@@ -35,7 +40,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public final class BukkitPackManager extends AbstractPackManager implements Listener {
@@ -48,11 +55,21 @@ public final class BukkitPackManager extends AbstractPackManager implements List
 
     @Override
     protected ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException {
+        AsyncExternalItemModelsCollectEvent event = new AsyncExternalItemModelsCollectEvent(pack.version());
+        EventUtils.fireAndForget(event);
+        Map<String, List<ExternalItemModel>> externalModels = event.freeze();
+        List<ExternalItemModel> configuredModels = Config.bedrockExternalItemModels();
+        if (!configuredModels.isEmpty()) {
+            externalModels = new HashMap<>(externalModels);
+            externalModels.put("config.yml:bedrock.external-item-models", configuredModels);
+        }
         return ItemRegistrationPlanGenerator.generate(
                 pack,
                 this.plugin.itemManager().loadedItems().values(),
                 new BukkitItemBehaviorReader(),
-                new BukkitItemRegistrationReader()
+                new BukkitItemRegistrationReader(),
+                externalModels,
+                key -> this.plugin.itemManager().getVanillaItem(key).map(item -> item.buildItem(ItemBuildContext.empty(), 1)).orElse(null)
         );
     }
 
@@ -64,6 +81,18 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     @Override
     protected List<WorldBlockSource> collectGeyserWorldBlockSources() {
         return BukkitWorldBlockSources.collect(this.plugin.blockManager().loadedBlocks().values());
+    }
+
+    @Override
+    protected List<NativeModelSource> collectGeyserNativeModels() throws IOException {
+        List<NativeModelSource> sources = new ArrayList<>();
+        for (String name : List.of("better_model", "model_engine")) {
+            ModelProvider provider = this.plugin.compatibilityManager().getModelProvider(name);
+            if (provider != null) {
+                sources.addAll(provider.bedrockModels());
+            }
+        }
+        return sources;
     }
 
     @Override

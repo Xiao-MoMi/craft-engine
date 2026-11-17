@@ -100,6 +100,9 @@ public final class BedrockItemDisplayGenerator {
         result.addProperty("identifier", "craftengine:" + name);
         result.add("items", items);
         result.add("appearances", appearances);
+        if (!assets.customModelDataColors().isEmpty()) {
+            result.add("custom_model_data_colors", assets.customModelDataColors());
+        }
         return result;
     }
 

@@ -11,6 +11,8 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
@@ -33,7 +35,7 @@ public final class BedrockDyedItem {
         for (ItemBindingRule rule : rules) {
             if (rule.target() instanceof ItemRenderTarget.Model model) {
                 for (Tint tint : model.tints()) {
-                    if (tint instanceof SimpleDefaultTint source && source.type().equals(DYE)) {
+                    if (tint instanceof CustomModelDataTint || (tint instanceof SimpleDefaultTint source && source.type().equals(DYE))) {
                         return true;
                     }
                 }
@@ -72,7 +74,7 @@ public final class BedrockDyedItem {
                                                  BedrockItemGenerationContext context,
                                                  DisplayPosition view,
                                                  int defaultColor) throws IOException {
-        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(resources.models(), resources.textures());
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(resources.models(), resources.textures(), TextureUsage.ITEM, true);
         BedrockDyedItemIcon icon = new BedrockDyedItemIcon(Config.bedrockItemIconSize());
         for (ItemBindingRule part : parts) {
             BedrockItemGeometry geometry = mesh.build(part, true);
@@ -84,7 +86,11 @@ public final class BedrockDyedItem {
     }
 
     public static String colorScript() {
-        return "variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + handColor(OFF_HAND_DYE) + ") : (context.item_slot == 'main_hand' ? (" + handColor(MAIN_HAND_DYE) + ") : -1);";
+        return "variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + viewColor(OFF_HAND_DYE) + ") : (context.item_slot == 'main_hand' ? (" + viewColor(MAIN_HAND_DYE) + ") : -1);";
+    }
+
+    private static String viewColor(String property) {
+        return "context.is_first_person ? (" + handColor(property) + ") : (" + handColor(property + "_third") + ")";
     }
 
     private static String handColor(String property) {

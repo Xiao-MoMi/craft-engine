@@ -24,16 +24,18 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null);
     private final SidebarProfiles scoreboard;
     private final JsonObject items;
     private final boolean convertText;
     private final JsonObject blocks;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
+    private final JsonObject nativeModels;
 
-    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard) {
+    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard, @Nullable JsonObject nativeModels) {
         this.scoreboard = scoreboard;
+        this.nativeModels = nativeModels;
         this.items = items;
         JsonObject displays = items == null ? null : items.getAsJsonObject("item_displays");
         this.convertText = displays != null && displays.has("convert_text") && displays.get("convert_text").getAsBoolean();
@@ -51,7 +53,8 @@ public final class GeyserExtensionData {
             JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK);
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
-            return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)));
+            return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
+                    readJson(archive, BedrockPackLayout.NATIVE_MODELS));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
         }
@@ -103,5 +106,9 @@ public final class GeyserExtensionData {
 
     public GeyserLanguageData languages() {
         return this.languages;
+    }
+
+    public JsonObject nativeModels() {
+        return this.nativeModels;
     }
 }

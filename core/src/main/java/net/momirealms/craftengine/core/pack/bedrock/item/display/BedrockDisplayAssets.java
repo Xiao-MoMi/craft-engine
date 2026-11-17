@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
@@ -34,6 +36,7 @@ final class BedrockDisplayAssets {
     private final Path root;
     private final String name;
     private final JsonObject textures = new JsonObject();
+    private final JsonObject customModelDataColors = new JsonObject();
     private final JsonObject geometryNames = new JsonObject();
     private final JsonObject animations = new JsonObject();
     private final JsonObject animationNames = new JsonObject();
@@ -55,21 +58,41 @@ final class BedrockDisplayAssets {
         return this.add(parts, TextureUsage.ITEM);
     }
 
+    JsonObject customModelDataColors() {
+        return this.customModelDataColors;
+    }
+
     int add(List<BedrockItemDisplayGenerator.Part> parts, TextureUsage textureUsage) throws IOException {
         if (parts.isEmpty()) {
             // shape 0 会显示原物品；显式 empty 需要一个没有绘制控制器的独立 shape。
             return ++this.shapes;
         }
-        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), textureUsage);
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), textureUsage, true);
         List<BedrockItemGeometry> partsCubes = new ArrayList<>(parts.size());
-        for (BedrockItemDisplayGenerator.Part part : parts) {
-            ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
-            partsCubes.add(part.geometry() == null ? mesh.build(rule, true) : mesh.build(rule, true, part.geometry()));
+        try {
+            for (BedrockItemDisplayGenerator.Part part : parts) {
+                ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
+                partsCubes.add(part.geometry() == null ? mesh.build(rule, true) : mesh.build(rule, true, part.geometry()));
+            }
+        } catch (BedrockResourceException exception) {
+            if (!"resource_pack.bedrock.reason.tint_source".equals(exception.getMessage())) {
+                throw exception;
+            }
+            TranslationManager.warn("resource_pack.bedrock.item.tint_fallback", parts.getFirst().target().model().asString(), "display_entity");
+            mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), textureUsage);
+            partsCubes.clear();
+            for (BedrockItemDisplayGenerator.Part part : parts) {
+                ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");
+                partsCubes.add(part.geometry() == null ? mesh.build(rule, false) : mesh.build(rule, false, part.geometry()));
+            }
         }
         if (mesh.materials().isEmpty()) {
             return 0;
         }
         int shape = ++this.shapes;
+        if (mesh.customModelDataColorIndex() >= 0) {
+            this.customModelDataColors.addProperty(Integer.toString(shape), mesh.customModelDataColorIndex());
+        }
         String condition = "query.property('craftengine:shape') == " + shape;
         JsonObject channels = new JsonObject();
         JsonArray geometries = new JsonArray();

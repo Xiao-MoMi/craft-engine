@@ -11,6 +11,8 @@ import net.momirealms.craftengine.core.item.network.encrypt.ChaCha20;
 import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
 import net.momirealms.craftengine.core.item.network.encrypt.Xor;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.pack.ExternalItemModel;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarConfig;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.HttpClientManager;
@@ -303,6 +305,9 @@ public final class Config {
 
     private boolean bedrock$enable = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
+    private List<ExternalItemModel> bedrock$external_item_models = List.of();
+    private BedrockModelIntegration bedrock$integrations$bettermodel = BedrockModelIntegration.DISABLED;
+    private BedrockModelIntegration bedrock$integrations$modelengine = BedrockModelIntegration.DISABLED;
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private boolean bedrock$display_entity$convert_text = true;
@@ -400,8 +405,6 @@ public final class Config {
 
     static YamlUpgradePipeline mainConfigUpgradePipeline() {
         return yamlUpgradeBuilder()
-                .addPatch(version -> Integer.parseInt(version) < 126, patch -> patch.relocate(
-                        YamlUtils.route("bedrock.display.convert-text"), YamlUtils.route("bedrock.display-entity.convert-text")))
                 .updateComments(true)
                 .deleteRemovedNodes(true)
                 .build();
@@ -798,6 +801,12 @@ public final class Config {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
+        this.bedrock$external_item_models = config.getList("bedrock.external-item-models", value -> {
+            ConfigSection section = value.getAsSection();
+            return new ExternalItemModel(section.getNonNullIdentifier("base-item"), section.getNonNullIdentifier("item-model"));
+        });
+        this.bedrock$integrations$bettermodel = config.getEnum("bedrock.integrations.bettermodel", BedrockModelIntegration.class, BedrockModelIntegration.DISABLED);
+        this.bedrock$integrations$modelengine = config.getEnum("bedrock.integrations.modelengine", BedrockModelIntegration.class, BedrockModelIntegration.DISABLED);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$display_entity$convert_text = config.getBoolean("bedrock.display-entity.convert-text", true);
@@ -1765,6 +1774,18 @@ public final class Config {
 
     public static Set<Key> bedrockVanillaDisplayItems() {
         return instance.bedrock$display_entity$vanilla_items;
+    }
+
+    public static List<ExternalItemModel> bedrockExternalItemModels() {
+        return instance.bedrock$external_item_models;
+    }
+
+    public static BedrockModelIntegration bedrockBetterModelIntegration() {
+        return instance.bedrock$integrations$bettermodel;
+    }
+
+    public static BedrockModelIntegration bedrockModelEngineIntegration() {
+        return instance.bedrock$integrations$modelengine;
     }
 
     public static List<String> bedrockVanillaDisplayBlocks() {

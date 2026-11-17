@@ -21,6 +21,7 @@ import java.util.function.BiPredicate;
 public final class CustomPackets {
     public static final int PROTOCOL_VERSION = 1;
     public static final BiPredicate<NetWorkUser, Key> ALWAYS_ALLOWED = (user, key) -> true;
+    public static final ClientCustomPacketType<ClientboundNativeModelPacket> NATIVE_MODEL = Config.bedrockEnabled() ? registerClientbound(ClientboundNativeModelPacket.ID, ClientboundNativeModelPacket.CODEC, ALWAYS_ALLOWED, false) : null;
     public static final ClientCustomPacketType<ClientboundBedrockHandshakePacket> BEDROCK_HANDSHAKE_REQUEST = Config.bedrockEnabled() ? registerClientbound(ClientboundBedrockHandshakePacket.ID, ClientboundBedrockHandshakePacket.CODEC, ALWAYS_ALLOWED, false) : null;
     public static final ClientCustomPacketType<ClientboundLightPacket> LIGHT = registerClientbound(ClientboundLightPacket.ID, ClientboundLightPacket.CODEC, ALWAYS_ALLOWED, true);
     public static final ClientCustomPacketType<ClientboundVisualBlockStateBatchStartPacket> VISUAL_BLOCK_STATE_BATCH_START = registerClientbound(ClientboundVisualBlockStateBatchStartPacket.ID, ClientboundVisualBlockStateBatchStartPacket.CODEC, false);

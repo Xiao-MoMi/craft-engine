@@ -349,6 +349,7 @@ resource_pack.bedrock.reason.display_scale: "Display scale is outside the Bedroc
 resource_pack.bedrock.reason.affine_transform: "Model transformation requires a finite affine matrix (perspective is not supported)"
 resource_pack.bedrock.reason.nonuniform_transform: "This compact geometry path requires positive uniform scale"
 resource_pack.bedrock.reason.head_texture: "Missing or invalid player head texture: <arg:0>"
+resource_pack.bedrock.item.tint_fallback: "Item <arg:0> uses multiple dynamic tint sources in <arg:1>; using each material's default color."
 resource_pack.bedrock.item.variant_skipped: "Skipped Bedrock item variant <arg:0> for model <arg:1> at <arg:2>: <arg:3>"
 resource_pack.bedrock.item.condition_fallback: "Bedrock item <arg:0> in <arg:1> cannot evaluate <arg:2>; using its default state (false, select fallback, or numeric 0)."
 resource_pack.bedrock.reason.tint_source: "Dynamic tint source <arg:0> is not supported yet"

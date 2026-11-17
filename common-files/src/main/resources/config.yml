@@ -809,6 +809,31 @@ client-optimization:
 
 bedrock:
   enable: true
+  # Register external item models for Bedrock conversion without defining CE items.
+  # base-item: the vanilla item type used by the item stack.
+  # item-model: its minecraft:item_model component, not a path under assets/<namespace>/models/.
+  # The item definition (assets/<namespace>/items/<path>.json) and its dependencies
+  # must be included in the merged Java resource pack.
+  # Example:
+  # external-item-models:
+  #   - base-item: minecraft:paper
+  #     item-model: myplugin:example
+  external-item-models: []
+  # Bedrock model rendering. Choose per plugin; no automatic fallback.
+  #
+  # disabled       - No automatic model support
+  # display_entity - Server-driven bone poses; better for dynamic effects, but more entities
+  #                  and usually a larger pack.
+  # custom_entity  - Native model + client animations; fewer entities, often a smaller pack.
+  #                  Requires .bbmodel files with embedded PNGs; server bone calculations remain.
+  #
+  # custom_entity supports: play/stop/loop/hold, bone visibility, scale, whole-model tint/hurt.
+  # Not faithfully synced: speed changes, seeking, blending, procedural bones (tracking/aiming/IK).
+  # Use display_entity for these effects. Pack size varies; tint uses color-layer approximation.
+  # After switching: reload CE config -> rebuild pack/data -> restart Geyser -> reconnect.
+  integrations:
+    bettermodel: disabled
+    modelengine: disabled
   scoreboard:
     # Match an existing sidebar to image decorations and a horizontal offset.
     #

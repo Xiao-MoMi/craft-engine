@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
+import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
@@ -44,6 +45,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserItemManager itemManager;
     private GeyserExtensionData extensionData;
     private GeyserCustomPayloads customPayloads;
+    private GeyserNativeModels nativeModels;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
@@ -66,6 +68,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemManager = new GeyserItemManager(this);
         try {
             this.extensionData = GeyserExtensionData.read(this.dataFile());
+            this.nativeModels = new GeyserNativeModels(this.extensionData.nativeModels());
             this.languageManager.load(this.extensionData.languages());
             this.glyphManager.load(this.extensionData.glyphs());
         } catch (IOException exception) {
@@ -102,6 +105,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
+        this.nativeModels.disconnect((GeyserSession) event.connection());
         this.playerManager.remove(event.connection());
     }
 
@@ -144,11 +148,13 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDefineEntities(GeyserDefineEntitiesEvent event) {
+        this.nativeModels.register(event);
         this.itemDisplays.registerEntities(this.extensionData.items(), event);
     }
 
     @Subscribe
     public void onDefineEntityProperties(GeyserDefineEntityPropertiesEvent event) {
+        this.nativeModels.properties(event);
         this.itemDisplays.properties(event);
         this.itemManager.registerProperties(event);
     }
@@ -217,5 +223,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserCustomPayloads customPayloads() {
         return this.customPayloads;
+    }
+
+    public GeyserNativeModels nativeModels() {
+        return this.nativeModels;
     }
 }

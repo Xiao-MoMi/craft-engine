@@ -5,12 +5,16 @@ import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundHar
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ServerboundBedrockHandshakePacket;
 import net.momirealms.craftengine.bedrock.network.codec.PacketCodec;
 
+import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundNativeModelPacket;
+import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public final class GeyserCustomPackets {
     private static final Map<String, ClientCustomPacketType<?>> CLIENTBOUND = new HashMap<>();
     private static final Map<String, ServerCustomPacketType<?>> SERVERBOUND = new HashMap<>();
+    public static final ClientCustomPacketType<ClientboundNativeModelPacket> NATIVE_MODEL = registerClientbound(NativeModelPayload.CHANNEL, ClientboundNativeModelPacket.CODEC);
     public static final ClientCustomPacketType<ClientboundHardHitboxPacket> HARD_HITBOX = registerClientbound(ClientboundHardHitboxPacket.ID, ClientboundHardHitboxPacket.CODEC);
     public static final ClientCustomPacketType<ClientboundBedrockHandshakePacket> BEDROCK_HANDSHAKE_REQUEST = registerClientbound(ClientboundBedrockHandshakePacket.ID, ClientboundBedrockHandshakePacket.CODEC);
     public static final ServerCustomPacketType<ServerboundBedrockHandshakePacket> BEDROCK_HANDSHAKE = registerServerbound(ServerboundBedrockHandshakePacket.ID, ServerboundBedrockHandshakePacket.class, ServerboundBedrockHandshakePacket.CODEC);

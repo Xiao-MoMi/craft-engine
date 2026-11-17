@@ -17,6 +17,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisp
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelAssets;
+import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
@@ -40,6 +42,10 @@ public final class BedrockPackGenerator {
     }
 
     public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path packOutput, Path dataOutput) throws IOException {
+        generate(resources, plan, blocks, List.of(), packOutput, dataOutput);
+    }
+
+    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels, Path packOutput, Path dataOutput) throws IOException {
         Path packDestination = packOutput.toAbsolutePath().normalize();
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
         Files.createDirectories(packDestination.getParent());
@@ -76,6 +82,7 @@ public final class BedrockPackGenerator {
             // 容器
             BedrockGuiGenerator.write(resources, root);
             BedrockSidebarGenerator.write(resources, root);
+            NativeModelAssets.write(nativeModels, root, Config.bedrockDisplayDyeMaxLayers());
 
             BedrockResourceSharing.share(root);
             BedrockDefinitionBundler.bundle(root, Config.bedrockMaxDefinitionsPerFile());

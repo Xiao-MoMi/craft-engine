@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.GrassTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
@@ -49,6 +50,9 @@ public final class JavaPackTextureSource {
     public Integer resolveTint(Tint tint) throws IOException {
         if (tint instanceof ConstantTint constant) {
             return rgb(constant.value());
+        }
+        if (tint instanceof CustomModelDataTint custom) {
+            return custom.value() == null ? WHITE : rgb(custom.value());
         }
         Integer dye = this.dyeColor(tint);
         if (dye != null) {

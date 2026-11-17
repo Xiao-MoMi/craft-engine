@@ -19,7 +19,7 @@ import java.util.BitSet;
 
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
-record DisplayDyeMasks(TextureData texture, BitSet coverage) {
+public record DisplayDyeMasks(TextureData texture, BitSet coverage) {
 
     static DisplayDyeMasks from(TextureData texture, JsonArray bones) {
         int width = texture.image().getWidth();
@@ -61,6 +61,10 @@ record DisplayDyeMasks(TextureData texture, BitSet coverage) {
     }
 
     Int2ObjectMap<JsonArray> write(String prefix, String directory, JsonObject textures, Path root) throws IOException {
+        return this.write(prefix, directory, textures, root, Config.bedrockDisplayDyeMaxLayers());
+    }
+
+    public Int2ObjectMap<JsonArray> write(String prefix, String directory, JsonObject textures, Path root, int maxLayers) throws IOException {
         int width = this.texture.image().getWidth();
         int height = this.texture.image().getHeight();
         int[] source = new int[width * height];
@@ -74,7 +78,7 @@ record DisplayDyeMasks(TextureData texture, BitSet coverage) {
                 }
             }
         });
-        Int2IntMap palette = DisplayDyePalette.group(frequencies, Config.bedrockDisplayDyeMaxLayers());
+        Int2IntMap palette = DisplayDyePalette.group(frequencies, maxLayers);
         Int2ObjectMap<JsonArray> frames = new Int2ObjectRBTreeMap<>();
         for (int shade : palette.values()) {
             if (!frames.containsKey(shade)) {

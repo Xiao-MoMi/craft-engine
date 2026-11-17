@@ -41,6 +41,7 @@ dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.byte.buddy)
+    testImplementation(libs.paper.api)
     testImplementation(project(":core"))
     testCompileOnly(project(":bukkit:proxy"))
     testRuntimeOnly(libs.junit.platform.launcher)

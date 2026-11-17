@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class ItemRegistrationPlanGenerator {
 
@@ -24,7 +26,16 @@ public final class ItemRegistrationPlanGenerator {
                                                 Collection<ItemDefinition> items,
                                                 ItemBehaviorReader behaviorReader,
                                                 ItemRegistrationReader registrationReader) throws IOException {
-        Map<Key, ItemModelDefinitionBinding> definitions = ItemModelBindingCompiler.compile(pack);
+        return generate(pack, items, behaviorReader, registrationReader, Map.of(), ignored -> null);
+    }
+
+    public static ItemRegistrationPlan generate(JavaResourcePack pack,
+                                                Collection<ItemDefinition> items,
+                                                ItemBehaviorReader behaviorReader,
+                                                ItemRegistrationReader registrationReader,
+                                                Map<String, List<ExternalItemModel>> externalModels,
+                                                Function<Key, Item> itemFactory) throws IOException {
+        Function<Key, ItemModelDefinitionBinding> definitions = ItemModelBindingCompiler.lazy(pack);
         ItemBindingResolver resolver = new ItemBindingResolver(definitions, behaviorReader, registrationReader);
 
         // 保一下注册顺序
@@ -45,6 +56,9 @@ public final class ItemRegistrationPlanGenerator {
                 TranslationManager.warn("resource_pack.bedrock.item.binding", definition.id().asString(), definition.material().asString(), t.toString());
             }
         }
-        return new ItemRegistrationPlan(entries);
+        if (!externalModels.isEmpty()) {
+            ExternalItemModelBindings.append(entries, definitions, externalModels, itemFactory, behaviorReader, registrationReader);
+        }
+        return new ItemRegistrationPlan(List.copyOf(entries));
     }
 }

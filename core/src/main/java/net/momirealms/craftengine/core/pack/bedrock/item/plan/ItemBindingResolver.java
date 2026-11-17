@@ -8,13 +8,20 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Function;
 
 public final class ItemBindingResolver {
-    private final Map<Key, ItemModelDefinitionBinding> definitions;
+    private final Function<Key, ItemModelDefinitionBinding> definitions;
     private final ItemBehaviorReader behaviorReader;
     private final ItemRegistrationReader registrationReader;
 
     public ItemBindingResolver(Map<Key, ItemModelDefinitionBinding> definitions,
+                               ItemBehaviorReader behaviorReader,
+                               ItemRegistrationReader registrationReader) {
+        this(definitions::get, behaviorReader, registrationReader);
+    }
+
+    public ItemBindingResolver(Function<Key, ItemModelDefinitionBinding> definitions,
                                ItemBehaviorReader behaviorReader,
                                ItemRegistrationReader registrationReader) {
         this.definitions = definitions;
@@ -31,7 +38,7 @@ public final class ItemBindingResolver {
         Key itemModel = VersionHelper.isOrAbove1_21_2
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
-        ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.get(itemModel);
+        ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.apply(itemModel);
         ItemBehaviorDescription behavior = this.behaviorReader.read(serverItem, clientItem);
         ItemRegistrationProperties properties = this.registrationReader.read(clientItem, behavior);
         Key headTexture = properties.headTexture();

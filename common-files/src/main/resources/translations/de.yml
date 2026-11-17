@@ -349,6 +349,7 @@ resource_pack.bedrock.reason.display_scale: "Anzeigeskalierung für <arg:0> lieg
 resource_pack.bedrock.reason.affine_transform: "Die Modelltransformation erfordert eine endliche affine Matrix (Perspektive wird nicht unterstützt)"
 resource_pack.bedrock.reason.nonuniform_transform: "Dieser kompakte Geometriepfad erfordert eine positive gleichmäßige Skalierung"
 resource_pack.bedrock.reason.head_texture: "Fehlende oder ungültige Spielerkopftextur: <arg:0>"
+resource_pack.bedrock.item.tint_fallback: "Item <arg:0> uses multiple dynamic tint sources in <arg:1>; using each material's default color."
 resource_pack.bedrock.item.variant_skipped: "Die Bedrock-Gegenstandsvariante <arg:0> für Modell <arg:1> an Position <arg:2> wurde übersprungen: <arg:3>"
 resource_pack.bedrock.item.display_skipped: "Das Bedrock-Anzeigemodell für <arg:0> im Kontext <arg:1> wurde übersprungen: <arg:2>"
 resource_pack.bedrock.item.armor_skipped: "Die Bedrock-Rüstung für <arg:0> mit Ausrüstung <arg:1> wurde übersprungen: <arg:2>"

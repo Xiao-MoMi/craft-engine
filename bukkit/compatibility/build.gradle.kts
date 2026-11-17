@@ -25,6 +25,7 @@ dependencies {
     adventure(project)
 
     compileOnly(project(":core"))
+    compileOnly(project(":bedrock"))
     compileOnly(project(":bukkit"))
     compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))

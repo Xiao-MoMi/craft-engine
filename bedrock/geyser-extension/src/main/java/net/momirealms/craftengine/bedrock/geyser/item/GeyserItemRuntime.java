@@ -29,6 +29,7 @@ public final class GeyserItemRuntime {
     private final ItemMappings originalMappings;
     private ItemMappings boundMappings;
     private GeyserSelectedItemHandler selectedHandler;
+    private GeyserItemTints tints = new GeyserItemTints(Map.of());
 
     GeyserItemRuntime(GeyserSession session, Set<String> selectedItems) {
         this.session = session;
@@ -36,7 +37,7 @@ public final class GeyserItemRuntime {
         this.selectedItems = selectedItems;
     }
 
-    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers) {
+    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers, Map<String, Map<String, Integer>> tintSources) {
         GeyserSession session = player.session();
         Set<String> selectedModels = new HashSet<>();
         for (CustomItemDefinition definition : definitions.values()) {
@@ -51,6 +52,7 @@ public final class GeyserItemRuntime {
             }
         }
         GeyserItemRuntime runtime = new GeyserItemRuntime(session, selectedItems);
+        runtime.tints = new GeyserItemTints(tintSources);
         if (!definitions.isEmpty()) {
             session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
         }
@@ -119,6 +121,26 @@ public final class GeyserItemRuntime {
     String dimension() {
         Object world = GeyserSessionProxy.INSTANCE.worldName(this.session);
         return world == null ? null : world.toString();
+    }
+
+    GeyserItemTints tints() {
+        return this.tints;
+    }
+
+    public int handColor(GeyserItemStack stack, boolean offhand, boolean firstPerson, boolean selected) {
+        if (stack == null || stack.isEmpty()) {
+            return -1;
+        }
+        return this.handColor(stack, this.handItem(stack, selected), offhand, firstPerson);
+    }
+
+    ItemData handItem(GeyserItemStack stack, boolean selected) {
+        return selected ? this.selected(stack) : stack.getItemData(this.session);
+    }
+
+    int handColor(GeyserItemStack stack, ItemData item, boolean offhand, boolean firstPerson) {
+        String view = (firstPerson ? "firstperson_" : "thirdperson_") + (offhand ? "lefthand" : "righthand");
+        return this.tints.color(stack, item, view);
     }
 
     boolean hasSelected(ItemData item) {

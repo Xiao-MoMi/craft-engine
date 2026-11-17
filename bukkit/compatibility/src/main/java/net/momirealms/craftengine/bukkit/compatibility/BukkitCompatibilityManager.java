@@ -16,9 +16,13 @@ import net.momirealms.craftengine.bukkit.compatibility.legacy.slimeworld.LegacyS
 import net.momirealms.craftengine.bukkit.compatibility.leveler.LevelerBridgeLeveler;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelBlockEntityElementConfig;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelFurnitureElementConfig;
+import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelItemModels;
+import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelNativeBridge;
 import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelProvider;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineBlockEntityElementConfig;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineFurnitureElementConfig;
+import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineItemModels;
+import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineNativeBridge;
 import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineProvider;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicItemDropListener;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMechanicListener;
@@ -215,6 +219,8 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
                 BukkitBlockEntityElementConfigs.register(Key.ce("better_model"), new BetterModelBlockEntityElementConfig.Factory());
                 BukkitFurnitureElementConfigs.register(Key.ce("better_model"), BetterModelFurnitureElementConfig.FACTORY);
                 registerModelProvider(new BetterModelProvider());
+                Bukkit.getPluginManager().registerEvents(new BetterModelItemModels(Bukkit.getPluginManager().getPlugin("BetterModel")), this.plugin.javaPlugin());
+                new BetterModelNativeBridge(this.plugin, Bukkit.getPluginManager().getPlugin("BetterModel")).start();
             }, "BetterModel");
         }
         if (this.hasPlugin("ModelEngine")) {
@@ -222,6 +228,8 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
                 BukkitBlockEntityElementConfigs.register(Key.ce("model_engine"), new ModelEngineBlockEntityElementConfig.Factory());
                 BukkitFurnitureElementConfigs.register(Key.ce("model_engine"), ModelEngineFurnitureElementConfig.FACTORY);
                 registerModelProvider(new ModelEngineProvider());
+                Bukkit.getPluginManager().registerEvents(new ModelEngineItemModels(Bukkit.getPluginManager().getPlugin("ModelEngine")), this.plugin.javaPlugin());
+                new ModelEngineNativeBridge(this.plugin, Bukkit.getPluginManager().getPlugin("ModelEngine")).start();
             }, "ModelEngine");
         }
         if (this.hasPlugin("CustomNameplates")) {

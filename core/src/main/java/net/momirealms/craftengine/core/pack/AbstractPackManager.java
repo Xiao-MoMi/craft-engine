@@ -196,6 +196,10 @@ public abstract class AbstractPackManager implements PackManager {
 
     protected abstract List<WorldBlockSource> collectGeyserWorldBlockSources();
 
+    protected List<net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource> collectGeyserNativeModels() throws IOException {
+        return List.of();
+    }
+
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
             PRESET_LEGACY_MODELS_ITEM.put(key, jsonObject);
@@ -1187,6 +1191,7 @@ public abstract class AbstractPackManager implements PackManager {
                         resources,
                         AbstractPackManager.this.generateGeyserItemPlan(resources),
                         AbstractPackManager.this.collectGeyserWorldBlockSources(),
+                        AbstractPackManager.this.collectGeyserNativeModels(),
                         outputPath,
                         dataPath
                 );

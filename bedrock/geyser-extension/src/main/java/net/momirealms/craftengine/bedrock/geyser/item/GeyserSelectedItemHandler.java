@@ -3,6 +3,10 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.definitions.BlockDefinition;
+import org.cloudburstmc.nbt.NbtMap;
+import org.geysermc.geyser.entity.type.Entity;
+import org.geysermc.geyser.entity.type.LivingEntity;
+import org.geysermc.geyser.inventory.Inventory;
 import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -12,6 +16,7 @@ import org.cloudburstmc.protocol.bedrock.packet.*;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.util.InventoryUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -46,6 +51,7 @@ public final class GeyserSelectedItemHandler {
         player.network().onSend(InventorySlotPacket.class, handler::onInventorySlot);
         player.network().onSend(MobArmorEquipmentPacket.class, handler::onArmorEquipment);
         player.network().onSend(MobEquipmentPacket.class, handler::onEquipment);
+        player.network().onSend(AddPlayerPacket.class, handler::onAddPlayer);
         player.network().onSend(ItemStackResponsePacket.class, handler::onStackResponse);
         if (pollSelection) {
             player.session().executeInEventLoop(handler::poll);
@@ -139,7 +145,18 @@ public final class GeyserSelectedItemHandler {
         MobEquipmentPacket equipment = event.packet();
         boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
         boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
-        equipment.setItem(this.render(equipment.getItem(), own && mainHand && equipment.getHotbarSlot() == this.session.getPlayerInventory().getHeldItemSlot()));
+        Entity entity = this.session.getEntityCache().getEntityByGeyserId(equipment.getRuntimeEntityId());
+        GeyserItemStack stack = own ? (mainHand ? this.session.getPlayerInventory().getItemInHand() : this.session.getPlayerInventory().getOffhand())
+                : (entity instanceof LivingEntity living ? (mainHand ? living.getMainHandItem() : living.getOffHandItem()) : null);
+        equipment.setItem(this.render(equipment.getItem(), own && mainHand, stack));
+    }
+
+    private void onAddPlayer(GeyserPacketEvent<AddPlayerPacket> event) {
+        AddPlayerPacket packet = event.packet();
+        Entity entity = this.session.getEntityCache().getEntityByGeyserId(packet.getRuntimeEntityId());
+        if (entity instanceof LivingEntity living) {
+            packet.setHand(this.render(packet.getHand(), false, living.getMainHandItem()));
+        }
     }
 
     private void onStackResponse(GeyserPacketEvent<ItemStackResponsePacket> event) {
@@ -187,6 +204,14 @@ public final class GeyserSelectedItemHandler {
             }
             active.add(inventory.getCursor().getNetId());
             this.originals.keySet().retainAll(active);
+            if (previous < 0 && !this.runtime.tints().isEmpty()) {
+                this.session.getPlayerInventoryHolder().updateInventory();
+                InventoryUtils.updateCursor(this.session);
+                if (this.session.getInventoryHolder() != null) {
+                    this.session.getInventoryHolder().updateInventory();
+                }
+                return;
+            }
             int selected = inventory.getHeldItemSlot();
             for (int slot = 0; slot < 36; slot++) {
                 if (previous >= 0 && slot != previous && slot != selected) {
@@ -207,18 +232,56 @@ public final class GeyserSelectedItemHandler {
 
     @Nullable
     ItemData render(@Nullable ItemData item, boolean selected) {
-        if (item == null || !selected || !this.runtime.hasSelected(item)) {
+        if (item == null || (!this.runtime.tints().contains(item) && (!selected || !this.runtime.hasSelected(item)))) {
             return item;
         }
-        GeyserItemStack stack = this.session.getPlayerInventory().getItemInHand();
-        // 排队中的旧槽位包不能使用新物品的组件；等待对应的最新槽位更新。
-        if (stack.getNetId() != item.getNetId()) {
+        return this.render(item, selected, this.findStack(item.getNetId()));
+    }
+
+    private GeyserItemStack findStack(int netId) {
+        if (netId <= 0) {
+            return null;
+        }
+        PlayerInventory inventory = this.session.getPlayerInventory();
+        if (inventory.getCursor().getNetId() == netId) {
+            return inventory.getCursor();
+        }
+        GeyserItemStack stack = findStack(inventory, netId);
+        return stack != null ? stack : findStack(this.session.getOpenInventory(), netId);
+    }
+
+    private static GeyserItemStack findStack(Inventory inventory, int netId) {
+        if (inventory != null) {
+            for (int slot = 0; slot < inventory.getSize(); slot++) {
+                GeyserItemStack stack = inventory.getItem(slot);
+                if (!stack.isEmpty() && stack.getNetId() == netId) {
+                    return stack;
+                }
+            }
+        }
+        return null;
+    }
+
+    private ItemData render(ItemData item, boolean selected, GeyserItemStack stack) {
+        if (item == null || stack == null || stack.isEmpty()
+                || (!this.runtime.tints().contains(item) && (!selected || !this.runtime.hasSelected(item)))) {
             return item;
         }
-        ItemData target = this.runtime.selected(stack);
-        Render display = new Render(target.getDefinition(), target.getBlockDefinition());
-        this.originals.put(item.getNetId(), new Replacement(new Render(item.getDefinition(), item.getBlockDefinition()), display));
-        return replace(item, display);
+        // 队列中的旧物品包不能读取新物品的颜色。保留 Geyser 原有的组件校验标记。
+        NbtMap tag = item.getTag();
+        if (tag != null && tag.containsKey("GeyserHash") && tag.getInt("GeyserHash") != stack.getAllComponents().hashCode()) {
+            return item;
+        }
+        ItemData target = item;
+        if (selected && this.runtime.hasSelected(item)) {
+            ItemData selectedItem = this.runtime.selected(stack);
+            target = item.toBuilder().definition(selectedItem.getDefinition()).blockDefinition(selectedItem.getBlockDefinition()).build();
+        }
+        target = this.runtime.tints().render(stack, target);
+        if (target != item && item.getNetId() > 0) {
+            this.originals.put(item.getNetId(), new Replacement(Render.of(item), Render.of(target)));
+        }
+        return target;
     }
 
     @Nullable
@@ -229,24 +292,35 @@ public final class GeyserSelectedItemHandler {
     @Nullable
     ItemData restore(@Nullable ItemData item, int slotNetId) {
         item = this.heads.unequipped(item);
-        if (item == null || !this.runtime.hasSelected(item)) {
+        if (item == null || (!this.runtime.hasSelected(item) && !this.runtime.tints().contains(item))) {
             return item;
         }
         Replacement replacement = this.originals.get(item.getNetId() > 0 ? item.getNetId() : slotNetId);
-        if (replacement == null || item.getDefinition() != replacement.display().item()) {
+        if (replacement == null && item.getNetId() <= 0) {
+            for (Replacement candidate : this.originals.values()) {
+                if (item.getDefinition() == candidate.display().item() && Objects.equals(item.getTag(), candidate.display().tag())) {
+                    replacement = candidate;
+                    break;
+                }
+            }
+        }
+        if (replacement == null || item.getDefinition() != replacement.display().item() || !Objects.equals(item.getTag(), replacement.display().tag())) {
             return item;
         }
         return replace(item, replacement.original());
     }
 
     private static ItemData replace(ItemData item, Render target) {
-        if (item.getDefinition() == target.item() && item.getBlockDefinition() == target.block()) {
+        if (item.getDefinition() == target.item() && item.getBlockDefinition() == target.block() && Objects.equals(item.getTag(), target.tag())) {
             return item;
         }
-        return item.toBuilder().definition(target.item()).blockDefinition(target.block()).build();
+        return item.toBuilder().definition(target.item()).blockDefinition(target.block()).tag(target.tag()).build();
     }
 
-    record Render(ItemDefinition item, @Nullable BlockDefinition block) {
+    record Render(ItemDefinition item, @Nullable BlockDefinition block, @Nullable NbtMap tag) {
+        static Render of(ItemData item) {
+            return new Render(item.getDefinition(), item.getBlockDefinition(), item.getTag());
+        }
     }
 
     record Replacement(Render original, Render display) {

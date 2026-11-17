@@ -58,11 +58,14 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         DisplayProperties properties = new DisplayProperties(id);
         this.carriers.put(id, properties);
         JsonArray values = displays.getAsJsonArray("appearances");
+        JsonObject colors = displays.getAsJsonObject("custom_model_data_colors");
         Appearance[] appearances = new Appearance[values.size()];
         appearances[0] = Appearance.EMPTY;
         for (int i = 1; i < appearances.length; i++) {
             JsonArray pose = values.get(i).getAsJsonArray();
-            appearances[i] = new Appearance(pose.get(0).getAsInt(), vector(pose, 1, Vector3f.ZERO), vector(pose, 2, Vector3f.ZERO), vector(pose, 3, Vector3f.ONE));
+            int shape = pose.get(0).getAsInt();
+            JsonElement color = colors == null ? null : colors.get(Integer.toString(shape));
+            appearances[i] = new Appearance(shape, vector(pose, 1, Vector3f.ZERO), vector(pose, 2, Vector3f.ZERO), vector(pose, 3, Vector3f.ONE), color == null ? -1 : color.getAsInt());
         }
         if (displays.has("vanilla_identifier")) {
             Identifier heldId = Identifier.of(displays.get("vanilla_identifier").getAsString());
@@ -203,8 +206,12 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         return this.vanillaItems.get(session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier().toString());
     }
 
-    record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale) {
+    record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale, int customModelDataColorIndex) {
         static final Appearance EMPTY = new Appearance(0, Vector3f.ZERO, Vector3f.ZERO, Vector3f.ONE);
+
+        Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale) {
+            this(shape, translation, rotation, scale, -1);
+        }
     }
 
     record Model(DisplayProperties carrier, Appearance[] shapes) {

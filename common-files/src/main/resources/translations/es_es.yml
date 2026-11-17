@@ -349,6 +349,7 @@ resource_pack.bedrock.reason.display_scale: "La escala de visualización en <arg
 resource_pack.bedrock.reason.affine_transform: "La transformación del modelo requiere una matriz afín finita (no se admite perspectiva)"
 resource_pack.bedrock.reason.nonuniform_transform: "Esta ruta de geometría compacta requiere una escala uniforme positiva"
 resource_pack.bedrock.reason.head_texture: "Textura de cabeza de jugador ausente o no válida: <arg:0>"
+resource_pack.bedrock.item.tint_fallback: "Item <arg:0> uses multiple dynamic tint sources in <arg:1>; using each material's default color."
 resource_pack.bedrock.item.variant_skipped: "Se omitió la variante de objeto de Bedrock <arg:0> del modelo <arg:1> en <arg:2>: <arg:3>"
 resource_pack.bedrock.item.display_skipped: "Se omitió el modelo de visualización de Bedrock para <arg:0> en el contexto <arg:1>: <arg:2>"
 resource_pack.bedrock.item.armor_skipped: "Se omitió la armadura de Bedrock para <arg:0> con el equipamiento <arg:1>: <arg:2>"

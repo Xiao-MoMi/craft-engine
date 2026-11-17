@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSourc
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
 import org.joml.Matrix4fc;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ public final class BedrockItemGeometryBuilder {
     private final JavaModelResolver models;
     private final JavaPackTextureSource textures;
     private final TextureUsage textureUsage;
+    private final boolean preserveCustomModelData;
+    private final boolean singleTintSource;
+    private Integer tintSource;
     private final Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
     private final List<BedrockItemGeometry.Material> materials = new ArrayList<>();
 
@@ -31,9 +35,19 @@ public final class BedrockItemGeometryBuilder {
     }
 
     public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures, TextureUsage textureUsage) {
+        this(models, textures, textureUsage, false);
+    }
+
+    public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures, TextureUsage textureUsage, boolean preserveCustomModelData) {
+        this(models, textures, textureUsage, preserveCustomModelData, true);
+    }
+
+    public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures, TextureUsage textureUsage, boolean preserveCustomModelData, boolean singleTintSource) {
         this.models = models;
         this.textures = textures;
         this.textureUsage = textureUsage;
+        this.preserveCustomModelData = preserveCustomModelData;
+        this.singleTintSource = singleTintSource;
     }
 
     public BedrockItemGeometry build(ItemBindingRule rule) throws IOException {
@@ -59,6 +73,10 @@ public final class BedrockItemGeometryBuilder {
 
     public List<BedrockItemGeometry.Material> materials() {
         return this.materials;
+    }
+
+    public int customModelDataColorIndex() {
+        return this.tintSource == null ? -1 : this.tintSource;
     }
 
     private JsonArray geometry(JavaModel model, ItemRenderTarget.Model target, boolean preserveDye) throws IOException {
@@ -87,6 +105,21 @@ public final class BedrockItemGeometryBuilder {
     private BedrockElementGeometry.Material material(JavaModel.Texture texture, ItemRenderTarget.Model target, int tintIndex, boolean preserveDye) throws IOException {
         Tint tint = tintIndex >= 0 && tintIndex < target.tints().size() ? target.tints().get(tintIndex) : null;
         Integer dye = preserveDye && tint != null ? this.textures.dyeColor(tint) : null;
+        int source = -1;
+        if (preserveDye && this.preserveCustomModelData && tint instanceof CustomModelDataTint custom) {
+            source = custom.index();
+            if (source < 0) {
+                throw new BedrockResourceException("resource_pack.bedrock.reason.tint_source", "custom_model_data index " + source);
+            }
+            dye = this.textures.resolveTint(tint);
+        }
+        if (dye != null && this.preserveCustomModelData && this.singleTintSource) {
+            // 展示实体共用一组 RGB 属性；只检查几何实际使用的染色源，防止把不同来源错误合并。
+            if (this.tintSource != null && this.tintSource != source) {
+                throw new BedrockResourceException("resource_pack.bedrock.reason.tint_source", "multiple dynamic color sources");
+            }
+            this.tintSource = source;
+        }
         int color = tint != null && dye == null ? this.textures.resolveTint(tint) : WHITE;
         TextureKey key = new TextureKey(texture, color, dye);
         BedrockElementGeometry.Material material = this.bindings.get(key);

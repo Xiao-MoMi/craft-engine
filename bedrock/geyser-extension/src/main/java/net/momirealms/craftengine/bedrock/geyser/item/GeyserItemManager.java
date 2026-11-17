@@ -28,7 +28,10 @@ public final class GeyserItemManager {
     private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
     private GeyserDyeProperties mainHandDye;
     private GeyserDyeProperties offHandDye;
+    private GeyserDyeProperties mainHandThirdDye;
+    private GeyserDyeProperties offHandThirdDye;
     private boolean hasDyedItems;
+    private final Map<String, Map<String, Integer>> tintSources = new HashMap<>();
     private Map<String, Integer> elytraVariants = Map.of();
     private GeyserIntEntityProperty elytraProperty;
 
@@ -41,6 +44,7 @@ public final class GeyserItemManager {
         this.headIdentifiers.clear();
         this.extension.blockManager().clearBlockItems();
         this.hasDyedItems = false;
+        this.tintSources.clear();
         this.elytraVariants = Map.of();
         Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
         if (plan != null) {
@@ -78,6 +82,16 @@ public final class GeyserItemManager {
                 failed += converted.failed();
                 JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
                 boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
+                for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
+                    JsonObject variant = branch.getAsJsonObject();
+                    JsonObject sources = variant.getAsJsonObject(RESOURCES).getAsJsonObject("tint_sources");
+                    if (sources != null) {
+                        Map<String, Integer> binding = new HashMap<>();
+                        sources.entrySet().forEach(source -> binding.put(source.getKey(), source.getValue().getAsInt()));
+                        this.tintSources.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), Map.copyOf(binding));
+                        this.hasDyedItems |= binding.values().stream().anyMatch(source -> source >= -1);
+                    }
+                }
                 for (CustomItemDefinition definition : converted.definitions()) {
                     event.register(identifier, definition);
                     this.hasDyedItems |= definition.bedrockOptions().defaultDyeableColor() != null;
@@ -126,6 +140,8 @@ public final class GeyserItemManager {
             Identifier player = Identifier.of("minecraft:player");
             this.mainHandDye = GeyserDyeProperties.register(event, player, MAIN_HAND_DYE);
             this.offHandDye = GeyserDyeProperties.register(event, player, OFF_HAND_DYE);
+            this.mainHandThirdDye = GeyserDyeProperties.register(event, player, MAIN_HAND_DYE + "_third");
+            this.offHandThirdDye = GeyserDyeProperties.register(event, player, OFF_HAND_DYE + "_third");
         }
     }
 
@@ -135,7 +151,7 @@ public final class GeyserItemManager {
 
     public GeyserHeldDye initPlayerDye(GeyserPlayer player) {
         if (this.hasDyedItems) {
-            return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye);
+            return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye, this.mainHandThirdDye, this.offHandThirdDye);
         }
         return null;
     }
@@ -148,8 +164,8 @@ public final class GeyserItemManager {
         if (!this.componentPatches.isEmpty()) {
             GeyserItemComponentPatcher.install(player, this.componentPatches);
         }
-        if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty()) {
-            return GeyserItemRuntime.install(player, this.contextualItems, this.headIdentifiers);
+        if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty() || !this.tintSources.isEmpty()) {
+            return GeyserItemRuntime.install(player, this.contextualItems, this.headIdentifiers, this.tintSources);
         }
         return null;
     }

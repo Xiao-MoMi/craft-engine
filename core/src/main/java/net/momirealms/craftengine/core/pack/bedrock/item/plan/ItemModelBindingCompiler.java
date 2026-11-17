@@ -12,10 +12,13 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public final class ItemModelBindingCompiler {
     private static final Key DEFAULT_HEAD_TEXTURE = Key.minecraft("entity/player/wide/steve");
@@ -29,6 +32,22 @@ public final class ItemModelBindingCompiler {
             bindings.put(entry.getKey(), compile(entry.getKey(), entry.getValue()));
         }
         return bindings;
+    }
+
+    static Function<Key, ItemModelDefinitionBinding> lazy(JavaResourcePack pack) throws IOException {
+        Map<Key, JsonObject> definitions = pack.itemDefinitions();
+        Map<Key, ItemModelDefinitionBinding> bindings = new HashMap<>();
+        return key -> bindings.computeIfAbsent(key, id -> {
+            JsonObject definition = definitions.get(id);
+            if (definition == null) {
+                return null;
+            }
+            try {
+                return compile(id, definition);
+            } catch (IOException exception) {
+                throw new UncheckedIOException(exception);
+            }
+        });
     }
 
     public static ItemModelDefinitionBinding compile(Key definitionId, JsonObject json) throws IOException {
