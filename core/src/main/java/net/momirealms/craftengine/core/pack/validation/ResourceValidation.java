@@ -152,7 +152,7 @@ final class ResourceValidation {
                                         if (sound instanceof JsonPrimitive primitive) {
                                             oggToSoundEvents.add(Key.of(primitive.getAsString()), soundKey);
                                         } else if (sound instanceof JsonObject soundObj && soundObj.get("name") instanceof JsonPrimitive name) {
-                                            if (soundObj.get("type") instanceof JsonPrimitive type && type.getAsString().equals("file")) {
+                                            if (!soundObj.has("type") || soundObj.get("type") instanceof JsonPrimitive type && type.getAsString().equals("file")) {
                                                 oggToSoundEvents.add(Key.of(name.getAsString()), soundKey);
                                             }
                                         }

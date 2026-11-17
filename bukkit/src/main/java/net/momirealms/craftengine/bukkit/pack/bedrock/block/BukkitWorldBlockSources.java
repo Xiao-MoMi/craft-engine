@@ -69,7 +69,8 @@ public final class BukkitWorldBlockSources {
                 lightDampening,
                 state.settings().friction(),
                 collisionBoxes,
-                selectionBox
+                selectionBox,
+                state.settings().sounds()
         );
     }
 }

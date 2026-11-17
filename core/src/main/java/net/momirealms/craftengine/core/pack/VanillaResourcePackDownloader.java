@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.pack.host.HttpClientManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -107,6 +108,28 @@ public final class VanillaResourcePackDownloader {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IOException("Interrupted while downloading " + uri, e);
+        }
+    }
+
+    public static final class IndexedAssets {
+        private final Path directory;
+        private JsonObject objects;
+
+        public IndexedAssets(Path directory) {
+            this.directory = directory;
+        }
+
+        @Nullable
+        public Path find(String name) throws IOException {
+            if (this.objects == null) {
+                Path index = this.directory.resolve("asset-index.json");
+                this.objects = Files.isRegularFile(index) ? GsonHelper.readJsonObjectFromFile(index).getAsJsonObject("objects") : new JsonObject();
+            }
+            JsonObject entry = this.objects.getAsJsonObject(name);
+            if (entry == null) {
+                return null;
+            }
+            return ensureDownloaded(Download.fromAsset(entry), this.directory.resolve("assets").resolve(name));
         }
     }
 

@@ -56,21 +56,28 @@ public final class BedrockTerrainAtlas {
             first = texture.image();
         } else {
             int interval = animation.sampleInterval(); // 所有帧时长的最大公约数
-            int count = animation.duration() / interval;
-            BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB); // 最终动画长条
-            int[] pixels = new int[width * height];
-            animation.forEachFrame(color, (sample, frame) -> {
-                frame.getRGB(0, 0, width, height, pixels, 0, width);
-                strip.setRGB(0, sample * size, width, height, pixels, 0, width);
-            });
-            ImageUtils.writePng(strip, root.resolve(path + "_anim.png"));
             JsonObject flipbook = new JsonObject();
+            BufferedImage strip;
+            if (animation.interpolate()) {
+                int count = animation.duration() / interval;
+                strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB);
+                int[] pixels = new int[width * height];
+                animation.forEachFrame(color, (sample, frame) -> {
+                    frame.getRGB(0, 0, width, height, pixels, 0, width);
+                    strip.setRGB(0, sample * size, width, height, pixels, 0, width);
+                });
+                first = strip.getSubimage(0, 0, size, size);
+            } else {
+                strip = animation.keyFrameStrip(color);
+                flipbook.add("frames", animation.frameSequence(interval));
+                first = strip.getSubimage(0, animation.frames().getFirst().index() * size, size, size);
+            }
+            ImageUtils.writePng(strip, root.resolve(path + "_anim.png"));
             flipbook.addProperty("atlas_tile", tile);
             flipbook.addProperty("flipbook_texture", path + "_anim");
             flipbook.addProperty("ticks_per_frame", interval);
             flipbook.addProperty("blend_frames", false);
             this.flipbooks.put(flipbookKey(flipbook), flipbook);
-            first = strip.getSubimage(0, 0, size, size);
         }
         if (first.getWidth() != size || first.getHeight() != size) {
             BufferedImage padded = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);

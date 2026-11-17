@@ -124,7 +124,10 @@ public final class GeyserNativeModels {
                 EntitySpawnContext context = new EntitySpawnContext(this.session, VanillaEntities.ARMOR_STAND,
                         GeyserNativeModels.this.nextId.decrementAndGet(), state.instance())
                         .bedrockEntityDefinition((BedrockEntityDefinition) model.definition)
-                        .position(Vector3f.from(state.x(), state.y(), state.z())).yaw(state.yaw()).headYaw(state.yaw()).pitch(state.pitch());
+                        .position(Vector3f.from(state.x(), state.y(), state.z()))
+                        .yaw(state.yaw())
+                        .headYaw(state.yaw())
+                        .pitch(state.pitch());
                 Entity entity = new Entity(context);
                 entity.updatePropertiesBatched(batch -> model.apply(batch, state), false);
                 instance = new Instance(entity, state);
@@ -185,7 +188,7 @@ public final class GeyserNativeModels {
     private static final class Model {
         private final Identifier id;
         private final List<String> animations = new ArrayList<>();
-        private final List<String> bones = new ArrayList<>();
+        private final Map<String, Integer> boneIndices = new HashMap<>();
         private final List<GeyserIntEntityProperty> animationProperties = new ArrayList<>();
         private final List<GeyserIntEntityProperty> boneProperties = new ArrayList<>();
         private CustomEntityDefinition definition;
@@ -197,7 +200,15 @@ public final class GeyserNativeModels {
         private Model(JsonObject data) {
             this.id = Identifier.of(data.get("identifier").getAsString());
             data.getAsJsonArray("animations").forEach(name -> this.animations.add(name.getAsString()));
-            this.bones.addAll(data.getAsJsonObject("bones").keySet());
+            JsonObject bones = data.getAsJsonObject("bones");
+            for (Map.Entry<String, JsonElement> entry : bones.entrySet()) {
+                String alias = entry.getValue().getAsString();
+                int index = Integer.parseInt(alias, 1, alias.length(), 10);
+                if (alias.charAt(0) != 'b' || index < 0 || index >= bones.size()) {
+                    throw new IllegalArgumentException("Invalid bone index for " + entry.getKey() + ": " + alias);
+                }
+                this.boneIndices.put(entry.getKey(), index);
+            }
         }
 
         private void register(GeyserDefineEntityPropertiesEvent event) {
@@ -208,7 +219,7 @@ public final class GeyserNativeModels {
             for (int i = 0; i < (this.animations.size() + 8) / 9; i++) {
                 this.animationProperties.add(event.registerIntegerProperty(this.id, Identifier.of("craftengine:model_anim" + i), 0, 262143, 0));
             }
-            for (int i = 0; i < (this.bones.size() + 18) / 19; i++) {
+            for (int i = 0; i < (this.boneIndices.size() + 18) / 19; i++) {
                 this.boneProperties.add(event.registerIntegerProperty(this.id, Identifier.of("craftengine:model_bone" + i), 0, 524287, 0));
             }
         }
@@ -228,18 +239,15 @@ public final class GeyserNativeModels {
             for (int i = 0; i < modes.length; i++) {
                 batch.update(this.animationProperties.get(i), modes[i]);
             }
-            this.writeBits(batch, this.boneProperties, this.bones, state.hiddenBones());
-        }
-
-        private void writeBits(BatchPropertyUpdater batch, List<GeyserIntEntityProperty> properties, List<String> names, List<String> active) {
-            for (int property = 0; property < properties.size(); property++) {
-                int bits = 0;
-                for (int bit = 0; bit < 19 && property * 19 + bit < names.size(); bit++) {
-                    if (active.contains(names.get(property * 19 + bit))) {
-                        bits |= 1 << bit;
-                    }
+            int[] hidden = new int[this.boneProperties.size()];
+            for (String name : state.hiddenBones()) {
+                Integer index = this.boneIndices.get(name);
+                if (index != null) {
+                    hidden[index / 19] |= 1 << (index % 19);
                 }
-                batch.update(properties.get(property), bits);
+            }
+            for (int i = 0; i < hidden.length; i++) {
+                batch.update(this.boneProperties.get(i), hidden[i]);
             }
         }
     }

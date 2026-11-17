@@ -43,7 +43,7 @@ final class BedrockBlockDisplayGenerator {
         if (selectors.isEmpty()) {
             return result;
         }
-        JavaBlockModelResolver resolver = new JavaBlockModelResolver(resources);
+        JavaBlockModelResolver resolver = resources.blockModels();
         Map<JsonArray, Integer> poses = new HashMap<>();
         for (BlockStateWrapper state : select(selectors, BlockRegistryMirror.blockStates())) {
             String key = BlockStateKey.parse(state.getAsString()).toString();

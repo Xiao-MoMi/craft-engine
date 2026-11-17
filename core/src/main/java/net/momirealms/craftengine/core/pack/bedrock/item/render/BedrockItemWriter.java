@@ -24,11 +24,13 @@ public final class BedrockItemWriter {
     private final JavaModelResources resources;
     private final BedrockItemIconRenderer renderer;
     private final BedrockItemContextWriter contextWriter;
+    private final BedrockItemVisualWriter visuals;
 
     public BedrockItemWriter(JavaModelResources resources, BedrockItemIconRenderer renderer) {
         this.resources = resources;
         this.renderer = renderer;
-        this.contextWriter = new BedrockItemContextWriter(resources, renderer);
+        this.visuals = new BedrockItemVisualWriter(resources, renderer);
+        this.contextWriter = new BedrockItemContextWriter(resources, renderer, this.visuals);
     }
 
     public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
@@ -45,7 +47,7 @@ public final class BedrockItemWriter {
             Key id = presentation.id();
             try {
                 GeneratedItemVariant variant = this.writeVariant(presentation, context, type);
-                this.contextWriter.writeWorldAliases(variant, false, context, variants);
+                this.visuals.writeWorldAliases(variant, false, context, variants);
                 variants.add(variant);
             } catch (BedrockResourceException exception) {
                 TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", id.asString(), entry.itemModel().asString(), rule.sourcePath(), exception.getLocalizedMessage());
@@ -60,23 +62,13 @@ public final class BedrockItemWriter {
                                               ItemVisualType type) throws IOException {
         Key id = presentation.id();
         ItemBindingRule rule = presentation.rulesByContext().get(ItemDisplayContext.GUI).getFirst();
-        List<ItemBindingRule> parts;
-        if (rule.target() == ItemRenderTarget.Builtin.EMPTY) {
-            return BedrockItemContextWriter.transparent(id, presentation.conditions(), presentation.idleRules(), context);
-        } else if (rule.target() instanceof ItemRenderTarget.Model) {
-            parts = List.of(rule);
-        } else if (rule.target() instanceof ItemRenderTarget.Composite composite) {
-            parts = composite.parts();
-        } else {
+        if (rule.target() != ItemRenderTarget.Builtin.EMPTY && !(rule.target() instanceof ItemRenderTarget.Model)
+                && !(rule.target() instanceof ItemRenderTarget.Composite)) {
             throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", rule.target().toString());
         }
+        List<ItemBindingRule> parts = BedrockItemVisualWriter.modelParts(rule);
         if (parts.isEmpty()) {
-            return BedrockItemContextWriter.transparent(id, presentation.conditions(), presentation.idleRules(), context);
-        }
-        for (ItemBindingRule part : parts) {
-            if (!(part.target() instanceof ItemRenderTarget.Model)) {
-                throw new BedrockResourceException("resource_pack.bedrock.reason.composite_child", part.sourcePath());
-            }
+            return BedrockItemVisualWriter.transparent(id, presentation.conditions(), presentation.idleRules(), context);
         }
         return switch (type) {
             case DISPLAY_BLOCK -> this.writeDisplayBlock(presentation, context, rule, parts);
@@ -105,16 +97,8 @@ public final class BedrockItemWriter {
                                            BedrockItemGenerationContext context,
                                            List<ItemBindingRule> parts) throws IOException {
         Key id = presentation.id();
-        List<BedrockTexture> images = new ObjectArrayList<>(parts.size());
-        for (ItemBindingRule part : parts) {
-            BedrockTexture image = this.renderer.render((ItemRenderTarget.Model) part.target());
-            if (image == null) {
-                throw new BedrockResourceException("resource_pack.bedrock.reason.static_icon", part.sourcePath());
-            }
-            images.add(image);
-        }
-        BedrockTexture icon = BedrockTexture.composite(images);
-        String texture = icon.write(context.root(), "textures/" + id.namespace() + '/' + id.value() + "/icon");
+        BedrockTexture icon = this.visuals.renderIcon(parts, false);
+        String texture = BedrockItemVisualWriter.writeIconTexture(id, icon, context);
         JavaModel model = ((ItemRenderTarget.Model) parts.getFirst().target()).resolve(this.resources.models());
         boolean attachable = this.renderer.needsHandheldAttachable(model);
         if (attachable) {

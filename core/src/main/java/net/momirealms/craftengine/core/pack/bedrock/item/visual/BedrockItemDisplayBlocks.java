@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
@@ -32,12 +33,12 @@ import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextu
 
 public final class BedrockItemDisplayBlocks {
     private final BedrockTerrainAtlas atlas;
-    private final JsonObject blockDefinitions;
+    private final BedrockBlockDefinitions blockDefinitions;
     private final Map<BedrockItemGeometry.Material, String> textureTiles = new HashMap<>();
     private final BedrockAffineFaces affineFaces = new BedrockAffineFaces();
     private final Map<GeometryKey, List<Geometry>> geometries = new HashMap<>();
 
-    public BedrockItemDisplayBlocks(BedrockTerrainAtlas atlas, JsonObject blockDefinitions) {
+    public BedrockItemDisplayBlocks(BedrockTerrainAtlas atlas, BedrockBlockDefinitions blockDefinitions) {
         this.atlas = atlas;
         this.blockDefinitions = blockDefinitions;
     }
@@ -164,9 +165,7 @@ public final class BedrockItemDisplayBlocks {
         this.writeGeometryFile(display, cubes, transforms, root);
         candidates.add(new Geometry(display, transforms));
 
-        JsonObject block = new JsonObject();
-        block.addProperty("sound", "wood");
-        this.blockDefinitions.add("geyser_custom:" + name, block);
+        this.blockDefinitions.register(name, "wood");
         return display;
     }
 

@@ -1172,7 +1172,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
-        public void generateBedrockPack(String input, String output, String dataOutput) throws IOException {
+        public void generateBedrockPack(String input, @Nullable String packOutput, String output) throws IOException {
             if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
                 throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.unsupported_version", MinecraftVersion.V1_21_4.version(), VersionHelper.MINECRAFT_VERSION.version()));
             }
@@ -1183,8 +1183,8 @@ public abstract class AbstractPackManager implements PackManager {
             TranslationManager.info("resource_pack.bedrock.workflow.started");
             Timestamp timestamp = new Timestamp();
             Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla_resource_pack")).download(VersionHelper.MINECRAFT_VERSION);
-            Path outputPath = this.resolvePath(output);
-            Path dataPath = this.resolvePath(dataOutput);
+            Path packPath = packOutput == null ? null : this.resolvePath(packOutput);
+            Path dataPath = this.resolvePath(output);
             try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
                 BedrockPackGenerator.generate(
@@ -1192,11 +1192,16 @@ public abstract class AbstractPackManager implements PackManager {
                         AbstractPackManager.this.generateGeyserItemPlan(resources),
                         AbstractPackManager.this.collectGeyserWorldBlockSources(),
                         AbstractPackManager.this.collectGeyserNativeModels(),
-                        outputPath,
+                        AbstractPackManager.this.plugin.blockManager().soundReplacements(),
+                        packPath,
                         dataPath
                 );
             }
-            TranslationManager.info("resource_pack.bedrock.workflow.finished", outputPath.toString(), dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
+            if (packPath == null) {
+                TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
+            } else {
+                TranslationManager.info("resource_pack.bedrock.workflow.finished", packPath.toString(), dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
+            }
         }
 
         @Override
@@ -2233,9 +2238,21 @@ public abstract class AbstractPackManager implements PackManager {
         for (Map.Entry<Key, Key> mapper : this.plugin.blockManager().soundReplacements().entrySet()) {
             Key originalKey = mapper.getKey();
 
+            JsonObject configured = soundJson.getAsJsonObject(originalKey.value());
             soundJson.add(originalKey.value(), empty);
             try {
                 JsonObject originalSounds = soundTemplate.getAsJsonObject(originalKey.value());
+                if (configured != null) {
+                    JsonObject restored = configured.deepCopy();
+                    if (originalSounds != null && (!configured.has("replace") || !configured.get("replace").getAsBoolean())) {
+                        JsonArray merged = originalSounds.getAsJsonArray("sounds").deepCopy();
+                        if (configured.has("sounds")) {
+                            merged.addAll(configured.getAsJsonArray("sounds"));
+                        }
+                        restored.add("sounds", merged);
+                    }
+                    originalSounds = restored;
+                }
                 if (originalSounds != null) {
                     soundJson.add(mapper.getValue().value(), originalSounds);
                 } else {

@@ -89,7 +89,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 for (String path : paths) {
                     TextureData data = loaded.get(path);
                     if (data == null) {
-                        data = BedrockVanillaTextures.loadResource(context, path);
+                        data = context.loadResource(path);
                         loaded.put(path, data);
                     }
                     if (data.animation() != null) {
@@ -101,7 +101,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 BufferedImage image = this.stitch(frames, first.rule());
                 String texture = "textures/particle/craftengine/" + target.file();
                 JsonObject definition = target.create(texture, first.rule().selection(), frames.size(), frame);
-                if (!BedrockVanillaTextures.writeImage(context, first.rule().source(), texture + ".png", image)) {
+                if (!context.output().writeImage(first.rule().source(), texture + ".png", image)) {
                     continue;
                 }
                 Path file = context.root().resolve("particles/" + target.file() + ".json");

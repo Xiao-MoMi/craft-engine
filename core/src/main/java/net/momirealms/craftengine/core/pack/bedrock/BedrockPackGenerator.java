@@ -2,11 +2,13 @@ package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import net.momirealms.craftengine.core.pack.bedrock.sound.BedrockSounds;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockWorldBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
@@ -24,8 +26,9 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanillaTextures;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
-import net.momirealms.craftengine.core.util.VectorUtils;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ZipUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public final class BedrockPackGenerator {
@@ -41,83 +45,91 @@ public final class BedrockPackGenerator {
     private BedrockPackGenerator() {
     }
 
-    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, Path packOutput, Path dataOutput) throws IOException {
+    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, @Nullable Path packOutput, Path dataOutput) throws IOException {
         generate(resources, plan, blocks, List.of(), packOutput, dataOutput);
     }
 
-    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels, Path packOutput, Path dataOutput) throws IOException {
-        Path packDestination = packOutput.toAbsolutePath().normalize();
+    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels, @Nullable Path packOutput, Path dataOutput) throws IOException {
+        generate(resources, plan, blocks, nativeModels, Map.of(), packOutput, dataOutput);
+    }
+
+    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels,
+                                Map<Key, Key> soundReplacements, @Nullable Path packOutput, Path dataOutput) throws IOException {
+        Path packDestination = packOutput == null ? null : packOutput.toAbsolutePath().normalize();
         Path dataDestination = dataOutput.toAbsolutePath().normalize();
-        Files.createDirectories(packDestination.getParent());
-        Files.createDirectories(dataDestination.getParent());
+        String packName = packDestination == null ? BedrockPackFiles.clientPackName(dataDestination) : packDestination.getFileName().toString();
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
-            Path root = fileSystem.getPath("bedrock").toAbsolutePath();
-            Path itemPlanPath = root.resolve(RegistrationPlanKind.ITEM.file());
-            Files.createDirectories(itemPlanPath.getParent());
+            Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
+            Path data = fileSystem.getPath("extension-data").toAbsolutePath();
+            writeItemsAndBlocks(resources, plan, blocks, pack, data, packName, soundReplacements);
+            GsonHelper.writeJsonFile(resources.translations(), data.resolve(BedrockPackLayout.TRANSLATIONS));
+            BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
+            BedrockGuiGenerator.write(resources, pack);
+            BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
+            NativeModelAssets.write(nativeModels, pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
 
-            BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
-            JsonObject blockDefinitions = new JsonObject();
-            JavaModelResources modelResources = new JavaModelResources(resources);
-            // 物品
-            BedrockItemResourceGenerator.Result generatedItems = BedrockItemResourceGenerator.write(modelResources, plan, root, atlas, blockDefinitions);
-
-            JsonObject itemDisplays = BedrockItemDisplayGenerator.write(modelResources, plan, generatedItems, root, packDestination.getFileName().toString());
-            ItemRegistrationPlanWriter.write(plan, itemPlanPath, generatedItems, itemDisplays);
-            // 方块
-            Path blockPlanPath = root.resolve(RegistrationPlanKind.BLOCK.file());
-            JsonArray worldBlockEntries = BedrockWorldBlocks.write(modelResources, blocks, root, atlas, blockDefinitions);
-            BlockRegistrationPlanWriter.write(generatedItems, worldBlockEntries, blocks, blockPlanPath);
-            BedrockVanillaTextures.write(resources, root, atlas);
-            atlas.finish(root);
-            // 展示方块与世界方块共用 blocks.json，全部收集后统一写出，避免生成阶段之间读回文件。
-            if (!blockDefinitions.isEmpty()) {
-                blockDefinitions.add(BedrockPackLayout.FORMAT_VERSION, VectorUtils.toJson(1, 1, 0));
-                GsonHelper.writeJsonFile(blockDefinitions, root.resolve("blocks.json"));
-            }
-            // 翻译文件
-            GsonHelper.writeJsonFile(resources.translations(), root.resolve(BedrockPackLayout.TRANSLATIONS));
-            // 字体文件
-            BedrockFontGenerator.write(resources, root);
-            // 容器
-            BedrockGuiGenerator.write(resources, root);
-            BedrockSidebarGenerator.write(resources, root);
-            NativeModelAssets.write(nativeModels, root, Config.bedrockDisplayDyeMaxLayers());
-
-            BedrockResourceSharing.share(root);
-            BedrockDefinitionBundler.bundle(root, Config.bedrockMaxDefinitionsPerFile());
-
-            // 元数据
-            JsonObject manifest = manifest();
-            GsonHelper.writeJsonFile(manifest, root.resolve("manifest.json"));
-
-            // 复制 pack 图标
+            BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()));
+            BedrockDefinitionBundler.bundle(pack, Config.bedrockMaxDefinitionsPerFile());
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {
-                    Files.copy(icon, root.resolve("pack_icon.png"));
+                    Files.copy(icon, pack.resolve("pack_icon.png"));
                 }
             }
+            writeArchives(pack, data, packDestination, dataDestination);
+        }
+    }
 
-            // 最终打包
-            Path temporaryPack = Files.createTempFile(packDestination.getParent(), "bedrock-pack-", ".tmp");
-            Path temporaryData = Files.createTempFile(dataDestination.getParent(), "bedrock-data-", ".tmp");
+    private static void writeItemsAndBlocks(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks,
+                                            Path pack, Path data, String packFileName, Map<Key, Key> soundReplacements) throws IOException {
+        Path itemPlanPath = data.resolve(RegistrationPlanKind.ITEM.file());
+        Files.createDirectories(itemPlanPath.getParent());
+        JavaModelResources models = new JavaModelResources(resources);
+        BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
+        BedrockBlockDefinitions definitions = new BedrockBlockDefinitions();
+
+        BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan, pack, atlas, definitions);
+        JsonObject displays = BedrockItemDisplayGenerator.write(models, plan, items, pack, packFileName);
+        ItemRegistrationPlanWriter.write(plan, itemPlanPath, items, displays);
+
+        BedrockSounds sounds = new BedrockSounds(resources, soundReplacements);
+        JsonArray worldBlocks = BedrockWorldBlocks.write(models, blocks, pack, atlas, definitions, sounds);
+        JsonObject playback = new JsonObject();
+        sounds.write(pack, playback);
+        if (!playback.isEmpty()) {
+            GsonHelper.writeJsonFile(playback, data.resolve(BedrockPackLayout.SOUND_MAPPINGS));
+        }
+        BlockRegistrationPlanWriter.write(items, worldBlocks, blocks, data.resolve(RegistrationPlanKind.BLOCK.file()));
+
+        BedrockVanillaTextures.write(resources, pack, atlas);
+        atlas.finish(pack);
+        definitions.write(pack);
+    }
+
+    private static void writeArchives(Path pack, Path data, @Nullable Path packDestination, Path dataDestination) throws IOException {
+        JsonObject manifest = manifest();
+        GsonHelper.writeJsonFile(manifest, pack.resolve("manifest.json"));
+        GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
+
+        Path dataDirectory = Files.createDirectories(dataDestination.getParent());
+        Path packDirectory = packDestination == null ? dataDirectory : Files.createDirectories(packDestination.getParent());
+        Path temporaryPack = Files.createTempFile(packDirectory, "bedrock-pack-", ".tmp");
+        try {
+            ZipUtils.compress(pack, temporaryPack, false, false);
+            Path temporaryData = Files.createTempFile(dataDirectory, "bedrock-data-", ".tmp");
             try {
-                // 将扩展数据复制到新文件夹打包
-                Path data = fileSystem.getPath("extension-data").toAbsolutePath();
-                for (String file : BedrockPackFiles.SERVER_FILES) {
-                    Path target = data.resolve(file);
-                    Files.createDirectories(target.getParent());
-                    Files.move(root.resolve(file), target);
+                if (packDestination == null) {
+                    ZipUtils.compressWithStoredFile(data, temporaryData, temporaryPack, BedrockPackFiles.CLIENT_PACK);
+                } else {
+                    ZipUtils.compress(data, temporaryData, false, false);
+                    Files.move(temporaryPack, packDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                 }
-                GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
-                ZipUtils.compress(root, temporaryPack, false, false);
-                ZipUtils.compress(data, temporaryData, false, false);
-                Files.move(temporaryPack, packDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
                 Files.move(temporaryData, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } finally {
-                Files.deleteIfExists(temporaryPack);
                 Files.deleteIfExists(temporaryData);
             }
+        } finally {
+            Files.deleteIfExists(temporaryPack);
         }
     }
 

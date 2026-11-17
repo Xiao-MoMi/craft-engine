@@ -27,7 +27,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
                 24, 23,
                 this::selection
         );
-        BedrockVanillaTextures.transform(context, "textures/ui/title.png", List.of("gui/title/minecraft.png"), images -> {
+        context.transform("textures/ui/title.png", List.of("gui/title/minecraft.png"), images -> {
             BufferedImage image = images.getFirst();
             return ImageUtils.resize(ImageUtils.crop(image, 0, 0, image.getWidth(), (float) (image.getHeight() * 44) / 64), 1937, 333);
         });
@@ -68,22 +68,16 @@ final class BedrockUiTextures implements BedrockTextureConverter {
             }
             int scale = image.getHeight() / 22;
             for (int index = 0; index < 9; index++) {
-                BedrockVanillaTextures.writeImage(
-                        context,
-                        path,
+                context.output().writeImage(path,
                         "textures/ui/hotbar_" + index + ".png",
                         ImageUtils.crop(image, (index * 20 + 1) * scale, 0, 20 * scale, image.getHeight())
                 );
             }
-            BedrockVanillaTextures.writeImage(
-                    context,
-                    path,
+            context.output().writeImage(path,
                     "textures/ui/hotbar_start_cap.png",
                     ImageUtils.crop(image, 0, 0, scale, image.getHeight())
             );
-            BedrockVanillaTextures.writeImage(
-                    context,
-                    path,
+            context.output().writeImage(path,
                     "textures/ui/hotbar_end_cap.png",
                     ImageUtils.crop(image, image.getWidth() - scale, 0, scale, image.getHeight())
             );
@@ -133,7 +127,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
         try {
             BufferedImage image = this.sprite(context, source, width, height);
             if (image != null) {
-                BedrockVanillaTextures.writeImage(context, source, target, transform.apply(image));
+                context.output().writeImage(source, target, transform.apply(image));
             }
         } catch (IOException | RuntimeException exception) {
             CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + source + ": " + exception.getMessage());
@@ -144,7 +138,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
         String path = "gui/sprites/hud/experience_bar_" + source + ".png";
         try {
             BufferedImage image = this.sprite(context, path, 182, 5);
-            if (image == null || !BedrockVanillaTextures.writeImage(context, path, "textures/ui/" + target + ".png", image)) {
+            if (image == null || !context.output().writeImage(path, "textures/ui/" + target + ".png", image)) {
                 return;
             }
             JsonObject definition = new JsonObject();
@@ -160,7 +154,7 @@ final class BedrockUiTextures implements BedrockTextureConverter {
             definition.add("nineslice_size", slices);
             GsonHelper.writeJsonFile(definition, context.root().resolve("textures/ui/" + target + ".json"));
             if (source.equals("background")) {
-                BedrockVanillaTextures.writeImage(context, path, "textures/ui/experiencenub.png", new BufferedImage(11, 5, BufferedImage.TYPE_INT_ARGB));
+                context.output().writeImage(path, "textures/ui/experiencenub.png", new BufferedImage(11, 5, BufferedImage.TYPE_INT_ARGB));
             }
         } catch (IOException | RuntimeException exception) {
             CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + path + ": " + exception.getMessage());

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock;
 
 public final class BedrockPackLayout {
+    public static final String SOUND_MAPPINGS = "craftengine/sound_mappings.json";
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
@@ -29,6 +30,8 @@ public final class BedrockPackLayout {
 
     public static final String BEDROCK_IDENTIFIER = "bedrock_identifier";
     public static final String HEAD_IDENTIFIER = "head_identifier";
+    public static final String WORLD_VIEW = "world_view";
+    public static final String TINT_SOURCES = "tint_sources";
     public static final String ITEM_TYPE = "item_type";
     public static final String MODEL = "model";
     public static final String COMPONENTS = "components";

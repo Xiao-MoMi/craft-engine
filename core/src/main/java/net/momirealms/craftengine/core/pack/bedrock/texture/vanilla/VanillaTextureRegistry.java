@@ -7,7 +7,6 @@ import net.momirealms.craftengine.core.plugin.CraftEngine;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 final class VanillaTextureRegistry {
@@ -29,11 +28,7 @@ final class VanillaTextureRegistry {
         return this.outputs.containsKey(path);
     }
 
-    void flipbook(String tile, int index, String path, int interval, int replicate) {
-        this.flipbook(tile, index, path, interval, replicate, List.of(), false);
-    }
-
-    void flipbook(String tile, int index, String path, int interval, int replicate, List<Integer> frames, boolean blend) {
+    void flipbook(String tile, int index, String path, int interval, int replicate, JsonArray frames, boolean blend) {
         JsonObject entry = new JsonObject();
         entry.addProperty("atlas_tile", tile);
         if (index >= 0) {
@@ -43,12 +38,8 @@ final class VanillaTextureRegistry {
         entry.addProperty("flipbook_texture", path);
         entry.addProperty("ticks_per_frame", interval);
         entry.addProperty("blend_frames", blend);
-        if (!frames.isEmpty()) {
-            JsonArray sequence = new JsonArray(frames.size());
-            for (int frame : frames) {
-                sequence.add(frame);
-            }
-            entry.add("frames", sequence);
+        if (frames != null) {
+            entry.add("frames", frames);
         }
         if (replicate != 1) {
             entry.addProperty("replicate", replicate);

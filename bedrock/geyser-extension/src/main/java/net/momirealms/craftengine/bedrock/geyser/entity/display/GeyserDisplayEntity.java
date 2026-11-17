@@ -142,16 +142,18 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
 
     @Override
     public void updateBedrockMetadata() {
-        this.updateDisplay();
+        this.updateDisplay(false);
         super.updateBedrockMetadata();
     }
 
-    private void updateDisplay() {
-        if (!this.dirty && !this.transform.dirty() && this.billboard == 0) {
+    private void updateDisplay(boolean spawning) {
+        if (!spawning && !this.dirty && !this.transform.dirty() && this.billboard == 0) {
             return;
         }
         this.dirty = false;
-        this.updateEquipment(false);
+        if (!spawning) {
+            this.updateEquipment(false);
+        }
         GeyserItemDisplays.Appearance appearance = this.model == null ? GeyserItemDisplays.Appearance.EMPTY : this.model.appearance(this.context);
         int dyeColor = this.model == null ? -1 : GeyserDyeProperties.color(this.displayItem, appearance.customModelDataColorIndex());
         boolean changeCarrier = this.model != null && this.carrier != this.model.carrier();
@@ -160,17 +162,18 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
             this.bedrockDefinition = Registries.BEDROCK_ENTITY_DEFINITIONS.get(this.carrier.id());
         }
         DisplayPose pose = this.transform.target();
-        boolean interpolationChanged = this.transform.dirty() || changeCarrier || this.sent == null;
+        boolean fullUpdate = spawning || changeCarrier || this.sent == null;
+        boolean interpolationChanged = this.transform.dirty() || fullUpdate;
         float renderYaw = this.billboard == 1 || this.billboard == 3 ? this.session.getPlayerEntity().getYaw() + 180 : this.yaw;
         float renderPitch = this.billboard == 2 || this.billboard == 3 ? -this.session.getPlayerEntity().getPitch() : this.pitch;
-        boolean heldItemChanged = changeCarrier || this.heldItemType != this.sentHeldItemType;
+        boolean heldItemChanged = fullUpdate || this.heldItemType != this.sentHeldItemType;
         if (!interpolationChanged && !changeCarrier && !heldItemChanged && pose.equals(this.sent) && appearance == this.sentAppearance && dyeColor == this.sentDyeColor && renderYaw == this.sentYaw && renderPitch == this.sentPitch) {
             return;
         }
-        DisplayPose previous = changeCarrier ? null : this.sent;
-        boolean modelChanged = changeCarrier || appearance != this.sentAppearance;
-        boolean dyeChanged = changeCarrier || this.sent == null || dyeColor != this.sentDyeColor;
-        int interpolation = interpolationChanged ? this.transform.consume(!this.valid || changeCarrier || this.sent == null) : -1;
+        DisplayPose previous = fullUpdate ? null : this.sent;
+        boolean modelChanged = fullUpdate || appearance != this.sentAppearance;
+        boolean dyeChanged = fullUpdate || dyeColor != this.sentDyeColor;
+        int interpolation = interpolationChanged ? this.transform.consume(!this.valid || fullUpdate) : -1;
         this.updatePropertiesBatched(batch -> {
             this.carrier.write(batch, pose, previous, appearance, modelChanged, dyeColor, dyeChanged, renderYaw, renderPitch, interpolation, this.transform.duration(), this.transform.delay());
             if (heldItemChanged) {
@@ -183,7 +186,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.sentDyeColor = dyeColor;
         this.sentYaw = renderYaw;
         this.sentPitch = renderPitch;
-        if (changeCarrier && this.valid) {
+        if (changeCarrier && this.valid && !spawning) {
             // 换资源包时客户端实体类型也要切换。保持 Java 实体、运行时 ID 和乘客关系。
             RemoveEntityPacket remove = new RemoveEntityPacket();
             remove.setUniqueEntityId(this.geyserId);
@@ -201,8 +204,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
 
     @Override
     public void spawnEntity() {
-        this.dirty = true;
-        this.updateDisplay();
+        this.updateDisplay(true);
         super.spawnEntity();
         if (this.equipment != ItemData.AIR) {
             this.updateEquipment(true);
@@ -247,7 +249,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
                 this.moveTo = null;
             }
         }
-        this.updateDisplay();
+        this.updateDisplay(false);
     }
 
     @Override

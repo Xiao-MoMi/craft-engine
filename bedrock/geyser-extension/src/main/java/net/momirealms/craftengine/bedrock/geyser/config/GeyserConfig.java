@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.config;
 
+import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.geyser.GeyserProperties;
 import net.momirealms.sparrow.yaml.SparrowYaml;
 import net.momirealms.sparrow.yaml.YamlDocument;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public final class GeyserConfig {
+    private static final String DEFAULT_DATA_FILE = "craftengine.cedata";
     private static GeyserConfig instance;
     private final Path configFilePath;
     private final ExtensionLogger logger;
@@ -24,6 +26,7 @@ public final class GeyserConfig {
     private long lastModified;
     private long size;
     private String forcedLocale = "";
+    private String dataFileName = DEFAULT_DATA_FILE;
     private boolean debug;
 
     public GeyserConfig(Path directory, ExtensionLogger logger) {
@@ -97,6 +100,15 @@ public final class GeyserConfig {
     private void loadFullSettings() {
         this.forcedLocale = this.config.getStringOrDefault("", Route.from("forced-locale"));
         this.debug = this.config.getBooleanOrDefault(false, Route.from("debug"));
+        this.dataFileName = this.config.getStringOrDefault(DEFAULT_DATA_FILE, Route.from("data-file"));
+    }
+
+    public Path dataFile() {
+        Path name = Path.of(this.dataFileName);
+        if (!name.equals(name.getFileName()) || !this.dataFileName.endsWith(BedrockPackFiles.DATA_EXTENSION)) {
+            throw new IllegalArgumentException("data-file must be a .cedata filename: " + this.dataFileName);
+        }
+        return this.configFilePath.resolveSibling("data").resolve(name);
     }
 
     public static String forcedLocale() {

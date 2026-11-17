@@ -42,33 +42,23 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
 
     @Override
     public void convert(VanillaTextureContext context) {
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/blocks/bamboo_fence_gate.png",
+        context.transform("textures/blocks/bamboo_fence_gate.png",
                 List.of("block/bamboo_fence_gate.png"),
                 images -> this.bambooFenceGate(images.getFirst())
         );
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/entity/banner/banner_base.png",
+        context.transform("textures/entity/banner/banner_base.png",
                 List.of("entity/banner/banner_base.png", "entity/banner/base.png"),
                 this::banner
         );
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/blocks/conduit_base.png",
+        context.transform("textures/blocks/conduit_base.png",
                 List.of("entity/conduit/base.png"),
                 images -> ImageUtils.crop(images.getFirst(), 0, 0, images.getFirst().getWidth() * 3 / 4f, images.getFirst().getHeight() * 3 / 4f)
         );
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/blocks/redstone_dust_line.png",
+        context.transform("textures/blocks/redstone_dust_line.png",
                 List.of("block/redstone_dust_line0.png"),
                 images -> ImageUtils.rotate(images.getFirst(), 90)
         );
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/blocks/redstone_dust_cross.png",
+        context.transform("textures/blocks/redstone_dust_cross.png",
                 List.of("block/redstone_dust_dot.png", "block/redstone_dust_line0.png", "block/redstone_dust_line1.png"),
                 this::redstoneCross
         );
@@ -82,25 +72,19 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 "copper_oxidized"
         )) {
             String target = name.equals("copper") ? "copper_default" : name;
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/entity/chest/" + target + ".png",
+            context.transform("textures/entity/chest/" + target + ".png",
                     List.of("entity/chest/" + name + ".png"),
                     images -> this.chest(images.getFirst())
             );
             if (!name.equals("ender")) {
                 String doubleName = name.equals("normal") ? "double_normal" : (name.equals("trapped") ? "trapped_double" : target + "_double");
-                BedrockVanillaTextures.transform(
-                        context,
-                        "textures/entity/chest/" + doubleName + ".png",
+                context.transform("textures/entity/chest/" + doubleName + ".png",
                         List.of("entity/chest/" + name + "_left.png", "entity/chest/" + name + "_right.png"),
                         this::doubleChest
                 );
             }
         }
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/entity/zombie/drowned.png",
+        context.transform("textures/entity/zombie/drowned.png",
                 List.of("entity/zombie/drowned.png", "entity/zombie/drowned_outer_layer.png"),
                 this::drowned
         );
@@ -109,16 +93,12 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 "husk"
         )) {
             List<String> sources = List.of("entity/zombie/" + name + ".png");
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/entity/zombie/" + name + ".png",
+            context.transform("textures/entity/zombie/" + name + ".png",
                     sources,
                     images -> ImageUtils.crop(images.getFirst(), 0, 0, images.getFirst().getWidth(), images.getFirst().getWidth() / 2f)
             );
             if (name.equals("zombie")) {
-                BedrockVanillaTextures.transform(
-                        context,
-                        "textures/entity/skulls/zombie.png",
+                context.transform("textures/entity/skulls/zombie.png",
                         sources,
                         images -> ImageUtils.crop(images.getFirst(), 0, 0, images.getFirst().getWidth(), images.getFirst().getWidth() / 2f)
                 );
@@ -134,31 +114,23 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
             String source = name.equals("chain") ? "iron_chain" : name;
             for (int index = 1; index <= 2; index++) {
                 int side = index;
-                BedrockVanillaTextures.transform(
-                        context,
-                        "textures/blocks/" + name + index + ".png",
+                context.transform("textures/blocks/" + name + index + ".png",
                         List.of("block/" + source + ".png"),
                         images -> this.chain(images.getFirst(), side)
                 );
             }
         }
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/blocks/dried_kelp_side_b.png",
+        context.transform("textures/blocks/dried_kelp_side_b.png",
                 List.of("block/dried_kelp_side.png"),
                 images -> ImageUtils.flip(images.getFirst(), true, false)
         );
         for (String part : List.of("top", "bottom")) {
             List<String> sources = List.of("block/tall_seagrass_" + part + ".png");
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/blocks/seagrass_doubletall_" + part + "_a.png",
+            context.transform("textures/blocks/seagrass_doubletall_" + part + "_a.png",
                     sources,
                     List::getFirst
             );
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/blocks/seagrass_doubletall_" + part + "_b.png",
+            context.transform("textures/blocks/seagrass_doubletall_" + part + "_b.png",
                     sources,
                     images -> ImageUtils.flip(images.getFirst(), true, false)
             );
@@ -167,24 +139,18 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 "flow",
                 "still"
         )) {
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/blocks/water_" + type + "_grey.png",
+            context.transform("textures/blocks/water_" + type + "_grey.png",
                     List.of("block/water_" + type + ".png"),
                     images -> ImageUtils.tint(images.getFirst(), 0xffffff)
             );
         }
         for (String color : LegacyChatFormatter.COLORS) {
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/items/bundle_" + color + "_open.png",
+            context.transform("textures/items/bundle_" + color + "_open.png",
                     List.of("item/" + color + "_bundle_open_back.png", "item/" + color + "_bundle_open_front.png"),
                     this::bundle
             );
         }
-        BedrockVanillaTextures.transform(
-                context,
-                "textures/items/bundle_open.png",
+        context.transform("textures/items/bundle_open.png",
                 List.of("item/bundle_open_back.png", "item/bundle_open_front.png"),
                 this::bundle
         );
@@ -196,9 +162,7 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                     "block/" + color + "_bed_foot_west.png"
             );
             String name = color.equals("light_gray") ? "silver" : color;
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/entity/bed/" + name + ".png",
+            context.transform("textures/entity/bed/" + name + ".png",
                     sources,
                     this::bed
             );
@@ -224,15 +188,11 @@ final class BedrockLayoutTextures implements BedrockTextureConverter {
                 case "spruce", "birch", "jungle", "acacia", "crimson", "warped" -> "sign_" + wood;
                 default -> wood + "_sign";
             };
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/entity/" + target + ".png",
+            context.transform("textures/entity/" + target + ".png",
                     List.of("block/" + wood + "_sign.png"),
                     images -> this.sign(images.getFirst(), false)
             );
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/entity/" + wood + "_hanging_sign.png",
+            context.transform("textures/entity/" + wood + "_hanging_sign.png",
                     List.of("block/" + wood + "_hanging_sign.png"),
                     images -> this.sign(images.getFirst(), true)
             );

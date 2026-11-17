@@ -15,6 +15,7 @@ import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarManager;
+import net.momirealms.craftengine.bedrock.geyser.sound.GeyserSoundMappings;
 import net.momirealms.craftengine.bedrock.geyser.translation.GeyserLanguageManager;
 import org.geysermc.event.PostOrder;
 import org.geysermc.event.subscribe.Subscribe;
@@ -23,6 +24,8 @@ import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
 import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.api.event.lifecycle.*;
 import org.geysermc.geyser.api.extension.Extension;
+import org.geysermc.geyser.api.pack.PackCodec;
+import org.geysermc.geyser.api.pack.ResourcePack;
 import org.geysermc.geyser.session.GeyserSession;
 
 import java.io.IOException;
@@ -37,6 +40,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
+    private GeyserGuiMenus guiMenus;
     private GeyserTextDisplayManager textDisplayManager;
     private GeyserHardHitboxManager hardHitboxManager;
     private GeyserGlyphManager glyphManager;
@@ -44,6 +48,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserBlockManager blockManager;
     private GeyserItemManager itemManager;
     private GeyserExtensionData extensionData;
+    private final GeyserSoundMappings sounds = new GeyserSoundMappings();
     private GeyserCustomPayloads customPayloads;
     private GeyserNativeModels nativeModels;
 
@@ -67,7 +72,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.languageManager = new GeyserLanguageManager();
         this.itemManager = new GeyserItemManager(this);
         try {
-            this.extensionData = GeyserExtensionData.read(this.dataFile());
+            this.extensionData = GeyserExtensionData.read(this.config.dataFile(), this.dataFolder().resolve("cache"));
             this.nativeModels = new GeyserNativeModels(this.extensionData.nativeModels());
             this.languageManager.load(this.extensionData.languages());
             this.glyphManager.load(this.extensionData.glyphs());
@@ -76,12 +81,17 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
     }
 
-    private Path dataFile() {
-        return this.dataFolder().resolve("data/craftengine.cedata");
+    @Subscribe
+    public void onDefineResourcePacks(GeyserDefineResourcePacksEvent event) {
+        Path pack = this.extensionData.clientPack();
+        if (pack != null) {
+            event.register(ResourcePack.create(PackCodec.path(pack)));
+        }
     }
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
+        this.sounds.install(this.extensionData.soundMappings());
         this.itemDisplays.install();
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
             this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
@@ -94,7 +104,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemManager.init();
         this.blockManager.init();
         this.customPayloads.install();
-        GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
+        this.guiMenus = GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
         this.blockManager.initPlacementHandler();
     }
 
@@ -111,6 +121,11 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        this.sounds.uninstall();
+        if (this.guiMenus != null) {
+            this.guiMenus.uninstall();
+            this.guiMenus = null;
+        }
         if (this.playerManager != null) {
             this.playerManager.disable();
         }

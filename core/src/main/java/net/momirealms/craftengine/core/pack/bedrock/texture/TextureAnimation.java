@@ -1,5 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.texture;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 
 import java.awt.image.BufferedImage;
@@ -34,6 +37,35 @@ public record TextureAnimation(BufferedImage sheet,
             interval = MiscUtils.gcd(interval, frame.time());
         }
         return interval;
+    }
+
+    public BufferedImage keyFrameStrip(int color) {
+        BufferedImage source = color == 0xffffff ? this.sheet : ImageUtils.multiplyColor(this.sheet, color);
+        int columns = source.getWidth() / this.width;
+        if (columns == 1 && this.width == this.height) {
+            return source;
+        }
+        int count = columns * (source.getHeight() / this.height);
+        int size = Math.max(this.width, this.height);
+        BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB);
+        int[] pixels = new int[this.width * this.height];
+        for (int index = 0; index < count; index++) {
+            source.getRGB(index % columns * this.width, index / columns * this.height, this.width, this.height, pixels, 0, this.width);
+            strip.setRGB(0, index * size, this.width, this.height, pixels, 0, this.width);
+        }
+        return strip;
+    }
+
+    public JsonArray frameSequence(int interval) {
+        JsonArray sequence = new JsonArray(this.duration / interval);
+        for (Frame frame : this.frames) {
+            JsonPrimitive index = new JsonPrimitive(frame.index());
+            int repeats = frame.time() / interval;
+            for (int i = 0; i < repeats; i++) {
+                sequence.add(index);
+            }
+        }
+        return sequence;
     }
 
     public void forEachFrame(int color, FrameConsumer consumer) throws IOException {

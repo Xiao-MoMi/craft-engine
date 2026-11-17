@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,9 +26,13 @@ public final class BedrockResourceSharing {
     }
 
     public static void share(Path root) throws IOException {
+        share(root, root.resolve(RegistrationPlanKind.BLOCK.file()));
+    }
+
+    static void share(Path root, Path blockPlan) throws IOException {
         // 展示方块可能在后续场景中补充姿态，必须等所有资源定稿后再共享；缓存只存活于本次生成。
         Set<String> animatedTiles = new HashSet<>();
-        List<References> references = readReferences(root, animatedTiles);
+        List<References> references = readReferences(root, blockPlan, animatedTiles);
         Set<String> textures = new HashSet<>();
         Set<String> geometries = new HashSet<>();
         for (References reference : references) {
@@ -57,7 +60,7 @@ public final class BedrockResourceSharing {
     }
 
     private static Map<String, String> shareTextures(Path root, Set<String> references, Set<String> animatedTiles, List<Path> redundantFiles) throws IOException {
-        Map<String, TextureFile> images = new HashMap<>();
+        Map<String, String> pathsByHash = new HashMap<>();
         Map<String, String> aliases = new HashMap<>();
         for (String directory : List.of("textures/ce", "textures/craftengine")) {
             for (Path file : files(root.resolve(directory), ".png")) {
@@ -70,16 +73,9 @@ public final class BedrockResourceSharing {
                 if (animatedTiles.contains(texture) || animatedTiles.contains(path)) {
                     continue;
                 }
-                byte[] bytes = Files.readAllBytes(file);
-                String hash = HashUtils.sha1(bytes);
-                TextureFile previous = images.get(hash);
-                if (previous == null) {
-                    images.put(hash, new TextureFile(path, bytes));
-                    continue;
-                }
+                String shared = pathsByHash.putIfAbsent(HashUtils.sha1(file), path);
                 // 哈希只用于索引；逐字节确认相同，保留 PNG 元数据及透明像素的原始语义。
-                if (Arrays.equals(previous.bytes(), bytes)) {
-                    String shared = previous.path();
+                if (shared != null && Files.mismatch(root.resolve(shared), file) == -1L) {
                     aliases.put(path, shared);
                     aliases.put(texture, shared.substring(0, shared.length() - 4));
                     redundantFiles.add(file);
@@ -137,7 +133,7 @@ public final class BedrockResourceSharing {
         return aliases;
     }
 
-    private static List<References> readReferences(Path root, Set<String> animatedTiles) throws IOException {
+    private static List<References> readReferences(Path root, Path blockPlan, Set<String> animatedTiles) throws IOException {
         List<References> result = new ArrayList<>();
         for (String directory : List.of("attachables", "entity")) {
             String type = directory.equals("attachables") ? "minecraft:attachable" : "minecraft:client_entity";
@@ -182,7 +178,6 @@ public final class BedrockResourceSharing {
             }
             result.add(new References(flipbooks, document, textures, List.of()));
         }
-        Path blockPlan = root.resolve(RegistrationPlanKind.BLOCK.file());
         if (Files.exists(blockPlan)) {
             JsonObject document = GsonHelper.readJsonFromFile(blockPlan).getAsJsonObject();
             List<Reference> geometries = new ArrayList<>();
@@ -261,8 +256,5 @@ public final class BedrockResourceSharing {
     }
 
     private record GeometryKey(JsonObject header, JsonObject definition) {
-    }
-
-    private record TextureFile(String path, byte[] bytes) {
     }
 }

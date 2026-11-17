@@ -89,7 +89,7 @@ public final class ItemRegistrationPlanWriter {
             json.addProperty(HEAD_IDENTIFIER, variant.headId().asString());
         }
         if (variant.worldView() != null) {
-            json.addProperty("world_view", variant.worldView().name());
+            json.addProperty(WORLD_VIEW, variant.worldView().name());
         }
         List<ItemBindingCondition> conditions = variant.conditions();
         JsonArray matches = new JsonArray(conditions.size());
@@ -140,7 +140,7 @@ public final class ItemRegistrationPlanWriter {
         if (!variant.tintSources().isEmpty()) {
             JsonObject sources = new JsonObject();
             variant.tintSources().forEach((view, source) -> sources.addProperty(view.serializedName(), source));
-            resources.add("tint_sources", sources);
+            resources.add(TINT_SOURCES, sources);
         }
         resources.addProperty(ATTACHABLE, variant.attachable());
         resources.addProperty(GENERATED, variant.generated());

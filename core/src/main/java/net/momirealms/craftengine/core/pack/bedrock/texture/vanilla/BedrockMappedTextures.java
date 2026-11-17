@@ -5,16 +5,11 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.JavaTextureAnimation
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.ClientPngReader;
-import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 final class BedrockMappedTextures implements BedrockTextureConverter {
@@ -32,59 +27,26 @@ final class BedrockMappedTextures implements BedrockTextureConverter {
                 continue;
             }
             int firstTarget = 0;
-            while (firstTarget < rule.targets().size() && context.textures().contains(rule.targets().get(firstTarget).path())) {
+            while (firstTarget < rule.targets().size() && context.output().contains(rule.targets().get(firstTarget).path())) {
                 firstTarget++;
             }
             if (firstTarget == rule.targets().size()) {
                 continue;
             }
-            try (InputStream input = context.pack().openResource(ResourcePackUtils.vanillaTexturePath(source))) {
-                JsonObject metadata = context.pack().readResourceMetadata(ResourcePackUtils.vanillaTexturePath(source));
-                boolean animated = metadata != null && metadata.has("animation");
-                byte[] bytes = input.readAllBytes();
-                TextureData data = null;
-                BufferedImage image = null;
+            String path = ResourcePackUtils.vanillaTexturePath(source);
+            try (InputStream input = context.pack().openResource(path)) {
+                JsonObject metadata = context.pack().readResourceMetadata(path);
+                if (metadata == null || !metadata.has("animation")) {
+                    context.output().copyMappedTextures(source, rule.targets(), firstTarget, input.readAllBytes());
+                    continue;
+                }
+
+                TextureData data = JavaTextureAnimation.read(ClientPngReader.read(input), metadata,
+                        context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
                 for (int index = firstTarget; index < rule.targets().size(); index++) {
                     BedrockTextureRule.Target target = rule.targets().get(index);
-                    if (context.textures().contains(target.path())) {
-                        continue;
-                    }
-                    if (!animated) {
-                        if (context.textures().claim(target.path(), source)) {
-                            BedrockTextureRule.Tga tga = BedrockVanillaTextures.tga(target.path());
-                            if (tga != null) {
-                                if (image == null) {
-                                    image = ClientPngReader.read(new ByteArrayInputStream(bytes));
-                                }
-                                ImageUtils.writeTga(image, context.root().resolve(tga.path()));
-                                if (!tga.keep()) {
-                                    continue;
-                                }
-                            }
-                            Path file = context.root().resolve(target.path());
-                            Files.createDirectories(file.getParent());
-                            Files.write(file, bytes);
-                            if (target.firstFrame() != null && context.textures().claim(target.firstFrame(), source)) {
-                                Path firstFrame = context.root().resolve(target.firstFrame());
-                                Files.createDirectories(firstFrame.getParent());
-                                Files.write(firstFrame, bytes);
-                            }
-                        }
-                    } else {
-                        if (data == null) {
-                            data = JavaTextureAnimation.read(ClientPngReader.read(new ByteArrayInputStream(bytes)), metadata,
-                                    context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
-                        }
-                        if (!BedrockVanillaTextures.writeKeyFrames(context, source, target, data.animation())) {
-                            BedrockVanillaTextures.writeFrames(context, source, target, List.of(data), List::getFirst);
-                        }
-                    }
-                    // 静态替换也覆盖原版 flipbook，避免客户端继续用原版动画刷新这个图集条目。
-                    if (target.firstFrame() != null && (!animated || data.animation() == null)) {
-                        String path = target.path().substring(0, target.path().lastIndexOf('.'));
-                        for (BedrockTextureRule.Tile tile : target.tiles()) {
-                            context.textures().flipbook(tile.name(), tile.index(), path, 1, tile.replicate(), List.of(0), false);
-                        }
+                    if (!context.output().contains(target.path())) {
+                        context.output().writeMappedTexture(source, target, data);
                     }
                 }
             } catch (IOException | RuntimeException exception) {

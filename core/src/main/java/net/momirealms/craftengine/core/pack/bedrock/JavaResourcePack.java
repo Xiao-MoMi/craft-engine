@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.core.pack.VanillaResourcePackDownloader;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.PackMeta;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -15,6 +16,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 
@@ -24,11 +26,15 @@ public final class JavaResourcePack {
     private final MinecraftVersion version;
     private final Path root;
     private final Path vanillaRoot;
+    private final VanillaResourcePackDownloader.IndexedAssets indexedAssets;
+    private final BiPredicate<String, String> vanillaFilter;
 
-    private JavaResourcePack(Path root, Path vanillaRoot, MinecraftVersion version) {
+    private JavaResourcePack(Path root, Path vanillaRoot, MinecraftVersion version, @Nullable BiPredicate<String, String> vanillaFilter, Path vanillaDirectory) {
         this.version = version;
         this.root = root;
         this.vanillaRoot = vanillaRoot;
+        this.indexedAssets = new VanillaResourcePackDownloader.IndexedAssets(vanillaDirectory);
+        this.vanillaFilter = vanillaFilter;
     }
 
     private static void extractResources(IndexedZipFile archive, List<Overlay> overlays, MinecraftVersion version, Path root) throws IOException {
@@ -104,6 +110,7 @@ public final class JavaResourcePack {
     public static JavaResourcePack openZip(Path source, Path vanilla, MinecraftVersion version, FileSystem fileSystem) throws IOException {
         Path root = fileSystem.getPath("resource_pack").toAbsolutePath();
         Path vanillaRoot = fileSystem.getPath("vanilla").toAbsolutePath();
+        BiPredicate<String, String> vanillaFilter;
         try (IndexedZipFile archive = new IndexedZipFile(source)) {
             ZipEntry entry = archive.getEntry("pack.mcmeta");
             if (entry == null) {
@@ -116,7 +123,9 @@ public final class JavaResourcePack {
             if (metadata == null || !(metadata.get("pack") instanceof JsonObject)) {
                 throw new IOException("Missing pack.mcmeta in " + source);
             }
-            extractResources(archive, new PackMeta(metadata).overlays().overlays(), version, root);
+            PackMeta packMeta = new PackMeta(metadata);
+            vanillaFilter = packMeta.filter() == null ? null : packMeta.filter().compile();
+            extractResources(archive, packMeta.overlays().overlays(), version, root);
             ZipEntry icon = archive.getEntry("pack.png");
             if (icon != null) {
                 try (InputStream input = archive.getInputStream(icon)) {
@@ -138,7 +147,24 @@ public final class JavaResourcePack {
                 }
             }
         }
-        return new JavaResourcePack(root, vanillaRoot, version);
+        return new JavaResourcePack(root, vanillaRoot, version, vanillaFilter, vanilla.toAbsolutePath().getParent());
+    }
+
+    @Nullable
+    public Path soundResource(String namespace, String name, boolean custom) throws IOException {
+        String path = "assets/" + namespace + '/' + name;
+        Path root = custom ? this.root : this.vanillaRoot;
+        if (namespace.contains("/") || namespace.contains("\\") || namespace.contains(":") || namespace.equals("..") || namespace.equals(".") || namespace.isEmpty() || name.contains("\\") || Arrays.asList(name.split("/")).contains("..")) {
+            return null;
+        }
+        if (!custom && this.filtersVanilla(path)) {
+            return null;
+        }
+        Path resource = root.resolve(path);
+        if (Files.isRegularFile(resource)) {
+            return resource;
+        }
+        return custom ? null : this.indexedAssets.find(namespace + '/' + name);
     }
 
     @Nullable
@@ -154,7 +180,7 @@ public final class JavaResourcePack {
     public List<JsonObject> readAtlas(Key atlas) throws IOException {
         String path = "assets/" + atlas.namespace() + "/atlases/" + atlas.value() + ".json";
         List<JsonObject> sources = new ObjectArrayList<>(2);
-        JsonObject vanilla = readJson(this.vanillaRoot.resolve(path));
+        JsonObject vanilla = this.filtersVanilla(path) ? null : readJson(this.vanillaRoot.resolve(path));
         if (vanilla != null) {
             sources.add(vanilla);
         }
@@ -204,6 +230,9 @@ public final class JavaResourcePack {
                 try (Stream<Path> files = Files.walk(directory)) {
                     for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
                         String path = CharacterUtils.replaceBackslashWithSlash(directory.relativize(file).toString());
+                        if (!custom && this.vanillaFilter != null && this.vanillaFilter.test(namespace.getFileName().toString(), "font/" + path)) {
+                            continue;
+                        }
                         Key id = Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5));
                         try {
                             JsonObject definition = readJson(file);
@@ -269,7 +298,7 @@ public final class JavaResourcePack {
 
     public Map<Key, JsonObject> vanillaItemDefinitions() throws IOException {
         if (Files.isDirectory(this.vanillaRoot.resolve("assets/minecraft/items"))) {
-            return itemDefinitions(this.vanillaRoot.resolve("assets"));
+            return this.itemDefinitions(this.vanillaRoot.resolve("assets"), true);
         }
         Map<Key, JsonObject> definitions = new TreeMap<>(Comparator.comparing(Key::asString));
         Path directory = this.vanillaRoot.resolve("assets/minecraft/models/item");
@@ -279,6 +308,9 @@ public final class JavaResourcePack {
         try (Stream<Path> files = Files.walk(directory)) {
             for (Path file : files.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".json")).toList()) {
                 String name = CharacterUtils.replaceBackslashWithSlash(directory.relativize(file).toString());
+                if (this.vanillaFilter != null && this.vanillaFilter.test("minecraft", "models/item/" + name)) {
+                    continue;
+                }
                 Key id = Key.of("minecraft", name.substring(0, name.length() - 5));
                 JsonObject model = new JsonObject();
                 model.addProperty("type", "minecraft:model");
@@ -292,10 +324,10 @@ public final class JavaResourcePack {
     }
 
     public Map<Key, JsonObject> itemDefinitions() throws IOException {
-        return itemDefinitions(this.root.resolve("assets"));
+        return this.itemDefinitions(this.root.resolve("assets"), false);
     }
 
-    private static Map<Key, JsonObject> itemDefinitions(Path assets) throws IOException {
+    private Map<Key, JsonObject> itemDefinitions(Path assets, boolean vanilla) throws IOException {
         Map<Key, JsonObject> definitions = new TreeMap<>(Comparator.comparing(Key::asString));
         if (!Files.isDirectory(assets)) {
             return definitions;
@@ -311,6 +343,9 @@ public final class JavaResourcePack {
                     while (iterator.hasNext()) {
                         Path file = iterator.next();
                         String path = CharacterUtils.replaceBackslashWithSlash(items.relativize(file).toString());
+                        if (vanilla && this.vanillaFilter != null && this.vanillaFilter.test(namespace.getFileName().toString(), "items/" + path)) {
+                            continue;
+                        }
                         Key key = Key.of(namespace.getFileName().toString(), path.substring(0, path.length() - 5));
                         JsonObject definition;
                         try {
@@ -339,6 +374,29 @@ public final class JavaResourcePack {
         return Files.isRegularFile(this.root.resolve(path));
     }
 
+    public Set<Key> customSoundFiles() throws IOException {
+        Set<Key> files = new HashSet<>();
+        for (String namespace : this.soundNamespaces()) {
+            Path sounds = this.root.resolve("assets").resolve(namespace).resolve("sounds");
+            if (Files.isDirectory(sounds)) {
+                try (Stream<Path> paths = Files.walk(sounds)) {
+                    for (Path path : paths.filter(Files::isRegularFile).filter(file -> file.toString().endsWith(".ogg")).toList()) {
+                        String name = CharacterUtils.replaceBackslashWithSlash(sounds.relativize(path).toString());
+                        files.add(Key.of(namespace, name.substring(0, name.length() - 4)));
+                    }
+                }
+            }
+        }
+        return files;
+    }
+
+    public List<String> soundNamespaces() throws IOException {
+        try (Stream<Path> paths = Files.list(this.root.resolve("assets"))) {
+            return paths.filter(path -> Files.isRegularFile(path.resolve("sounds.json")) || Files.isDirectory(path.resolve("sounds")))
+                    .map(path -> path.getFileName().toString()).sorted().toList();
+        }
+    }
+
     @Nullable
     public InputStream openResource(String path) throws IOException {
         Path resource = this.resolveResource(path);
@@ -347,7 +405,15 @@ public final class JavaResourcePack {
 
     private Path resolveResource(String path) {
         Path resource = this.root.resolve(path);
-        return Files.isRegularFile(resource) ? resource : this.vanillaRoot.resolve(path);
+        return Files.isRegularFile(resource) || this.filtersVanilla(path) ? resource : this.vanillaRoot.resolve(path);
+    }
+
+    public boolean filtersVanilla(String path) {
+        if (this.vanillaFilter == null || !path.startsWith("assets/")) {
+            return false;
+        }
+        int separator = path.indexOf('/', 7);
+        return separator >= 0 && this.vanillaFilter.test(path.substring(7, separator), path.substring(separator + 1));
     }
 
     public JsonObject readModel(Key model) throws IOException {

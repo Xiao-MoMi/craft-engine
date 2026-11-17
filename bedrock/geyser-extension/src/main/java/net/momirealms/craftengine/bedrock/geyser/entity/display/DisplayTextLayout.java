@@ -14,10 +14,11 @@ record DisplayTextLayout(List<Line> lines, int width) {
         int width = 0;
         int maximum = 0;
         boolean bold = false;
-        for (int index = 0; index < text.length(); index++) {
-            char character = text.charAt(index);
-            if (character == '§' && index + 1 < text.length()) {
-                char code = text.charAt(++index);
+        for (int index = 0; index < text.length();) {
+            int character = text.codePointAt(index);
+            index += Character.charCount(character);
+            if (character == '§' && index < text.length() && Character.isBmpCodePoint(text.codePointAt(index))) {
+                char code = text.charAt(index++);
                 if (code == 'r' || "0123456789abcdef".indexOf(code) >= 0) {
                     format.setLength(0);
                     bold = false;
@@ -27,7 +28,7 @@ record DisplayTextLayout(List<Line> lines, int width) {
                 line.append('§').append(code);
                 continue;
             }
-            int advance = SignUtils.getCharacterWidth(character) + (bold ? 1 : 0);
+            int advance = (Character.isBmpCodePoint(character) ? SignUtils.getCharacterWidth((char) character) : 6) + (bold ? 1 : 0);
             if (character == '\n' || (width > 0 && width + advance > maxWidth)) {
                 lines.add(new Line(line.toString(), width));
                 maximum = Math.max(maximum, width);
@@ -36,7 +37,7 @@ record DisplayTextLayout(List<Line> lines, int width) {
                 width = 0;
             }
             if (character != '\n') {
-                line.append(character);
+                line.appendCodePoint(character);
                 width += advance;
             }
         }

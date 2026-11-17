@@ -70,7 +70,7 @@ final class BedrockLayerTextures implements BedrockTextureConverter {
                         colors[index] = tint;
                     }
                 }
-                BedrockVanillaTextures.transform(context, rule.target(), rule.sources(), true,
+                context.transform(rule.target(), rule.sources(), true,
                         images -> this.combine(rule, images, colors));
             } catch (IOException | RuntimeException exception) {
                 CraftEngine.instance().logger().warn("Skipping Bedrock vanilla texture " + rule.target() + ": " + exception.getMessage());

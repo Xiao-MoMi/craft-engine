@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item;
 
-import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockAnimalEquipment;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockElytraEquipment;
@@ -16,7 +16,7 @@ public final class BedrockItemGenerationContext {
     private final BedrockItemDisplayBlocks itemDisplayBlocks;
     private final BedrockPlayerAnimations playerAnimations = new BedrockPlayerAnimations();
 
-    public BedrockItemGenerationContext(Path root, BedrockTerrainAtlas atlas, JsonObject blockDefinitions) {
+    public BedrockItemGenerationContext(Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions blockDefinitions) {
         this.root = root;
         this.itemDisplayBlocks = new BedrockItemDisplayBlocks(atlas, blockDefinitions);
     }

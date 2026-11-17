@@ -43,6 +43,10 @@ public final class BedrockFontGenerator {
     }
 
     public static void write(JavaResourcePack resources, Path root) throws IOException {
+        write(resources, root, root.resolve(BedrockPackLayout.GLYPHS));
+    }
+
+    public static void write(JavaResourcePack resources, Path root, Path glyphData) throws IOException {
         JavaFontResolver fonts = new JavaFontResolver(resources, Config.bedrockExcludedFonts());
         // 所有字体共用的位图页和码位
         GlyphAtlas atlas = new GlyphAtlas();
@@ -59,7 +63,8 @@ public final class BedrockFontGenerator {
         // 写入扩展所需数据
         JsonObject result = new JsonObject();
         result.add("metrics", layouts);
-        GsonHelper.writeJsonFile(result, root.resolve(BedrockPackLayout.GLYPHS));
+        Files.createDirectories(glyphData.getParent());
+        GsonHelper.writeJsonFile(result, glyphData);
     }
 
     private static void addFont(Key font, Int2ObjectMap<Glyph> glyphs, GlyphAtlas atlas, JsonObject layouts) {

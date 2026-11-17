@@ -34,9 +34,7 @@ final class BedrockAtlasTextures implements BedrockTextureConverter {
             for (int index = 0; index < sheet.frames(); index++) {
                 inputs.add(String.format(Locale.ROOT, sheet.source(), index));
             }
-            BedrockVanillaTextures.transform(
-                    context,
-                    "textures/" + sheet.target(),
+            context.transform("textures/" + sheet.target(),
                     inputs,
                     images -> this.stitch(images, sheet.horizontal())
             );
@@ -146,14 +144,14 @@ final class BedrockAtlasTextures implements BedrockTextureConverter {
         try {
             List<BufferedImage> inputs = new ArrayList<>(names.length);
             for (String name : names) {
-                TextureData data = BedrockVanillaTextures.load(context, "gui/sprites/container/slot/" + name + ".png");
+                TextureData data = context.load("gui/sprites/container/slot/" + name + ".png");
                 if (data.animation() != null) {
                     throw new IOException("Animated slot sprites are not supported: " + name);
                 }
                 inputs.add(data.image());
             }
             BufferedImage image = this.stitch(inputs, true);
-            if (!BedrockVanillaTextures.writeImage(context, target, "textures/ui/" + target + ".png", image)) {
+            if (!context.output().writeImage(target, "textures/ui/" + target + ".png", image)) {
                 return false;
             }
             // UI 的 uv_size 使用像素尺寸，必须与高清图集的每格宽高同步。
@@ -177,7 +175,7 @@ final class BedrockAtlasTextures implements BedrockTextureConverter {
                 positions.add(index);
             }
         }
-        BedrockVanillaTextures.transform(context, target, inputs, images -> {
+        context.transform(target, inputs, images -> {
             int size = images.stream().mapToInt(BufferedImage::getWidth).max().orElseThrow();
             BufferedImage result = new BufferedImage(size * columns, size * rows, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = result.createGraphics();

@@ -36,13 +36,19 @@ public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreen
     }
 
     @SuppressWarnings("unchecked")
-    public static void install(ContainerTitleLayout layout) {
+    public static GeyserGuiMenus install(ContainerTitleLayout layout) {
         PacketTranslator<ClientboundOpenScreenPacket> original = (PacketTranslator<ClientboundOpenScreenPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundOpenScreenPacket.class);
         if (original instanceof GeyserGuiMenus menus) {
             original = menus.delegate;
         }
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(original, layout));
+        GeyserGuiMenus installed = new GeyserGuiMenus(original, layout);
+        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundOpenScreenPacket.class, installed);
         GeyserTranslationManager.info("gui.layout_enabled");
+        return installed;
+    }
+
+    public void uninstall() {
+        Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundOpenScreenPacket.class, this, this.delegate);
     }
 
     @Override

@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bedrock.geyser.pack;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
@@ -12,11 +13,13 @@ import net.momirealms.craftengine.bedrock.geyser.translation.GeyserTranslations;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -24,7 +27,7 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null);
     private final SidebarProfiles scoreboard;
     private final JsonObject items;
     private final boolean convertText;
@@ -32,8 +35,13 @@ public final class GeyserExtensionData {
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
     private final JsonObject nativeModels;
+    private final JsonObject soundMappings;
+    private final Path clientPack;
 
-    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard, @Nullable JsonObject nativeModels) {
+    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard,
+                                @Nullable JsonObject nativeModels, @Nullable JsonObject soundMappings, @Nullable Path clientPack) {
+        this.soundMappings = soundMappings;
+        this.clientPack = clientPack;
         this.scoreboard = scoreboard;
         this.nativeModels = nativeModels;
         this.items = items;
@@ -45,6 +53,10 @@ public final class GeyserExtensionData {
     }
 
     public static GeyserExtensionData read(Path path) throws IOException {
+        return read(path, null);
+    }
+
+    public static GeyserExtensionData read(Path path, @Nullable Path cacheDirectory) throws IOException {
         if (Files.notExists(path)) {
             return EMPTY;
         }
@@ -54,10 +66,35 @@ public final class GeyserExtensionData {
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
-                    readJson(archive, BedrockPackLayout.NATIVE_MODELS));
+                    readJson(archive, BedrockPackLayout.NATIVE_MODELS), readJson(archive, BedrockPackLayout.SOUND_MAPPINGS),
+                    cacheDirectory == null ? null : extractClientPack(archive, cacheDirectory));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
         }
+    }
+
+    @Nullable
+    private static Path extractClientPack(ZipFile archive, Path cacheDirectory) throws IOException {
+        ZipEntry entry = archive.getEntry(BedrockPackFiles.CLIENT_PACK);
+        if (entry == null) {
+            return null;
+        }
+        Files.createDirectories(cacheDirectory);
+        Path pack = cacheDirectory.resolve(BedrockPackFiles.CLIENT_PACK);
+        Path temporary = Files.createTempFile(cacheDirectory, "client-", ".tmp");
+        try {
+            try (InputStream input = archive.getInputStream(entry)) {
+                Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return Files.move(temporary, pack, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+        } finally {
+            Files.deleteIfExists(temporary);
+        }
+    }
+
+    @Nullable
+    public Path clientPack() {
+        return this.clientPack;
     }
 
     @Nullable
@@ -110,5 +147,10 @@ public final class GeyserExtensionData {
 
     public JsonObject nativeModels() {
         return this.nativeModels;
+    }
+
+    @Nullable
+    public JsonObject soundMappings() {
+        return this.soundMappings;
     }
 }

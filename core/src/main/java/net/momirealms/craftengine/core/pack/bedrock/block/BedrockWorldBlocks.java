@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
+import net.momirealms.craftengine.core.pack.bedrock.sound.BedrockSounds;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
@@ -34,19 +35,30 @@ public final class BedrockWorldBlocks {
     private BedrockWorldBlocks(JavaModelResources resources, BedrockTerrainAtlas atlas) {
         this.atlas = atlas;
         this.textures = resources.textures();
-        this.models = new JavaBlockModelResolver(resources);
+        this.models = resources.blockModels();
     }
 
-    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, JsonObject blockDefinitions) throws IOException {
-        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root, blockDefinitions);
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions blockDefinitions) throws IOException {
+        return write(resources, sources, root, atlas, blockDefinitions, Map.of());
     }
 
-    private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root, JsonObject blockDefinitions) throws IOException {
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions blockDefinitions, Map<Key, Key> replacements) throws IOException {
+        BedrockSounds sounds = new BedrockSounds(resources.pack(), replacements);
+        JsonArray blocks = new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root, blockDefinitions, sounds);
+        sounds.write(root, new JsonObject());
+        return blocks;
+    }
+
+    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
+        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root, definitions, sounds);
+    }
+
+    private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root, BedrockBlockDefinitions blockDefinitions, BedrockSounds sounds) throws IOException {
         Map<String, List<WorldBlockSource>> groups = groupByVisualState(sources);
         JsonArray entries = new JsonArray(groups.size());
         for (Map.Entry<String, List<WorldBlockSource>> group : groups.entrySet()) {
             try {
-                entries.add(this.writeGroup(group.getKey(), group.getValue(), blockDefinitions, root));
+                entries.add(this.writeGroup(group.getKey(), group.getValue(), blockDefinitions, sounds, root));
             } catch (UnsupportedOperationException exception) {
                 // 同一显示状态只能注册一套方块属性；跳过整组，避免其他状态误用首个状态的碰撞箱。
                 for (WorldBlockSource source : group.getValue()) {
@@ -69,9 +81,18 @@ public final class BedrockWorldBlocks {
         return groups;
     }
 
-    private JsonObject writeGroup(String visualState, List<WorldBlockSource> sources, JsonObject blocks, Path root) throws IOException {
+    private JsonObject writeGroup(String visualState, List<WorldBlockSource> sources, BedrockBlockDefinitions blockDefinitions, BedrockSounds sounds, Path root) throws IOException {
         JsonObject properties = sharedComponents(visualState, sources);
         WorldBlockSource first = sources.getFirst();
+        BedrockSounds.Group group = sounds.resolve(first.sounds(), first.id());
+        for (int i = 1; i < sources.size(); i++) {
+            WorldBlockSource source = sources.get(i);
+            BedrockSounds.Group other = sounds.resolve(source.sounds(), source.id());
+            if (!group.equals(other)) {
+                throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.sound_conflict",
+                        visualState, first.id().asString(), group.toString(), source.id().asString(), other.toString()));
+            }
+        }
         String name = "craftengine/world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
         List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
 
@@ -82,9 +103,7 @@ public final class BedrockWorldBlocks {
         }
         entry.add("server_states", serverStatesToJson(sources));
 
-        JsonObject block = new JsonObject();
-        block.addProperty("sound", "stone");
-        blocks.add("geyser_custom:" + name, block);
+        blockDefinitions.register(name, sounds.register(group));
         return entry;
     }
 

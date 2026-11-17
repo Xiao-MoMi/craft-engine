@@ -5,6 +5,7 @@ import java.util.List;
 
 public final class BedrockPackFiles {
     public static final String DATA_EXTENSION = ".cedata";
+    public static final String CLIENT_PACK = "client.mcpack";
     public static final List<String> SERVER_FILES = List.of(
             RegistrationPlanKind.ITEM.file(),
             RegistrationPlanKind.BLOCK.file(),
@@ -18,8 +19,16 @@ public final class BedrockPackFiles {
     }
 
     public static Path data(Path pack, Path directory) {
-        String name = pack.getFileName().toString();
+        return directory.resolve(baseName(pack) + DATA_EXTENSION);
+    }
+
+    public static String clientPackName(Path data) {
+        return baseName(data) + ".mcpack";
+    }
+
+    private static String baseName(Path file) {
+        String name = file.getFileName().toString();
         int extension = name.lastIndexOf('.');
-        return directory.resolve((extension < 0 ? name : name.substring(0, extension)) + DATA_EXTENSION);
+        return extension < 0 ? name : name.substring(0, extension);
     }
 }

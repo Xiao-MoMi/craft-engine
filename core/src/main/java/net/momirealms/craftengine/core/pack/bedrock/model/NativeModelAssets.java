@@ -50,20 +50,27 @@ public final class NativeModelAssets {
     }
 
     public static void write(List<NativeModelSource> sources, Path root, int maxLayers) throws IOException {
+        write(sources, root, root.resolve(MANIFEST), maxLayers);
+    }
+
+    public static void write(List<NativeModelSource> sources, Path root, Path modelData, int maxLayers) throws IOException {
         JsonObject models = new JsonObject();
         for (NativeModelSource source : sources) {
             try {
-                models.add(source.id().asString(), new NativeModelAssets(source).write(root, maxLayers));
+                String material = switch (source.id().namespace()) {
+                    case "bettermodel", "modelengine" -> "entity_alphatest_one_sided";
+                    default -> "entity_alphatest";
+                };
+                models.add(source.id().asString(), new NativeModelAssets(source).write(root, maxLayers, material));
             } catch (RuntimeException exception) {
                 throw new IOException("Cannot convert native model " + source.id() + " from " + source.blueprint(), exception);
             }
         }
-        Path output = root.resolve(MANIFEST);
-        Files.createDirectories(output.getParent());
-        GsonHelper.writeJsonFile(models, output);
+        Files.createDirectories(modelData.getParent());
+        GsonHelper.writeJsonFile(models, modelData);
     }
 
-    private JsonObject write(Path root, int maxLayers) throws IOException {
+    private JsonObject write(Path root, int maxLayers, String material) throws IOException {
         int[] size = this.writeTexture(root);
         for (JsonElement element : this.blueprint.getAsJsonArray("elements")) {
             JsonObject cube = element.getAsJsonObject();
@@ -99,7 +106,7 @@ public final class NativeModelAssets {
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);
         geometry.add("bones", this.bones);
-        JsonObject geometries = JsonParser.parseString("{\"format_version\":\"1.16.0\",\"minecraft:geometry\":[]}").getAsJsonObject();
+        JsonObject geometries = JsonParser.parseString("{\"format_version\":\"1.21.0\",\"minecraft:geometry\":[]}").getAsJsonObject();
         geometries.getAsJsonArray("minecraft:geometry").add(geometry);
         this.save(root, "models/entity/craftengine/native/", ".geo.json", geometries);
 
@@ -175,8 +182,9 @@ public final class NativeModelAssets {
         JsonObject renderFile = JsonParser.parseString("{\"format_version\":\"1.8.0\",\"render_controllers\":{}}").getAsJsonObject();
         String renderId = "controller.render.ce_native_" + this.stem;
         renderFile.getAsJsonObject("render_controllers").add(renderId, render);
-        JsonObject entity = JsonParser.parseString("{\"format_version\":\"1.10.0\",\"minecraft:client_entity\":{\"description\":{\"materials\":{\"default\":\"entity_alphatest\"},\"textures\":{},\"geometry\":{},\"scripts\":{},\"render_controllers\":[]}}}").getAsJsonObject();
+        JsonObject entity = JsonParser.parseString("{\"format_version\":\"1.10.0\",\"minecraft:client_entity\":{\"description\":{\"materials\":{},\"textures\":{},\"geometry\":{},\"scripts\":{},\"render_controllers\":[]}}}").getAsJsonObject();
         JsonObject entityDescription = entity.getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
+        entityDescription.getAsJsonObject("materials").addProperty("default", material);
         entityDescription.add("identifier", manifest.get("identifier"));
         entityDescription.getAsJsonObject("textures").addProperty("default", "textures/ce_native/" + this.stem);
         entityDescription.getAsJsonObject("geometry").addProperty("default", "geometry.ce_native_" + this.stem);

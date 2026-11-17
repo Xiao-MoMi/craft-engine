@@ -314,7 +314,7 @@ public final class BedrockItem3DAttachables {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", this.id.asString());
         JsonObject renderMaterials = new JsonObject();
-        renderMaterials.addProperty("default", "entity_alphatest");
+        renderMaterials.addProperty("default", "entity_alphatest_one_sided");
         renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
         for (Material material : this.materials) {
             if (material.dyeColor() != null) {

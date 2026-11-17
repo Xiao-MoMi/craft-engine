@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemWriter;
@@ -23,7 +24,7 @@ public final class BedrockItemResourceGenerator {
     private BedrockItemResourceGenerator() {
     }
 
-    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root, BedrockTerrainAtlas atlas, JsonObject blockDefinitions) throws IOException {
+    public static Result write(JavaModelResources resources, ItemRegistrationPlan plan, Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions blockDefinitions) throws IOException {
         BedrockItemIconRenderer renderer = new BedrockItemIconRenderer(resources);
         BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas, blockDefinitions);

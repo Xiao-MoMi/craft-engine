@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -30,8 +31,17 @@ public final class ZipUtils {
     }
 
     public static void compress(Path in, Path out, boolean storePng, boolean includeDirectories) throws IOException {
-        byte[] crcBuffer = storePng ? new byte[8192] : null;
-        CRC32 crc = storePng ? new CRC32() : null;
+        compress(in, out, storePng, includeDirectories, null, null);
+    }
+
+    public static void compressWithStoredFile(Path in, Path out, Path storedFile, String entryName) throws IOException {
+        compress(in, out, false, false, storedFile, entryName);
+    }
+
+    private static void compress(Path in, Path out, boolean storePng, boolean includeDirectories,
+                                 @Nullable Path storedFile, @Nullable String entryName) throws IOException {
+        byte[] crcBuffer = storePng || storedFile != null ? new byte[8192] : null;
+        CRC32 crc = crcBuffer == null ? null : new CRC32();
         try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out), ZIP_OUTPUT_BUFFER_SIZE);
              ZipOutputStream zos = new ZipOutputStream(os)) {
 
@@ -54,18 +64,7 @@ public final class ZipUtils {
                     ZipEntry entry = new ZipEntry(relativePath);
                     entry.setTime(0L);
                     if (storePng && FileUtils.isPngFile(file)) {
-                        // STORED entries need their size and CRC before the local header is written.
-                        crc.reset();
-                        try (InputStream input = Files.newInputStream(file)) {
-                            int length;
-                            while ((length = input.read(crcBuffer)) != -1) {
-                                crc.update(crcBuffer, 0, length);
-                            }
-                        }
-                        entry.setMethod(ZipEntry.STORED);
-                        entry.setSize(attrs.size());
-                        entry.setCompressedSize(attrs.size());
-                        entry.setCrc(crc.getValue());
+                        prepareStoredEntry(entry, file, attrs.size(), crc, crcBuffer);
                     }
                     zos.putNextEntry(entry);
                     Files.copy(file, zos);
@@ -73,7 +72,29 @@ public final class ZipUtils {
                     return FileVisitResult.CONTINUE;
                 }
             });
+            if (storedFile != null) {
+                ZipEntry entry = new ZipEntry(entryName);
+                entry.setTime(0L);
+                prepareStoredEntry(entry, storedFile, Files.size(storedFile), crc, crcBuffer);
+                zos.putNextEntry(entry);
+                Files.copy(storedFile, zos);
+                zos.closeEntry();
+            }
         }
+    }
+
+    private static void prepareStoredEntry(ZipEntry entry, Path file, long size, CRC32 crc, byte[] buffer) throws IOException {
+        crc.reset();
+        try (InputStream input = Files.newInputStream(file)) {
+            int length;
+            while ((length = input.read(buffer)) != -1) {
+                crc.update(buffer, 0, length);
+            }
+        }
+        entry.setMethod(ZipEntry.STORED);
+        entry.setSize(size);
+        entry.setCompressedSize(size);
+        entry.setCrc(crc.getValue());
     }
 
     public static void decompress(Path source, Path target) throws IOException {

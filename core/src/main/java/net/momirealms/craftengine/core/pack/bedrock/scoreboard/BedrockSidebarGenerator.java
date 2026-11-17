@@ -24,6 +24,10 @@ public final class BedrockSidebarGenerator {
     }
 
     public static void write(JavaResourcePack resources, Path root, BedrockSidebarConfig config) throws IOException {
+        write(resources, root, root.resolve(BedrockPackLayout.SCOREBOARD), config);
+    }
+
+    public static void write(JavaResourcePack resources, Path root, Path scoreboardData, BedrockSidebarConfig config) throws IOException {
         JsonObject data = new JsonObject();
         data.addProperty("enabled", config.enable());
         JsonArray entries = new JsonArray();
@@ -62,8 +66,8 @@ public final class BedrockSidebarGenerator {
             entries.add(entry);
         }
         data.add("profiles", entries);
-        Files.createDirectories(root.resolve(BedrockPackLayout.SCOREBOARD).getParent());
-        GsonHelper.writeJsonFile(data, root.resolve(BedrockPackLayout.SCOREBOARD));
+        Files.createDirectories(scoreboardData.getParent());
+        GsonHelper.writeJsonFile(data, scoreboardData);
         if (config.enable()) {
             new BedrockSidebarWriter(entries).write(root);
         }

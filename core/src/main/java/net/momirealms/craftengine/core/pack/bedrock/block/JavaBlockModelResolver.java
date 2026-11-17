@@ -20,6 +20,7 @@ import java.util.*;
 public final class JavaBlockModelResolver {
     private final JavaResourcePack resources;
     private final JavaModelResolver models;
+    private final Map<Key, JsonObject> definitions = new HashMap<>();
 
     public JavaBlockModelResolver(JavaModelResources resources) {
         this.resources = resources.pack();
@@ -28,7 +29,11 @@ public final class JavaBlockModelResolver {
 
     public List<Part> resolve(BlockStateWrapper state) throws IOException {
         Key block = state.ownerId();
-        JsonObject definition = this.resources.readJson("assets/" + block.namespace() + "/blockstates/" + block.value() + ".json");
+        JsonObject definition = this.definitions.get(block);
+        if (definition == null && !this.definitions.containsKey(block)) {
+            definition = this.resources.readJson("assets/" + block.namespace() + "/blockstates/" + block.value() + ".json");
+            this.definitions.put(block, definition);
+        }
         if (definition == null) {
             throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.missing", block.asString()));
         }

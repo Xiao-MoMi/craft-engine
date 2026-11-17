@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedItem;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedVariant;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
@@ -46,88 +48,89 @@ public final class GeyserItemManager {
         this.hasDyedItems = false;
         this.tintSources.clear();
         this.elytraVariants = Map.of();
-        Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
-        if (plan != null) {
-            this.registerItems(plan, event, patches);
-            JsonObject elytra = plan.getAsJsonObject(ELYTRA_VARIANTS);
-            if (elytra != null) {
-                Map<String, Integer> variants = new HashMap<>();
-                elytra.entrySet().forEach(entry -> variants.put(entry.getKey(), entry.getValue().getAsInt()));
-                this.elytraVariants = Map.copyOf(variants);
-            }
+        this.elytraProperty = null;
+        this.componentPatches = Map.of();
+        if (plan == null) {
+            return;
         }
-        patches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
-        this.componentPatches = Map.copyOf(patches);
-    }
-
-    private void registerItems(JsonObject plan, GeyserDefineCustomItemsEvent event, Map<String, GeyserItemComponentPatch> patches) {
         GeyserItemRegistrationAdapter adapter;
         JsonArray entries;
+        Registration registration;
         try {
             adapter = new GeyserItemRegistrationAdapter(plan.get(SOURCE_VERSION).getAsString());
-            entries = plan.getAsJsonArray(ENTRIES);
+            entries = plan.get(ENTRIES).getAsJsonArray();
+            registration = new Registration(event, plan.getAsJsonObject(ELYTRA_VARIANTS));
         } catch (RuntimeException exception) {
             GeyserTranslationManager.error("item.prepare_failed", exception);
             return;
         }
-        int registered = 0;
-        int failed = 0;
-        int skipped = 0;
         for (JsonElement value : entries) {
+            if (!value.isJsonObject()) {
+                registration.failed++;
+                GeyserTranslationManager.error("item.register_failed", value, "?", "?");
+                continue;
+            }
             JsonObject entry = value.getAsJsonObject();
-            Identifier identifier = Identifier.of(entry.get(ITEM_TYPE).getAsString());
             try {
-                GeyserItemRegistrationAdapter.ConvertedItem converted = adapter.convert(entry, this.extension.blockManager().displayBlocks());
-                skipped += converted.skipped();
-                failed += converted.failed();
-                JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
-                boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
-                for (JsonElement branch : entry.getAsJsonArray(VARIANTS)) {
-                    JsonObject variant = branch.getAsJsonObject();
-                    JsonObject sources = variant.getAsJsonObject(RESOURCES).getAsJsonObject("tint_sources");
-                    if (sources != null) {
-                        Map<String, Integer> binding = new HashMap<>();
-                        sources.entrySet().forEach(source -> binding.put(source.getKey(), source.getValue().getAsInt()));
-                        this.tintSources.put(variant.get(BEDROCK_IDENTIFIER).getAsString(), Map.copyOf(binding));
-                        this.hasDyedItems |= binding.values().stream().anyMatch(source -> source >= -1);
-                    }
-                }
-                for (CustomItemDefinition definition : converted.definitions()) {
-                    event.register(identifier, definition);
-                    this.hasDyedItems |= definition.bedrockOptions().defaultDyeableColor() != null;
-                    registered++;
-                    this.registerVariant(definition, converted, placesBlock, patches);
-                }
-                if (converted.contextual()) {
-                    for (CustomItemDefinition definition : converted.definitions()) {
-                        this.contextualItems.put(definition.bedrockIdentifier().toString(), definition);
-                    }
+                ConvertedItem item = adapter.convert(entry, this.extension.blockManager().displayBlocks());
+                registration.skipped += item.skipped();
+                registration.failed += item.failed();
+                for (ConvertedVariant variant : item.variants()) {
+                    this.registerVariant(item, variant, registration);
                 }
             } catch (UnsupportedOperationException exception) {
-                skipped++;
+                registration.skipped++;
                 GeyserTranslationManager.warn("item.skipped", entry.get(BEDROCK_IDENTIFIER), entry.get(MODEL), exception.getMessage());
             } catch (RuntimeException exception) {
-                failed++;
+                registration.failed++;
                 GeyserTranslationManager.error("item.register_failed", exception, entry.get(BEDROCK_IDENTIFIER), entry.get(ITEM_TYPE), entry.get(MODEL));
             }
         }
-        GeyserTranslationManager.info("item.registered", registered, skipped, failed);
+        registration.patches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
+        this.componentPatches = Map.copyOf(registration.patches);
+        this.elytraVariants = Map.copyOf(registration.elytraVariants);
+        GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
     }
 
-    private void registerVariant(CustomItemDefinition definition, GeyserItemRegistrationAdapter.ConvertedItem converted,
-                                 boolean placesBlock, Map<String, GeyserItemComponentPatch> patches) {
+    private void registerVariant(ConvertedItem item, ConvertedVariant variant, Registration registration) {
+        CustomItemDefinition definition = variant.definition();
+        String primaryId = definition.bedrockIdentifier().toString();
+        try {
+            this.registerDefinition(item, definition, registration);
+            if (!variant.tintSources().isEmpty()) {
+                this.tintSources.put(primaryId, variant.tintSources());
+                this.hasDyedItems |= variant.tintSources().values().stream().anyMatch(source -> source >= -1);
+            }
+            if (variant.head() != null) {
+                definition = variant.head();
+                this.registerDefinition(item, definition, registration);
+                this.headIdentifiers.put(primaryId, definition.bedrockIdentifier().toString());
+                registration.patches.put(primaryId, GeyserItemComponentPatches.withoutWearable(item.componentPatch()));
+            }
+        } catch (RuntimeException exception) {
+            registration.failed++;
+            GeyserTranslationManager.error("item.register_failed", exception, definition.bedrockIdentifier(), item.itemType(), definition.model());
+        }
+    }
+
+    private void registerDefinition(ConvertedItem item, CustomItemDefinition definition, Registration registration) {
         String identifier = definition.bedrockIdentifier().toString();
-        if (placesBlock) {
+        JsonElement elytra = registration.elytraPlan == null ? null : registration.elytraPlan.get(identifier);
+        Integer elytraVariant = elytra == null ? null : elytra.getAsInt();
+        registration.event.register(item.itemType(), definition);
+        registration.registered++;
+        if (elytraVariant != null) {
+            registration.elytraVariants.put(identifier, elytraVariant);
+        }
+        this.hasDyedItems |= definition.bedrockOptions().defaultDyeableColor() != null;
+        if (item.placesBlock()) {
             this.extension.blockManager().registerBlockItem(identifier);
         }
-        GeyserItemComponentPatch patch = converted.componentPatch();
-        String headIdentifier = converted.headIdentifiers().get(identifier);
-        if (headIdentifier != null) {
-            patch = GeyserItemComponentPatches.withoutWearable(patch);
-            this.headIdentifiers.put(identifier, headIdentifier);
+        if (item.contextual()) {
+            this.contextualItems.put(identifier, definition);
         }
-        if (patch != null) {
-            patches.put(identifier, patch);
+        if (item.componentPatch() != null) {
+            registration.patches.put(identifier, item.componentPatch());
         }
     }
 
@@ -172,5 +175,20 @@ public final class GeyserItemManager {
 
     public void disable() {
         this.worldItemViews.uninstall();
+    }
+
+    private static final class Registration {
+        private final GeyserDefineCustomItemsEvent event;
+        private final JsonObject elytraPlan;
+        private final Map<String, Integer> elytraVariants = new HashMap<>();
+        private final Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
+        private int registered;
+        private int skipped;
+        private int failed;
+
+        private Registration(GeyserDefineCustomItemsEvent event, JsonObject elytraPlan) {
+            this.event = event;
+            this.elytraPlan = elytraPlan;
+        }
     }
 }

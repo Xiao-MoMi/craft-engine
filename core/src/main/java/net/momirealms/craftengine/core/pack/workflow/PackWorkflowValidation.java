@@ -4,6 +4,7 @@ import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Map;
@@ -56,17 +57,17 @@ public final class PackWorkflowValidation {
         resolvePath(path);
     }
 
-    public void generateBedrockPack(String input, String output, String dataOutput) {
-        Path sourcePath = resolvePath(input);
-        Path outputPath = resolvePath(output);
-        Path dataPath = this.resolvePath(dataOutput);
-        if (sourcePath.equals(outputPath) || sourcePath.equals(dataPath)) {
+    public void generateBedrockPack(String input, @Nullable String packOutput, String output) {
+        Path sourcePath = this.resolvePath(input);
+        Path packPath = packOutput == null ? null : this.resolvePath(packOutput);
+        Path dataPath = this.resolvePath(output);
+        if (sourcePath.equals(packPath) || sourcePath.equals(dataPath)) {
             throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.input_conflict", sourcePath.toString()));
         }
-        if (dataPath.equals(outputPath)) {
+        if (dataPath.equals(packPath)) {
             throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.output_conflict", dataPath.toString()));
         }
-        Path expectedDataPath = BedrockPackFiles.data(outputPath, dataPath.getParent());
+        Path expectedDataPath = BedrockPackFiles.data(packPath == null ? dataPath : packPath, dataPath.getParent());
         if (!dataPath.equals(expectedDataPath)) {
             throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.data_filename",
                     dataPath.toString(), expectedDataPath.toString()));
