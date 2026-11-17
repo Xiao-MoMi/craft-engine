@@ -31,6 +31,22 @@ public final class WrappedBlockStateHelper {
 
     private WrappedBlockStateHelper() {}
 
+    public static boolean registerGrim() throws Throwable {
+        for (String packageName : new String[]{
+                "ac{}grim{}grimac{}shaded{}com{}github{}retrooper{}packetevents",
+                "ac{}grim{}grimac{}shaded{}packetevents"
+        }) {
+            try {
+                Class.forName(packageName.replace("{}", ".") + ".protocol.world.states.WrappedBlockState", false, WrappedBlockStateHelper.class.getClassLoader());
+            } catch (ClassNotFoundException e) {
+                continue;
+            }
+            register(packageName);
+            return true;
+        }
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public static void register(@Nullable String packageName) throws Throwable {
         init(packageName);

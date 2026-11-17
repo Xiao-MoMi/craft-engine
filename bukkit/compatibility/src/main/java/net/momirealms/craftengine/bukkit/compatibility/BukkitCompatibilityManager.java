@@ -334,7 +334,13 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
             runCatchingHook(() -> WrappedBlockStateHelper.register(null), "packetevents");
         }
         if (this.isPluginEnabled("GrimAC") && Config.injectPacketEvents()) {
-            runCatchingHook(() -> WrappedBlockStateHelper.register("ac{}grim{}grimac{}shaded{}com{}github{}retrooper{}packetevents"), "GrimAC");
+            try {
+                if (WrappedBlockStateHelper.registerGrim()) {
+                    logHook("GrimAC");
+                }
+            } catch (Throwable e) {
+                this.plugin.logger().warn("Failed to hook GrimAC", e);
+            }
         }
         BukkitLevelerBridge levelerBridge = BukkitLevelerBridge.builder()
                 .detectSupportedPlugins(
