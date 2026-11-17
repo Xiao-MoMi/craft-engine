@@ -435,3 +435,5 @@ update.is_latest: Du verwendest die aktuellste Version
 workflow.unknown_type: 'Unbekannter Ressourcenpaket-Workflow-Typ ''<arg:0>'''
 yaml.duplicated_key: "Doppelter Key '<arg:1>' in Zeile <arg:2> in Datei <arg:0> gefunden"
 yaml.inconsistent_value_type: "Doppelter Key '<arg:1>' in Zeile <arg:2> mit unterschiedlichen Value-Typen in Datei <arg:0> gefunden"
+
+resource_pack.bedrock.block.display_skipped: "Bedrock-Blockanzeigemodell für <arg:0> übersprungen; Darstellung als gehaltenes Item: <arg:1>"

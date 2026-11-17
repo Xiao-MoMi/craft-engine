@@ -852,6 +852,14 @@ bedrock:
     #   - minecraft:apple
     #   - minecraft:diamond_sword
     vanilla-items: []
+    # Block states whose Java models are converted for block display entities.
+    # Omitted properties match all legal values; a bare block ID selects all its states.
+    # Unlisted states use approximate Bedrock held-item rendering without extra models.
+    # vanilla-blocks:
+    #   - "minecraft:oak_log"
+    #   - "minecraft:oak_stairs[facing=east]"
+    #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
+    vanilla-blocks: []
     convert-text: true
   resource-pack:
     # Resource pack name shown in the Bedrock client.

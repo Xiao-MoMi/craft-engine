@@ -18,11 +18,13 @@ import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.Tickable;
 import org.geysermc.geyser.inventory.GeyserItemStack;
+import org.geysermc.geyser.level.block.type.BlockState;
+import org.geysermc.geyser.item.type.Item;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.translator.item.ItemTranslator;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 
-final class GeyserItemDisplayEntity extends Entity implements Tickable {
+final class GeyserDisplayEntity extends Entity implements Tickable {
     private final GeyserItemDisplays displays;
     private DisplayProperties carrier;
     private GeyserItemDisplays.Model model;
@@ -49,7 +51,7 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     private float targetYaw;
     private float targetPitch;
 
-    GeyserItemDisplayEntity(EntitySpawnContext context, GeyserItemDisplays displays, DisplayProperties carrier) {
+    GeyserDisplayEntity(EntitySpawnContext context, GeyserItemDisplays displays, DisplayProperties carrier) {
         super(context);
         this.displays = displays;
         this.carrier = carrier;
@@ -87,6 +89,25 @@ final class GeyserItemDisplayEntity extends Entity implements Tickable {
     void context(byte value) {
         this.dirty = true;
         this.context = value;
+    }
+
+    void block(int stateId) {
+        this.dirty = true;
+        this.context = 0;
+        this.dyeColor = -1;
+        this.equipment = ItemData.AIR;
+        this.heldItemType = BedrockHeldItemType.NATIVE;
+        BlockState state = BlockState.of(stateId);
+        this.model = this.displays.block(state.toString());
+        if (this.model == null) {
+            Item item = state.block().asItem();
+            if (item.javaId() != 0) {
+                ItemStack stack = GeyserItemStack.of(this.session, item.javaId(), 1).getItemStack();
+                this.equipment = ItemTranslator.translateToBedrock(this.session, stack);
+                this.heldItemType = GeyserHeldItemTypes.resolve(this.equipment, this.session.getItemMappings().getMapping(stack).isBlock());
+                this.model = this.displays.heldBlock();
+            }
+        }
     }
 
     void billboard(byte value) {

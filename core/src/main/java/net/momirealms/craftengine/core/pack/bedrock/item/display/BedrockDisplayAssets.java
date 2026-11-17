@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix4f;
@@ -51,11 +52,15 @@ final class BedrockDisplayAssets {
     }
 
     int add(List<BedrockItemDisplayGenerator.Part> parts) throws IOException {
+        return this.add(parts, TextureUsage.ITEM);
+    }
+
+    int add(List<BedrockItemDisplayGenerator.Part> parts, TextureUsage textureUsage) throws IOException {
         if (parts.isEmpty()) {
             // shape 0 会显示原物品；显式 empty 需要一个没有绘制控制器的独立 shape。
             return ++this.shapes;
         }
-        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures());
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), textureUsage);
         List<BedrockItemGeometry> partsCubes = new ArrayList<>(parts.size());
         for (BedrockItemDisplayGenerator.Part part : parts) {
             ItemBindingRule rule = new ItemBindingRule(List.of(), part.target(), part.transforms(), "");

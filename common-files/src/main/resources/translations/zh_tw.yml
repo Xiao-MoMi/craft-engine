@@ -435,3 +435,5 @@ update.is_latest: 你正在使用最新版本
 workflow.unknown_type: '未知的資源包工作流程類型''<arg:0>'''
 yaml.duplicated_key: 在檔案 '<arg:0>' 中的第 '<arg:2>' 行發現發現重複的鍵 '<arg:1>'
 yaml.inconsistent_value_type: 在檔案 '<arg:0>' 中的第 '<arg:2>' 行發現發現重複的鍵 '<arg:1>' 且值類型不同
+
+resource_pack.bedrock.block.display_skipped: "已略過方塊 <arg:0> 的基岩版展示模型，改用手持物品顯示：<arg:1>"

@@ -437,3 +437,5 @@ update.is_latest: You're running the latest version
 workflow.unknown_type: Unknown resource pack workflow type '<arg:0>'
 yaml.duplicated_key: "Found duplicated key '<arg:1>' at line <arg:2> in file <arg:0>"
 yaml.inconsistent_value_type: "Found duplicated key '<arg:1>' at line <arg:2> with different value types in file <arg:0>"
+
+resource_pack.bedrock.block.display_skipped: "Skipped the Bedrock block display model for <arg:0>; using held-item rendering: <arg:1>"

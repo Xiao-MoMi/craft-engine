@@ -22,12 +22,18 @@ import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextu
 public final class BedrockItemGeometryBuilder {
     private final JavaModelResolver models;
     private final JavaPackTextureSource textures;
+    private final TextureUsage textureUsage;
     private final Map<TextureKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
     private final List<BedrockItemGeometry.Material> materials = new ArrayList<>();
 
     public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures) {
+        this(models, textures, TextureUsage.ITEM);
+    }
+
+    public BedrockItemGeometryBuilder(JavaModelResolver models, JavaPackTextureSource textures, TextureUsage textureUsage) {
         this.models = models;
         this.textures = textures;
+        this.textureUsage = textureUsage;
     }
 
     public BedrockItemGeometry build(ItemBindingRule rule) throws IOException {
@@ -61,7 +67,7 @@ public final class BedrockItemGeometryBuilder {
             List<JavaModel.Texture> layers = this.models.resolveLayers(model);
             for (int layer = 0; layer < layers.size(); layer++) {
                 BedrockElementGeometry.Material material = this.material(layers.get(layer), target, layer, preserveDye);
-                TextureData data = this.textures.read(layers.get(layer), TextureUsage.ITEM);
+                TextureData data = this.textures.read(layers.get(layer), this.textureUsage);
                 BedrockGeneratedGeometry.addLayer(cubes, data, material.name(), layer, data.image().getWidth(), data.image().getHeight());
             }
             return cubes;
@@ -86,7 +92,7 @@ public final class BedrockItemGeometryBuilder {
         BedrockElementGeometry.Material material = this.bindings.get(key);
         if (material == null) {
             material = new BedrockElementGeometry.Material("layer" + this.materials.size(), 1, 1);
-            this.materials.add(new BedrockItemGeometry.Material(this.textures.read(key.texture(), TextureUsage.ITEM), key.color(), key.dyeColor()));
+            this.materials.add(new BedrockItemGeometry.Material(this.textures.read(key.texture(), this.textureUsage), key.color(), key.dyeColor()));
             this.bindings.put(key, material);
         }
         return material;

@@ -435,3 +435,5 @@ update.is_latest: "최신 버전을 사용 중입니다."
 workflow.unknown_type: '알 수 없는 리소스 팩 워크플로 유형 ''<arg:0>'''
 yaml.duplicated_key: "파일 <arg:0>의 <arg:2>번째 줄에서 중복된 키 '<arg:1>' 발견"
 yaml.inconsistent_value_type: "파일 <arg:0>의 <arg:2>번째 줄에서 값 타입이 다른 중복 키 '<arg:1>' 발견"
+
+resource_pack.bedrock.block.display_skipped: "<arg:0>의 베드락 블록 표시 모델을 건너뛰고 손에 든 아이템으로 표시합니다: <arg:1>"

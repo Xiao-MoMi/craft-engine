@@ -435,3 +435,5 @@ update.is_latest: Estás ejecutando la versión más reciente
 workflow.unknown_type: 'Tipo de flujo de trabajo de paquetes de recursos desconocido ''<arg:0>'''
 yaml.duplicated_key: "Se encontró una clave duplicada '<arg:1>' en la línea <arg:2> del archivo <arg:0>"
 yaml.inconsistent_value_type: "Se encontró una clave duplicada '<arg:1>' en la línea <arg:2> con diferentes tipos de valores en el archivo <arg:0>"
+
+resource_pack.bedrock.block.display_skipped: "Se omitió el modelo de bloque de Bedrock para <arg:0>; se mostrará como objeto sostenido: <arg:1>"

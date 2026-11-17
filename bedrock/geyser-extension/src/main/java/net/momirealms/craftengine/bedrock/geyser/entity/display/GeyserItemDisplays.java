@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.entity.display;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BlockStateKey;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
@@ -30,8 +31,11 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
     private final Map<Identifier, DisplayProperties> carriers = new LinkedHashMap<>();
     private final Map<String, Model> items = new LinkedHashMap<>();
     private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
+    private final Map<BlockStateKey, Model> blocks = new LinkedHashMap<>();
+    private Model heldBlock;
     private PacketTranslator<ClientboundAddEntityPacket> original;
-    private VanillaEntityType<GeyserItemDisplayEntity> definition;
+    private VanillaEntityType<GeyserDisplayEntity> definition;
+    private VanillaEntityType<GeyserDisplayEntity> blockDefinition;
 
     public void registerEntities(JsonObject plan, GeyserDefineEntitiesEvent event) {
         if (plan == null) {
@@ -65,6 +69,10 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
             event.register(CustomEntityDefinition.of(heldId));
             DisplayProperties heldProperties = new DisplayProperties(heldId);
             this.carriers.put(heldId, heldProperties);
+            if (this.heldBlock == null) {
+                this.heldBlock = new Model(heldProperties, new Appearance[]{new Appearance(0,
+                        Vector3f.from(8, 8, -8), Vector3f.from(0, 180, 0), Vector3f.ONE)});
+            }
             for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("vanilla").entrySet()) {
                 JsonArray contexts = entry.getValue().getAsJsonArray();
                 Appearance[] poses = new Appearance[contexts.size()];
@@ -81,6 +89,12 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
                 shapes[i] = appearances[contexts.get(i).getAsInt()];
             }
             this.items.putIfAbsent(entry.getKey(), new Model(properties, shapes));
+        }
+        if (displays.has("blocks")) {
+            for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("blocks").entrySet()) {
+                this.blocks.putIfAbsent(BlockStateKey.parse(entry.getKey()),
+                        new Model(properties, new Appearance[]{appearances[entry.getValue().getAsInt()]}));
+            }
         }
     }
 
@@ -109,18 +123,27 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         }
         DisplayProperties first = this.carriers.values().iterator().next();
         this.definition = this.definition(Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id()), first);
+        this.blockDefinition = this.displayBase(Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id()), first, EntityType.BLOCK_DISPLAY)
+                .addTranslator(MetadataTypes.BLOCK_STATE, (entity, meta) -> entity.block((int) meta.getValue())).build(false);
         this.original = (PacketTranslator<ClientboundAddEntityPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundAddEntityPacket.class);
         Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundAddEntityPacket.class, this);
     }
 
-    VanillaEntityType<GeyserItemDisplayEntity> definition(BedrockEntityDefinition bedrock, DisplayProperties first) {
-        EntityTypeBase.Builder<GeyserItemDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserItemDisplayEntity.class);
+    VanillaEntityType<GeyserDisplayEntity> definition(BedrockEntityDefinition bedrock, DisplayProperties first) {
+        return this.displayBase(bedrock, first, EntityType.ITEM_DISPLAY)
+                .addTranslator(MetadataTypes.ITEM_STACK, (entity, meta) -> entity.item(meta.getValue()))
+                .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.context(meta.getValue()))
+                .build(false);
+    }
+
+    private VanillaEntityType.Builder<GeyserDisplayEntity> displayBase(BedrockEntityDefinition bedrock, DisplayProperties first, EntityType type) {
+        EntityTypeBase.Builder<GeyserDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserDisplayEntity.class);
         // MCProtocolLib 的公共实体字段占 0..7。第 8 个字段起是 Display，物品栈和上下文在 23、24。
         for (int i = 0; i < 8; i++) {
             base.addTranslator(null);
         }
-        return VanillaEntityType.inherited(context -> new GeyserItemDisplayEntity(context, this, first), base.build())
-                .type(EntityType.ITEM_DISPLAY).bedrockDefinition(bedrock).heightAndWidth(0)
+        return VanillaEntityType.inherited(context -> new GeyserDisplayEntity(context, this, first), base.build())
+                .type(type).bedrockDefinition(bedrock).heightAndWidth(0)
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.startInterpolation((int) meta.getValue()))
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.duration((int) meta.getValue()))
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.teleportDuration((int) meta.getValue()))
@@ -130,10 +153,7 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
                 .addTranslator(MetadataTypes.QUATERNION, (entity, meta) -> entity.right(meta.getValue()))
                 .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.billboard(meta.getValue()))
                 .addTranslator(null).addTranslator(null).addTranslator(null).addTranslator(null)
-                .addTranslator(null).addTranslator(null).addTranslator(null)
-                .addTranslator(MetadataTypes.ITEM_STACK, (entity, meta) -> entity.item(meta.getValue()))
-                .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.context(meta.getValue()))
-                .build(false);
+                .addTranslator(null).addTranslator(null).addTranslator(null);
     }
 
     public void uninstall() {
@@ -143,20 +163,24 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         }
         this.items.clear();
         this.vanillaItems.clear();
+        this.blocks.clear();
+        this.heldBlock = null;
+        this.blockDefinition = null;
         this.carriers.clear();
     }
 
     @Override
     public void translate(GeyserSession session, ClientboundAddEntityPacket packet) {
-        if (packet.getType() != EntityType.ITEM_DISPLAY) {
+        if (packet.getType() != EntityType.ITEM_DISPLAY && packet.getType() != EntityType.BLOCK_DISPLAY) {
             this.original.translate(session, packet);
             return;
         }
-        EntitySpawnContext context = EntitySpawnContext.fromPacket(session, this.definition, packet);
+        VanillaEntityType<GeyserDisplayEntity> selected = packet.getType() == EntityType.BLOCK_DISPLAY ? this.blockDefinition : this.definition;
+        EntitySpawnContext context = EntitySpawnContext.fromPacket(session, selected, packet);
         if (!context.callServerSpawnEvent()) {
             return;
         }
-        GeyserItemDisplayEntity entity = this.definition.factory().create(context);
+        GeyserDisplayEntity entity = selected.factory().create(context);
         if (context.consumers() != null) {
             context.consumers().forEach(consumer -> consumer.accept(entity));
         }
@@ -165,6 +189,14 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
 
     Model resolve(ItemData item) {
         return this.items.get(item.getDefinition().getIdentifier());
+    }
+
+    Model block(String state) {
+        return this.blocks.get(BlockStateKey.parse(state));
+    }
+
+    Model heldBlock() {
+        return this.heldBlock;
     }
 
     Model vanilla(GeyserSession session, ItemStack stack) {

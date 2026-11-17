@@ -304,6 +304,7 @@ public final class Config {
     private boolean bedrock$enable = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
+    private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private boolean bedrock$display_entity$convert_text = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
@@ -798,6 +799,7 @@ public final class Config {
         }
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
+        this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$display_entity$convert_text = config.getBoolean("bedrock.display-entity.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
@@ -1763,6 +1765,10 @@ public final class Config {
 
     public static Set<Key> bedrockVanillaDisplayItems() {
         return instance.bedrock$display_entity$vanilla_items;
+    }
+
+    public static List<String> bedrockVanillaDisplayBlocks() {
+        return instance.bedrock$display_entity$vanilla_blocks;
     }
 
     public static boolean bedrockConvertText() {

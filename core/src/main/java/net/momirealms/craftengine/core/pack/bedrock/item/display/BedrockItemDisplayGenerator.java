@@ -93,6 +93,7 @@ public final class BedrockItemDisplayGenerator {
         }
         JsonObject result = new JsonObject();
         result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
+        result.add("blocks", BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks()));
         result.addProperty("vanilla_identifier", "craftengine:" + name + "_held");
         result.addProperty("convert_text", Config.bedrockConvertText());
         assets.finish();
