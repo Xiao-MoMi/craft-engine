@@ -21,6 +21,7 @@ import java.util.*;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockItemIconRenderer {
+    private static final Key VANILLA_ICON_MODEL = Key.minecraft("item/generated");
     private static final EnumSet<DisplayPosition> HANDHELD_POSITIONS = EnumSet.of(
             DisplayPosition.FIRSTPERSON_RIGHTHAND,
             DisplayPosition.FIRSTPERSON_LEFTHAND,
@@ -126,7 +127,7 @@ public final class BedrockItemIconRenderer {
 
     private JavaModel vanillaIconModel() throws IOException {
         if (this.vanillaIconModel == null) {
-            this.vanillaIconModel = this.models.resolveVanilla(Key.minecraft("item/generated"));
+            this.vanillaIconModel = this.models.resolveVanilla(VANILLA_ICON_MODEL);
         }
         return this.vanillaIconModel;
     }

@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
@@ -17,6 +18,8 @@ import java.util.*;
 final class JavaSoundEvents {
     static final Event MISSING = new Event("", List.of(), false);
     private static final Event SILENT = new Event("", List.of(), true);
+    private static final Key EMPTY_SOUND_ID = SoundData.EMPTY.id();
+    private static final JsonArray NO_SOUNDS = new JsonArray(0);
     private final JavaResourcePack resources;
     private final JsonObject mappings;
     private final Map<Key, Key> replacements;
@@ -27,6 +30,7 @@ final class JavaSoundEvents {
     private final Map<Key, Path> audio = new HashMap<>();
     private final Map<Key, Boolean> silentFiles = new HashMap<>();
     private final Set<Key> visiting = new HashSet<>();
+    private byte[] silence;
 
     JavaSoundEvents(JavaResourcePack resources, JsonObject mappings, Map<Key, Key> replacements) {
         this.resources = resources;
@@ -53,7 +57,7 @@ final class JavaSoundEvents {
     }
 
     private Event read(Key id) throws IOException {
-        if (id.equals(Key.of("minecraft:intentionally_empty"))) {
+        if (EMPTY_SOUND_ID.equals(id)) {
             return SILENT;
         }
         Key original = this.originals.getOrDefault(id, id);
@@ -69,21 +73,18 @@ final class JavaSoundEvents {
             custom = this.definition(id, true);
         }
         JsonObject vanilla = this.definition(id, false);
-        JsonElement mapped = id.isMinecraftNamespace() && !this.resources.filtersVanilla("assets/minecraft/sounds.json")
-                ? this.mappings.get(id.value()) : null;
+        JsonElement mapped = id.isMinecraftNamespace() && !this.resources.filtersVanilla("assets/minecraft/sounds.json") ? this.mappings.get(id.value()) : null;
         JsonArray base = sounds(vanilla);
         JsonArray entries = sounds(custom);
-        boolean replace = carrierMute || (custom != null && custom.has("replace") && custom.get("replace").getAsBoolean());
+        boolean replace = carrierMute || replacesSounds(custom);
         boolean modified = custom != null && (replace || !entries.isEmpty());
         if (modified && !base.isEmpty() && sameSamples(entries, base)) {
             modified = false;
         }
         if (!modified) {
             entries = base;
-        } else if (!replace && !base.isEmpty()) {
-            JsonArray merged = base.deepCopy();
-            merged.addAll(entries);
-            entries = merged;
+        } else if (!replace) {
+            entries = mergeSounds(base, entries);
         }
         if (entries.isEmpty()) {
             if (!modified && mapped != null) {
@@ -95,7 +96,8 @@ final class JavaSoundEvents {
     }
 
     private Event resolveSamples(Key id, JsonArray entries, @Nullable String nativeSound) throws IOException {
-        List<Key> samples = new ArrayList<>();
+        int entryCount = entries.size();
+        List<Key> samples = new ArrayList<>(entryCount);
         Event singleReference = null;
         for (JsonElement entry : entries) {
             Key key = sampleId(entry);
@@ -104,22 +106,23 @@ final class JavaSoundEvents {
                 if (nested == MISSING) {
                     return MISSING;
                 }
-                if (entries.size() > 1 && !nested.name().isEmpty() && nested.samples().isEmpty()) {
+                if (entryCount > 1 && !nested.name().isEmpty() && nested.samples().isEmpty()) {
                     return MISSING;
                 }
                 if (!nested.vanilla()) {
                     nativeSound = null;
                 }
                 samples.addAll(nested.samples());
-                if (entries.size() == 1) {
+                if (entryCount == 1) {
                     singleReference = nested;
                 }
             } else {
-                Path customFile = this.resources.soundResource(key.namespace(), "sounds/" + key.value() + ".ogg", true);
+                String soundPath = audioPath(key);
+                Path customFile = this.resources.soundResource(key.namespace(), soundPath, true);
                 if (customFile != null) {
                     nativeSound = null;
                     this.audio.put(key, customFile);
-                } else if (this.resources.filtersVanilla("assets/" + key.namespace() + "/sounds/" + key.value() + ".ogg")) {
+                } else if (this.resources.filtersVanilla("assets/" + key.namespace() + '/' + soundPath)) {
                     return MISSING;
                 }
                 samples.add(key);
@@ -135,16 +138,16 @@ final class JavaSoundEvents {
             return SILENT;
         }
         for (Key sample : samples) {
-            if (!this.audio.containsKey(sample)) {
-                Path file;
+            Path file = this.audio.get(sample);
+            if (file == null && !this.audio.containsKey(sample)) {
                 try {
-                    file = this.resources.soundResource(sample.namespace(), "sounds/" + sample.value() + ".ogg", false);
+                    file = this.resources.soundResource(sample.namespace(), audioPath(sample), false);
                 } catch (IOException unavailable) {
                     file = null;
                 }
                 this.audio.put(sample, file);
             }
-            if (this.audio.get(sample) == null) {
+            if (file == null) {
                 return MISSING;
             }
         }
@@ -171,7 +174,7 @@ final class JavaSoundEvents {
                     throw unavailable;
                 }
                 // A font-only vanilla cache can still match native sounds while the Mojang asset server is offline.
-                namespace = GsonHelper.readJsonFromResource("/internal/sounds.json").getAsJsonObject();
+                namespace = originalDefinitions();
             }
             definitions.put(name, namespace);
         }
@@ -183,7 +186,7 @@ final class JavaSoundEvents {
     }
 
     private boolean isCarrierMute(@Nullable JsonObject definition) throws IOException {
-        if (definition == null || !definition.has("replace") || !definition.get("replace").getAsBoolean()) {
+        if (!replacesSounds(definition)) {
             return false;
         }
         JsonArray sounds = sounds(definition);
@@ -198,23 +201,53 @@ final class JavaSoundEvents {
         if (cached != null) {
             return cached;
         }
-        Path sound = this.resources.soundResource(key.namespace(), "sounds/" + key.value() + ".ogg", true);
+        Path sound = this.resources.soundResource(key.namespace(), audioPath(key), true);
         if (sound == null) {
             return false;
         }
-        try (InputStream silence = JavaSoundEvents.class.getResourceAsStream("/silence.ogg")) {
-            if (silence == null) {
-                return false;
+        if (this.silence == null) {
+            try (InputStream input = JavaSoundEvents.class.getResourceAsStream("/silence.ogg")) {
+                if (input == null) {
+                    return false;
+                }
+                this.silence = input.readAllBytes();
             }
-            byte[] bytes = silence.readAllBytes();
-            boolean silent = Files.size(sound) == bytes.length && Arrays.equals(bytes, Files.readAllBytes(sound));
-            this.silentFiles.put(key, silent);
-            return silent;
         }
+        boolean silent = Files.size(sound) == this.silence.length && Arrays.equals(this.silence, Files.readAllBytes(sound));
+        this.silentFiles.put(key, silent);
+        return silent;
     }
 
+    static JsonObject originalDefinitions() {
+        return OriginalDefinitions.ALL;
+    }
+
+    // Sound entries are read-only and can be shared between resolvers
     static JsonArray sounds(@Nullable JsonObject event) {
-        return event == null || !event.has("sounds") ? new JsonArray() : event.getAsJsonArray("sounds");
+        JsonArray sounds = event == null ? null : event.getAsJsonArray("sounds");
+        return sounds == null ? NO_SOUNDS : sounds;
+    }
+
+    static JsonArray mergeSounds(JsonArray base, JsonArray additions) {
+        if (base.isEmpty()) {
+            return additions;
+        }
+        if (additions.isEmpty()) {
+            return base;
+        }
+        JsonArray merged = new JsonArray(base.size() + additions.size());
+        merged.addAll(base);
+        merged.addAll(additions);
+        return merged;
+    }
+
+    static boolean replacesSounds(@Nullable JsonObject definition) {
+        JsonElement replace = definition == null ? null : definition.get("replace");
+        return replace != null && replace.getAsBoolean();
+    }
+
+    static String audioPath(Key id) {
+        return "sounds/" + id.value() + ".ogg";
     }
 
     private static boolean sameSamples(JsonArray first, JsonArray second) {
@@ -236,7 +269,12 @@ final class JavaSoundEvents {
     }
 
     static boolean isReference(JsonElement entry) {
-        return entry.isJsonObject() && entry.getAsJsonObject().has("type") && entry.getAsJsonObject().get("type").getAsString().equals("event");
+        JsonElement type = entry instanceof JsonObject object ? object.get("type") : null;
+        return type != null && "event".equals(type.getAsString());
+    }
+
+    private static final class OriginalDefinitions {
+        private static final JsonObject ALL = GsonHelper.readJsonFromResource("/internal/sounds.json").getAsJsonObject();
     }
 
     record Event(String name, List<Key> samples, boolean vanilla) {

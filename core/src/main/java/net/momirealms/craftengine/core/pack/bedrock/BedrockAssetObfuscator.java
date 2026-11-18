@@ -38,9 +38,7 @@ final class BedrockAssetObfuscator {
                 String name = pack.relativize(file).toString().replace('\\', '/');
                 if (name.endsWith(".json")) {
                     definitions.add(name);
-                } else if ((name.endsWith(".png") || name.endsWith(".tga")) &&
-                        (name.startsWith(BedrockPackLayout.CRAFTENGINE_TEXTURES + '/') ||
-                                name.startsWith(BedrockPackLayout.CRAFTENGINE_PARTICLE_TEXTURES + '/'))) {
+                } else if ((name.endsWith(".png") || name.endsWith(".tga")) && (name.startsWith(BedrockPackLayout.CRAFTENGINE_TEXTURES + '/') || name.startsWith(BedrockPackLayout.CRAFTENGINE_PARTICLE_TEXTURES + '/'))) {
                     textures.add(name);
                 } else if (name.endsWith(".ogg") && name.startsWith(BedrockPackLayout.CRAFTENGINE_SOUNDS + '/')) {
                     sounds.add(name);
@@ -165,8 +163,7 @@ final class BedrockAssetObfuscator {
         List<String> attachables = definitions.stream()
                 .filter(file -> file.startsWith("attachables/ce/") && file.endsWith(".attachable.json")).toList();
         List<String> entities = definitions.stream()
-                .filter(file -> (file.startsWith("entity/ce/native/") && file.endsWith(".entity.json"))
-                        || file.equals("entity/item_display.entity.json") || file.equals("entity/item_display_held.entity.json")).toList();
+                .filter(file -> (file.startsWith("entity/ce/native/") && file.endsWith(".entity.json")) || file.equals("entity/item_display.entity.json") || file.equals("entity/item_display_held.entity.json")).toList();
         List<String> ui = definitions.stream().filter(file -> file.startsWith("ui/ce/")).toList();
         renameFiles(pack, attachables, "attachables/ce", ".attachable.json", paths);
         renameFiles(pack, entities, "entity/ce", ".entity.json", paths);

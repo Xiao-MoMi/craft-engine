@@ -35,6 +35,9 @@ import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 final class BedrockDisplayAssets {
     private static final double DYE_BRIGHTNESS = 0.72;
+    private static final String[] AXES = { "x", "y", "z" };
+    private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y", "model_z" };
+    private static final String[] CUBE_POINTS = { "origin", "pivot" };
     private final JavaModelResources resources;
     private final Path root;
     private final String name;
@@ -91,7 +94,8 @@ final class BedrockDisplayAssets {
                 partsCubes.add(part.geometry() == null ? mesh.build(rule, false) : mesh.build(rule, false, part.geometry()));
             }
         }
-        if (mesh.materials().isEmpty()) {
+        List<BedrockItemGeometry.Material> materials = mesh.materials();
+        if (materials.isEmpty()) {
             return 0;
         }
         int shape = ++this.shapes;
@@ -100,15 +104,17 @@ final class BedrockDisplayAssets {
         }
         String condition = "query.property('ce:shape') == " + shape;
         JsonObject channels = new JsonObject();
-        JsonArray geometries = new JsonArray();
-        for (int layer = 0; layer < mesh.materials().size(); layer++) {
+        JsonArray geometries = new JsonArray(materials.size());
+        for (int layer = 0; layer < materials.size(); layer++) {
             String alias = "s" + shape + "l" + layer;
             String geometry = "geometry." + this.name + "." + alias;
+            String materialId = "layer" + layer;
             JsonArray bones = rig();
             for (int i = 0; i < parts.size(); i++) {
-                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partsCubes.get(i).cubes(), "layer" + layer);
+                BedrockItemGeometry partGeometry = partsCubes.get(i);
+                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partGeometry.cubes(), materialId);
                 if (!cubes.isEmpty()) {
-                    addPart(bones, channels, i, parts.get(i), cubes, partsCubes.get(i).transformation());
+                    addPart(bones, channels, i, parts.get(i), cubes, partGeometry.transformation());
                 }
             }
             JsonObject description = new JsonObject();
@@ -119,7 +125,7 @@ final class BedrockDisplayAssets {
             file.add("bones", bones);
             geometries.add(file);
             this.geometryNames.addProperty(alias, geometry);
-            BedrockItemGeometry.Material material = mesh.materials().get(layer);
+            BedrockItemGeometry.Material material = materials.get(layer);
             if (material.dyeColor() == null) {
                 this.addDraw(shape, layer, alias, material.data(), material.color(), DyePass.NONE);
             } else {
@@ -137,9 +143,9 @@ final class BedrockDisplayAssets {
     }
 
     private static JsonArray rig() {
-        JsonArray bones = new JsonArray();
+        JsonArray bones = new JsonArray(RIG_BONES.length);
         String parent = null;
-        for (String name : List.of("yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y", "model_z")) {
+        for (String name : RIG_BONES) {
             bones.add(bone(name, parent));
             parent = name;
         }
@@ -160,9 +166,9 @@ final class BedrockDisplayAssets {
         // 物品几何的中心在 (0,8,0)，展示实体的原点在 (0,0,0)。
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
-            for (String key : List.of("origin", "pivot")) {
-                if (cube.has(key)) {
-                    JsonArray xyz = cube.getAsJsonArray(key);
+            for (String key : CUBE_POINTS) {
+                JsonArray xyz = cube.getAsJsonArray(key);
+                if (xyz != null) {
                     xyz.set(1, new JsonPrimitive(xyz.get(1).getAsFloat() - 8));
                 }
             }
@@ -336,13 +342,13 @@ final class BedrockDisplayAssets {
         rig.add("left", interpolatedVector("rotation", "left"));
         rig.add("size", interpolatedVector("scale", "size"));
         rig.add("right", interpolatedVector("rotation", "right"));
-        for (int i = 0; i < 3; i++) {
-            String axis = List.of("x", "y", "z").get(i);
+        for (int i = 0; i < AXES.length; i++) {
+            String axis = AXES[i];
             JsonObject bone = i == 0 ? propertyVector("position", "model_pos") : new JsonObject();
             JsonArray angles = VectorUtils.toJson(0, 0, 0);
             angles.set(i, new JsonPrimitive("query.property('ce:model_rot_" + axis + "')"));
             bone.add("rotation", angles);
-            if (i == 2) {
+            if (i == AXES.length - 1) {
                 bone.add("scale", propertyVector("scale", "model_size").get("scale"));
             }
             rig.add("model_" + axis, bone);
@@ -396,16 +402,17 @@ final class BedrockDisplayAssets {
     }
 
     private static JsonObject interpolatedVector(String channel, String group) {
-        JsonArray values = new JsonArray();
-        for (String axis : List.of("x", "y", "z")) {
-            values.add("v.ce_" + group + "_" + (channel.equals("rotation") ? "r" : "") + axis);
+        JsonArray values = new JsonArray(AXES.length);
+        String prefix = "v.ce_" + group + "_" + (channel.equals("rotation") ? "r" : "");
+        for (String axis : AXES) {
+            values.add(prefix + axis);
         }
         return createObject(channel, values);
     }
 
     private static JsonObject propertyVector(String channel, String property) {
-        JsonArray values = new JsonArray();
-        for (String axis : List.of("x", "y", "z")) {
+        JsonArray values = new JsonArray(AXES.length);
+        for (String axis : AXES) {
             values.add("query.property('ce:" + property + "_" + axis + "')");
         }
         return createObject(channel, values);

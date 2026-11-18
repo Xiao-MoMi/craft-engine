@@ -40,6 +40,7 @@ public final class BedrockItemAttachables {
     private static final String Y = "ce_display_y";
     private static final String Z = "ce_display_z";
     private static final View[] VIEWS = { View.FIRST_RIGHT, View.FIRST_LEFT, View.THIRD_RIGHT, View.THIRD_LEFT };
+    private static final View[] ALL_VIEWS = View.values();
 
     private BedrockItemAttachables() {
     }
@@ -252,7 +253,7 @@ public final class BedrockItemAttachables {
         description.addProperty("identifier", geometryId);
         description.addProperty("texture_width", 16);
         description.addProperty("texture_height", 16);
-        expandDisplayBounds(description, model, modelRadius, bonePrefix.isEmpty() ? VIEWS : View.values());
+        expandDisplayBounds(description, model, modelRadius, bonePrefix.isEmpty() ? VIEWS : ALL_VIEWS);
         description.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);

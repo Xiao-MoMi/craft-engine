@@ -8,6 +8,9 @@ import java.util.List;
 final class BedrockDisplayInterpolation {
     private static final List<String> AXES = List.of("x", "y", "z");
     private static final List<String> QUATERNION_AXES = List.of("x", "y", "z", "w");
+    private static final List<String> ROTATION_GROUPS = List.of("left", "right");
+    private static final String FRACTION = "v.ce_fraction = !v.ce_active || v.ce_duration <= 0 ? 1 : math.clamp((q.life_time - v.ce_start) / v.ce_duration, 0, 1); ";
+    private static final List<String> PRE_ANIMATION = buildPreAnimation();
 
     private BedrockDisplayInterpolation() {
     }
@@ -18,10 +21,17 @@ final class BedrockDisplayInterpolation {
         JsonArray initialize = new JsonArray();
         initialize.add("v.ce_seen = -1; v.ce_start = 0; v.ce_duration = 0; v.ce_active = 0; v.ce_t = -1;");
         result.add("initialize", initialize);
-        JsonArray update = new JsonArray();
+        JsonArray update = new JsonArray(PRE_ANIMATION.size());
+        PRE_ANIMATION.forEach(update::add);
+        result.add("pre_animation", update);
+        return result;
+    }
+
+    private static List<String> buildPreAnimation() {
+        String sample = sample();
         StringBuilder changed = new StringBuilder("v.ce_snap = v.ce_seen < 0 || math.mod(q.property('ce:interpolation'), 8) >= 4; ");
         // 中途换目标时先求旧动画在当前帧的姿态，避免从上一个目标或上一帧重新起步。
-        changed.append("!v.ce_snap ? {").append(fraction()).append(sample()).append("}; ");
+        changed.append("!v.ce_snap ? {").append(FRACTION).append(sample).append("}; ");
         changed.append("v.ce_snap || math.mod(q.property('ce:interpolation'), 4) > 0 ? {");
         for (String group : List.of("pos", "size", "left", "right")) {
             for (String axis : axes(group)) {
@@ -32,10 +42,8 @@ final class BedrockDisplayInterpolation {
         }
         changed.append("}; v.ce_snap ? {v.ce_active = 0;} : {math.mod(q.property('ce:interpolation'), 2) == 1 ? {v.ce_start = q.life_time + q.property('ce:delay'); v.ce_active = 1;};}; ");
         changed.append("v.ce_duration = q.property('ce:duration'); v.ce_t = -1; v.ce_seen = q.property('ce:interpolation');");
-        update.add("v.ce_seen != q.property('ce:interpolation') ? {" + changed + "};");
-        update.add(fraction());
-        StringBuilder pose = new StringBuilder(sample());
-        for (String group : List.of("left", "right")) {
+        StringBuilder pose = new StringBuilder(sample);
+        for (String group : ROTATION_GROUPS) {
             String q = "v.ce_" + group + '_';
             pose.append("v.ce_sy = math.clamp(2 * (").append(q).append("w * ").append(q).append("y - ").append(q).append("z * ").append(q).append("x), -1, 1); ");
             pose.append(q).append("rx = math.abs(v.ce_sy) >= 0.9999999 ? 0 : math.atan2(2 * (").append(q).append("w * ").append(q).append("x + ").append(q).append("y * ").append(q).append("z), 1 - 2 * (").append(q).append("x * ").append(q).append("x + ").append(q).append("y * ").append(q).append("y)); ");
@@ -43,13 +51,11 @@ final class BedrockDisplayInterpolation {
             pose.append(q).append("rz = math.abs(v.ce_sy) >= 0.9999999 ? 2 * math.atan2(").append(q).append("z, ").append(q).append("w) : math.atan2(2 * (").append(q).append("w * ").append(q).append("z + ").append(q).append("x * ").append(q).append("y), 1 - 2 * (").append(q).append("y * ").append(q).append("y + ").append(q).append("z * ").append(q).append("z)); ");
         }
         pose.append("v.ce_t = v.ce_fraction;");
-        update.add("v.ce_t != v.ce_fraction ? {" + pose + "};");
-        result.add("pre_animation", update);
-        return result;
-    }
-
-    private static String fraction() {
-        return "v.ce_fraction = !v.ce_active || v.ce_duration <= 0 ? 1 : math.clamp((q.life_time - v.ce_start) / v.ce_duration, 0, 1); ";
+        return List.of(
+                "v.ce_seen != q.property('ce:interpolation') ? {" + changed + "};",
+                FRACTION,
+                "v.ce_t != v.ce_fraction ? {" + pose + "};"
+        );
     }
 
     private static List<String> axes(String group) {
@@ -64,7 +70,7 @@ final class BedrockDisplayInterpolation {
                 result.append("v.ce_").append(name).append(" = math.lerp(v.ce_from_").append(name).append(", v.ce_to_").append(name).append(", v.ce_fraction); ");
             }
         }
-        for (String group : List.of("left", "right")) {
+        for (String group : ROTATION_GROUPS) {
             result.append("v.ce_dot = ");
             for (String axis : QUATERNION_AXES) {
                 if (!axis.equals("x")) {

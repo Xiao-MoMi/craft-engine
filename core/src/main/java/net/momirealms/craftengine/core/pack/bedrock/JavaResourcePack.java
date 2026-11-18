@@ -166,19 +166,25 @@ public final class JavaResourcePack {
 
     @Nullable
     public Path soundResource(String namespace, String name, boolean custom) throws IOException {
-        String path = "assets/" + namespace + '/' + name;
-        Path root = custom ? this.root : this.vanillaRoot;
-        if (namespace.contains("/") || namespace.contains("\\") || namespace.contains(":") || namespace.equals("..") || namespace.equals(".") || namespace.isEmpty() || name.contains("\\") || Arrays.asList(name.split("/")).contains("..")) {
+        if (namespace.isEmpty() || namespace.equals(".") || namespace.equals("..")
+                || namespace.indexOf('/') >= 0 || namespace.indexOf('\\') >= 0 || namespace.indexOf(':') >= 0
+                || name.indexOf('\\') >= 0 || hasParentDirectory(name)) {
             return null;
         }
+        String path = "assets/" + namespace + '/' + name;
         if (!custom && this.filtersVanilla(path)) {
             return null;
         }
+        Path root = custom ? this.root : this.vanillaRoot;
         Path resource = root.resolve(path);
         if (Files.isRegularFile(resource)) {
             return resource;
         }
         return custom ? null : this.indexedAssets.find(namespace + '/' + name);
+    }
+
+    private static boolean hasParentDirectory(String name) {
+        return name.equals("..") || name.startsWith("../") || name.endsWith("/..") || name.contains("/../");
     }
 
     @Nullable

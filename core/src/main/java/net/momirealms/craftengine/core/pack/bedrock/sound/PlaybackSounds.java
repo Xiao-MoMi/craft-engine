@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.sound;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -15,6 +16,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 final class PlaybackSounds {
+    private static final Event MISSING = new Event(false, true, List.of());
+
     private final JavaResourcePack pack;
     private final JavaSoundEvents source;
     private final Set<Key> customFiles;
@@ -22,7 +25,6 @@ final class PlaybackSounds {
     private final Map<Key, Event> cache = new HashMap<>();
     private final Set<Key> visiting = new HashSet<>();
     private final Map<Key, Path> audio = new HashMap<>();
-    private static final Event MISSING = new Event(false, true, List.of());
 
     PlaybackSounds(JavaResourcePack pack, JavaSoundEvents source, Map<Key, Key> replacements) throws IOException {
         this.pack = pack;
@@ -36,10 +38,11 @@ final class PlaybackSounds {
     }
 
     void write(Path root, JsonObject mappings, JsonObject definitions, Map<Key, String> copied) throws IOException {
-        Set<Key> candidates = new TreeSet<>(Comparator.comparing(Key::asString));
+        Map<String, Key> candidates = new TreeMap<>();
         for (String namespace : this.pack.soundNamespaces()) {
             for (String name : this.source.definitions(namespace, true).keySet()) {
-                candidates.add(Key.of(namespace, name));
+                Key id = Key.of(namespace, name);
+                candidates.putIfAbsent(id.asString(), id);
             }
         }
         if (candidates.isEmpty() && this.customFiles.isEmpty()) {
@@ -47,36 +50,41 @@ final class PlaybackSounds {
         }
         // A replaced OGG or nested event can also change vanilla events absent from the custom sounds.json.
         for (String name : this.source.definitions("minecraft", false).keySet()) {
-            candidates.add(Key.of("minecraft", name));
+            Key id = Key.of("minecraft", name);
+            candidates.putIfAbsent(id.asString(), id);
         }
-        candidates.removeAll(this.restored.values());
+        for (Key alias : this.restored.values()) {
+            candidates.remove(alias.asString());
+        }
         JsonObject aliases = new JsonObject();
         this.restored.forEach((original, alias) -> aliases.addProperty(alias.asMinimalString(), original.asMinimalString()));
         JsonObject overrides = new JsonObject();
-        for (Key id : candidates) {
+        for (Map.Entry<String, Key> candidate : candidates.entrySet()) {
+            Key id = candidate.getValue();
             Event event = this.resolve(id);
             if (!event.changed()) {
                 continue;
             }
+            String javaId = candidate.getKey();
             if (event.missing() || !this.locateAudio(event)) {
-                TranslationManager.warn("resource_pack.bedrock.sound.unresolved", id.asString());
+                TranslationManager.warn("resource_pack.bedrock.sound.unresolved", javaId);
                 continue;
             }
-            String target = "ce.sound." + HashUtils.sha1(id.asString().getBytes(StandardCharsets.UTF_8));
-            JsonArray files = new JsonArray();
+            String target = "ce.sound." + HashUtils.sha1(javaId.getBytes(StandardCharsets.UTF_8));
+            JsonArray files = new JsonArray(event.samples().size());
             for (Sample sample : event.samples()) {
                 String path = BedrockSounds.copyAudio(root, sample.id(), this.audio.get(sample.id()), copied);
                 files.add(sample.encode(path));
             }
             JsonObject definition = GsonHelper.createObject("sounds", files);
-            JsonObject block = definitions.getAsJsonObject(id.asString());
+            JsonObject block = definitions.getAsJsonObject(javaId);
             if (block != null && files.equals(block.getAsJsonArray("sounds"))) {
-                target = id.asString();
+                target = javaId;
             } else {
                 definition.addProperty("category", "neutral");
                 definitions.add(target, definition);
             }
-            overrides.addProperty(id.asMinimalString(), target);
+            overrides.addProperty(id.isMinecraftNamespace() ? id.value() : javaId, target);
         }
         if (!overrides.isEmpty()) {
             mappings.add("events", overrides);
@@ -89,11 +97,12 @@ final class PlaybackSounds {
     private boolean locateAudio(Event event) throws IOException {
         for (Sample sample : event.samples()) {
             Key key = sample.id();
-            if (!this.audio.containsKey(key)) {
-                Path path = this.pack.soundResource(key.namespace(), "sounds/" + key.value() + ".ogg", this.customFiles.contains(key));
+            Path path = this.audio.get(key);
+            if (path == null && !this.audio.containsKey(key)) {
+                path = this.pack.soundResource(key.namespace(), JavaSoundEvents.audioPath(key), this.customFiles.contains(key));
                 this.audio.put(key, path);
             }
-            if (this.audio.get(key) == null) {
+            if (path == null) {
                 return false;
             }
         }
@@ -122,20 +131,19 @@ final class PlaybackSounds {
         Key effective = this.restored.getOrDefault(id, id);
         JsonObject custom = this.source.definitions(effective.namespace(), true).getAsJsonObject(effective.value());
         boolean carrier = !effective.equals(id);
-        if (carrier && Objects.equals(JavaSoundEvents.sounds(custom), JavaSoundEvents.sounds(OriginalEvents.ALL.getAsJsonObject(id.value())))) {
+        if (carrier && JavaSoundEvents.sounds(custom).equals(JavaSoundEvents.sounds(JavaSoundEvents.originalDefinitions().getAsJsonObject(id.value())))) {
             custom = null;
         }
         if (vanilla == null && custom == null) {
             return MISSING;
         }
         boolean changed = custom != null;
-        JsonArray entries = new JsonArray();
-        if (custom == null || (!carrier && (!custom.has("replace") || !custom.get("replace").getAsBoolean()))) {
-            entries.addAll(JavaSoundEvents.sounds(vanilla));
+        JsonArray entries = JavaSoundEvents.sounds(custom);
+        if (custom == null || (!carrier && !JavaSoundEvents.replacesSounds(custom))) {
+            entries = JavaSoundEvents.mergeSounds(JavaSoundEvents.sounds(vanilla), entries);
         }
-        entries.addAll(JavaSoundEvents.sounds(custom));
         boolean missing = false;
-        List<Sample> samples = new ArrayList<>();
+        List<Sample> samples = new ArrayList<>(entries.size());
         for (JsonElement entry : entries) {
             Key key = JavaSoundEvents.sampleId(entry);
             JsonObject modifiers = entry.isJsonObject() ? entry.getAsJsonObject() : null;
@@ -156,11 +164,8 @@ final class PlaybackSounds {
     }
 
     private static double number(JsonObject object, String name) {
-        return object != null && object.has(name) ? object.get(name).getAsDouble() : 1;
-    }
-
-    private static final class OriginalEvents {
-        private static final JsonObject ALL = GsonHelper.readJsonFromResource("/internal/sounds.json").getAsJsonObject();
+        JsonElement value = object == null ? null : object.get(name);
+        return value == null ? 1 : value.getAsDouble();
     }
 
     private record Event(boolean changed, boolean missing, List<Sample> samples) {
@@ -169,7 +174,7 @@ final class PlaybackSounds {
     private record Sample(Key id, double volume, double pitch, double weight) {
         JsonElement encode(String path) {
             if (this.volume == 1 && this.pitch == 1 && this.weight == 1) {
-                return new com.google.gson.JsonPrimitive(path);
+                return new JsonPrimitive(path);
             }
             JsonObject value = new JsonObject();
             value.addProperty("name", path);

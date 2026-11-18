@@ -13,6 +13,7 @@ import java.util.*;
 
 final class DisplayContextVariants {
     private static final ItemBindingRule EMPTY = new ItemBindingRule(List.of(), ItemRenderTarget.Builtin.EMPTY, List.of(), "");
+    private static final List<ItemDisplayContext> DISPLAY_CONTEXTS = List.of(ItemDisplayContext.values());
 
     private DisplayContextVariants() {
     }
@@ -36,10 +37,10 @@ final class DisplayContextVariants {
         if (!explicitViews) {
             // Java 没有按显示位置分支时，只对公共规则做一次分组
             ViewBranches shared = branchesForView(entry, rules, ItemDisplayContext.GUI);
-            contextsByBranches.put(shared, List.of(ItemDisplayContext.values()));
+            contextsByBranches.put(shared, DISPLAY_CONTEXTS);
         } else {
             // 分支内容相同的显示位置共用一组输入，避免重复参与后面的条件交集组合
-            for (ItemDisplayContext context : ItemDisplayContext.values()) {
+            for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                 ViewBranches branches = branchesForView(entry, rules, context);
                 contextsByBranches.computeIfAbsent(branches, ignored -> new ObjectArrayList<>(1)).add(context);
             }

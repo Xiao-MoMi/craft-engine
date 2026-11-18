@@ -41,16 +41,22 @@ public final class BedrockSounds {
         Map<Group, String> groups = new HashMap<>();
         for (Map.Entry<String, JsonElement> entry : REGISTRY.getAsJsonObject("groups").entrySet()) {
             JsonArray ids = entry.getValue().getAsJsonArray();
-            groups.put(new Group(ids.get(0).getAsString(), ids.get(1).getAsString(), ids.get(2).getAsString(),
-                    ids.get(3).getAsString(), ids.get(4).getAsString()), entry.getKey());
+            groups.put(
+                    new Group(ids.get(0).getAsString(), ids.get(1).getAsString(), ids.get(2).getAsString(), ids.get(3).getAsString(), ids.get(4).getAsString()),
+                    entry.getKey()
+            );
         }
         return Map.copyOf(groups);
     }
 
     public Group resolve(BlockSounds sounds, Key block) throws IOException {
-        return new Group(this.event(sounds.breakSound().id(), block, "break"), this.event(sounds.stepSound().id(), block, "step"),
-                this.event(sounds.placeSound().id(), block, "place"), this.event(sounds.hitSound().id(), block, "hit"),
-                this.event(sounds.fallSound().id(), block, "fall"));
+        return new Group(
+                this.event(sounds.breakSound().id(), block, "break"),
+                this.event(sounds.stepSound().id(), block, "step"),
+                this.event(sounds.placeSound().id(), block, "place"),
+                this.event(sounds.hitSound().id(), block, "hit"),
+                this.event(sounds.fallSound().id(), block, "fall")
+        );
     }
 
     private String event(Key id, Key block, String action) throws IOException {
@@ -141,6 +147,7 @@ public final class BedrockSounds {
     }
 
     public record Group(String breakSound, String step, String place, String hit, String fall) {
+
         List<String> events() {
             return List.of(this.breakSound, this.step, this.place, this.hit, this.fall);
         }

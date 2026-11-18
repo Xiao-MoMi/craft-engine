@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 
 final class JavaItemTintSource {
+    private static final Key MODEL_TYPE = Key.minecraft("model");
+
     private final JavaResourcePack pack;
     private final JavaPackTextureSource textures;
 
@@ -31,7 +33,7 @@ final class JavaItemTintSource {
             return null;
         }
         JsonObject model = definition.getAsJsonObject("model");
-        if (model == null || !Key.minecraft("model").equals(Key.of(model.get("type").getAsString()))) {
+        if (model == null || !MODEL_TYPE.equals(Key.of(model.get("type").getAsString()))) {
             throw new IOException("Expected a static item model for " + key);
         }
         JsonArray tints = model.getAsJsonArray("tints");

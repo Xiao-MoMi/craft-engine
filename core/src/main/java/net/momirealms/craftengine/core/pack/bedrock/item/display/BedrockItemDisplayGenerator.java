@@ -39,6 +39,7 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
 
 public final class BedrockItemDisplayGenerator {
     private static final Key TRIDENT_ICON = Key.minecraft("item/trident");
+    private static final ItemDisplayContext[] DISPLAY_CONTEXTS = ItemDisplayContext.values();
     private static final Transformation SPECIAL_MODEL_FLIP = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, -1, -1), new Quaternionf());
 
     private BedrockItemDisplayGenerator() {
@@ -63,7 +64,7 @@ public final class BedrockItemDisplayGenerator {
                 JsonArray contexts = new JsonArray();
                 boolean mapped = false;
                 Set<String> reported = new HashSet<>();
-                for (ItemDisplayContext context : ItemDisplayContext.values()) {
+                for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                     int shape = 0;
                     ItemBindingRule rule = variant.displayModels().get(context);
                     if (rule != null) {
@@ -118,15 +119,15 @@ public final class BedrockItemDisplayGenerator {
             List<List<Part>> converted = List.of();
             try {
                 if (selected.contains(entry.getKey())) {
-                    converted = new ArrayList<>(ItemDisplayContext.values().length);
-                    for (ItemDisplayContext context : ItemDisplayContext.values()) {
+                    converted = new ArrayList<>(DISPLAY_CONTEXTS.length);
+                    for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                         converted.add(vanillaParts(resources, entry.getValue().getAsJsonObject("model"), context, List.of()));
                     }
                 }
             } catch (BedrockResourceException exception) {
                 converted = List.of();
             }
-            for (ItemDisplayContext context : ItemDisplayContext.values()) {
+            for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                 if (!converted.isEmpty()) {
                     List<Part> parts = converted.get(context.ordinal());
                     Integer index = geometryIndices.get(parts);

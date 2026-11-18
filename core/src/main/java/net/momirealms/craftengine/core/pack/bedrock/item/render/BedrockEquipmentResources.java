@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 final class BedrockEquipmentResources {
+    private static final Slot[] SLOTS = Slot.values();
+    private static final List<String> ELYTRA_STATES = List.of("default", "gliding", "sneaking", "sleeping", "swimming");
     private static final List<String> TRIM_PATTERNS = List.of(
             "bolt",
             "coast",
@@ -71,7 +73,7 @@ final class BedrockEquipmentResources {
             }
             Integer dye = dye(entry.clientProperties().components().get(DataComponentKeys.DYED_COLOR));
             List<Layer> appearances = new ArrayList<>();
-            for (Slot slot : Slot.values()) {
+            for (Slot slot : SLOTS) {
                 if (!slot.equipmentSlot.equals(equipmentSlot) || !layers.has(slot.layer)) {
                     continue;
                 }
@@ -254,7 +256,7 @@ final class BedrockEquipmentResources {
                 }
                 if (wings) {
                     animations.addProperty("ce_elytra_controller", "controller.animation.elytra.default");
-                    for (String state : List.of("default", "gliding", "sneaking", "sleeping", "swimming")) {
+                    for (String state : ELYTRA_STATES) {
                         animations.addProperty(state, "animation.elytra." + state);
                     }
                     JsonObject selected = new JsonObject();
