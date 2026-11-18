@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -44,7 +45,7 @@ final class VanillaItemOverrides {
                     continue;
                 }
                 Key mappedModel = mappedModels.get(vanillaModel);
-                JsonObject definition = mappedModel == null ? changedDefinition(vanillaModel, vanillaModel, resources) : null;
+                SelectedDefinition definition = mappedModel == null ? changedDefinition(vanillaModel, vanillaModel, resources) : null;
                 if (definition == null && mappedModel == null) {
                     continue;
                 }
@@ -65,7 +66,8 @@ final class VanillaItemOverrides {
                     continue;
                 }
 
-                ResolvedItemBinding binding = resolver.resolve(item, clientItem, clientModel, ItemModelBindingCompiler.compile(clientModel, definition));
+                ItemModelDefinitionBinding model = ItemModelBindingCompiler.compile(clientModel, definition.model(), definition.useRootFallback());
+                ResolvedItemBinding binding = resolver.resolve(item, clientItem, clientModel, model);
                 if (!index.add(binding)) {
                     TranslationManager.warn("resource_pack.bedrock.item.vanilla_occupied", itemId.asString(), clientModel.asString());
                     continue;
@@ -78,7 +80,7 @@ final class VanillaItemOverrides {
         return overrides;
     }
 
-    private static @Nullable JsonObject changedDefinition(Key vanillaModel, Key clientModel, JavaModelResources resources) throws IOException {
+    private static @Nullable SelectedDefinition changedDefinition(Key vanillaModel, Key clientModel, JavaModelResources resources) throws IOException {
         JavaResourcePack pack = resources.pack();
         String path = ResourcePackUtils.itemDefinitionPath(vanillaModel);
         JsonObject vanilla = pack.readVanillaJson(path);
@@ -99,9 +101,24 @@ final class VanillaItemOverrides {
         if (definition == null) {
             return null;
         }
-        // items 定义可以沿用原版文件，任意分支的模型或父模型变化也会触发转换
-        if (!Objects.equals(definition, vanilla) || hasChangedReference(definition.get("model"), resources.models())) {
-            return definition;
+        VanillaItemModelDefaults.Selection selection = VanillaItemModelDefaults.selectRootFallback(definition);
+        JsonObject selected = selection == null ? definition : selection.definition();
+        boolean useRootFallback = selection != null && selection.useRootFallback();
+        ModernItemModel parsed = null;
+        if (custom) {
+            VanillaItemModelDefaults.Selection vanillaSelection = vanilla == null ? null : VanillaItemModelDefaults.selectRootFallback(vanilla);
+            JsonObject original = vanillaSelection == null ? vanilla : vanillaSelection.definition();
+            if (original == null || !Objects.equals(selected.get("model"), original.get("model"))) {
+                parsed = ItemModelBindingCompiler.readDefinition(clientModel, selected);
+                // 原版文件和 Java 打包器可能采用不同的命名空间写法，按解析后的模型判断是否有变化
+                if (original == null || !parsed.model().equals(ItemModelBindingCompiler.readDefinition(vanillaModel, original).model())) {
+                    return new SelectedDefinition(parsed, useRootFallback);
+                }
+            }
+        }
+        if (hasChangedReference(selected.get("model"), resources.models())) {
+            ModernItemModel model = parsed == null ? ItemModelBindingCompiler.readDefinition(clientModel, selected) : parsed;
+            return new SelectedDefinition(model, useRootFallback);
         }
         return null;
     }
@@ -109,10 +126,10 @@ final class VanillaItemOverrides {
     private static boolean hasChangedReference(@Nullable JsonElement node, JavaModelResolver models) throws IOException {
         if (node instanceof JsonObject object) {
             if (object.get("model") instanceof JsonPrimitive model && model.isString()) {
-                return models.hasChangedModel(Key.of(model.getAsString()));
+                return models.hasChangedItemModel(Key.of(model.getAsString()));
             }
             if (object.get("base") instanceof JsonPrimitive base && base.isString()) {
-                return models.hasChangedModel(Key.of(base.getAsString()));
+                return models.hasChangedItemModel(Key.of(base.getAsString()));
             }
             for (JsonElement child : object.asMap().values()) {
                 if (hasChangedReference(child, models)) {
@@ -127,5 +144,8 @@ final class VanillaItemOverrides {
             }
         }
         return false;
+    }
+
+    private record SelectedDefinition(ModernItemModel model, boolean useRootFallback) {
     }
 }

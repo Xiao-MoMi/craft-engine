@@ -47,14 +47,29 @@ public final class ItemModelBindingCompiler {
     }
 
     public static ItemModelDefinitionBinding compile(Key definitionId, JsonObject json) throws IOException {
-        ModernItemModel definition;
+        return compile(definitionId, readDefinition(definitionId, json), false);
+    }
+
+    static ModernItemModel readDefinition(Key definitionId, JsonObject json) throws IOException {
         try {
-            definition = ModernItemModel.fromJson(json);
+            return ModernItemModel.fromJson(json);
         } catch (Throwable t) {
             throw new IOException("Failed to parse item definition " + definitionId + " at " + ResourcePackUtils.itemDefinitionPath(definitionId) + ": " + t.getMessage(), t);
         }
+    }
+
+    static ItemModelDefinitionBinding compile(Key definitionId, ModernItemModel definition, boolean useRootFallback) {
         Builder builder = new Builder();
-        builder.visit(definition.model(), "$.model");
+        if (useRootFallback) {
+            RangeDispatchItemModel range = (RangeDispatchItemModel) definition.model();
+            Transformation transformation = range.transformation();
+            if (transformation != null) {
+                builder.transformations.add(transformation);
+            }
+            builder.visitOrMissing(range.fallBack(), "$.model.fallback");
+        } else {
+            builder.visit(definition.model(), "$.model");
+        }
         return new ItemModelDefinitionBinding(
                 definitionId,
                 definition.handAnimationOnSwap(),
@@ -178,12 +193,16 @@ public final class ItemModelBindingCompiler {
         private void branch(ItemBindingCondition condition, ItemModel model, String path) {
             // 沿 Java 条件树累积从根到当前分支的条件，供叶子规则记录。遍历兄弟分支前恢复父节点的条件
             this.conditions.add(condition);
+            this.visitOrMissing(model, path);
+            this.conditions.removeLast();
+        }
+
+        private void visitOrMissing(ItemModel model, String path) {
             if (model == null) {
                 this.emit(ItemRenderTarget.Builtin.MISSING, path);
             } else {
                 this.visit(model, path);
             }
-            this.conditions.removeLast();
         }
 
         private void emit(ItemRenderTarget target, String path) {

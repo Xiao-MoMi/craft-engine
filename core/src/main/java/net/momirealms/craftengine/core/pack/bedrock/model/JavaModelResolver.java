@@ -31,6 +31,7 @@ public final class JavaModelResolver {
     private final Map<Key, InheritedModel> vanillaInheritedModels = new HashMap<>();
     private final Map<Key, JavaModel> models = new HashMap<>();
     private final Map<Key, Boolean> changedModels = new HashMap<>();
+    private final Map<Key, Boolean> changedItemModels = new HashMap<>();
 
     public JavaModelResolver(JavaResourcePack pack) {
         this.pack = pack;
@@ -48,6 +49,42 @@ public final class JavaModelResolver {
     public boolean hasChangedModel(Key model) throws IOException {
         Boolean cached = this.changedModels.get(model);
         return cached == null ? this.hasChangedModel(model, new HashSet<>(4)) : cached;
+    }
+
+    public boolean hasChangedItemModel(Key model) throws IOException {
+        Boolean cached = this.changedItemModels.get(model);
+        if (cached != null) {
+            return cached;
+        }
+        if (!this.hasChangedModel(model)) {
+            return false;
+        }
+        boolean changed = true;
+        if (this.pack.readVanillaJson(ResourcePackUtils.modelPath(model)) != null) {
+            // 旧版 overrides 可能还留在模型或父模型中，比较解析后的外观可排除这些兼容分支
+            JavaModel effective = this.resolve(model);
+            JavaModel vanilla = this.resolveVanilla(model);
+            changed = effective.kind() != vanilla.kind()
+                    || effective.guiLight() != vanilla.guiLight()
+                    || !effective.elements().equals(vanilla.elements())
+                    || !effective.display().equals(vanilla.display())
+                    || !this.sameTextures(effective, vanilla);
+        }
+        this.changedItemModels.put(model, changed);
+        return changed;
+    }
+
+    private boolean sameTextures(JavaModel effective, JavaModel vanilla) throws IOException {
+        if (!effective.textures().keySet().equals(vanilla.textures().keySet())) {
+            return false;
+        }
+        for (Map.Entry<String, JsonElement> entry : effective.textures().entrySet()) {
+            String slot = entry.getKey();
+            if (!entry.getValue().equals(vanilla.textures().get(slot)) && !this.resolveTexture(effective.id(), slot, effective.textures()).equals(this.resolveTexture(vanilla.id(), slot, vanilla.textures()))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean hasChangedModel(Key model, Set<Key> parents) throws IOException {
