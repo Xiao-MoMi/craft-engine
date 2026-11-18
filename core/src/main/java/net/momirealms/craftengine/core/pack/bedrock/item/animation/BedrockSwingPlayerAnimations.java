@@ -27,18 +27,17 @@ public final class BedrockSwingPlayerAnimations {
         if (itemsUsingJavaSwing.isEmpty()) {
             return;
         }
-        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/player/swing.pose.json").getAsJsonObject();
-        String setup = firstPersonSwingScript(itemsUsingJavaSwing, source);
+        String condition = "query.is_item_name_any('slot.weapon.mainhand'" + BedrockPlayerAnimations.sortedItemArguments(itemsUsingJavaSwing) + ")";
+        String setup = "variable.ce_java_swing = " + condition + Templates.POSE_SCRIPT;
         BedrockPlayerAnimationState firstPerson = controller.state("first_person");
         firstPerson.updateCondition("first_person_attack_controller", original -> setup + original + ';');
-        writeRightArmAnimation(source.getAsJsonObject("rightarm"), root);
+        Path animationPath = root.resolve("animations/ce/shared/swing_player.animation.json");
+        Files.createDirectories(animationPath.getParent());
+        GsonHelper.writeJsonFile(Templates.ATTACK_ANIMATION, animationPath);
     }
 
-    private static String firstPersonSwingScript(Set<Key> itemsUsingJavaSwing, JsonObject source) {
-        String condition = "query.is_item_name_any('slot.weapon.mainhand'" + BedrockPlayerAnimations.sortedItemArguments(itemsUsingJavaSwing) + ")";
-        StringBuilder scripts = new StringBuilder("variable.ce_java_swing = ")
-                .append(condition)
-                .append("; variable.ce_java_swing ? { ");
+    private static String poseScript(JsonObject source) {
+        StringBuilder scripts = new StringBuilder("; variable.ce_java_swing ? { ");
         for (JsonElement expression : source.getAsJsonArray("pre_animation")) {
             scripts.append(expression.getAsString()).append(' ');
         }
@@ -72,7 +71,7 @@ public final class BedrockSwingPlayerAnimations {
         }
     }
 
-    private static void writeRightArmAnimation(JsonObject rightArm, Path root) throws IOException {
+    private static JsonObject attackAnimation(JsonObject rightArm) {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/attack.animation.json").getAsJsonObject();
         animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         JsonObject armBone = animationFile.getAsJsonObject("animations")
@@ -86,9 +85,18 @@ public final class BedrockSwingPlayerAnimations {
                 vanilla.set(i, new JsonPrimitive("variable.ce_java_swing ? (" + replacement.get(i).getAsString() + ") : (" + vanilla.get(i).getAsString() + ")"));
             }
         }
-        Path animationPath = root.resolve("animations/ce/shared/swing_player.animation.json");
-        Files.createDirectories(animationPath.getParent());
-        GsonHelper.writeJsonFile(animationFile, animationPath);
+        return animationFile;
+    }
+
+    private static final class Templates {
+        private static final String POSE_SCRIPT;
+        private static final JsonObject ATTACK_ANIMATION;
+
+        static {
+            JsonObject source = GsonHelper.readJsonFromResource("/bedrock/player/swing.pose.json").getAsJsonObject();
+            POSE_SCRIPT = poseScript(source);
+            ATTACK_ANIMATION = attackAnimation(source.getAsJsonObject("rightarm"));
+        }
     }
 
     private static String matrixElement(Matrix4fc left, Matrix4fc right, int row, int column) {

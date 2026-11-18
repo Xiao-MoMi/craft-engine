@@ -37,6 +37,7 @@ final class BedrockDisplayAssets {
     private static final double DYE_BRIGHTNESS = 0.72;
     private static final String[] AXES = { "x", "y", "z" };
     private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y", "model_z" };
+    private static final JsonArray RIG = createRig();
     private static final String[] CUBE_POINTS = { "origin", "pivot" };
     private final JavaModelResources resources;
     private final Path root;
@@ -143,6 +144,13 @@ final class BedrockDisplayAssets {
     }
 
     private static JsonArray rig() {
+        // 展示部件只追加自己的骨骼，基础骨骼留作只读模板
+        JsonArray bones = new JsonArray(RIG.size() + 4);
+        bones.addAll(RIG);
+        return bones;
+    }
+
+    private static JsonArray createRig() {
         JsonArray bones = new JsonArray(RIG_BONES.length);
         String parent = null;
         for (String name : RIG_BONES) {

@@ -19,7 +19,7 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
             boolean cancelled;
             try {
                 cancelled = this.player.network().receive(wrapper);
-            } catch (RuntimeException | Error e) {
+            } catch (Throwable e) {
                 wrapper.release();
                 throw e;
             }
@@ -37,7 +37,7 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
             boolean cancelled;
             try {
                 cancelled = this.player.network().send(wrapper);
-            } catch (RuntimeException | Error e) {
+            } catch (Throwable e) {
                 wrapper.release();
                 throw e;
             }

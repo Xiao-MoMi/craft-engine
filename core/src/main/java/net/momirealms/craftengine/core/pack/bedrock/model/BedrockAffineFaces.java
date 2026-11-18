@@ -73,9 +73,13 @@ public final class BedrockAffineFaces {
                     rectangleWidth += Math.abs(shear);
                     String material = face.get("material_instance").getAsString();
                     // 用平面矩形承载错切面，透明像素裁出平行四边形；按原贴图的像素密度采样。
-                    Bake key = new Bake(materials.get(material).data(), face.getAsJsonArray("uv").deepCopy(),
-                            face.getAsJsonArray("uv_size").deepCopy(), face.has("uv_rotation") ? face.get("uv_rotation").getAsInt() : 0,
-                            Math.round(shear / width * 1_000_000f) / 1_000_000f);
+                    Bake key = new Bake(
+                            materials.get(material).data(),
+                            face.getAsJsonArray("uv").deepCopy(),
+                            face.getAsJsonArray("uv_size").deepCopy(),
+                            face.has("uv_rotation") ? face.get("uv_rotation").getAsInt() : 0,
+                            Math.round(shear / width * 1_000_000f) / 1_000_000f
+                    );
                     BakedTexture cached = this.textures.get(key);
                     if (cached == null) {
                         cached = new BakedTexture(this.textures.size(), bake(key));

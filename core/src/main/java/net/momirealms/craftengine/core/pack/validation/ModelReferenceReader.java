@@ -2,10 +2,10 @@ package net.momirealms.craftengine.core.pack.validation;
 
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ final class ModelReferenceReader {
         String model = null;
         String type = null;
         String base = null;
-        Set<String> fields = new HashSet<>(4);
+        Set<String> fields = new ObjectOpenHashSet<>(4);
         reader.beginObject();
         while (reader.hasNext()) {
             String name = nextUniqueName(reader, fields);
@@ -68,7 +68,7 @@ final class ModelReferenceReader {
     static List<BlockReference> readBlockState(JsonReader reader) throws IOException {
         List<BlockReference> multipart = null;
         List<BlockReference> variants = List.of();
-        Set<String> fields = new HashSet<>(4);
+        Set<String> fields = new ObjectOpenHashSet<>(4);
         reader.beginObject();
         while (reader.hasNext()) {
             switch (nextUniqueName(reader, fields)) {
@@ -90,7 +90,7 @@ final class ModelReferenceReader {
                 reader.skipValue();
                 continue;
             }
-            Set<String> fields = new HashSet<>(4);
+            Set<String> fields = new ObjectOpenHashSet<>(4);
             reader.beginObject();
             while (reader.hasNext()) {
                 if (nextUniqueName(reader, fields).equals("apply")) {
@@ -108,7 +108,7 @@ final class ModelReferenceReader {
     private static List<BlockReference> readVariants(JsonReader reader) throws IOException {
         require(reader, JsonToken.BEGIN_OBJECT);
         List<BlockReference> references = new ArrayList<>();
-        Set<String> fields = new HashSet<>(4);
+        Set<String> fields = new ObjectOpenHashSet<>(4);
         reader.beginObject();
         while (reader.hasNext()) {
             String variant = nextUniqueName(reader, fields);
@@ -138,7 +138,7 @@ final class ModelReferenceReader {
 
     private static String readModel(JsonReader reader) throws IOException {
         String model = null;
-        Set<String> fields = new HashSet<>(4);
+        Set<String> fields = new ObjectOpenHashSet<>(4);
         reader.beginObject();
         while (reader.hasNext()) {
             if (nextUniqueName(reader, fields).equals("model")) {

@@ -154,12 +154,12 @@ public final class BedrockItem3DAttachables {
 
         // 各阶段共用这一层的贴图。每个有可见面的阶段各自注册控制器，由 ce_stage 选中当前阶段。
         Map<LocalGeometry, JsonObject> layerGeometries = this.contextPose == null ? new HashMap<>() : null;
-        JsonArray[] contextCubes = this.contextPose == null ? null : new JsonArray[this.stages.size()];
+        String[] contextGeometryIds = this.contextPose == null ? null : new String[this.stages.size()];
         for (int index = 0; index < this.stages.size(); index++) {
             Stage stage = this.stages.get(index);
             String alias = "stage_" + index + '_' + layerName;
-            if (contextCubes != null) {
-                if (!this.registerContextGeometry(index, layerName, alias, contextCubes)) {
+            if (contextGeometryIds != null) {
+                if (!this.registerContextGeometry(index, layerName, alias, contextGeometryIds)) {
                     continue;
                 }
             } else {
@@ -177,20 +177,19 @@ public final class BedrockItem3DAttachables {
         }
     }
 
-    private boolean registerContextGeometry(int index, String layerName, String alias, JsonArray[] contextCubes) {
-        Stage stage = this.stages.get(index);
+    private boolean registerContextGeometry(int index, String layerName, String alias, String[] geometryIds) {
         int geometryIndex = this.contextGeometryIndices[index];
-        JsonArray cubes = contextCubes[geometryIndex];
-        if (cubes == null) {
-            cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
-            contextCubes[geometryIndex] = cubes;
-        }
-        if (cubes.isEmpty()) {
-            return false;
-        }
-        String geometryId = "geometry." + this.prefix + ".stage_" + geometryIndex + '_' + layerName;
-        // 缓存仅属于当前材质层；首阶段写出几何，后续场景只登记别名，不修改共享 cubes。
-        if (geometryIndex == index) {
+        String geometryId = geometryIds[geometryIndex];
+        // 首阶段写出几何，只缓存该层的 ID 或空面的结果，后续场景直接登记别名
+        if (geometryId == null) {
+            Stage stage = this.stages.get(index);
+            JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
+            if (cubes.isEmpty()) {
+                geometryIds[geometryIndex] = "";
+                return false;
+            }
+            geometryId = "geometry." + this.prefix + '.' + alias;
+            geometryIds[geometryIndex] = geometryId;
             String prefix = "p" + geometryIndex + "_";
             JsonObject geometry = BedrockItemAttachables.displayGeometry(stage.geometry().model(), cubes, geometryId,
                     modelRadius(cubes, stage.geometry().transformation()), prefix);
@@ -200,6 +199,9 @@ public final class BedrockItem3DAttachables {
             }
             this.addLocalTransform(geometry, stage.geometry().transformation(), prefix);
             this.geometries.add(geometry);
+        }
+        if (geometryId.isEmpty()) {
+            return false;
         }
         this.geometryNames.addProperty(alias, geometryId);
         return true;
@@ -268,7 +270,8 @@ public final class BedrockItem3DAttachables {
                 }
             }
             if (!bones.isEmpty()) {
-                JsonObject bound = animation.deepCopy();
+                JsonObject bound = new JsonObject();
+                bound.asMap().putAll(animation.asMap());
                 bound.add("bones", bones);
                 result.add(action.getKey(), bound);
             }

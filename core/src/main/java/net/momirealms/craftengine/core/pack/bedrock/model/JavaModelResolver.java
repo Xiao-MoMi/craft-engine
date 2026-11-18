@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.model.generation.GuiLight;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
@@ -227,7 +228,7 @@ public final class JavaModelResolver {
     }
 
     private Texture resolveTexture(Key model, String slot, Map<String, JsonElement> textures) throws IOException {
-        Set<String> references = new HashSet<>();
+        Set<String> references = new ObjectOpenHashSet<>(2);
         String currentSlot = slot;
         while (references.add(currentSlot)) {
             JsonElement texture = textures.get(currentSlot);

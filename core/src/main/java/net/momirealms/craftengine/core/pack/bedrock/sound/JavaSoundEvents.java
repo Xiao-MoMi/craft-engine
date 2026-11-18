@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.sound;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -56,6 +57,7 @@ final class JavaSoundEvents {
         }
     }
 
+    // 确定事件最终使用的声音条目，以及是否还能沿用基岩原版事件
     private Event read(Key id) throws IOException {
         if (EMPTY_SOUND_ID.equals(id)) {
             return SILENT;
@@ -63,7 +65,8 @@ final class JavaSoundEvents {
         Key original = this.originals.getOrDefault(id, id);
         JsonObject custom = this.definition(original, true);
         Key replacement = this.replacements.get(original);
-        // CE mutes the carrier event in the Java pack and saves the audible definition under its replacement ID.
+        // 给 Java 载体事件写入静音定义，并把原本要播放的声音保存在替代 ID 下
+        // 生成基岩包时，用替代 ID 下的定义恢复原事件的声音
         JsonObject restored = replacement == null ? null : this.definition(replacement, true);
         boolean carrierMute = restored != null && this.isCarrierMute(custom);
         if (carrierMute) {
@@ -78,6 +81,7 @@ final class JavaSoundEvents {
         JsonArray entries = sounds(custom);
         boolean replace = carrierMute || replacesSounds(custom);
         boolean modified = custom != null && (replace || !entries.isEmpty());
+        // 自定义定义里按顺序引用的声音与原版一致时，仍可尝试使用基岩原版映射
         if (modified && !base.isEmpty() && sameSamples(entries, base)) {
             modified = false;
         }
@@ -95,6 +99,7 @@ final class JavaSoundEvents {
         return this.resolveSamples(id, entries, !modified && mapped != null ? mapped.getAsString() : null);
     }
 
+    // 递归展开事件引用为 OGG 样本，必要时查找并缓存生成基岩声音定义所需的文件
     private Event resolveSamples(Key id, JsonArray entries, @Nullable String nativeSound) throws IOException {
         int entryCount = entries.size();
         List<Key> samples = new ArrayList<>(entryCount);
@@ -106,6 +111,7 @@ final class JavaSoundEvents {
                 if (nested == MISSING) {
                     return MISSING;
                 }
+                // 列表只有这一条引用时可直接沿用子事件，多个条目则无法混入只有事件名而没有样本的基岩声音
                 if (entryCount > 1 && !nested.name().isEmpty() && nested.samples().isEmpty()) {
                     return MISSING;
                 }
@@ -120,6 +126,7 @@ final class JavaSoundEvents {
                 String soundPath = audioPath(key);
                 Path customFile = this.resources.soundResource(key.namespace(), soundPath, true);
                 if (customFile != null) {
+                    // 即使事件定义沿用原版，自定义包里的同名 OGG 也会覆盖实际播放的音频
                     nativeSound = null;
                     this.audio.put(key, customFile);
                 } else if (this.resources.filtersVanilla("assets/" + key.namespace() + '/' + soundPath)) {
@@ -139,6 +146,7 @@ final class JavaSoundEvents {
         }
         for (Key sample : samples) {
             Path file = this.audio.get(sample);
+            // 自定义 OGG 已在上面缓存，这里补查原版 OGG，也记录找不到的结果
             if (file == null && !this.audio.containsKey(sample)) {
                 try {
                     file = this.resources.soundResource(sample.namespace(), audioPath(sample), false);
@@ -154,14 +162,17 @@ final class JavaSoundEvents {
         return new Event(id.asString(), List.copyOf(samples), false);
     }
 
+    // 取已定位的 OGG 路径，供基岩资源包复制
     Path audio(Key id) {
         return this.audio.get(id);
     }
 
+    // 从指定来源的命名空间定义里取出单个声音事件
     private JsonObject definition(Key id, boolean custom) throws IOException {
         return this.definitions(id.namespace(), custom).getAsJsonObject(id.value());
     }
 
+    // 按命名空间加载 sounds.json，原版与自定义定义各自缓存
     JsonObject definitions(String name, boolean custom) throws IOException {
         Map<String, JsonObject> definitions = custom ? this.customDefinitions : this.vanillaDefinitions;
         JsonObject namespace = definitions.get(name);
@@ -173,7 +184,7 @@ final class JavaSoundEvents {
                 if (custom || !name.equals("minecraft")) {
                     throw unavailable;
                 }
-                // A font-only vanilla cache can still match native sounds while the Mojang asset server is offline.
+                // 比如原版缓存只有字体且无法连接 Mojang 资源服务器时，用内置定义继续匹配基岩原版声音
                 namespace = originalDefinitions();
             }
             definitions.put(name, namespace);
@@ -181,10 +192,12 @@ final class JavaSoundEvents {
         return namespace;
     }
 
+    // 原事件被静音且替代 ID 有自定义定义时，才将这对 ID 视为载体声音的替换关系
     boolean hasCarrierReplacement(Key id, Key alias) throws IOException {
         return this.definition(alias, true) != null && this.isCarrierMute(this.definition(id, true));
     }
 
+    // 载体静音必须设置 replace，并清空声音列表或只引用与内置静音 OGG 内容一致的文件
     private boolean isCarrierMute(@Nullable JsonObject definition) throws IOException {
         if (!replacesSounds(definition)) {
             return false;
@@ -218,16 +231,18 @@ final class JavaSoundEvents {
         return silent;
     }
 
+    // 首次使用时加载插件内置的原版 sounds.json，供声音解析和播放映射共用
     static JsonObject originalDefinitions() {
         return OriginalDefinitions.ALL;
     }
 
-    // Sound entries are read-only and can be shared between resolvers
+    // 取事件的 sounds 数组，缺省时返回共享空数组，调用方只读
     static JsonArray sounds(@Nullable JsonObject event) {
         JsonArray sounds = event == null ? null : event.getAsJsonArray("sounds");
         return sounds == null ? NO_SOUNDS : sounds;
     }
 
+    // 按原版条目在前、自定义条目在后的顺序合并，一侧为空时直接复用另一侧的只读数组
     static JsonArray mergeSounds(JsonArray base, JsonArray additions) {
         if (base.isEmpty()) {
             return additions;
@@ -241,15 +256,18 @@ final class JavaSoundEvents {
         return merged;
     }
 
+    // 读取 replace 标记，缺省为 false，表示保留原版条目
     static boolean replacesSounds(@Nullable JsonObject definition) {
         JsonElement replace = definition == null ? null : definition.get("replace");
         return replace != null && replace.getAsBoolean();
     }
 
+    // 把音频 ID 转成其命名空间目录下的 OGG 相对路径
     static String audioPath(Key id) {
         return "sounds/" + id.value() + ".ogg";
     }
 
+    // 按顺序比较声音 ID 和引用类型，音量、音调、权重由播放映射单独处理
     private static boolean sameSamples(JsonArray first, JsonArray second) {
         if (first.size() != second.size()) {
             return false;
@@ -264,10 +282,12 @@ final class JavaSoundEvents {
         return true;
     }
 
+    // 声音条目可直接写成字符串，也可在对象的 name 字段里指定 ID
     static Key sampleId(JsonElement entry) {
         return Key.of(entry.isJsonPrimitive() ? entry.getAsString() : entry.getAsJsonObject().get("name").getAsString());
     }
 
+    // type 为 event 时引用另一个声音事件，其余条目按 OGG 文件处理
     static boolean isReference(JsonElement entry) {
         JsonElement type = entry instanceof JsonObject object ? object.get("type") : null;
         return type != null && "event".equals(type.getAsString());

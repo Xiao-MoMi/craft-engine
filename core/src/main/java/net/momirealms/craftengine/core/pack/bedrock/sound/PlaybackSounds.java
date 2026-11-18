@@ -50,7 +50,7 @@ final class PlaybackSounds {
         }
         // A replaced OGG or nested event can also change vanilla events absent from the custom sounds.json.
         for (String name : this.source.definitions("minecraft", false).keySet()) {
-            Key id = Key.of("minecraft", name);
+            Key id = Key.minecraft(name);
             candidates.putIfAbsent(id.asString(), id);
         }
         for (Key alias : this.restored.values()) {

@@ -19,9 +19,13 @@ final class BedrockTridentRenderStrategy extends BedrockItemRenderStrategy {
         if (entry.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.TRIDENT) {
             return super.pose(entry);
         }
-        JsonObject source = GsonHelper.readJsonFromResource("/bedrock/item/trident/charge.pose.json").getAsJsonObject();
+        JsonObject source = PoseTemplate.TRIDENT;
         JsonArray scripts = useScripts(entry.useBehavior());
         scripts.addAll(source.getAsJsonArray("pre_animation"));
         return new BedrockAttachablePose(scripts, source.getAsJsonArray("bones"), source.getAsJsonObject("animations"), source.getAsJsonArray("animate"), BedrockAttachablePose.FIRST_PERSON_MAIN);
+    }
+
+    private static final class PoseTemplate {
+        private static final JsonObject TRIDENT = GsonHelper.readJsonFromResource("/bedrock/item/trident/charge.pose.json").getAsJsonObject();
     }
 }

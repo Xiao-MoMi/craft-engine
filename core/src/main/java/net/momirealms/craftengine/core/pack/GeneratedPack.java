@@ -5,6 +5,7 @@ import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -49,7 +50,7 @@ record GeneratedPack(FileSystem fileSystem,
             }
             // 外部 ZIP 没有 generate 步骤的选项。保留其原始元数据，不能用服务器默认描述和版本覆盖。
             return new GeneratedPack(fs, root, metadata, new Overlays(metadata), null);
-        } catch (IOException | RuntimeException | Error e) {
+        } catch (Throwable e) {
             fs.close();
             throw e;
         }
@@ -60,14 +61,16 @@ record GeneratedPack(FileSystem fileSystem,
         // 不跟随符号链接，清理仅作用于导出目录中的条目。
         if (Files.exists(output, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
             Files.walkFileTree(output, new SimpleFileVisitor<>() {
+                @NotNull
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
 
+                @NotNull
                 @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exception) throws IOException {
+                public FileVisitResult postVisitDirectory(@NotNull Path dir, IOException exception) throws IOException {
                     if (exception != null) throw exception;
                     Files.delete(dir);
                     return FileVisitResult.CONTINUE;
@@ -75,14 +78,16 @@ record GeneratedPack(FileSystem fileSystem,
             });
         }
         Files.walkFileTree(this.path, new SimpleFileVisitor<>() {
+            @NotNull
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.createDirectories(output.resolve(path.relativize(dir).toString()));
                 return FileVisitResult.CONTINUE;
             }
 
+            @NotNull
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
                 Files.copy(file, output.resolve(path.relativize(file).toString()));
                 return FileVisitResult.CONTINUE;
             }

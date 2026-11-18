@@ -952,7 +952,7 @@ public abstract class AbstractPackManager implements PackManager {
             this.writeJsonSafely(packMcMeta, generatedPackPath.resolve("pack.mcmeta"));
             TranslationManager.info("resource_pack.generation_finished", String.valueOf(timestamp.deltaMillis()));
             return new GeneratedPack(fs, generatedPackPath, packMcMeta, overlays, options);
-        } catch (IOException | RuntimeException | Error e) {
+        } catch (Throwable e) {
             fs.close();
             throw e;
         }
@@ -997,7 +997,7 @@ public abstract class AbstractPackManager implements PackManager {
             Map<String, Path> selfHostedPacks = new LinkedHashMap<>();
             // 与工作流一样使用配置键作为 ID，并保留配置顺序作为资源包发送顺序。
             for (String id : packs.keySet()) {
-                if (!id.matches("[A-Za-z0-9_-]{1,64}")) {
+                if (id.length() > 64 || !StringUtils.isAsciiIdentifier(id)) {
                     throw new IllegalArgumentException("Invalid resource pack host id: " + id);
                 }
                 ConfigSection section = packs.getNonNullSection(id);

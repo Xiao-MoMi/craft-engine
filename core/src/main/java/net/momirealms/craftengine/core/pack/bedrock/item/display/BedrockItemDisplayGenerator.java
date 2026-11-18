@@ -40,9 +40,20 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
 public final class BedrockItemDisplayGenerator {
     private static final Key TRIDENT_ICON = Key.minecraft("item/trident");
     private static final ItemDisplayContext[] DISPLAY_CONTEXTS = ItemDisplayContext.values();
+    private static final DisplayPosition[] DISPLAY_POSITIONS = displayPositions();
     private static final Transformation SPECIAL_MODEL_FLIP = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, -1, -1), new Quaternionf());
 
     private BedrockItemDisplayGenerator() {
+    }
+
+    private static DisplayPosition[] displayPositions() {
+        DisplayPosition[] positions = new DisplayPosition[DISPLAY_CONTEXTS.length];
+        for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
+            if (context != ItemDisplayContext.NONE) {
+                positions[context.ordinal()] = DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT));
+            }
+        }
+        return positions;
     }
 
     public static JsonObject write(JavaModelResources resources,
@@ -112,16 +123,17 @@ public final class BedrockItemDisplayGenerator {
     private static JsonObject vanilla(JavaModelResources resources, BedrockDisplayAssets assets, Map<List<Part>, Integer> geometryIndices,
                                       Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
         JsonObject items = new JsonObject();
-        Map<JsonArray, Integer> indices = new HashMap<>();
+        HeldAppearances held = new HeldAppearances();
         Set<Key> selected = Config.bedrockVanillaDisplayItems();
         for (Map.Entry<Key, JsonObject> entry : resources.pack().vanillaItemDefinitions().entrySet()) {
-            JsonArray contexts = new JsonArray();
+            JsonArray contexts = new JsonArray(DISPLAY_CONTEXTS.length);
+            JsonObject model = entry.getValue().getAsJsonObject("model");
             List<List<Part>> converted = List.of();
             try {
                 if (selected.contains(entry.getKey())) {
                     converted = new ArrayList<>(DISPLAY_CONTEXTS.length);
                     for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
-                        converted.add(vanillaParts(resources, entry.getValue().getAsJsonObject("model"), context, List.of()));
+                        converted.add(vanillaParts(resources, model, context, List.of()));
                     }
                 }
             } catch (BedrockResourceException exception) {
@@ -138,7 +150,7 @@ public final class BedrockItemDisplayGenerator {
                     contexts.add(index);
                     continue;
                 }
-                contexts.add(heldAppearance(resources, entry.getValue().getAsJsonObject("model"), context, indices, appearances));
+                contexts.add(heldAppearance(resources, model, context, held, appearances));
             }
             items.add(entry.getKey().asString(), contexts);
         }
@@ -146,19 +158,26 @@ public final class BedrockItemDisplayGenerator {
     }
 
     private static int heldAppearance(JavaModelResources resources, JsonObject node, ItemDisplayContext context,
-                                      Map<JsonArray, Integer> indices, JsonArray appearances) throws IOException {
+                                      HeldAppearances held, JsonArray appearances) throws IOException {
         List<Transformation> transforms = new ArrayList<>();
         Key model = vanillaModel(node, context, transforms, resources.pack().version());
         Map<DisplayPosition, JavaModel.Transform> display = model == null ? Map.of() : resources.models().resolveVanillaDisplay(model);
-        JavaModel.Transform transform = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY : display.getOrDefault(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)), JavaModel.Transform.IDENTITY);
+        DisplayPosition position = DISPLAY_POSITIONS[context.ordinal()];
+        JavaModel.Transform transform = position == null ? JavaModel.Transform.IDENTITY : display.getOrDefault(position, JavaModel.Transform.IDENTITY);
         boolean mirrored = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
         int side = mirrored ? -1 : 1;
-        JsonArray pose = new JsonArray();
+        Map<JavaModel.Transform, Integer> direct = mirrored ? held.mirrored : held.normal;
+        boolean hasLocalTransforms = !transforms.isEmpty();
+        // 原版模型缓存的 display 对象会复用，常见姿态可以直接复用已经登记的索引
+        if (!hasLocalTransforms) {
+            Integer cached = direct.get(transform);
+            if (cached != null) {
+                return cached;
+            }
+        }
+        JsonArray pose = new JsonArray(4);
         pose.add(0);
-        pose.add(VectorUtils.toJson(-side * transform.translation().x + 0.0f, transform.translation().y, transform.translation().z));
-        pose.add(VectorUtils.toJson(-transform.rotation().x + 0.0f, -side * transform.rotation().y + 0.0f, side * transform.rotation().z + 0.0f));
-        pose.add(VectorUtils.toJson(transform.scale()));
-        if (!transforms.isEmpty()) {
+        if (hasLocalTransforms) {
             float radians = (float) (Math.PI / 180);
             Matrix4f coordinates = new Matrix4f().translation(8, -8, -8).scale(-16, 16, 16);
             Matrix4f local = new Matrix4f(coordinates).mul(BedrockModelTransform.compose(transforms)).mul(new Matrix4f(coordinates).invert());
@@ -166,15 +185,22 @@ public final class BedrockItemDisplayGenerator {
                     .rotateXYZ(transform.rotation().x * radians, -side * transform.rotation().y * radians, -side * transform.rotation().z * radians)
                     .scale(transform.scale()).mul(local);
             Vector3f rotation = BedrockModelTransform.rotationAngles(new Matrix3d().rotation(matrix.getUnnormalizedRotation(new Quaternionf())).transpose()).negate();
-            pose.set(1, VectorUtils.toJson(matrix.getTranslation(new Vector3f())));
-            pose.set(2, VectorUtils.toJson(rotation));
-            pose.set(3, VectorUtils.toJson(matrix.getScale(new Vector3f())));
+            pose.add(VectorUtils.toJson(matrix.getTranslation(new Vector3f())));
+            pose.add(VectorUtils.toJson(rotation));
+            pose.add(VectorUtils.toJson(matrix.getScale(new Vector3f())));
+        } else {
+            pose.add(VectorUtils.toJson(-side * transform.translation().x + 0.0f, transform.translation().y, transform.translation().z));
+            pose.add(VectorUtils.toJson(-transform.rotation().x + 0.0f, -side * transform.rotation().y + 0.0f, side * transform.rotation().z + 0.0f));
+            pose.add(VectorUtils.toJson(transform.scale()));
         }
-        Integer index = indices.get(pose);
+        Integer index = held.indices.get(pose);
         if (index == null) {
             index = appearances.size();
             appearances.add(pose);
-            indices.put(pose, index);
+            held.indices.put(pose, index);
+        }
+        if (!hasLocalTransforms) {
+            direct.put(transform, index);
         }
         return index;
     }
@@ -225,7 +251,7 @@ public final class BedrockItemDisplayGenerator {
                 }
             }
             JavaModel.Transform pose = context == ItemDisplayContext.NONE ? JavaModel.Transform.IDENTITY
-                    : model.display().get(DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT)));
+                    : model.display().get(DISPLAY_POSITIONS[context.ordinal()]);
             boolean mirrored = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
             return List.of(new Part(new ItemRenderTarget.Model(id, tints), transforms, pose, mirrored, geometry));
         }
@@ -362,7 +388,7 @@ public final class BedrockItemDisplayGenerator {
     private static List<Part> parts(JavaModelResources resources, ItemBindingRule rule, ItemDisplayContext context) throws IOException {
         List<ItemBindingRule> children = rule.target() instanceof ItemRenderTarget.Composite composite ? composite.parts() : List.of(rule);
         List<Part> parts = new ArrayList<>(children.size());
-        DisplayPosition position = context == ItemDisplayContext.NONE ? null : DisplayPosition.valueOf(context.serializedName().toUpperCase(Locale.ROOT));
+        DisplayPosition position = DISPLAY_POSITIONS[context.ordinal()];
         for (ItemBindingRule child : children) {
             if (!(child.target() instanceof ItemRenderTarget.Model target)) {
                 return List.of();
@@ -373,6 +399,12 @@ public final class BedrockItemDisplayGenerator {
             parts.add(new Part(target, child.transformations(), transform, mirrored));
         }
         return parts;
+    }
+
+    private static final class HeldAppearances {
+        private final Map<JsonArray, Integer> indices = new HashMap<>();
+        private final Map<JavaModel.Transform, Integer> normal = new IdentityHashMap<>();
+        private final Map<JavaModel.Transform, Integer> mirrored = new IdentityHashMap<>();
     }
 
     record Part(ItemRenderTarget.Model target, List<Transformation> transforms, JavaModel.Transform display, boolean mirrored, @Nullable JavaModel geometry) {

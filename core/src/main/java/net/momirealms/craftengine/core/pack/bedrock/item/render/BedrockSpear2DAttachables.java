@@ -43,20 +43,23 @@ public final class BedrockSpear2DAttachables {
         JsonArray preAnimation = BedrockItemRenderStrategy.useScripts(plan.item().useBehavior());
         preAnimation.add(BedrockItemAttachables.stageSelection(conditions, Function.identity()));
         attachment.write(root, preAnimation);
-        JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.animation.json").getAsJsonObject();
-        JsonObject nativeAnimations = animationFile.getAsJsonObject("animations");
-        JsonObject hit = nativeAnimations.remove("animation.spear.hit").getAsJsonObject();
-        JsonObject hitAnimations = new JsonObject();
-        hitAnimations.add("animation.ce.spear.hit", hit);
-        ResourcePackUtils.writeBedrockJson(BedrockFormatVersions.ANIMATION, "animations", hitAnimations, root.resolve("animations/ce/shared/spear_hit.animation.json"));
+        ResourcePackUtils.writeBedrockJson(BedrockFormatVersions.ANIMATION, "animations", Templates.HIT_ANIMATIONS,
+                root.resolve("animations/ce/shared/spear_hit.animation.json"));
     }
 
     private static JsonObject geometry(String identifier, String texture) {
-        JsonObject geometry = GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.geo.json")
-                .getAsJsonObject().getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
+        JsonObject geometry = Templates.GEOMETRY.deepCopy();
         geometry.getAsJsonObject("description").addProperty("identifier", identifier);
         geometry.getAsJsonArray("bones").get(0).getAsJsonObject().getAsJsonArray("texture_meshes")
                 .get(0).getAsJsonObject().addProperty("texture", texture);
         return geometry;
+    }
+
+    private static final class Templates {
+        private static final JsonObject GEOMETRY = GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.geo.json")
+                .getAsJsonObject().getAsJsonArray("minecraft:geometry").get(0).getAsJsonObject();
+        private static final JsonObject HIT_ANIMATIONS = GsonHelper.createObject("animation.ce.spear.hit",
+                GsonHelper.readJsonFromResource("/bedrock/item/spear/flat.animation.json")
+                        .getAsJsonObject().getAsJsonObject("animations").getAsJsonObject("animation.spear.hit"));
     }
 }

@@ -20,9 +20,17 @@ import java.util.List;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
+import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 public final class NativeModelAssets {
     public static final String MANIFEST = BedrockPackLayout.NATIVE_MODELS;
+    private static final String DEFAULT_COLOR = "q.property('ce:model_dye_r') < 0 || (q.property('ce:model_dye_r') == 255 && q.property('ce:model_dye_gb') == 65535)";
+    private static final String DYE_RED = "q.property('ce:model_dye_r') < 0 ? 1 : q.property('ce:model_dye_r') / 255";
+    private static final String DYE_GREEN = "q.property('ce:model_dye_r') < 0 ? 1 : math.floor(q.property('ce:model_dye_gb') / 256) / 255";
+    private static final String DYE_BLUE = "q.property('ce:model_dye_r') < 0 ? 1 : math.mod(q.property('ce:model_dye_gb'), 256) / 255";
+    private static final List<String> NON_RENDERABLE_TYPES = List.of("bounding_box", "locator", "null_object", "camera");
+    private static final List<String> ANIMATION_CHANNELS = List.of("rotation", "position", "scale");
+    private static final List<String> AXES = List.of("x", "y", "z");
     private final JsonObject blueprint;
     private final String stem;
     private final Map<String, JsonObject> elements = new HashMap<>();
@@ -68,7 +76,7 @@ public final class NativeModelAssets {
         int[] size = this.writeTexture(root.resolve(texture + ".png"));
         for (JsonElement element : this.blueprint.getAsJsonArray("elements")) {
             JsonObject cube = element.getAsJsonObject();
-            if (cube.has("type") && List.of("bounding_box", "locator", "null_object", "camera").contains(cube.get("type").getAsString())) {
+            if (cube.has("type") && NON_RENDERABLE_TYPES.contains(cube.get("type").getAsString())) {
                 continue;
             }
             if (cube.has("type") && !cube.get("type").getAsString().equals("cube")) {
@@ -90,8 +98,9 @@ public final class NativeModelAssets {
         for (JsonElement node : this.blueprint.getAsJsonArray("outliner")) {
             this.addNode(node, rootBone);
         }
+        String geometryId = "geometry.ce_native_" + this.stem;
         JsonObject description = new JsonObject();
-        description.addProperty("identifier", "geometry.ce_native_" + this.stem);
+        description.addProperty("identifier", geometryId);
         description.addProperty("texture_width", size[0]);
         description.addProperty("texture_height", size[1]);
         description.addProperty("visible_bounds_width", 64);
@@ -100,9 +109,7 @@ public final class NativeModelAssets {
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);
         geometry.add("bones", this.bones);
-        JsonObject geometries = JsonParser.parseString("{\"minecraft:geometry\":[]}").getAsJsonObject();
-        geometries.getAsJsonArray("minecraft:geometry").add(geometry);
-        this.save(root, "models/entity/ce/native/", ".geo.json", GEOMETRY, geometries);
+        this.save(root, "models/entity/ce/native/", ".geo.json", GEOMETRY, createObject("minecraft:geometry", single(geometry)));
 
         JsonObject manifest = new JsonObject();
         manifest.addProperty("identifier", "ce:native_" + this.stem);
@@ -115,36 +122,42 @@ public final class NativeModelAssets {
         JsonObject controllers = new JsonObject();
         JsonObject aliases = new JsonObject();
         JsonArray animate = new JsonArray();
+        String animationPrefix = "animation.ce_native_" + this.stem + '.';
         if (this.blueprint.has("animations")) {
             for (JsonElement element : this.blueprint.getAsJsonArray("animations")) {
                 JsonObject animation = element.getAsJsonObject();
                 int index = animationNames.size();
                 animationNames.add(animation.get("name").getAsString());
                 String alias = "a" + index;
-                String id = "animation.ce_native_" + this.stem + "." + alias;
+                String id = animationPrefix + alias;
                 JsonObject converted = this.animation(animation);
                 String controllerId = "controller.animation.ce_native_" + this.stem + "." + alias;
-                JsonObject controller = JsonParser.parseString("{\"initial_state\":\"stop\",\"states\":{\"stop\":{\"transitions\":[]}}}").getAsJsonObject();
-                JsonObject states = controller.getAsJsonObject("states");
+                JsonArray startTransitions = new JsonArray(3);
+                JsonObject states = createObject("stop", createObject("transitions", startTransitions));
+                JsonObject controller = new JsonObject();
+                controller.addProperty("initial_state", "stop");
+                controller.add("states", states);
                 String property = "math.mod(math.floor(q.property('ce:model_anim" + index / 9 + "') / " + (1 << (index % 9 * 2)) + "), 4)";
                 for (int mode = 1; mode <= 3; mode++) {
                     String variant = alias + "_" + mode;
-                    JsonObject clip = converted.deepCopy();
+                    // 各播放模式只替换顶层的 loop，共用已转换的骨骼关键帧
+                    JsonObject clip = new JsonObject();
+                    clip.asMap().putAll(converted.asMap());
                     if (mode == 3) {
                         clip.addProperty("loop", "hold_on_last_frame");
                     } else {
                         clip.addProperty("loop", mode == 2);
                     }
-                    animations.add(id + "_" + mode, clip);
-                    aliases.addProperty(variant, id + "_" + mode);
+                    String clipId = id + "_" + mode;
+                    animations.add(clipId, clip);
+                    aliases.addProperty(variant, clipId);
                     JsonObject transition = new JsonObject();
                     transition.addProperty(variant, property + " == " + mode);
-                    states.getAsJsonObject("stop").getAsJsonArray("transitions").add(transition);
-                    JsonObject play = JsonParser.parseString("{\"animations\":[],\"transitions\":[]}").getAsJsonObject();
-                    play.getAsJsonArray("animations").add(variant);
+                    startTransitions.add(transition);
+                    JsonObject play = createObject("animations", single(new JsonPrimitive(variant)));
                     JsonObject stop = new JsonObject();
                     stop.addProperty("stop", property + " != " + mode);
-                    play.getAsJsonArray("transitions").add(stop);
+                    play.add("transitions", single(stop));
                     states.add(variant, play);
                 }
                 controllers.add(controllerId, controller);
@@ -152,60 +165,52 @@ public final class NativeModelAssets {
                 animate.add("c" + index);
             }
         }
-        JsonObject scaleAnimation = JsonParser.parseString("{\"loop\":true,\"bones\":{\"root\":{\"scale\":[\"q.property('ce:model_sx')\",\"q.property('ce:model_sy')\",\"q.property('ce:model_sz')\"]}}}").getAsJsonObject();
-        animations.add("animation.ce_native_" + this.stem + ".scale", scaleAnimation);
-        aliases.addProperty("scale", "animation.ce_native_" + this.stem + ".scale");
+        String scaleId = animationPrefix + "scale";
+        animations.add(scaleId, Templates.SCALE_ANIMATION);
+        aliases.addProperty("scale", scaleId);
         animate.add("scale");
-        JsonObject animationFile = new JsonObject();
-        animationFile.add("animations", animations);
-        this.save(root, "animations/ce/native/", ".json", ANIMATION, animationFile);
-        JsonObject controllerFile = new JsonObject();
-        controllerFile.add("animation_controllers", controllers);
-        this.save(root, "animation_controllers/ce/native/", ".json", ANIMATION_CONTROLLER, controllerFile);
+        this.save(root, "animations/ce/native/", ".json", ANIMATION, createObject("animations", animations));
+        this.save(root, "animation_controllers/ce/native/", ".json", ANIMATION_CONTROLLER, createObject("animation_controllers", controllers));
 
-        JsonObject render = JsonParser.parseString("{\"geometry\":\"Geometry.default\",\"materials\":[{\"*\":\"Material.default\"}],\"textures\":[\"Texture.default\"],\"part_visibility\":[]}").getAsJsonObject();
+        JsonArray partVisibility = new JsonArray(this.boneNames.size());
         int boneIndex = 0;
         for (String name : this.boneNames.values()) {
             JsonObject visible = new JsonObject();
             visible.addProperty(name, bit("bone", boneIndex++) + " == 0");
-            render.getAsJsonArray("part_visibility").add(visible);
+            partVisibility.add(visible);
         }
-        JsonObject color = JsonParser.parseString("{\"r\":\"q.property('ce:model_dye_r') < 0 ? 1 : q.property('ce:model_dye_r') / 255\",\"g\":\"q.property('ce:model_dye_r') < 0 ? 1 : math.floor(q.property('ce:model_dye_gb') / 256) / 255\",\"b\":\"q.property('ce:model_dye_r') < 0 ? 1 : math.mod(q.property('ce:model_dye_gb'), 256) / 255\",\"a\":1}").getAsJsonObject();
-        JsonObject renderFile = JsonParser.parseString("{\"render_controllers\":{}}").getAsJsonObject();
         String renderId = "controller.render.ce_native_" + this.stem;
-        renderFile.getAsJsonObject("render_controllers").add(renderId, render);
-        JsonObject entity = JsonParser.parseString("{\"minecraft:client_entity\":{\"description\":{\"materials\":{},\"textures\":{},\"geometry\":{},\"scripts\":{},\"render_controllers\":[]}}}").getAsJsonObject();
-        JsonObject entityDescription = entity.getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
-        entityDescription.getAsJsonObject("materials").addProperty("default", material);
+        JsonObject renderControllers = createObject(renderId, renderController(Templates.DEFAULT_TEXTURES, partVisibility));
+        JsonObject entityTextures = createObject("default", new JsonPrimitive(texture));
+        JsonArray activeControllers = new JsonArray();
+        JsonObject entityDescription = new JsonObject();
+        entityDescription.add("materials", createObject("default", new JsonPrimitive(material)));
+        entityDescription.add("textures", entityTextures);
+        entityDescription.add("geometry", createObject("default", new JsonPrimitive(geometryId)));
+        entityDescription.add("scripts", createObject("animate", animate));
+        entityDescription.add("render_controllers", activeControllers);
         entityDescription.add("identifier", manifest.get("identifier"));
-        entityDescription.getAsJsonObject("textures").addProperty("default", texture);
-        entityDescription.getAsJsonObject("geometry").addProperty("default", "geometry.ce_native_" + this.stem);
         entityDescription.add("animations", aliases);
-        entityDescription.getAsJsonObject("scripts").add("animate", animate);
-        String defaultColor = "q.property('ce:model_dye_r') < 0 || (q.property('ce:model_dye_r') == 255 && q.property('ce:model_dye_gb') == 65535)";
-        JsonObject defaultController = new JsonObject();
-        defaultController.addProperty(renderId, defaultColor);
-        entityDescription.getAsJsonArray("render_controllers").add(defaultController);
+        activeControllers.add(createObject(renderId, Templates.DEFAULT_COLOR_CONDITION));
         BitSet coverage = new BitSet(this.atlas.getWidth() * this.atlas.getHeight());
         coverage.set(0, this.atlas.getWidth() * this.atlas.getHeight());
         DisplayDyeMasks masks = new DisplayDyeMasks(new TextureData(this.atlas, null), coverage);
-        Int2ObjectMap<JsonArray> layers = masks.write("dye", texture + '/', entityDescription.getAsJsonObject("textures"), root, maxLayers);
+        Int2ObjectMap<JsonArray> layers = masks.write("dye", texture + '/', entityTextures, root, maxLayers);
         for (Int2ObjectMap.Entry<JsonArray> layer : layers.int2ObjectEntrySet()) {
-            JsonObject tinted = render.deepCopy();
-            tinted.add("textures", layer.getValue());
-            JsonObject overlay = color.deepCopy();
+            JsonObject tinted = renderController(layer.getValue(), partVisibility);
             int shade = layer.getIntKey();
-            overlay.addProperty("r", "(" + color.get("r").getAsString() + ") * " + (shade >> 16) + " / 255 * 0.72");
-            overlay.addProperty("g", "(" + color.get("g").getAsString() + ") * " + (shade >> 8 & 255) + " / 255 * 0.72");
-            overlay.addProperty("b", "(" + color.get("b").getAsString() + ") * " + (shade & 255) + " / 255 * 0.72");
+            JsonObject overlay = new JsonObject();
+            overlay.addProperty("r", "(" + DYE_RED + ") * " + (shade >> 16) + " / 255 * 0.72");
+            overlay.addProperty("g", "(" + DYE_GREEN + ") * " + (shade >> 8 & 255) + " / 255 * 0.72");
+            overlay.addProperty("b", "(" + DYE_BLUE + ") * " + (shade & 255) + " / 255 * 0.72");
+            overlay.addProperty("a", 1);
             tinted.add("overlay_color", overlay);
             String tintedId = renderId + ".d" + Integer.toHexString(shade);
-            renderFile.getAsJsonObject("render_controllers").add(tintedId, tinted);
-            JsonObject condition = new JsonObject();
-            condition.addProperty(tintedId, "!(" + defaultColor + ")");
-            entityDescription.getAsJsonArray("render_controllers").add(condition);
+            renderControllers.add(tintedId, tinted);
+            activeControllers.add(createObject(tintedId, Templates.TINTED_COLOR_CONDITION));
         }
-        this.save(root, "render_controllers/ce/native/", ".json", RENDER_CONTROLLER, renderFile);
+        this.save(root, "render_controllers/ce/native/", ".json", RENDER_CONTROLLER, createObject("render_controllers", renderControllers));
+        JsonObject entity = createObject("minecraft:client_entity", createObject("description", entityDescription));
         this.save(root, "entity/ce/native/", ".entity.json", CLIENT_ENTITY, entity);
         return manifest;
     }
@@ -350,7 +355,7 @@ public final class NativeModelAssets {
             for (JsonElement element : keyframes) {
                 JsonObject frame = element.getAsJsonObject();
                 String channel = frame.get("channel").getAsString();
-                if (!List.of("rotation", "position", "scale").contains(channel)) {
+                if (!ANIMATION_CHANNELS.contains(channel)) {
                     continue;
                 }
                 JsonObject timeline = output.getAsJsonObject(channel);
@@ -375,8 +380,8 @@ public final class NativeModelAssets {
     }
 
     private static JsonArray animationPoint(JsonObject point, String channel) {
-        JsonArray value = new JsonArray();
-        for (String axis : List.of("x", "y", "z")) {
+        JsonArray value = new JsonArray(AXES.size());
+        for (String axis : AXES) {
             int sign = channel.equals("scale") || axis.equals("z") || (axis.equals("y") && channel.equals("position")) ? 1 : -1;
             String expression = point.has(axis) ? point.get(axis).getAsString() : (channel.equals("scale") ? "1" : "0");
             if (expression.isBlank()) {
@@ -389,6 +394,39 @@ public final class NativeModelAssets {
             }
         }
         return value;
+    }
+
+    private static JsonArray single(JsonElement element) {
+        JsonArray array = new JsonArray(1);
+        array.add(element);
+        return array;
+    }
+
+    private static JsonObject renderController(JsonArray textures, JsonArray partVisibility) {
+        JsonObject render = new JsonObject();
+        render.addProperty("geometry", "Geometry.default");
+        render.add("materials", Templates.DEFAULT_MATERIALS);
+        render.add("textures", textures);
+        render.add("part_visibility", partVisibility);
+        return render;
+    }
+
+    // 首个原生模型写出时初始化，只读用于序列化，保护步骤会重新读取写出的 JSON
+    private static final class Templates {
+        private static final JsonObject SCALE_ANIMATION = JsonParser.parseString("""
+                {
+                  "loop": true,
+                  "bones": {
+                    "root": {
+                      "scale": ["q.property('ce:model_sx')", "q.property('ce:model_sy')", "q.property('ce:model_sz')"]
+                    }
+                  }
+                }
+                """).getAsJsonObject();
+        private static final JsonArray DEFAULT_MATERIALS = single(createObject("*", new JsonPrimitive("Material.default")));
+        private static final JsonArray DEFAULT_TEXTURES = single(new JsonPrimitive("Texture.default"));
+        private static final JsonPrimitive DEFAULT_COLOR_CONDITION = new JsonPrimitive(DEFAULT_COLOR);
+        private static final JsonPrimitive TINTED_COLOR_CONDITION = new JsonPrimitive("!(" + DEFAULT_COLOR + ")");
     }
 
     private void save(Path root, String directory, String suffix, String formatVersion, JsonObject value) throws IOException {

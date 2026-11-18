@@ -16,16 +16,19 @@ public record BedrockItemGeometry(JavaModel model, JsonArray cubes, Matrix4fc tr
         JsonArray cubes = new JsonArray();
         for (JsonElement value : source) {
             JsonObject original = value.getAsJsonObject();
-            JsonObject faces = new JsonObject();
+            JsonObject faces = null;
             for (Map.Entry<String, JsonElement> entry : original.getAsJsonObject("uv").entrySet()) {
                 JsonObject face = entry.getValue().getAsJsonObject();
                 if (face.get("material_instance").getAsString().equals(material)) {
+                    if (faces == null) {
+                        faces = new JsonObject();
+                    }
                     JsonObject selected = face.deepCopy();
                     selected.remove("material_instance");
                     faces.add(entry.getKey(), selected);
                 }
             }
-            if (!faces.isEmpty()) {
+            if (faces != null) {
                 JsonObject cube = new JsonObject();
                 // UV 已按材质筛选，不能再复制整套 UV 后立即丢弃。
                 for (Map.Entry<String, JsonElement> entry : original.entrySet()) {

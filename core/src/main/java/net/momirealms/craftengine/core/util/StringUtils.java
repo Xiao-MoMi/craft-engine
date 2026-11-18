@@ -7,6 +7,21 @@ import java.util.Locale;
 public final class StringUtils {
     private StringUtils() {}
 
+    public static boolean isAsciiIdentifier(String value) {
+        int length = value.length();
+        if (length == 0) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            char c = value.charAt(i);
+            boolean allowed = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-';
+            if (!allowed) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static String capitalize(String str, Locale locale) {
         if (str == null || str.isEmpty()) {
             return str;

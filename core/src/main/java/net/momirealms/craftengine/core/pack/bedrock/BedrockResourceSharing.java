@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.util.FileUtils;
@@ -15,9 +16,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 public final class BedrockResourceSharing {
+    private static final ToIntFunction<String> NUMBER_HASH = value -> Double.hashCode(Double.parseDouble(value));
+
     private BedrockResourceSharing() {
     }
 
@@ -87,6 +91,7 @@ public final class BedrockResourceSharing {
     private static Map<String, String> shareGeometries(Path root, Set<String> references, List<Path> redundantFiles,
                                                        @Nullable Map<Path, JsonObject> modelDocuments) throws IOException {
         Map<GeometryKey, String> geometries = new HashMap<>();
+        Object2IntOpenHashMap<String> numberHashes = new Object2IntOpenHashMap<>();
         Map<String, String> aliases = new HashMap<>();
         Path blockModels = root.resolve(BedrockDefinitionBundler.BLOCK_MODELS);
         Path entityModels = root.resolve(BedrockDefinitionBundler.ENTITY_MODELS);
@@ -102,6 +107,7 @@ public final class BedrockResourceSharing {
                     header.add(entry.getKey(), entry.getValue());
                 }
             }
+            int headerHash = 31 * header.hashCode();
             boolean changed = false;
             for (Iterator<JsonElement> iterator = definitions.iterator(); iterator.hasNext();) {
                 JsonObject geometry = iterator.next().getAsJsonObject();
@@ -117,7 +123,8 @@ public final class BedrockResourceSharing {
                 JsonObject sharedDescription = description.deepCopy();
                 sharedDescription.remove("identifier");
                 shape.add("description", sharedDescription);
-                String previous = geometries.putIfAbsent(new GeometryKey(header, shape), id);
+                int hash = headerHash + geometryHash(shape, numberHashes);
+                String previous = geometries.putIfAbsent(new GeometryKey(header, shape, hash), id);
                 if (previous != null) {
                     aliases.put(id, previous);
                     iterator.remove();
@@ -133,6 +140,28 @@ public final class BedrockResourceSharing {
             }
         }
         return aliases;
+    }
+
+    private static int geometryHash(JsonElement element, Object2IntOpenHashMap<String> numberHashes) {
+        if (element instanceof JsonObject object) {
+            int hash = 0;
+            for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+                hash += entry.getKey().hashCode() ^ geometryHash(entry.getValue(), numberHashes);
+            }
+            return hash;
+        }
+        if (element instanceof JsonArray array) {
+            int hash = 1;
+            for (int i = 0, size = array.size(); i < size; i++) {
+                hash = 31 * hash + geometryHash(array.get(i), numberHashes);
+            }
+            return hash;
+        }
+        // 几何由 Gson 从文件解析，数字的哈希取决于 double 值，重复出现的数值只转换一次
+        if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
+            return numberHashes.computeIfAbsent(primitive.getAsString(), NUMBER_HASH);
+        }
+        return element.hashCode();
     }
 
     private static List<References> readReferences(Path root, Path blockPlan, Set<String> animatedTiles) throws IOException {
@@ -221,6 +250,10 @@ public final class BedrockResourceSharing {
         }
     }
 
-    private record GeometryKey(JsonObject header, JsonObject definition) {
+    private record GeometryKey(JsonObject header, JsonObject definition, int hash) {
+        @Override
+        public int hashCode() {
+            return this.hash;
+        }
     }
 }

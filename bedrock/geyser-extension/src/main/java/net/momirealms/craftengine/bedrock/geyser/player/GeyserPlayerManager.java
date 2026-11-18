@@ -29,7 +29,7 @@ public final class GeyserPlayerManager {
         }
         try {
             player.initialize();
-        } catch (RuntimeException | Error e) {
+        } catch (Throwable e) {
             this.players.remove(session, player);
             player.close();
             throw e;

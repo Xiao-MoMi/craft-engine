@@ -23,7 +23,7 @@ public final class IndexedZipFile implements AutoCloseable {
                 entries.put(entry.getName(), entry);
             }
             this.entries = Collections.unmodifiableMap(entries);
-        } catch (RuntimeException | Error exception) {
+        } catch (Throwable exception) {
             this.archive.close();
             throw exception;
         }

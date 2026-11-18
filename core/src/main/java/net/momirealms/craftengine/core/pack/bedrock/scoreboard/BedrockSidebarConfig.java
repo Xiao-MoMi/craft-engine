@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.scoreboard;
 import net.momirealms.craftengine.core.plugin.config.*;
 import net.momirealms.craftengine.core.util.CollectingConfigReader;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.StringUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -53,7 +54,7 @@ public record BedrockSidebarConfig(List<Profile> profiles) {
         private static Element fromConfig(ConfigSection section, CollectingConfigReader config) {
             String id = config.attempt(section.assemblePath("id"), () -> {
                 String parsed = section.getNonEmptyString("id");
-                if (!parsed.matches("[a-zA-Z0-9_-]+")) {
+                if (!StringUtils.isAsciiIdentifier(parsed)) {
                     throw new KnownResourceException("resource_pack.bedrock.sidebar.id", section.assemblePath("id"), parsed);
                 }
                 return parsed;

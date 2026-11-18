@@ -102,8 +102,12 @@ public final class BedrockModelTransform {
         // 全部以零点为支点，避免父子 pivot 的补偿再次引入平移。
         String[] suffixes = {"translation", "left", "scale", "right"};
         String[] properties = {"position", "rotation", "scale", "rotation"};
-        Vector3f[] values = {new Vector3f(matrix.m30(), matrix.m31(), matrix.m32()), rotationAngles(parts.left()),
-                new Vector3f(parts.scale()), rotationAngles(parts.right())};
+        Vector3f[] values = {
+                new Vector3f(matrix.m30(), matrix.m31(), matrix.m32()),
+                rotationAngles(parts.left()),
+                new Vector3f(parts.scale()),
+                rotationAngles(parts.right())
+        };
         for (int index = 0; index < suffixes.length; index++) {
             String name = prefix + "affine_" + suffixes[index];
             JsonObject bone = new JsonObject();
