@@ -45,15 +45,18 @@ public final class BedrockPackGenerator {
     private BedrockPackGenerator() {
     }
 
-    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels,
-                                Map<Key, Key> soundReplacements, Path output) throws IOException {
+    public static void generate(JavaResourcePack resources,
+                                ItemRegistrationPlan plan,
+                                List<WorldBlockSource> blocks,
+                                List<NativeModelSource> nativeModels,
+                                Map<Key, Key> soundReplacements,
+                                Path output) throws IOException {
         Path dataDestination = output.toAbsolutePath().normalize();
-        String packName = BedrockPackFiles.clientPackName(dataDestination);
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
             Path data = fileSystem.getPath("extension-data").toAbsolutePath();
-            writeItemsAndBlocks(resources, plan, blocks, pack, data, packName, soundReplacements);
+            writeItemsAndBlocks(resources, plan, blocks, pack, data, soundReplacements);
             GsonHelper.writeJsonFile(resources.translations(), data.resolve(BedrockPackLayout.TRANSLATIONS));
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
             BedrockGuiGenerator.write(resources, pack);
@@ -72,8 +75,12 @@ public final class BedrockPackGenerator {
         }
     }
 
-    private static void writeItemsAndBlocks(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks,
-                                            Path pack, Path data, String packFileName, Map<Key, Key> soundReplacements) throws IOException {
+    private static void writeItemsAndBlocks(JavaResourcePack resources,
+                                            ItemRegistrationPlan plan,
+                                            List<WorldBlockSource> blocks,
+                                            Path pack,
+                                            Path data,
+                                            Map<Key, Key> soundReplacements) throws IOException {
         Path itemPlanPath = data.resolve(RegistrationPlanKind.ITEM.file());
         Files.createDirectories(itemPlanPath.getParent());
         JavaModelResources models = new JavaModelResources(resources);
@@ -81,7 +88,7 @@ public final class BedrockPackGenerator {
         BedrockBlockDefinitions definitions = new BedrockBlockDefinitions();
 
         BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan, pack, atlas, definitions);
-        JsonObject displays = BedrockItemDisplayGenerator.write(models, plan, items, pack, packFileName);
+        JsonObject displays = BedrockItemDisplayGenerator.write(models, plan, items, pack);
         ItemRegistrationPlanWriter.write(plan, itemPlanPath, items, displays);
 
         BedrockSounds sounds = new BedrockSounds(resources, soundReplacements);

@@ -105,7 +105,7 @@ public final class BedrockResourceSharing {
                 JsonObject geometry = iterator.next().getAsJsonObject();
                 JsonObject description = geometry.getAsJsonObject("description");
                 String id = description.get("identifier").getAsString();
-                if (!references.contains(id) || !(id.startsWith("geometry.craftengine.") || id.startsWith("geometry.item_display_"))) {
+                if (!references.contains(id) || !(id.startsWith("geometry.craftengine.") || id.startsWith("geometry.item_display."))) {
                     continue;
                 }
                 // 仅忽略标识符；格式版本、骨骼名、UV、材质槽和所有显示变换都参与比较。

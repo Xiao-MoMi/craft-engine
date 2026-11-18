@@ -29,7 +29,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -43,9 +42,8 @@ public final class BedrockItemDisplayGenerator {
     public static JsonObject write(JavaModelResources resources,
                                    ItemRegistrationPlan plan,
                                    BedrockItemResourceGenerator.Result generated,
-                                   Path root,
-                                   String packName) throws IOException {
-        String name = "item_display_" + UUID.nameUUIDFromBytes(packName.getBytes(StandardCharsets.UTF_8)).toString().replace("-", "");
+                                   Path root) throws IOException {
+        String name = "item_display";
         BedrockDisplayAssets assets = new BedrockDisplayAssets(resources, root, name);
         Map<List<Part>, Integer> indices = new HashMap<>();
         Map<List<Part>, Integer> meshes = new HashMap<>();
@@ -67,8 +65,7 @@ public final class BedrockItemDisplayGenerator {
                         // 每种展示上下文先选 Java 分支，再应用该模型的 display；NONE 使用恒等变换。
                         try {
                             List<Part> parts = parts(resources, rule, context);
-                            if (!parts.isEmpty() || rule.target() == ItemRenderTarget.Builtin.EMPTY
-                                    || (rule.target() instanceof ItemRenderTarget.Composite composite && composite.parts().isEmpty())) {
+                            if (!parts.isEmpty() || rule.target() == ItemRenderTarget.Builtin.EMPTY || (rule.target() instanceof ItemRenderTarget.Composite composite && composite.parts().isEmpty())) {
                                 Integer existing = indices.get(parts);
                                 if (existing == null) {
                                     existing = appearance(assets, parts, meshes, appearances);

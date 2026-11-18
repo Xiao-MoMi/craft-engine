@@ -29,9 +29,10 @@ record BedrockItemPresentation(ResolvedItemBinding item,
         boolean explicitViews = DisplayContextVariants.usesDisplayContext(item);
         boolean separateWorldViews = explicitViews || item.definition().hasPlayerHead() || hasDifferentPartTransforms(item, models);
         List<? extends BedrockItemRenderStrategy> strategies = BedrockItemRenderStrategy.forItem(item);
-        boolean contextual = BedrockEquipmentResources.hasAsset(item) || separateWorldViews
+        boolean contextual = separateWorldViews
                 || strategies.getFirst() != BedrockItemRenderStrategy.DEFAULT
                 || item.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.NONE
+                || BedrockEquipmentResources.hasAsset(item)
                 || hasUseConditions(item.definition().rules()) || BedrockDyedItem.hasDye(item.definition().rules())
                 || requiresAffineBones(item.definition().rules());
 

@@ -23,10 +23,6 @@ public final class BedrockPackFiles {
         return directory.resolve(baseName(pack) + DATA_EXTENSION);
     }
 
-    public static String clientPackName(Path data) {
-        return baseName(data) + ".mcpack";
-    }
-
     private static String baseName(Path file) {
         String name = file.getFileName().toString();
         int extension = name.lastIndexOf('.');

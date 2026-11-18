@@ -20,7 +20,11 @@ public final class ModelEngineProvider implements ModelProvider {
         if (Config.bedrockModelEngineIntegration() != BedrockModelIntegration.CUSTOM_ENTITY) {
             return List.of();
         }
-        return NativeModelSources.collect("modelengine", Bukkit.getPluginManager().getPlugin("ModelEngine").getDataFolder().toPath().resolve("blueprints"), ModelEngineAPI.getAPI().getModelRegistry().getValues().stream().map(ModelBlueprint::getName).toList());
+        return NativeModelSources.collect(
+                "modelengine",
+                Bukkit.getPluginManager().getPlugin("ModelEngine").getDataFolder().toPath().resolve("blueprints"),
+                ModelEngineAPI.getAPI().getModelRegistry().getValues().stream().map(ModelBlueprint::getName).toList()
+        );
     }
 
     @Override

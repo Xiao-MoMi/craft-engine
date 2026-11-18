@@ -20,8 +20,11 @@ public final class BetterModelProvider implements ModelProvider {
         if (Config.bedrockBetterModelIntegration() != BedrockModelIntegration.CUSTOM_ENTITY) {
             return List.of();
         }
-        return NativeModelSources.collect("bettermodel", Bukkit.getPluginManager().getPlugin("BetterModel").getDataFolder().toPath().resolve("models"),
-                BetterModel.models().stream().map(ModelRenderer::name).toList());
+        return NativeModelSources.collect(
+                "bettermodel",
+                Bukkit.getPluginManager().getPlugin("BetterModel").getDataFolder().toPath().resolve("models"),
+                BetterModel.models().stream().map(ModelRenderer::name).toList()
+        );
     }
 
     @Override

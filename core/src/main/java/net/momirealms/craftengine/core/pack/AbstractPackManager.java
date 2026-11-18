@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
@@ -196,7 +197,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     protected abstract List<WorldBlockSource> collectGeyserWorldBlockSources();
 
-    protected List<net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource> collectGeyserNativeModels() throws IOException {
+    protected List<NativeModelSource> collectGeyserNativeModels() throws IOException {
         return List.of();
     }
 
