@@ -4,6 +4,8 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.momirealms.craftengine.core.block.BlockRegistryMirror;
+import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -16,9 +18,8 @@ import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.pack.atlas.*;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
-import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
-import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockPackPlan;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
@@ -196,13 +197,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     protected abstract void dispatchGenerationEvent(Path resourceFolder, Path zipPath);
 
-    protected abstract ItemRegistrationPlan generateGeyserItemPlan(JavaResourcePack pack) throws IOException;
-
-    protected abstract List<WorldBlockSource> collectGeyserWorldBlockSources();
-
-    protected List<NativeModelSource> collectGeyserNativeModels() throws IOException {
-        return List.of();
-    }
+    protected abstract BedrockPackPlan prepareBedrockPack(JavaModelResources resources) throws IOException;
 
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
@@ -1190,15 +1185,9 @@ public abstract class AbstractPackManager implements PackManager {
             Path dataPath = this.resolvePath(output);
             try (FileSystem fileSystem = JavaResourcePack.newInputFileSystem()) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
-                BedrockPackGenerator.generate(
-                        resources,
-                        AbstractPackManager.this.generateGeyserItemPlan(resources),
-                        AbstractPackManager.this.collectGeyserWorldBlockSources(),
-                        AbstractPackManager.this.collectGeyserNativeModels(),
-                        AbstractPackManager.this.plugin.blockManager().soundReplacements(),
-                        dataPath,
-                        protection
-                );
+                JavaModelResources models = new JavaModelResources(resources);
+                BedrockPackPlan plan = AbstractPackManager.this.prepareBedrockPack(models);
+                BedrockPackGenerator.generate(models, plan, dataPath, protection);
             }
             TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
         }
@@ -2338,14 +2327,8 @@ public abstract class AbstractPackManager implements PackManager {
                     stateJson = new JsonObject();
                 }
 
-                JsonObject newVariants = new JsonObject();
-                if (previousVariants != null) {
-                    for (Map.Entry<String, JsonElement> variantEntry : previousVariants.entrySet()) {
-                        newVariants.add(variantEntry.getKey(), variantEntry.getValue());
-                    }
-                }
-                // 新增变体排序后追加在末尾；与旧变体同 key 的仅替换值，保持原位
                 Map<String, JsonElement> sortedNewVariants = new TreeMap<>(entry.getValue());
+                JsonObject newVariants = previousVariants == null ? new JsonObject() : this.expandBlockVariantOverlaps(key, previousVariants, sortedNewVariants.keySet());
                 for (Map.Entry<String, JsonElement> resourcePathEntry : sortedNewVariants.entrySet()) {
                     newVariants.add(resourcePathEntry.getKey(), resourcePathEntry.getValue());
                 }
@@ -2375,6 +2358,49 @@ public abstract class AbstractPackManager implements PackManager {
                 writeJsonSafely(blueMapBlockStates, generatedPackPath.resolve("assets").resolve(Key.CRAFTENGINE_NAMESPACE).resolve("blockColors.json"));
             }
         }
+    }
+
+    private JsonObject expandBlockVariantOverlaps(Key block, JsonObject previous, Set<String> overrides) {
+        JsonObject result = new JsonObject();
+        List<String> stateSelectors = null;
+        for (Map.Entry<String, JsonElement> entry : previous.entrySet()) {
+            String selector = entry.getKey();
+            boolean overlaps = overrides.stream().anyMatch(state -> !state.equals(selector) && matchesBlockVariant(selector, state));
+            if (!overlaps) {
+                result.add(selector, entry.getValue());
+                continue;
+            }
+            // Java 会拒绝同一状态的重叠定义，将通用变体展开到未被自定义方块占用的状态
+            if (stateSelectors == null) {
+                stateSelectors = new ArrayList<>();
+                int vanillaCount = this.plugin.blockManager().vanillaBlockStateCount();
+                for (int i = 0; i < vanillaCount; i++) {
+                    BlockStateWrapper state = BlockRegistryMirror.byId(i);
+                    if (state.ownerId().equals(block)) {
+                        stateSelectors.add(ResourcePackUtils.blockStateSelector(state.getAsString()));
+                    }
+                }
+            }
+            for (String state : stateSelectors) {
+                if (!overrides.contains(state) && matchesBlockVariant(selector, state)) {
+                    result.add(state, entry.getValue());
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean matchesBlockVariant(String selector, String state) {
+        if (selector.isEmpty()) {
+            return true;
+        }
+        String properties = ',' + state + ',';
+        for (String property : selector.split(",")) {
+            if (!properties.contains(',' + property + ',')) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void generateModernItemModels1_21_2(Path generatedPackPath) {

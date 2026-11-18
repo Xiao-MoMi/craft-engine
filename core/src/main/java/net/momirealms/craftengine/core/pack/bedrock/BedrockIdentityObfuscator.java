@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -40,14 +42,21 @@ final class BedrockIdentityObfuscator {
             return Map.of();
         }
         JsonObject plan = GsonHelper.readJsonFromFile(file).getAsJsonObject();
+        JsonArray entries = plan.getAsJsonArray(ENTRIES);
+        JsonArray overrides = plan.getAsJsonArray(VANILLA_OVERRIDES);
+        List<JsonArray> sections = overrides == null ? List.of(entries) : List.of(entries, overrides);
         Set<String> names = new HashSet<>();
-        for (JsonElement entry : plan.getAsJsonArray(ENTRIES)) {
-            collect(entry.getAsJsonObject(), NAME, PATH_PREFIX, names);
+        for (JsonArray section : sections) {
+            for (JsonElement entry : section) {
+                collect(entry.getAsJsonObject(), NAME, PATH_PREFIX, names);
+            }
         }
         Map<String, String> aliases = randomNames(names, PATH_PREFIX + "b", random);
         if (!aliases.isEmpty()) {
-            for (JsonElement entry : plan.getAsJsonArray(ENTRIES)) {
-                GsonHelper.replaceStringValues(entry.getAsJsonObject(), NAME, aliases);
+            for (JsonArray section : sections) {
+                for (JsonElement entry : section) {
+                    GsonHelper.replaceStringValues(entry.getAsJsonObject(), NAME, aliases);
+                }
             }
             GsonHelper.writeJsonFile(plan, file);
         }

@@ -16,16 +16,14 @@ final class ExternalItemModelBindings {
     }
 
     static void append(List<ResolvedItemBinding> entries,
+                       ItemRegistrationIndex index,
                        Function<Key, ItemModelDefinitionBinding> definitions,
                        Map<String, List<ExternalItemModel>> contributions,
                        Function<Key, Item> itemFactory,
                        ItemBehaviorReader behaviorReader,
                        ItemRegistrationReader registrationReader) throws IOException {
-        Set<ExternalItemModel> registered = new HashSet<>();
-        Set<Key> identifiers = new HashSet<>();
-        for (ResolvedItemBinding entry : entries) {
-            registered.add(new ExternalItemModel(entry.clientItemType(), entry.itemModel()));
-            identifiers.add(entry.bedrockId());
+        if (contributions.isEmpty()) {
+            return;
         }
         Map<ExternalItemModel, String> ordered = new TreeMap<>(Comparator
                 .comparing((ExternalItemModel model) -> model.baseItem().asString())
@@ -48,8 +46,7 @@ final class ExternalItemModelBindings {
                 if (clientModel == null) {
                     continue;
                 }
-                ExternalItemModel clientBinding = new ExternalItemModel(clientItem.vanillaId(), clientModel);
-                if (registered.contains(clientBinding)) {
+                if (index.containsModel(clientItem.vanillaId(), clientModel)) {
                     continue;
                 }
                 ItemModelDefinitionBinding definition = definitions.apply(clientModel);
@@ -61,10 +58,9 @@ final class ExternalItemModelBindings {
                 String identity = model.baseItem().asString() + '\n' + model.itemModel().asString();
                 Key id = Key.of("external", UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8)).toString());
                 ResolvedItemBinding binding = new ResolvedItemBinding(id, model.baseItem(), clientItem.vanillaId(), clientModel, definition, behavior, properties);
-                if (!identifiers.add(binding.bedrockId())) {
+                if (!index.add(binding)) {
                     throw new IllegalArgumentException("Conflicting generated identifier: " + binding.bedrockId());
                 }
-                registered.add(clientBinding);
                 entries.add(binding);
             } catch (RuntimeException exception) {
                 throw new IOException("Failed to register external item model from " + entry.getValue() + ": " + model.baseItem() + " + " + model.itemModel() + ": " + exception.getMessage(), exception);

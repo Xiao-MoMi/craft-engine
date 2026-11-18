@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -35,7 +36,17 @@ public final class ItemRegistrationPlanGenerator {
                                                 ItemRegistrationReader registrationReader,
                                                 Map<String, List<ExternalItemModel>> externalModels,
                                                 Function<Key, Item> itemFactory) throws IOException {
-        Function<Key, ItemModelDefinitionBinding> definitions = ItemModelBindingCompiler.lazy(pack);
+        return generate(new JavaModelResources(pack), items, List.of(), behaviorReader, registrationReader, externalModels, itemFactory);
+    }
+
+    public static ItemRegistrationPlan generate(JavaModelResources resources,
+                                                Collection<ItemDefinition> items,
+                                                List<Key> vanillaItems,
+                                                ItemBehaviorReader behaviorReader,
+                                                ItemRegistrationReader registrationReader,
+                                                Map<String, List<ExternalItemModel>> externalModels,
+                                                Function<Key, Item> itemFactory) throws IOException {
+        Function<Key, ItemModelDefinitionBinding> definitions = ItemModelBindingCompiler.lazy(resources.pack());
         ItemBindingResolver resolver = new ItemBindingResolver(definitions, behaviorReader, registrationReader);
 
         // 保一下注册顺序
@@ -56,9 +67,11 @@ public final class ItemRegistrationPlanGenerator {
                 TranslationManager.warn("resource_pack.bedrock.item.binding", definition.id().asString(), definition.material().asString(), t.toString());
             }
         }
-        if (!externalModels.isEmpty()) {
-            ExternalItemModelBindings.append(entries, definitions, externalModels, itemFactory, behaviorReader, registrationReader);
+        if (externalModels.isEmpty() && vanillaItems.isEmpty()) {
+            return new ItemRegistrationPlan(entries);
         }
-        return new ItemRegistrationPlan(List.copyOf(entries));
+        ItemRegistrationIndex index = new ItemRegistrationIndex(entries);
+        ExternalItemModelBindings.append(entries, index, definitions, externalModels, itemFactory, behaviorReader, registrationReader);
+        return new ItemRegistrationPlan(entries, VanillaItemOverrides.plan(vanillaItems, itemFactory, resolver, resources, index));
     }
 }

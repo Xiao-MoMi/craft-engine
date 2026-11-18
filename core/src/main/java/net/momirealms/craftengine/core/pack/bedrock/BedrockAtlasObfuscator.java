@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -9,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.List;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
@@ -78,8 +80,14 @@ final class BedrockAtlasObfuscator {
         if (Files.exists(planFile)) {
             JsonObject plan = GsonHelper.readJsonFromFile(planFile).getAsJsonObject();
             boolean changed = false;
-            for (JsonElement entry : plan.getAsJsonArray(ENTRIES)) {
-                changed |= GsonHelper.replaceStringValues(entry.getAsJsonObject(), MATERIALS, aliases);
+            for (String section : List.of(ENTRIES, VANILLA_OVERRIDES)) {
+                JsonArray entries = plan.getAsJsonArray(section);
+                if (entries == null) {
+                    continue;
+                }
+                for (JsonElement entry : entries) {
+                    changed |= GsonHelper.replaceStringValues(entry.getAsJsonObject(), MATERIALS, aliases);
+                }
             }
             if (changed) {
                 GsonHelper.writeJsonFile(plan, planFile);

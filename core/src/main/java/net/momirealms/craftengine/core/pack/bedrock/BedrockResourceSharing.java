@@ -213,6 +213,10 @@ public final class BedrockResourceSharing {
             JsonObject document = GsonHelper.readJsonFromFile(blockPlan).getAsJsonObject();
             List<Reference> geometries = new ArrayList<>();
             document.getAsJsonArray(BedrockPackLayout.ENTRIES).forEach(entry -> geometries.add(new Reference(entry.getAsJsonObject(), BedrockPackLayout.GEOMETRY)));
+            JsonArray overrides = document.getAsJsonArray(BedrockPackLayout.VANILLA_OVERRIDES);
+            if (overrides != null) {
+                overrides.forEach(entry -> geometries.add(new Reference(entry.getAsJsonObject(), BedrockPackLayout.GEOMETRY)));
+            }
             result.add(new References(blockPlan, document, List.of(), geometries));
         }
         return result;

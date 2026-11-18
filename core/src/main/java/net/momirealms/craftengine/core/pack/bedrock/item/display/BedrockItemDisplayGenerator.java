@@ -9,9 +9,7 @@ import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
@@ -57,7 +55,6 @@ public final class BedrockItemDisplayGenerator {
     }
 
     public static JsonObject write(JavaModelResources resources,
-                                   ItemRegistrationPlan plan,
                                    BedrockItemResourceGenerator.Result generated,
                                    Path root) throws IOException {
         String name = "item_display";
@@ -67,8 +64,8 @@ public final class BedrockItemDisplayGenerator {
         JsonArray appearances = new JsonArray();
         appearances.add(new JsonArray());
         JsonObject items = new JsonObject();
-        for (ResolvedItemBinding entry : plan.entries()) {
-            for (GeneratedItemVariant variant : generated.variants().getOrDefault(entry.bedrockId(), List.of())) {
+        for (List<GeneratedItemVariant> variants : generated.variants().values()) {
+            for (GeneratedItemVariant variant : variants) {
                 if (!variant.generated() || variant.worldView() != null) {
                     continue;
                 }
@@ -120,8 +117,11 @@ public final class BedrockItemDisplayGenerator {
         return result;
     }
 
-    private static JsonObject vanilla(JavaModelResources resources, BedrockDisplayAssets assets, Map<List<Part>, Integer> geometryIndices,
-                                      Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
+    private static JsonObject vanilla(JavaModelResources resources,
+                                      BedrockDisplayAssets assets,
+                                      Map<List<Part>, Integer> geometryIndices,
+                                      Map<List<Part>, Integer> meshes,
+                                      JsonArray appearances) throws IOException {
         JsonObject items = new JsonObject();
         HeldAppearances held = new HeldAppearances();
         Set<Key> selected = Config.bedrockVanillaDisplayItems();
@@ -157,8 +157,11 @@ public final class BedrockItemDisplayGenerator {
         return items;
     }
 
-    private static int heldAppearance(JavaModelResources resources, JsonObject node, ItemDisplayContext context,
-                                      HeldAppearances held, JsonArray appearances) throws IOException {
+    private static int heldAppearance(JavaModelResources resources,
+                                      JsonObject node,
+                                      ItemDisplayContext context,
+                                      HeldAppearances held,
+                                      JsonArray appearances) throws IOException {
         List<Transformation> transforms = new ArrayList<>();
         Key model = vanillaModel(node, context, transforms, resources.pack().version());
         Map<DisplayPosition, JavaModel.Transform> display = model == null ? Map.of() : resources.models().resolveVanillaDisplay(model);
@@ -205,8 +208,10 @@ public final class BedrockItemDisplayGenerator {
         return index;
     }
 
-    private static List<Part> vanillaParts(JavaModelResources resources, JsonObject node, ItemDisplayContext context,
-                                          List<Transformation> inherited) throws IOException {
+    private static List<Part> vanillaParts(JavaModelResources resources,
+                                           JsonObject node,
+                                           ItemDisplayContext context,
+                                           List<Transformation> inherited) throws IOException {
         List<Transformation> transforms = inherited;
         if (node.has("transformation")) {
             transforms = new ArrayList<>(inherited);

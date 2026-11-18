@@ -37,11 +37,9 @@ public final class ItemRegistrationPlanWriter {
         result.addProperty(FORMAT_VERSION, RegistrationPlanKind.ITEM.formatVersion());
         result.addProperty(SOURCE_VERSION, VersionHelper.MINECRAFT_VERSION.version());
 
-        JsonArray entries = new JsonArray(plan.entries().size());
-        for (ResolvedItemBinding entry : plan.entries()) {
-            List<GeneratedItemVariant> variants = generatedItems.variants().getOrDefault(entry.bedrockId(), List.of());
-            entries.add(entryToJson(entry, variants));
-        }
+        JsonArray entries = new JsonArray(plan.size());
+        appendEntries(entries, plan.explicitItems(), generatedItems);
+        appendEntries(entries, plan.vanillaOverrides(), generatedItems);
         result.add(ENTRIES, entries);
         if (!generatedItems.elytraVariants().isEmpty()) {
             JsonObject elytraVariants = new JsonObject();
@@ -49,6 +47,13 @@ public final class ItemRegistrationPlanWriter {
             result.add(ELYTRA_VARIANTS, elytraVariants);
         }
         return GsonHelper.sortObjectKeys(result).getAsJsonObject();
+    }
+
+    private static void appendEntries(JsonArray entries, List<ResolvedItemBinding> items, BedrockItemResourceGenerator.Result generatedItems) {
+        for (ResolvedItemBinding entry : items) {
+            List<GeneratedItemVariant> variants = generatedItems.variants().getOrDefault(entry.bedrockId(), List.of());
+            entries.add(entryToJson(entry, variants));
+        }
     }
 
     private static JsonObject entryToJson(ResolvedItemBinding entry, List<GeneratedItemVariant> variants) {

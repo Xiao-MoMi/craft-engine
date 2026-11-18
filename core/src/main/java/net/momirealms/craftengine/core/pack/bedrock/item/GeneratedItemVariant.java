@@ -21,16 +21,16 @@ public record GeneratedItemVariant(Key id,
                                    @Nullable Key headId,
                                    Map<ItemDisplayContext, Integer> tintSources) {
 
-    public GeneratedItemVariant(Key id, List<ItemBindingCondition> conditions, @Nullable String iconTexture,
-                                @Nullable BedrockItemDisplayBlocks.DisplayBlock displayBlock, boolean attachable,
-                                @Nullable Integer dyeColor, Map<ItemDisplayContext, ItemBindingRule> displayModels,
-                                @Nullable ItemDisplayContext worldView, @Nullable Key headId) {
+    public GeneratedItemVariant(Key id,
+                                List<ItemBindingCondition> conditions,
+                                @Nullable String iconTexture,
+                                @Nullable BedrockItemDisplayBlocks.DisplayBlock displayBlock,
+                                boolean attachable,
+                                @Nullable Integer dyeColor,
+                                Map<ItemDisplayContext, ItemBindingRule> displayModels,
+                                @Nullable ItemDisplayContext worldView,
+                                @Nullable Key headId) {
         this(id, conditions, iconTexture, displayBlock, attachable, dyeColor, displayModels, worldView, headId, Map.of());
-    }
-
-    public GeneratedItemVariant withTintSources(Map<ItemDisplayContext, Integer> sources) {
-        return new GeneratedItemVariant(this.id, this.conditions, this.iconTexture, this.displayBlock, this.attachable,
-                this.dyeColor, this.displayModels, this.worldView, this.headId, Map.copyOf(sources));
     }
 
     public GeneratedItemVariant(Key id,
@@ -40,6 +40,10 @@ public record GeneratedItemVariant(Key id,
                                 boolean attachable,
                                 @Nullable Integer dyeColor) {
         this(id, conditions, iconTexture, displayBlock, attachable, dyeColor, Map.of(), null, null);
+    }
+
+    public GeneratedItemVariant withTintSources(Map<ItemDisplayContext, Integer> sources) {
+        return new GeneratedItemVariant(this.id, this.conditions, this.iconTexture, this.displayBlock, this.attachable, this.dyeColor, this.displayModels, this.worldView, this.headId, Map.copyOf(sources));
     }
 
     public static GeneratedItemVariant icon(Key id, List<ItemBindingCondition> conditions, String texture, boolean attachable) {

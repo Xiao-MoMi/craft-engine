@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockWorldBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanWriter;
+import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockPlan;
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockBossBars;
@@ -56,23 +57,31 @@ public final class BedrockPackGenerator {
                                 Map<Key, Key> soundReplacements,
                                 Path output,
                                 boolean obfuscation) throws IOException {
+        generate(new JavaModelResources(resources), new BedrockPackPlan(plan, new WorldBlockPlan(blocks, List.of()), nativeModels, soundReplacements), output, obfuscation);
+    }
+
+    public static void generate(JavaModelResources models,
+                                BedrockPackPlan plan,
+                                Path output,
+                                boolean obfuscation) throws IOException {
         Path dataDestination = output.toAbsolutePath().normalize();
+        JavaResourcePack resources = models.pack();
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
             Path data = fileSystem.getPath("extension-data").toAbsolutePath();
-            writeItemsAndBlocks(resources, plan, blocks, pack, data, soundReplacements);
+            writeItemsAndBlocks(models, plan, pack, data);
             GsonHelper.writeJsonFile(resources.translations(), data.resolve(BedrockPackLayout.TRANSLATIONS));
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
-            NativeModelAssets.write(nativeModels, pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
+            NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
 
             boolean protection = obfuscation && VersionHelper.PREMIUM;
-            Map<Path, JsonObject> models = new HashMap<>();
-            BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()), models);
-            Map<String, JsonObject> bundles = BedrockDefinitionBundler.bundle(pack, models, protection);
+            Map<Path, JsonObject> geometryDocuments = new HashMap<>();
+            BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()), geometryDocuments);
+            Map<String, JsonObject> bundles = BedrockDefinitionBundler.bundle(pack, geometryDocuments, protection);
             if (protection) {
                 BedrockAssetObfuscator.obfuscate(pack, data, bundles);
             }
@@ -85,30 +94,28 @@ public final class BedrockPackGenerator {
         }
     }
 
-    private static void writeItemsAndBlocks(JavaResourcePack resources,
-                                            ItemRegistrationPlan plan,
-                                            List<WorldBlockSource> blocks,
+    private static void writeItemsAndBlocks(JavaModelResources models,
+                                            BedrockPackPlan plan,
                                             Path pack,
-                                            Path data,
-                                            Map<Key, Key> soundReplacements) throws IOException {
+                                            Path data) throws IOException {
         Path itemPlanPath = data.resolve(RegistrationPlanKind.ITEM.file());
         Files.createDirectories(itemPlanPath.getParent());
-        JavaModelResources models = new JavaModelResources(resources);
+        JavaResourcePack resources = models.pack();
         BedrockTerrainAtlas atlas = new BedrockTerrainAtlas();
         BedrockBlockDefinitions definitions = new BedrockBlockDefinitions();
 
-        BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan, pack, atlas, definitions);
-        JsonObject displays = BedrockItemDisplayGenerator.write(models, plan, items, pack);
-        ItemRegistrationPlanWriter.write(plan, itemPlanPath, items, displays);
+        BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan.items(), pack, atlas, definitions);
+        JsonObject displays = BedrockItemDisplayGenerator.write(models, items, pack);
+        ItemRegistrationPlanWriter.write(plan.items(), itemPlanPath, items, displays);
 
-        BedrockSounds sounds = new BedrockSounds(resources, soundReplacements);
-        JsonArray worldBlocks = BedrockWorldBlocks.write(models, blocks, pack, atlas, definitions, sounds);
+        BedrockSounds sounds = new BedrockSounds(resources, plan.soundReplacements());
+        BedrockWorldBlocks.Result blocks = BedrockWorldBlocks.write(models, plan.blocks(), pack, atlas, definitions, sounds);
         JsonObject playback = new JsonObject();
         sounds.write(pack, playback);
         if (!playback.isEmpty()) {
             GsonHelper.writeJsonFile(playback, data.resolve(BedrockPackLayout.SOUND_MAPPINGS));
         }
-        BlockRegistrationPlanWriter.write(items, worldBlocks, blocks, data.resolve(RegistrationPlanKind.BLOCK.file()));
+        BlockRegistrationPlanWriter.write(items, blocks, plan.blocks().customBlocks(), data.resolve(RegistrationPlanKind.BLOCK.file()));
 
         BedrockVanillaTextures.write(resources, pack, atlas);
         atlas.finish(pack);

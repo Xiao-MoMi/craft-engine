@@ -16,14 +16,15 @@ public final class GeyserBlockRegistrationAdapter {
     private GeyserBlockRegistrationAdapter() {
     }
 
-    public static String registerBlock(JsonObject display, GeyserDefineCustomBlocksEvent event) {
+    public static String registerBlock(JsonObject display, GeyserDefineCustomBlocksEvent event, boolean vanillaOverride) {
         boolean world = display.has("java_state");
         CustomBlockComponents.Builder components = CustomBlockComponents.builder()
                 .geometry(GeometryComponent.builder().identifier(display.get(GEOMETRY).getAsString()).build());
         if (world) {
-            // CE owns mining completion; the client must not destroy the visual carrier independently.
+            // CraftEngine 自定义方块由扩展接管挖掘，原版覆盖沿用方块原本的硬度
+            float hardness = vanillaOverride ? display.get("hardness").getAsFloat() : -1;
             components.selectionBox(BoxComponent.fullBox()).collisionBoxes(BoxComponent.fullBox())
-                    .destructibleByMining(Float.MAX_VALUE)
+                    .destructibleByMining(hardness < 0 ? Float.MAX_VALUE : hardness)
                     .placeAir(false)
                     .lightEmission(display.get("light_emission").getAsInt());
             if (display.has("collision_boxes")) {

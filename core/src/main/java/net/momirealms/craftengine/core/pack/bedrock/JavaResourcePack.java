@@ -193,6 +193,11 @@ public final class JavaResourcePack {
     }
 
     @Nullable
+    public JsonObject readVanillaJson(String path) throws IOException {
+        return readJson(this.vanillaRoot.resolve(path));
+    }
+
+    @Nullable
     public JsonObject readParticleJson(Key key) throws IOException {
         return this.readJson(ResourcePackUtils.particleDefinitionPath(key));
     }
@@ -445,7 +450,7 @@ public final class JavaResourcePack {
     }
 
     public JsonObject readVanillaModel(Key model) throws IOException {
-        JsonObject json = readJson(this.vanillaRoot.resolve(ResourcePackUtils.modelPath(model)));
+        JsonObject json = this.readVanillaJson(ResourcePackUtils.modelPath(model));
         if (json == null) {
             throw new IOException("Missing vanilla Java model " + model + " for " + this.version.version());
         }

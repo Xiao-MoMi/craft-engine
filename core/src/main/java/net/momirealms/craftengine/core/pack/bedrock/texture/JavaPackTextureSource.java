@@ -24,11 +24,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.momirealms.craftengine.core.pack.AbstractPackManager.MISSING_NO;
+
 public final class JavaPackTextureSource {
     public static final Integer WHITE = 0xffffff;
     private static final Key ITEMS = Key.minecraft("items");
     private static final Key BLOCKS = Key.minecraft("blocks");
     private static final Key DYE = Key.minecraft("dye");
+    private static final TextureData MISSING_TEXTURE = missingTexture();
     private final JavaResourcePack pack;
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
@@ -92,6 +95,9 @@ public final class JavaPackTextureSource {
     }
 
     public TextureData read(Texture texture, TextureUsage usage) throws IOException {
+        if (MISSING_NO.equals(texture.sprite())) {
+            return MISSING_TEXTURE;
+        }
         if (texture.standalone()) {
             return this.readStandalone(texture.sprite());
         }
@@ -110,6 +116,16 @@ public final class JavaPackTextureSource {
             throw this.textureFailure(texture, usage, useItemAtlas);
         }
         return data;
+    }
+
+    private static TextureData missingTexture() {
+        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < 16; y++) {
+            for (int x = 0; x < 16; x++) {
+                image.setRGB(x, y, ((x < 8) == (y < 8)) ? 0xfff800f8 : 0xff000000);
+            }
+        }
+        return new TextureData(image, null);
     }
 
     private IOException textureFailure(Texture texture, TextureUsage usage, boolean useItemAtlas) {

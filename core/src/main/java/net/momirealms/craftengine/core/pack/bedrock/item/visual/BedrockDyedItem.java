@@ -46,27 +46,6 @@ public final class BedrockDyedItem {
         return false;
     }
 
-    @SuppressWarnings("DeconstructionCanBeUsed")
-    @Nullable
-    public static Integer defaultColor(List<ItemBindingRule> rules, JavaPackTextureSource textures) {
-        for (ItemBindingRule rule : rules) {
-            if (rule.target() instanceof ItemRenderTarget.Model model) {
-                for (Tint tint : model.tints()) {
-                    Integer color = textures.dyeColor(tint);
-                    if (color != null) {
-                        return color;
-                    }
-                }
-            } else if (rule.target() instanceof ItemRenderTarget.Composite composite) {
-                Integer color = defaultColor(composite.parts(), textures);
-                if (color != null) {
-                    return color;
-                }
-            }
-        }
-        return null;
-    }
-
     public static GeneratedItemVariant writeIcon(Key id,
                                                  List<ItemBindingCondition> conditions,
                                                  List<ItemBindingRule> parts,

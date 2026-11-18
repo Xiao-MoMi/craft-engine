@@ -9,8 +9,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ResourcePackUtils {
-
     private ResourcePackUtils() {
+    }
+
+    public static String blockStateSelector(String state) {
+        int start = state.indexOf('[');
+        return start < 0 ? "" : state.substring(start + 1, state.length() - 1);
     }
 
     public static void writeJson(JsonElement json, Path path) throws IOException {

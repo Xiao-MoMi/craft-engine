@@ -22,19 +22,22 @@ public final class BlockRegistrationPlanWriter {
     private BlockRegistrationPlanWriter() {
     }
 
-    public static void write(BedrockItemResourceGenerator.Result generatedItems, JsonArray worldBlockEntries,
+    public static void write(BedrockItemResourceGenerator.Result generatedItems, BedrockWorldBlocks.Result generatedBlocks,
                              List<WorldBlockSource> worldBlocks, Path blockPlanPath) throws IOException {
         JsonArray entries = new JsonArray();
         for (DisplayBlock block : collectDisplayBlocks(generatedItems)) {
             entries.add(displayBlockToJson(block));
         }
         // 世界方块条目已包含 java_state 和 server_states，按生成顺序原样追加。
-        entries.addAll(worldBlockEntries);
+        entries.addAll(generatedBlocks.customBlocks());
 
         JsonObject plan = new JsonObject();
         plan.addProperty(KIND, RegistrationPlanKind.BLOCK.id());
         plan.addProperty(FORMAT_VERSION, RegistrationPlanKind.BLOCK.formatVersion());
         plan.add(ENTRIES, entries);
+        if (!generatedBlocks.vanillaOverrides().isEmpty()) {
+            plan.add(VANILLA_OVERRIDES, generatedBlocks.vanillaOverrides());
+        }
         plan.add(WORLD_STATE_MAPPINGS, worldStateMappings(worldBlocks));
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(plan), blockPlanPath);
     }

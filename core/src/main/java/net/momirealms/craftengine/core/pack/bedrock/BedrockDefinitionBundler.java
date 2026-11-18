@@ -93,7 +93,7 @@ public final class BedrockDefinitionBundler {
             JsonObject document = new JsonObject();
             entry.getKey().entrySet().forEach(header -> document.add(header.getKey(), header.getValue()));
             document.add(type.key(), group.definitions);
-            String name = String.format(Locale.ROOT, "%04d%s", index++, type.suffix());
+            String name = index++ + type.suffix();
             if (deferred != null) {
                 deferred.put(type.directory() + '/' + NAMESPACE + '/' + name, document);
             } else {

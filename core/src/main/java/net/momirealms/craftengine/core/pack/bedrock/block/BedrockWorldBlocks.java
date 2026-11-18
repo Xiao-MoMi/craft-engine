@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
@@ -50,8 +51,42 @@ public final class BedrockWorldBlocks {
         return blocks;
     }
 
-    public static JsonArray write(JavaModelResources resources, List<WorldBlockSource> sources, Path root, BedrockTerrainAtlas atlas, BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
-        return new BedrockWorldBlocks(resources, atlas).writeBlocks(sources, root, definitions, sounds);
+    public static Result write(JavaModelResources resources, WorldBlockPlan plan, Path root, BedrockTerrainAtlas atlas,
+                               BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
+        BedrockWorldBlocks writer = new BedrockWorldBlocks(resources, atlas);
+        JsonArray customBlocks = writer.writeBlocks(plan.customBlocks(), root, definitions, sounds);
+        return new Result(customBlocks, writer.writeVanillaOverrides(plan.vanillaOverrides(), root));
+    }
+
+    private JsonArray writeVanillaOverrides(List<WorldBlockPlan.VanillaOverride> overrides, Path root) throws IOException {
+        JsonArray entries = new JsonArray(overrides.size());
+        for (WorldBlockPlan.VanillaOverride override : overrides) {
+            try {
+                entries.add(this.writeVanillaState(override, root));
+            } catch (UnsupportedOperationException exception) {
+                CraftEngine.instance().logger().warn("Skipped Bedrock vanilla model for " + override.state().getAsString() + ": " + exception.getLocalizedMessage());
+            }
+        }
+        return entries;
+    }
+
+    private JsonObject writeVanillaState(WorldBlockPlan.VanillaOverride override, Path root) throws IOException {
+        BlockStateWrapper state = override.state();
+        Key block = state.ownerId();
+        JsonObject properties = components(override.properties());
+        List<JavaBlockModelResolver.Part> parts = this.models.resolveVanillaOverride(override.model());
+        String name = PATH_PREFIX + "vanilla/" + block.namespace() + '/' + block.value() + "/state_" + state.registryId();
+        GeneratedGeometry geometry = this.writeGeometry(name, parts, state, root);
+        if (geometry.scale() < 1) {
+            warnScaled(block, state.registryId(), scalePercent(geometry.scale()));
+        }
+        JsonObject entry = geometry.entry();
+        entry.addProperty("java_state", state.getAsString());
+        entry.addProperty("hardness", override.properties().hardness());
+        for (Map.Entry<String, JsonElement> property : properties.entrySet()) {
+            entry.add(property.getKey(), property.getValue());
+        }
+        return entry;
     }
 
     private JsonArray writeBlocks(List<WorldBlockSource> sources, Path root, BedrockBlockDefinitions blockDefinitions, BedrockSounds sounds) throws IOException {
@@ -97,7 +132,14 @@ public final class BedrockWorldBlocks {
         String name = PATH_PREFIX + "world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
         List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
 
-        JsonObject entry = this.writeGeometry(name, parts, sources, root);
+        GeneratedGeometry geometry = this.writeGeometry(name, parts, first.visual(), root);
+        if (geometry.scale() < 1) {
+            String percent = scalePercent(geometry.scale());
+            for (WorldBlockSource source : sources) {
+                warnScaled(source.id(), source.stateIndex(), percent);
+            }
+        }
+        JsonObject entry = geometry.entry();
         entry.addProperty("java_state", visualState);
         for (Map.Entry<String, JsonElement> property : properties.entrySet()) {
             entry.add(property.getKey(), property.getValue());
@@ -110,16 +152,16 @@ public final class BedrockWorldBlocks {
 
     private static JsonObject sharedComponents(String visualState, List<WorldBlockSource> sources) {
         WorldBlockSource first = sources.getFirst();
-        JsonObject properties = components(first);
+        JsonObject properties = components(first.properties());
         for (WorldBlockSource source : sources) {
-            if (source != first && !properties.equals(components(source))) {
+            if (source != first && !properties.equals(components(source.properties()))) {
                 throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.conflict", visualState));
             }
         }
         return properties;
     }
 
-    private static JsonObject components(WorldBlockSource source) {
+    private static JsonObject components(WorldBlockProperties source) {
         if (source.collisionBoxes().size() > 16) {
             throw new UnsupportedOperationException(TranslationManager.message("resource_pack.bedrock.block.collision"));
         }
@@ -157,31 +199,32 @@ public final class BedrockWorldBlocks {
             state.addProperty("id", source.serverStateId());
             state.addProperty("state", source.serverState());
             state.addProperty("block_id", source.id().asString());
-            state.addProperty("hardness", source.hardness());
+            state.addProperty("hardness", source.properties().hardness());
             states.add(state);
         }
         return states;
     }
 
-    private JsonObject writeGeometry(String name, List<JavaBlockModelResolver.Part> parts, List<WorldBlockSource> sources, Path root) throws IOException {
+    private GeneratedGeometry writeGeometry(String name, List<JavaBlockModelResolver.Part> parts, BlockStateWrapper visual, Path root) throws IOException {
         Map<MaterialKey, BedrockElementGeometry.Material> bindings = new LinkedHashMap<>();
-        JsonArray cubes = this.buildCubes(parts, sources.getFirst().visual(), bindings);
+        JsonArray cubes = this.buildCubes(parts, visual, bindings);
         // 每个部件先应用自己的变换，再统一缩放整个方块以保留部件之间的相对位置。
         float scale = BedrockElementGeometry.fitWorldBlock(cubes);
         String id = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(Key.of(NAMESPACE, name.substring(PATH_PREFIX.length()))) + ".world";
         writeGeometryFile(root.resolve("models/blocks/" + name + ".geo.json"), id, cubes);
-        if (scale < 1) {
-            String percent = String.format(Locale.ROOT, "%.4f", scale * 100.0);
-            for (WorldBlockSource source : sources) {
-                TranslationManager.warn("resource_pack.bedrock.block.scaled", source.id().asString(), Integer.toString(source.stateIndex()), percent);
-            }
-        }
-
         JsonObject entry = new JsonObject();
         entry.addProperty(NAME, name);
         entry.addProperty(GEOMETRY, id);
         this.writeMaterials(entry, name, bindings, root);
-        return entry;
+        return new GeneratedGeometry(entry, scale);
+    }
+
+    private static String scalePercent(float scale) {
+        return String.format(Locale.ROOT, "%.4f", scale * 100.0);
+    }
+
+    private static void warnScaled(Key block, int stateIndex, String percent) {
+        TranslationManager.warn("resource_pack.bedrock.block.scaled", block.asString(), Integer.toString(stateIndex), percent);
     }
 
     private JsonArray buildCubes(List<JavaBlockModelResolver.Part> parts, BlockStateWrapper visual,
@@ -232,6 +275,12 @@ public final class BedrockWorldBlocks {
         if (!tintMethods.isEmpty()) {
             entry.add(TINT_METHODS, tintMethods);
         }
+    }
+
+    public record Result(JsonArray customBlocks, JsonArray vanillaOverrides) {
+    }
+
+    private record GeneratedGeometry(JsonObject entry, float scale) {
     }
 
     private record MaterialKey(JavaModel.Texture texture, BlockTint tint) {

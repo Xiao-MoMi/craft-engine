@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemWrite
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -31,12 +32,20 @@ public final class BedrockItemResourceGenerator {
         BedrockItemWriter itemWriter = new BedrockItemWriter(resources, renderer);
         BedrockItemGenerationContext context = new BedrockItemGenerationContext(root, atlas, blockDefinitions);
 
-        Map<Key, List<GeneratedItemVariant>> items = LinkedHashMap.newLinkedHashMap(plan.entries().size());
-        for (ResolvedItemBinding entry : plan.entries()) {
+        Map<Key, List<GeneratedItemVariant>> items = LinkedHashMap.newLinkedHashMap(plan.size());
+        for (ResolvedItemBinding entry : plan.explicitItems()) {
             try {
                 items.put(entry.bedrockId(), itemWriter.write(entry, context));
-            } catch (IOException | RuntimeException t) {
-                throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + t.getMessage(), t);
+            } catch (IOException | RuntimeException exception) {
+                throw new IOException("Failed to generate item resources for " + entry.itemModel() + " at " + ResourcePackUtils.itemDefinitionPath(entry.itemModel()) + ": " + exception.getMessage(), exception);
+            }
+        }
+        for (ResolvedItemBinding entry : plan.vanillaOverrides()) {
+            try {
+                items.put(entry.bedrockId(), itemWriter.write(entry, context));
+            } catch (IOException | RuntimeException exception) {
+                TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", entry.bedrockId().asString(), entry.itemModel().asString(),
+                        ResourcePackUtils.itemDefinitionPath(entry.itemModel()), exception.getLocalizedMessage());
             }
         }
 

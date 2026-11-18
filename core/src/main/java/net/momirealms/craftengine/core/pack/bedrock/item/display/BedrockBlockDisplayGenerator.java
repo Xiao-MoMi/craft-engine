@@ -31,8 +31,10 @@ final class BedrockBlockDisplayGenerator {
     private BedrockBlockDisplayGenerator() {
     }
 
-    static JsonObject write(JavaModelResources resources, BedrockDisplayAssets assets,
-                            Map<List<BedrockItemDisplayGenerator.Part>, Integer> meshes, JsonArray appearances,
+    static JsonObject write(JavaModelResources resources,
+                            BedrockDisplayAssets assets,
+                            Map<List<BedrockItemDisplayGenerator.Part>, Integer> meshes,
+                            JsonArray appearances,
                             List<String> selectors) {
         JsonObject result = new JsonObject();
         if (selectors.isEmpty()) {

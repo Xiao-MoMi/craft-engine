@@ -42,6 +42,10 @@ public final class ItemBindingResolver {
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
         ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.apply(itemModel);
+        return this.resolve(serverItem, clientItem, itemModel, definition);
+    }
+
+    ResolvedItemBinding resolve(Item serverItem, Item clientItem, @Nullable Key itemModel, @Nullable ItemModelDefinitionBinding definition) {
         if (definition != null) {
             ItemDefinition item = serverItem.getDefinitionOrNull();
             SharedModelData modelData = item == null ? null : item.settings().sharedModelData();

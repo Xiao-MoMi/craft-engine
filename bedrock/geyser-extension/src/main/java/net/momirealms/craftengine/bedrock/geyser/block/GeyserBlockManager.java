@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.block;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
@@ -40,23 +41,31 @@ public final class GeyserBlockManager {
             if (plan.has(WORLD_STATE_MAPPINGS)) {
                 this.worldBlocks.addStateMappings(plan.getAsJsonObject(WORLD_STATE_MAPPINGS));
             }
-            for (JsonElement value : plan.getAsJsonArray(ENTRIES)) {
-                JsonObject display = value.getAsJsonObject();
-                String name = display.get(NAME).getAsString();
-                if (this.displayBlocks.containsKey(name)) {
-                    continue;
-                }
-                try {
-                    this.displayBlocks.put(name, GeyserBlockRegistrationAdapter.registerBlock(display, event));
-                    if (display.has("java_state")) {
-                        this.worldBlocks.add(display);
-                    }
-                } catch (RuntimeException exception) {
-                    GeyserTranslationManager.error("block.register_failed", exception, name);
-                }
+            this.registerEntries(plan.getAsJsonArray(ENTRIES), event, false);
+            JsonArray overrides = plan.getAsJsonArray(VANILLA_OVERRIDES);
+            if (overrides != null) {
+                this.registerEntries(overrides, event, true);
             }
         } catch (RuntimeException exception) {
             GeyserTranslationManager.error("block.registration_failed", exception);
+        }
+    }
+
+    private void registerEntries(JsonArray entries, GeyserDefineCustomBlocksEvent event, boolean vanillaOverride) {
+        for (JsonElement value : entries) {
+            JsonObject display = value.getAsJsonObject();
+            String name = display.get(NAME).getAsString();
+            if (this.displayBlocks.containsKey(name)) {
+                continue;
+            }
+            try {
+                this.displayBlocks.put(name, GeyserBlockRegistrationAdapter.registerBlock(display, event, vanillaOverride));
+                if (!vanillaOverride && display.has("java_state")) {
+                    this.worldBlocks.add(display);
+                }
+            } catch (RuntimeException exception) {
+                GeyserTranslationManager.error("block.register_failed", exception, name);
+            }
         }
     }
 

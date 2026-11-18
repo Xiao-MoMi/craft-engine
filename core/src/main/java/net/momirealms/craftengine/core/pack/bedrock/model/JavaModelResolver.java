@@ -17,6 +17,7 @@ import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_ENTITY;
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_GENERATED;
+import static net.momirealms.craftengine.core.pack.AbstractPackManager.MISSING_NO;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Rotation;
 import static net.momirealms.craftengine.core.pack.model.ModelJsonKeys.*;
@@ -29,6 +30,7 @@ public final class JavaModelResolver {
     private final Map<Key, InheritedModel> inheritedModels = new HashMap<>();
     private final Map<Key, InheritedModel> vanillaInheritedModels = new HashMap<>();
     private final Map<Key, JavaModel> models = new HashMap<>();
+    private final Map<Key, Boolean> changedModels = new HashMap<>();
 
     public JavaModelResolver(JavaResourcePack pack) {
         this.pack = pack;
@@ -41,6 +43,31 @@ public final class JavaModelResolver {
             this.models.put(model, resolved);
         }
         return resolved;
+    }
+
+    public boolean hasChangedModel(Key model) throws IOException {
+        Boolean cached = this.changedModels.get(model);
+        return cached == null ? this.hasChangedModel(model, new HashSet<>(4)) : cached;
+    }
+
+    private boolean hasChangedModel(Key model, Set<Key> parents) throws IOException {
+        Boolean cached = this.changedModels.get(model);
+        if (cached != null) {
+            return cached;
+        }
+        if (!parents.add(model)) {
+            throw new IOException("Cyclic model parent " + model);
+        }
+        String path = ResourcePackUtils.modelPath(model);
+        JsonObject vanilla = this.pack.readVanillaJson(path);
+        JsonObject effective = this.pack.hasCustomResource(path) ? this.pack.readJson(path) : vanilla;
+        boolean changed = !Objects.equals(effective, vanilla);
+        if (!changed && effective != null && effective.has(PARENT)) {
+            changed = this.hasChangedModel(Key.of(effective.get(PARENT).getAsString()), parents);
+        }
+        parents.remove(model);
+        this.changedModels.put(model, changed);
+        return changed;
     }
 
     public Map<DisplayPosition, Transform> resolveVanillaDisplay(Key model) throws IOException {
@@ -233,6 +260,9 @@ public final class JavaModelResolver {
         while (references.add(currentSlot)) {
             JsonElement texture = textures.get(currentSlot);
             if (texture == null) {
+                if (currentSlot.equals("missing")) {
+                    return new Texture(MISSING_NO, false);
+                }
                 throw new IOException("Missing texture #" + currentSlot + " in model " + model);
             }
             if (texture.isJsonPrimitive() && texture.getAsString().startsWith("#")) {

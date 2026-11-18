@@ -25,7 +25,13 @@ import java.util.Map;
 
 final class BedrockEquipmentResources {
     private static final Slot[] SLOTS = Slot.values();
-    private static final List<String> ELYTRA_STATES = List.of("default", "gliding", "sneaking", "sleeping", "swimming");
+    private static final List<String> ELYTRA_STATES = List.of(
+            "default",
+            "gliding",
+            "sneaking",
+            "sleeping",
+            "swimming"
+    );
     private static final List<String> TRIM_PATTERNS = List.of(
             "bolt",
             "coast",
@@ -81,8 +87,7 @@ final class BedrockEquipmentResources {
                 String texture = this.textures.get(key);
                 if (texture == null) {
                     BufferedImage image = this.compose(layers.getAsJsonArray(slot.layer), slot.layer, dye);
-                    texture = "textures/ce/equipment/" + asset.namespace() + '/' + asset.value() + '/' + slot.layer
-                            + (dye == null ? "_undyed" : "_" + Integer.toHexString(dye));
+                    texture = "textures/ce/equipment/" + asset.namespace() + '/' + asset.value() + '/' + slot.layer + (dye == null ? "_undyed" : "_" + Integer.toHexString(dye));
                     ImageUtils.writePng(image, root.resolve(texture + ".png"));
                     this.textures.put(key, texture);
                 }

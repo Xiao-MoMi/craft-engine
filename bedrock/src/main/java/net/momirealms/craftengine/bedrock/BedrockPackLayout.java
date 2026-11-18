@@ -41,6 +41,7 @@ public final class BedrockPackLayout {
     public static final String SOURCE_VERSION = "source_version";
     public static final String ENTRIES = "entries";
     public static final String WORLD_STATE_MAPPINGS = "world_state_mappings";
+    public static final String VANILLA_OVERRIDES = "vanilla_overrides";
 
     public static final String BEDROCK_IDENTIFIER = "bedrock_identifier";
     public static final String HEAD_IDENTIFIER = "head_identifier";
