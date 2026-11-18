@@ -39,7 +39,7 @@ public final class BedrockItemWriter {
             return this.contextWriter.write(entry, plan.variants(), context);
         }
 
-        // 资源分类仍按整个定义决定；注册分支、编号和闲置规则已在规划阶段选定。
+        // 资源分类仍按整个定义决定；注册分支、编号和闲置规则已在规划阶段选定
         ItemVisualType type = ItemVisualType.classify(entry.definition(), this.renderer);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(plan.variants().size());
         for (BedrockItemPresentation presentation : plan.variants()) {

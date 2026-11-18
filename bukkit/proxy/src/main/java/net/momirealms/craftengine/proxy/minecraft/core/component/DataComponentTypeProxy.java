@@ -11,6 +11,9 @@ public interface DataComponentTypeProxy {
     DataComponentTypeProxy INSTANCE = ASMProxyFactory.create(DataComponentTypeProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.core.component.DataComponentType");
 
+    @MethodInvoker(name = "codec")
+    <T> Codec<T> codec(Object target);
+
     @MethodInvoker(name = "codecOrThrow")
     <T> Codec<T> codecOrThrow(Object target);
 }

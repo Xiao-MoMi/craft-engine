@@ -15,4 +15,28 @@ public final class ListUtils {
         }
         return list;
     }
+
+    public static Object getIndexed(Object value, String path, int start) {
+        while (start < path.length()) {
+            if (!(value instanceof List<?> list) || path.charAt(start) != '[') {
+                return null;
+            }
+            int end = path.indexOf(']', start + 1);
+            if (end < 0) {
+                return null;
+            }
+            int index;
+            try {
+                index = Integer.parseInt(path, start + 1, end, 10);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
+            if (index < 0 || index >= list.size()) {
+                return null;
+            }
+            value = list.get(index);
+            start = end + 1;
+        }
+        return value;
+    }
 }

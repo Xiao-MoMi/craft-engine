@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.processor.RandomValuesProcessor;
 import net.momirealms.craftengine.core.plugin.context.ChainParameterProvider;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
 import net.momirealms.craftengine.core.plugin.context.NamedRandoms;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -22,6 +23,7 @@ public final class ItemParameterProvider implements ChainParameterProvider<Item>
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_BLOCK_ITEM, Item::isBlockItem);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.RANDOM, ItemParameterProvider::randomValues);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_EMPTY, Item::isEmpty);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.COMPONENTS, item -> VersionHelper.isOrAbove1_20_5 ? new ItemComponentParameters(item) : null);
     }
 
     @SuppressWarnings("unchecked")
