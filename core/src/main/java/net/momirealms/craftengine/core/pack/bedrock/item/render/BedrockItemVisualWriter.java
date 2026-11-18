@@ -8,16 +8,15 @@ import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockDyedItem;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTint;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTint;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;

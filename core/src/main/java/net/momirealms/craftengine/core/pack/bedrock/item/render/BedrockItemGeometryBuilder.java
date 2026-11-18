@@ -8,8 +8,8 @@ import net.momirealms.craftengine.core.pack.bedrock.model.*;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
-import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
+import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import org.joml.Matrix4fc;
 
 import java.io.IOException;

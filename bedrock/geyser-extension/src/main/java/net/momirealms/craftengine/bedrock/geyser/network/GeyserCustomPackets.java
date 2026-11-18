@@ -2,11 +2,10 @@ package net.momirealms.craftengine.bedrock.geyser.network;
 
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundBedrockHandshakePacket;
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundHardHitboxPacket;
-import net.momirealms.craftengine.bedrock.geyser.network.protocol.ServerboundBedrockHandshakePacket;
-import net.momirealms.craftengine.bedrock.network.codec.PacketCodec;
-
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundNativeModelPacket;
+import net.momirealms.craftengine.bedrock.geyser.network.protocol.ServerboundBedrockHandshakePacket;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
+import net.momirealms.craftengine.bedrock.network.codec.PacketCodec;
 
 import java.util.HashMap;
 import java.util.Map;

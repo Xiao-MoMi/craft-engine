@@ -27,7 +27,7 @@ final class ModelValidation {
 
     ModelValidation(ValidationContext context) {
         this.context = context;
-        this.resolver = new ValidationModelResolver(context.logger(), context.resources().modelIds(), context.resources().models());
+        this.resolver = new ValidationModelResolver(context);
     }
 
     Models validate(Path resourcePackPath,
@@ -63,7 +63,7 @@ final class ModelValidation {
             String modelStringPath = "assets/" + modelPath.namespace() + "/models/" + modelPath.value() + ".json";
             Path modelJsonPath = rpView.getExistingReversed(modelStringPath);
             if (modelJsonPath != null) {
-                JsonObject modelJson = this.context.readJson(modelJsonPath);
+                JsonObject modelJson = this.context.readModel(modelJsonPath);
                 if (modelJson == null) {
                     continue;
                 }
@@ -77,7 +77,7 @@ final class ModelValidation {
             // 资源包中没有模型文件时，回退到原版模型；非原版模型则提示缺失
             if (!this.context.resources().modelIds().contains(modelPath)) {
                 modelsCache.put(modelPath, TexturedModel.EMPTY);
-                this.context.logger().warn(TranslationManager.message("resource_pack.missing_block_model", entry.getValue().toString(), modelStringPath));
+                TranslationManager.warn("resource_pack.missing_block_model", entry.getValue().toString(), modelStringPath);
             } else {
                 SimplifiedModelFile preset = this.context.resources().models().get(modelPath);
                 if (preset != null) {
@@ -102,7 +102,7 @@ final class ModelValidation {
                     itemModels.put(modelPath, blockModel);
                     continue;
                 }
-                JsonObject modelJson = this.context.readJson(modelJsonPath);
+                JsonObject modelJson = this.context.readModel(modelJsonPath);
                 if (modelJson == null) {
                     continue;
                 }
@@ -115,7 +115,7 @@ final class ModelValidation {
             }
             if (!this.context.resources().modelIds().contains(modelPath)) {
                 modelsCache.put(modelPath, TexturedModel.EMPTY);
-                this.context.logger().warn(TranslationManager.message("resource_pack.missing_item_model", entry.getValue().toString(), modelStringPath));
+                TranslationManager.warn("resource_pack.missing_item_model", entry.getValue().toString(), modelStringPath);
             } else {
                 SimplifiedModelFile preset = this.context.resources().models().get(modelPath);
                 if (preset != null) {
@@ -128,10 +128,10 @@ final class ModelValidation {
         modelsToValidate.addAll(itemModels.values());
         for (TexturedModel model : modelsToValidate) {
             for (ModelTextureReferenceValidator.Problem problem : ModelTextureReferenceValidator.validate(model)) {
-                this.context.logger().warn(TranslationManager.message(
+                TranslationManager.warn(
                         problem.cycle() ? "resource_pack.cyclic_texture_reference" : "resource_pack.missing_texture_reference",
                         model.path.asString(), problem.location(), problem.chain()
-                ));
+                );
             }
         }
 
@@ -160,14 +160,14 @@ final class ModelValidation {
                 }
             } else {
                 for (ModelDisplayBoundsValidator.Problem problem : displayProblems) {
-                    this.context.logger().warn(TranslationManager.message(
+                    TranslationManager.warn(
                             "resource_pack.model_display_out_of_bounds",
                             texturedModel.path.asString(),
                             problem.position(),
                             problem.field(),
                             problem.vector(),
                             String.valueOf(problem.limit())
-                    ));
+                    );
                 }
             }
         }
@@ -180,14 +180,14 @@ final class ModelValidation {
                 }
             } else {
                 for (ModelUvBoundsValidator.Problem problem : uvProblems) {
-                    this.context.logger().warn(TranslationManager.message(
+                    TranslationManager.warn(
                             "resource_pack.model_uv_out_of_bounds",
                             texturedModel.path.asString(),
                             String.valueOf(problem.elementIndex() + 1),
                             problem.face(),
                             problem.uv(),
                             problem.texture()
-                    ));
+                    );
                 }
             }
         }

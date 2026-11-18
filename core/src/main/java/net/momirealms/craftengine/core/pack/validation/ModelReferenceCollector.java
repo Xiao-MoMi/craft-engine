@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.validation.ResourceValidation.ModelReferences;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MutableBoolean;
@@ -147,7 +148,7 @@ final class ModelReferenceCollector {
                     });
                 } catch (IOException e) {
                     complete.set(false);
-                    this.context.logger().warn("Failed to walk through items", e);
+                    CraftEngine.instance().logger().warn("Failed to walk through items", e);
                 }
             }
 
@@ -170,7 +171,7 @@ final class ModelReferenceCollector {
                     });
                 } catch (IOException e) {
                     complete.set(false);
-                    this.context.logger().warn("Failed to walk through blockstates", e);
+                    CraftEngine.instance().logger().warn("Failed to walk through blockstates", e);
                 }
             }
         }
@@ -190,7 +191,7 @@ final class ModelReferenceCollector {
     private boolean collectItem(Path file, Consumer<Key> callback) {
         List<String> models;
         try {
-            models = ResourcePackJsonUtils.readJsonObjectOrWarn(this.context.logger(), file, ModelReferenceReader::readItem);
+            models = ResourcePackJsonUtils.readJsonObjectOrWarn(file, ModelReferenceReader::readItem);
         } catch (ModelReferenceReader.TreeReadingRequired e) {
             JsonObject json = this.context.readJson(file);
             if (json == null) {
@@ -211,7 +212,7 @@ final class ModelReferenceCollector {
     private boolean collectBlockState(Path file, String block, BiConsumer<Key, String> callback) {
         List<ModelReferenceReader.BlockReference> models;
         try {
-            models = ResourcePackJsonUtils.readJsonObjectOrWarn(this.context.logger(), file, ModelReferenceReader::readBlockState);
+            models = ResourcePackJsonUtils.readJsonObjectOrWarn(file, ModelReferenceReader::readBlockState);
         } catch (ModelReferenceReader.TreeReadingRequired e) {
             JsonObject json = this.context.readJson(file);
             if (json == null) {

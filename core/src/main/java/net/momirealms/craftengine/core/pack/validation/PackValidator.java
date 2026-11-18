@@ -8,7 +8,6 @@ import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.mcmeta.overlay.OverlayCombination;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
 import java.nio.file.Files;
@@ -17,11 +16,9 @@ import java.util.*;
 
 public final class PackValidator {
     public static final List<PackVersion> VALIDATION_BOUNDARIES = List.of(PackVersion.ITEM_ATLAS_VERSION);
-    private final PluginLogger logger;
     private final ValidationResources resources;
 
-    public PackValidator(PluginLogger logger, ValidationResources resources) {
-        this.logger = logger;
+    public PackValidator(ValidationResources resources) {
         this.resources = resources;
     }
 
@@ -30,7 +27,7 @@ public final class PackValidator {
     }
 
     public void validate(Path path, Overlays overlays, boolean obfuscation, ValidationSettings settings) {
-        ValidationContext context = new ValidationContext(this.logger, this.resources, settings);
+        ValidationContext context = new ValidationContext(this.resources, settings);
         new Session(context).validate(path, overlays, obfuscation);
     }
 
@@ -81,28 +78,27 @@ public final class PackValidator {
             Set<Revision> revisions = new TreeSet<>();
             for (int i = 0, size = segments.size(); i < size; i++) {
                 OverlayCombination.Segment segment = segments.get(i);
-                List<Path> rootPathList = new ArrayList<>();
-                rootPathList.add(path);
-                List<Overlay> overlayInOrder = new ArrayList<>(segment.overlays().size());
+                List<String> overlayInOrder = new ArrayList<>(segment.overlays().size());
                 for (Overlay overlay : packOverlays.overlays()) {
                     if (segment.overlays().contains(overlay)) {
                         Path overlayDir = path.resolve(overlay.directory());
                         if (Files.isDirectory(overlayDir)) {
-                            overlayInOrder.add(overlay);
-                            rootPathList.add(overlayDir);
+                            overlayInOrder.add(overlay.directory());
                         }
                     }
                 }
 
-                this.context.logger().info(TranslationManager.message(
+                TranslationManager.info(
                         "resource_pack.validation_started_interval",
-                        String.valueOf(i + 1), String.valueOf(size), PackVersion.formatRange(segment.minVersion(), segment.maxVersion()), overlayInOrder.stream().map(Overlay::directory).toList().toString()
-                ));
+                        String.valueOf(i + 1), String.valueOf(size), PackVersion.formatRange(segment.minVersion(), segment.maxVersion()), overlayInOrder.toString()
+                );
 
-                Path[] rootPaths = rootPathList.toArray(new Path[0]);
+                ResourcePackView view = new ResourcePackView(path, overlayInOrder);
+                Path[] rootPaths = view.roots();
                 AtlasValidation.ValidationResult result = validateResourcePackWithOverlays(
                         path,
                         rootPaths,
+                        view,
                         references,
                         revisions,
                         segment.min() >= MinecraftVersion.V1_21_6.packFormat().major(),
@@ -178,13 +174,13 @@ public final class PackValidator {
         private AtlasValidation.ValidationResult validateResourcePackWithOverlays(
                 Path path,
                 Path[] rootPaths,
+                ResourcePackView view,
                 ModelReferenceCollector references,
                 Set<Revision> revisions,
                 boolean v1_21_6,
                 boolean modern,
                 boolean v26_1,
                 boolean obfuscation) {
-            ResourcePackView view = new ResourcePackView(rootPaths);
             AtlasValidation atlas = new AtlasValidation(this.context, view, modern);
             ResourceValidation.ModelReferences modelReferences = new ResourceValidation(this.context, references).collectAndValidate(rootPaths, view);
             ModelValidation.Models models = new ModelValidation(this.context).validate(path, rootPaths, view, modelReferences, revisions, v1_21_6, modern, v26_1);

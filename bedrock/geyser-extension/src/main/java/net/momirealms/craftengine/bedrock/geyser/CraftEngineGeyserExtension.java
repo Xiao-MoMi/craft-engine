@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser;
 
-import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
+import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;

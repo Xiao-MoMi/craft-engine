@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack;
 import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import org.apache.commons.io.output.StringBuilderWriter;
+import org.jetbrains.annotations.NotNull;
 
 final class PackJsonWriter {
     private PackJsonWriter() {
@@ -17,7 +18,7 @@ final class PackJsonWriter {
             }
 
             @Override
-            public void write(String value, int offset, int length) {
+            public void write(@NotNull String value, int offset, int length) {
                 getBuilder().append(value, offset, offset + length);
             }
         };

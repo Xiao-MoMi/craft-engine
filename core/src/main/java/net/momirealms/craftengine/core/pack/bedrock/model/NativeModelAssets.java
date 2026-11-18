@@ -1,10 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.model;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.DisplayDyeMasks;
@@ -12,28 +8,18 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION_CONTROLLER;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 
 public final class NativeModelAssets {
     public static final String MANIFEST = BedrockPackLayout.NATIVE_MODELS;

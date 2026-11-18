@@ -1,12 +1,12 @@
 package net.momirealms.craftengine.bukkit.compatibility.model.bettermodel;
 
-import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
-import net.momirealms.craftengine.core.plugin.compatibility.ModelProvider;
 import kr.toxicity.model.api.BetterModel;
 import kr.toxicity.model.api.data.renderer.ModelRenderer;
+import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
 import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSources;
+import net.momirealms.craftengine.core.plugin.compatibility.ModelProvider;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import org.bukkit.Bukkit;
 

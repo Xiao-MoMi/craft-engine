@@ -6,15 +6,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
-import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry.Material;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
-import net.momirealms.craftengine.core.util.VectorUtils;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -22,16 +21,9 @@ import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 
 public final class BedrockItem3DAttachables {
     private final Key id;

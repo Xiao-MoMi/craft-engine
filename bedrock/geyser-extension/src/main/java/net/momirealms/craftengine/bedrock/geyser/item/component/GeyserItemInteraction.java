@@ -5,9 +5,7 @@ import com.google.gson.JsonObject;
 import org.cloudburstmc.nbt.NbtMap;
 import org.jetbrains.annotations.Nullable;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ANIMATION;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NATIVE_USE_ON_RELEASE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.USE;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 final class GeyserItemInteraction {
     private static final NbtMap USE_BUTTON = NbtMap.builder().putString("value", "action.interact.use").build();

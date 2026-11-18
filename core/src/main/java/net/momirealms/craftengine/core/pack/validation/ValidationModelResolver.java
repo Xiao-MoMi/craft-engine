@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.validation;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.pack.atlas.SimplifiedModelFile;
 import net.momirealms.craftengine.core.pack.atlas.TexturedModel;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.util.Key;
@@ -13,16 +14,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public final class ValidationModelResolver {
     private final PluginLogger logger;
     private final Set<Key> modelIds;
     private final Map<Key, SimplifiedModelFile> models;
+    private final Function<Path, JsonObject> modelReader;
 
     public ValidationModelResolver(PluginLogger logger, Set<Key> modelIds, Map<Key, SimplifiedModelFile> models) {
+        this(logger, modelIds, models, ResourcePackJsonUtils::readJsonObjectOrWarn);
+    }
+
+    ValidationModelResolver(ValidationContext context) {
+        this(CraftEngine.instance().logger(), context.resources().modelIds(), context.resources().models(), context::readModel);
+    }
+
+    private ValidationModelResolver(PluginLogger logger, Set<Key> modelIds, Map<Key, SimplifiedModelFile> models,
+                                    Function<Path, JsonObject> modelReader) {
         this.logger = logger;
         this.modelIds = modelIds;
         this.models = models;
+        this.modelReader = modelReader;
     }
 
     public TexturedModel getTexturedModel(Key currentRL, @Nullable Key parentRL, Map<String, Key> textures, Path[] rootPaths, Map<Key, TexturedModel> cached) {
@@ -96,7 +109,7 @@ public final class ValidationModelResolver {
             Path rootPath = rootPaths[i];
             Path modelJsonPath = rootPath.resolve(path);
             if (Files.exists(modelJsonPath)) {
-                JsonObject parentModelJson = ResourcePackJsonUtils.readJsonObjectOrWarn(this.logger, modelJsonPath);
+                JsonObject parentModelJson = this.modelReader.apply(modelJsonPath);
                 if (parentModelJson != null) {
                     return parentModelJson;
                 }

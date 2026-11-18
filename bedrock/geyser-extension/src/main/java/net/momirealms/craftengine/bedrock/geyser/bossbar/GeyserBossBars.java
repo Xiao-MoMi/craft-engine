@@ -15,12 +15,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.BossBarDivision;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundBossEventPacket;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.WeakHashMap;
+import java.util.*;
 
 public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventPacket> {
     private final PacketTranslator<ClientboundBossEventPacket> delegate;

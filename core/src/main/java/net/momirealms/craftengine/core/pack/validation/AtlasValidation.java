@@ -100,24 +100,24 @@ final class AtlasValidation {
                                 // 不修复就骂你
                                 if (status.inItemAtlas()) {
                                     if (status.inBlockAtlas()) {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.duplicated_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
-                                                "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png")
+                                                "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
                                         );
                                     } else {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.bad_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
                                                 "minecraft:textures/atlas/blocks.png", "minecraft:textures/atlas/items.png"
-                                        ));
+                                        );
                                     }
                                 } else {
                                     if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.texture_not_in_atlas",
                                                 spritePath.asString()
-                                        ));
+                                        );
                                     }
                                 }
                             }
@@ -171,24 +171,24 @@ final class AtlasValidation {
                                 // 不修复就骂你
                                 if (status.inItemAtlas()) {
                                     if (status.inBlockAtlas()) {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.duplicated_sprite",
                                                 entry.getKey().asString(), spritePath.asString(),
                                                 "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
-                                        ));
+                                        );
                                     } else if (finalHasBlockAtlas) {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.multiple_atlases",
                                                 entry.getKey().asString(),
                                                 "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
-                                        ));
+                                        );
                                     }
                                 } else {
                                     if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.context.logger().warn(TranslationManager.message(
+                                        TranslationManager.warn(
                                                 "resource_pack.texture_not_in_atlas",
                                                 spritePath.asString()
-                                        ));
+                                        );
                                     }
                                 }
                             }
@@ -389,10 +389,10 @@ final class AtlasValidation {
                 } else {
                     // 骂死你臭杂鱼
                     for (Key spritePath : blockAtlasToAdd) {
-                        this.context.logger().warn(TranslationManager.message(
+                        TranslationManager.warn(
                                 "resource_pack.texture_not_in_atlas",
                                 spritePath.asString()
-                        ));
+                        );
                     }
                 }
             }
@@ -427,7 +427,7 @@ final class AtlasValidation {
             }
         }
 
-        textureToModels.report(this.context.logger(), "resource_pack.missing_model_texture");
+        textureToModels.report("resource_pack.missing_model_texture");
 
         if (result == null) {
             result = new ValidationResult(null, this.lastItemAtlas, null, this.lastBlocksAtlas);

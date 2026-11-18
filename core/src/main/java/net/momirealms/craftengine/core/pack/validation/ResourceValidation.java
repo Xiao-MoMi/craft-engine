@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.ResourcePackView;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +44,7 @@ final class ResourceValidation {
             try {
                 namespaces = FileUtils.collectNamespaces(assetsPath);
             } catch (IOException e) {
-                this.context.logger().warn("Failed to collect namespaces for " + assetsPath.toAbsolutePath(), e);
+                CraftEngine.instance().logger().warn("Failed to collect namespaces for " + assetsPath.toAbsolutePath(), e);
                 continue;
             }
 
@@ -97,7 +98,7 @@ final class ResourceValidation {
                             }
                         });
                     } catch (IOException e) {
-                        this.context.logger().warn("Failed to walk through font", e);
+                        CraftEngine.instance().logger().warn("Failed to walk through font", e);
                     }
                 }
 
@@ -134,7 +135,7 @@ final class ResourceValidation {
                             }
                         });
                     } catch (IOException | ClassCastException e) {
-                        this.context.logger().warn("Failed to walk through equipments", e);
+                        CraftEngine.instance().logger().warn("Failed to walk through equipments", e);
                     }
                 }
 
@@ -165,9 +166,9 @@ final class ResourceValidation {
             }
         }
 
-        glyphToFonts.report(this.context.logger(), "resource_pack.missing_font_texture");
-        textureToEquipments.report(this.context.logger(), "resource_pack.missing_equipment_texture");
-        oggToSoundEvents.report(this.context.logger(), "resource_pack.missing_sound");
+        glyphToFonts.report("resource_pack.missing_font_texture");
+        textureToEquipments.report("resource_pack.missing_equipment_texture");
+        oggToSoundEvents.report("resource_pack.missing_sound");
 
         return ModelReferenceCollector.combine(modelReferences);
     }

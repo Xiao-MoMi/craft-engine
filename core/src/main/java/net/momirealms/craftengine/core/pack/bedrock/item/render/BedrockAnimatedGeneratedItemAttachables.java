@@ -21,10 +21,7 @@ import java.nio.file.Path;
 import java.util.BitSet;
 import java.util.List;
 
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockAnimatedGeneratedItemAttachables {

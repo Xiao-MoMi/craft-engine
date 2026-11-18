@@ -19,8 +19,8 @@ import org.geysermc.geyser.api.util.Identifier;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Map;
+import java.util.Set;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 

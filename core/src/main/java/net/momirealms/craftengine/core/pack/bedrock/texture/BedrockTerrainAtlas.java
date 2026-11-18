@@ -13,9 +13,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FLIPBOOK_TEXTURES;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NAMESPACE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.TERRAIN_TEXTURE_ATLAS;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class BedrockTerrainAtlas {
     private final JsonObject terrain = new JsonObject();

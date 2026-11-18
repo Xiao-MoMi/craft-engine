@@ -14,9 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 
 public final class BedrockAnimalEquipment {
     private boolean wolf;

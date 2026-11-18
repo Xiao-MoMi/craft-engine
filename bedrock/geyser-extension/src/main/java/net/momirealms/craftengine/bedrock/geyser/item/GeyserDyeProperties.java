@@ -5,8 +5,8 @@ import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.inventory.GeyserItemStack;
-import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.CustomModelData;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
 
 public record GeyserDyeProperties(GeyserIntEntityProperty red, GeyserIntEntityProperty greenBlue) {
 

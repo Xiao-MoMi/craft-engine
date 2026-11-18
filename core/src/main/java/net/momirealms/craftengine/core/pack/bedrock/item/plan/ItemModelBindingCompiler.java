@@ -13,11 +13,7 @@ import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public final class ItemModelBindingCompiler {

@@ -10,26 +10,21 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingConditi
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockDyedItem;
-import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTint;
-import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemDisplayBlocks;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTint;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
-import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
+import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 根据 Java 物品的显示位置规则，生成背包外观、手持和头部的 attachable，以及掉落物、展示框和置物架使用的别名。

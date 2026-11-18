@@ -128,6 +128,9 @@ public abstract class AbstractPackManager implements PackManager {
     private static final byte[] EMPTY_1X1_IMAGE;
     private static final byte[] EMPTY_EQUIPMENT_IMAGE;
     private static final byte[] EMPTY_16X16_IMAGE;
+    private static final Configuration GENERATED_PACK_FILE_SYSTEM = Configuration.forCurrentPlatform().toBuilder()
+            .setBlockSize(4096)
+            .build();
     static {
         try (ByteArrayOutputStream stream1 = new ByteArrayOutputStream();
              ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
@@ -876,7 +879,7 @@ public abstract class AbstractPackManager implements PackManager {
         this.dispatchCacheEvent(cacheData);
 
         // get the target location
-        FileSystem fs = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
+        FileSystem fs = Jimfs.newFileSystem(GENERATED_PACK_FILE_SYSTEM);
         try {
             // firstly merge existing folders
             Path generatedPackPath = fs.getPath("resource_pack");
@@ -924,7 +927,7 @@ public abstract class AbstractPackManager implements PackManager {
             JsonObject packMcMeta = null;
             Path packMcMetaPath = generatedPackPath.resolve("pack.mcmeta");
             if (Files.exists(packMcMetaPath)) {
-                packMcMeta = readJsonObjectFromFileOrWarn(packMcMetaPath);
+                packMcMeta = ResourcePackJsonUtils.readJsonObjectOrWarn(packMcMetaPath);
             }
 
             if (packMcMeta == null) {
@@ -1679,11 +1682,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     private void validateResourcePack(Path path, Overlays packOverlays, boolean obfuscation) {
         ValidationResources resources = new ValidationResources(this.vanillaBlockAtlas, this.vanillaItemAtlas, PRESET_MODELS, VANILLA_MODELS, VANILLA_TEXTURES, VANILLA_SOUNDS);
-        new PackValidator(this.plugin.logger(), resources).validate(path, packOverlays, obfuscation);
-    }
-
-    private JsonObject readJsonObjectFromFileOrWarn(Path path) {
-        return ResourcePackJsonUtils.readJsonObjectOrWarn(this.plugin.logger(), path);
+        new PackValidator(resources).validate(path, packOverlays, obfuscation);
     }
 
     public TexturedModel getTexturedModel(Key currentRL,
@@ -1750,7 +1749,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve(atlasId.value() + ".json");
             List<SpriteSource> sources = new ArrayList<>();
             if (Files.exists(atlasPath)) {
-                JsonObject existing = readJsonObjectFromFileOrWarn(atlasPath);
+                JsonObject existing = ResourcePackJsonUtils.readJsonObjectOrWarn(atlasPath);
                 if (existing != null) {
                     sources.addAll(AtlasParser.parse(existing).sources());
                 }
@@ -2735,6 +2734,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     private List<Pair<String, List<Path>>> updateCachedAssets(@NotNull PackCacheData cacheData, @Nullable FileSystem fs) throws IOException {
         Map<String, List<Path>> conflictChecker = new HashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f);
+        Set<Path> createdDirectories = new HashSet<>();
         Map<Path, CachedAssetFile> previousFiles = this.cachedAssetFiles;
         this.cachedAssetFiles = Config.cacheResourceFiles() ? new Object2ObjectOpenHashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f) : new Object2ObjectOpenHashMap<>();
 
@@ -2750,14 +2750,14 @@ public abstract class AbstractPackManager implements PackManager {
                 Files.walkFileTree(sourceFolder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
                     @Override
                     public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        processRegularFile(file, attrs, sourceFolder, fs, conflictChecker, previousFiles);
+                        processRegularFile(file, attrs, sourceFolder, fs, conflictChecker, previousFiles, createdDirectories);
                         return FileVisitResult.CONTINUE;
                     }
                 });
             }
         }
         for (Path zip : cacheData.externalZips()) {
-            processZipFile(zip, fs, conflictChecker, previousFiles);
+            processZipFile(zip, fs, conflictChecker, previousFiles, createdDirectories);
         }
 
         List<Pair<String, List<Path>>> conflicts = new ArrayList<>();
@@ -2770,7 +2770,8 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void processRegularFile(Path file, BasicFileAttributes attrs, Path sourceFolder, @Nullable FileSystem fs,
-                                    Map<String, List<Path>> conflictChecker, Map<Path, CachedAssetFile> previousFiles) throws IOException {
+                                    Map<String, List<Path>> conflictChecker, Map<Path, CachedAssetFile> previousFiles,
+                                    Set<Path> createdDirectories) throws IOException {
         if (Config.excludeFileExtensions().contains(FileUtils.getExtension(file))) {
             return;
         }
@@ -2794,13 +2795,14 @@ public abstract class AbstractPackManager implements PackManager {
         }
         if (fs == null) return;
         Path relative = sourceFolder.relativize(file);
-        updateConflictChecker(fs, conflictChecker, file, file, relative, data);
+        updateConflictChecker(fs, conflictChecker, file, file, relative, data, createdDirectories);
     }
 
     private void processZipFile(Path zipFile,
                                 @Nullable FileSystem fs,
                                 Map<String, List<Path>> conflictChecker,
-                                Map<Path, CachedAssetFile> previousFiles) {
+                                Map<Path, CachedAssetFile> previousFiles,
+                                Set<Path> createdDirectories) {
         try (FileSystem zipFs = FileSystems.newFileSystem(zipFile)) {
             long zipLastModified = Files.getLastModifiedTime(zipFile).toMillis();
             long zipSize = Files.size(zipFile);
@@ -2834,7 +2836,7 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                     if (fs != null) {
                         try {
-                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, data);
+                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, data, createdDirectories);
                         } catch (Exception e) {
                             AbstractPackManager.this.plugin.logger().warn("Failed to update conflict checker", e);
                         }
@@ -2847,12 +2849,17 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void updateConflictChecker(FileSystem fs, Map<String, List<Path>> conflictChecker, Path sourcePath, Path namedSourcePath, Path relative, byte[] data) throws IOException {
+    private void updateConflictChecker(FileSystem fs, Map<String, List<Path>> conflictChecker, Path sourcePath,
+                                       Path namedSourcePath, Path relative, byte[] data, Set<Path> createdDirectories) throws IOException {
         String relativePath = CharacterUtils.replaceBackslashWithSlash(relative.toString());
         Path targetPath = fs.getPath("resource_pack/" + relativePath);
         List<Path> conflicts = conflictChecker.get(relativePath);
         if (conflicts == null) {
-            Files.createDirectories(targetPath.getParent());
+            Path directory = targetPath.getParent();
+            if (!createdDirectories.contains(directory)) {
+                Files.createDirectories(directory);
+                createdDirectories.add(directory);
+            }
             Files.write(targetPath, data);
             conflictChecker.put(relativePath, List.of(namedSourcePath));
         } else {
@@ -2861,6 +2868,7 @@ public abstract class AbstractPackManager implements PackManager {
             PathContext sourceCTX = PathContext.of(sourcePath);
             for (ConditionalResolution resolution : Config.resolutions()) {
                 if (resolution.matcher().test(relativeCTX)) {
+                    createdDirectories.clear();
                     resolution.resolution().run(targetCTX, sourceCTX);
                     return;
                 }

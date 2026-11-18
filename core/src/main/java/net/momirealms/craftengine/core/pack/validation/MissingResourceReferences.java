@@ -4,7 +4,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import net.momirealms.craftengine.core.pack.ResourcePackView;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.Collection;
@@ -43,9 +42,9 @@ final class MissingResourceReferences {
         this.missing.put(resource, reference);
     }
 
-    void report(PluginLogger logger, String translationKey) {
+    void report(String translationKey) {
         for (Map.Entry<Key, Collection<Key>> entry : this.missing.asMap().entrySet()) {
-            logger.warn(TranslationManager.message(translationKey, entry.getValue().toString(), path(entry.getKey())));
+            TranslationManager.warn(translationKey, entry.getValue().toString(), path(entry.getKey()));
         }
     }
 

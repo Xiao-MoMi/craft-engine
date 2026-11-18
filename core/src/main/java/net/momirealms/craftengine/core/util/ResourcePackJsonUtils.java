@@ -8,7 +8,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.plugin.logger.PluginLogger;
 
 import java.io.BufferedWriter;
 import java.io.EOFException;
@@ -21,21 +20,21 @@ public final class ResourcePackJsonUtils {
     private ResourcePackJsonUtils() {
     }
 
-    public static JsonObject readJsonObjectOrWarn(PluginLogger logger, Path path) {
+    public static JsonObject readJsonObjectOrWarn(Path path) {
         try {
             JsonObject jsonObject = GsonHelper.readJsonObjectFromFile(path);
             if (jsonObject == null) {
-                logger.warn(TranslationManager.message("resource_pack.not_a_json_object", path.toString()));
+                TranslationManager.warn("resource_pack.not_a_json_object", path.toString());
             }
             return jsonObject;
         } catch (IOException | JsonParseException | IllegalStateException e) {
-            logger.warn(TranslationManager.message("resource_pack.malformatted_json", path.toString()));
+            TranslationManager.warn("resource_pack.malformatted_json", path.toString());
         }
         return null;
     }
 
     @SuppressWarnings("deprecation")
-    public static <T> T readJsonObjectOrWarn(PluginLogger logger, Path path, ObjectReader<T> objectReader) {
+    public static <T> T readJsonObjectOrWarn(Path path, ObjectReader<T> objectReader) {
         boolean empty = true;
         try (JsonReader reader = new JsonReader(Files.newBufferedReader(path))) {
             // Match JsonParser: lenient document parsing, followed by a strict trailing-content check.
@@ -48,7 +47,7 @@ public final class ResourcePackJsonUtils {
                 if (!element.isJsonNull() && reader.peek() != JsonToken.END_DOCUMENT) {
                     throw new JsonParseException("Trailing JSON content");
                 }
-                logger.warn(TranslationManager.message("resource_pack.not_a_json_object", path.toString()));
+                TranslationManager.warn("resource_pack.not_a_json_object", path.toString());
                 return null;
             }
             T result = objectReader.read(reader);
@@ -58,9 +57,9 @@ public final class ResourcePackJsonUtils {
             }
             return result;
         } catch (EOFException e) {
-            logger.warn(TranslationManager.message(empty ? "resource_pack.not_a_json_object" : "resource_pack.malformatted_json", path.toString()));
+            TranslationManager.warn(empty ? "resource_pack.not_a_json_object" : "resource_pack.malformatted_json", path.toString());
         } catch (IOException | JsonParseException | IllegalStateException e) {
-            logger.warn(TranslationManager.message("resource_pack.malformatted_json", path.toString()));
+            TranslationManager.warn("resource_pack.malformatted_json", path.toString());
         }
         return null;
     }

@@ -7,7 +7,6 @@ import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
-import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
@@ -18,6 +17,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureAnimation;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix4f;
@@ -27,13 +27,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.CRAFTENGINE_TEXTURES;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
 import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
 import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 final class BedrockDisplayAssets {

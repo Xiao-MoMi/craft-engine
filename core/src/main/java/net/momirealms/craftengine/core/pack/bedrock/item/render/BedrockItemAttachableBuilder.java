@@ -11,9 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
-import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 
 final class BedrockItemAttachableBuilder {
     static final String IN_HAND = "context.item_slot == 'main_hand' || context.item_slot == 'off_hand'";
