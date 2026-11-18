@@ -6,8 +6,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
+import net.momirealms.craftengine.core.util.FileUtils;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.HashUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,10 +28,10 @@ public final class BedrockResourceSharing {
     }
 
     public static void share(Path root) throws IOException {
-        share(root, root.resolve(RegistrationPlanKind.BLOCK.file()));
+        share(root, root.resolve(RegistrationPlanKind.BLOCK.file()), null);
     }
 
-    static void share(Path root, Path blockPlan) throws IOException {
+    static void share(Path root, Path blockPlan, @Nullable Map<Path, JsonObject> modelDocuments) throws IOException {
         // 展示方块可能在后续场景中补充姿态，必须等所有资源定稿后再共享；缓存只存活于本次生成。
         Set<String> animatedTiles = new HashSet<>();
         List<References> references = readReferences(root, blockPlan, animatedTiles);
@@ -41,7 +43,7 @@ public final class BedrockResourceSharing {
         }
         List<Path> redundantFiles = new ArrayList<>();
         Map<String, String> textureAliases = shareTextures(root, textures, animatedTiles, redundantFiles);
-        Map<String, String> geometryAliases = shareGeometries(root, geometries, redundantFiles);
+        Map<String, String> geometryAliases = shareGeometries(root, geometries, redundantFiles, modelDocuments);
         for (References reference : references) {
             boolean changed = false;
             for (Reference value : reference.textures()) {
@@ -63,6 +65,7 @@ public final class BedrockResourceSharing {
         Map<String, String> pathsByHash = new HashMap<>();
         Map<String, String> aliases = new HashMap<>();
         Path nativeTextures = root.resolve(BedrockPackLayout.NATIVE_MODEL_TEXTURES);
+        byte[] buffer = new byte[16 * 1024];
         for (Path file : files(root.resolve(BedrockPackLayout.CRAFTENGINE_TEXTURES), ".png")) {
             if (file.startsWith(nativeTextures)) {
                 continue;
@@ -76,9 +79,9 @@ public final class BedrockResourceSharing {
             if (animatedTiles.contains(texture) || animatedTiles.contains(path)) {
                 continue;
             }
-            String shared = pathsByHash.putIfAbsent(HashUtils.sha1(file), path);
+            String shared = pathsByHash.putIfAbsent(HashUtils.sha1(file, buffer), path);
             // 哈希只用于索引；逐字节确认相同，保留 PNG 元数据及透明像素的原始语义。
-            if (shared != null && Files.mismatch(root.resolve(shared), file) == -1L) {
+            if (shared != null && FileUtils.contentEquals(root.resolve(shared), file, buffer)) {
                 aliases.put(path, shared);
                 aliases.put(texture, shared.substring(0, shared.length() - 4));
                 redundantFiles.add(file);
@@ -87,9 +90,12 @@ public final class BedrockResourceSharing {
         return aliases;
     }
 
-    private static Map<String, String> shareGeometries(Path root, Set<String> references, List<Path> redundantFiles) throws IOException {
+    private static Map<String, String> shareGeometries(Path root, Set<String> references, List<Path> redundantFiles,
+                                                       @Nullable Map<Path, JsonObject> modelDocuments) throws IOException {
         Map<GeometryKey, String> geometries = new HashMap<>();
         Map<String, String> aliases = new HashMap<>();
+        Path blockModels = root.resolve(BedrockDefinitionBundler.BLOCK_MODELS);
+        Path entityModels = root.resolve(BedrockDefinitionBundler.ENTITY_MODELS);
         for (Path file : files(root.resolve("models"), ".geo.json")) {
             JsonObject document = GsonHelper.readJsonFromFile(file).getAsJsonObject();
             JsonArray definitions = document.getAsJsonArray("minecraft:geometry");
@@ -124,12 +130,12 @@ public final class BedrockResourceSharing {
                     changed = true;
                 }
             }
-            if (changed) {
-                if (definitions.isEmpty()) {
-                    redundantFiles.add(file);
-                } else {
-                    GsonHelper.writeJsonFile(document, file);
-                }
+            if (changed && definitions.isEmpty()) {
+                redundantFiles.add(file);
+            } else if (modelDocuments != null && (file.startsWith(blockModels) || file.startsWith(entityModels))) {
+                modelDocuments.put(file, document);
+            } else if (changed) {
+                GsonHelper.writeJsonFile(document, file);
             }
         }
         return aliases;

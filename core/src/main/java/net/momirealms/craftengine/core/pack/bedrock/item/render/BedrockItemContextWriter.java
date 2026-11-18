@@ -58,8 +58,7 @@ final class BedrockItemContextWriter {
         List<GeneratedItemVariant> output = new ObjectArrayList<>();
         BedrockItemPresentation.ItemFeatures features = plan.features();
         Map<List<ItemBindingRule>, BedrockItemTint> cachedTints = new IdentityHashMap<>();
-        boolean needsEquipmentAppearance = features.hasEquipmentAsset();
-        BedrockEquipmentResources.Appearance equipmentAppearance = null;
+        BedrockEquipmentResources.Appearance equipmentAppearance = features.hasEquipmentAsset() ? null : BedrockEquipmentResources.Appearance.EMPTY;
         for (BedrockItemPresentation variant : plan.variants()) {
             Map<ItemDisplayContext, BedrockItemTint> tints;
             try {
@@ -71,16 +70,15 @@ final class BedrockItemContextWriter {
             }
             Key id = variant.id();
             Key headId = features.usesHeadModel() ? Key.of(id.namespace(), id.value() + "_view_head") : null;
-            if (needsEquipmentAppearance) {
+            if (equipmentAppearance == null) {
                 equipmentAppearance = this.equipmentResources.resolve(entry, features.equipmentSlot(), features.equipmentAssetId(), context.root());
-                needsEquipmentAppearance = false;
             }
             GeneratedItemVariant item = this.writeVariant(variant, headId, equipmentAppearance, features, tints, context);
             if (features.hasDye()) {
                 item = item.withTintSources(tintSources(tints));
             }
             this.visuals.writeWorldAliases(item, variant.separateWorldViews(), context, output);
-            registerEquipmentAppearance(id, item, equipmentAppearance, context);
+            equipmentAppearance.registerVariant(id, item.generated(), context.animalEquipment(), context.elytraEquipment());
             output.add(item);
         }
         return output;
@@ -142,7 +140,7 @@ final class BedrockItemContextWriter {
 
     private GeneratedItemVariant writeVariant(BedrockItemPresentation plan,
                                               @Nullable Key headId,
-                                              @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
+                                              BedrockEquipmentResources.Appearance equipmentAppearance,
                                               BedrockItemPresentation.ItemFeatures features,
                                               Map<ItemDisplayContext, BedrockItemTint> tints,
                                               BedrockItemGenerationContext context) throws IOException {
@@ -187,7 +185,7 @@ final class BedrockItemContextWriter {
 
     private void writeAttachables(BedrockItemPresentation plan,
                                   @Nullable Key headId,
-                                  @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
+                                  BedrockEquipmentResources.Appearance equipmentAppearance,
                                   boolean hasEquipmentAsset,
                                   Map<ItemDisplayContext, BedrockItemTint> tints,
                                   BedrockItemGenerationContext context) throws IOException {
@@ -228,24 +226,6 @@ final class BedrockItemContextWriter {
         BedrockItem3DAttachables.writeDisplayContexts(id, headId, stages, materials, pose, equipmentAppearance, context.root());
         if (hasHandModel) {
             plan.strategy().registerHandModel(context.playerAnimations(), id, plan.item());
-        }
-    }
-
-    private static void registerEquipmentAppearance(Key id,
-                                                    GeneratedItemVariant item,
-                                                    @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
-                                                    BedrockItemGenerationContext context) {
-        if (equipmentAppearance == null) {
-            return;
-        }
-        equipmentAppearance.registerAnimals(id, context.animalEquipment());
-        // 鞘翅贴图绑定到已生成的物品 ID，供客户端切换穿戴外观
-        if (item.generated()) {
-            for (BedrockEquipmentResources.Layer layer : equipmentAppearance.layers()) {
-                if (layer.slot() == BedrockEquipmentResources.Slot.WINGS) {
-                    context.elytraEquipment().register(id, layer.texture());
-                }
-            }
         }
     }
 

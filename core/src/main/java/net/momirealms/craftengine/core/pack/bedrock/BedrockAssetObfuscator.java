@@ -36,7 +36,7 @@ final class BedrockAssetObfuscator {
     private BedrockAssetObfuscator() {
     }
 
-    static void obfuscate(Path pack, Path data) throws IOException {
+    static void obfuscate(Path pack, Path data, Map<String, JsonObject> bundles) throws IOException {
         List<String> textures = new ArrayList<>();
         List<String> sounds = new ArrayList<>();
         List<String> definitions = new ArrayList<>();
@@ -55,7 +55,9 @@ final class BedrockAssetObfuscator {
             }
         }
 
-        Map<String, String> identifiers = definitionNames(pack, definitions);
+        definitions.addAll(bundles.keySet());
+        Map<String, JsonObject> definitionDocuments = new HashMap<>(bundles);
+        Map<String, String> identifiers = definitionNames(pack, definitions, definitionDocuments);
         shortenNativeEntities(data.resolve(BedrockPackLayout.NATIVE_MODELS), identifiers);
 
         Map<String, String> paths = new HashMap<>();
@@ -78,7 +80,17 @@ final class BedrockAssetObfuscator {
             return replacement != null ? replacement : BedrockIdentityObfuscator.rewriteMolang(value, clientIds);
         };
         for (String definition : definitions) {
-            rewriteReferences(pack.resolve(paths.getOrDefault(definition, definition)), clientValues, clientKeys);
+            Path file = pack.resolve(paths.getOrDefault(definition, definition));
+            JsonObject document = definitionDocuments.remove(definition);
+            if (bundles.containsKey(definition)) {
+                GsonHelper.replaceStrings(document, clientValues, clientKeys);
+                Files.createDirectories(file.getParent());
+                GsonHelper.writeJsonFile(document, file);
+            } else if (document == null) {
+                rewriteReferences(file, clientValues, clientKeys);
+            } else {
+                rewriteReferences(file, document, clientValues, clientKeys);
+            }
         }
         for (String path : List.of(RegistrationPlanKind.BLOCK.file(), BedrockPackLayout.SCOREBOARD)) {
             Path definition = data.resolve(path);
@@ -95,12 +107,12 @@ final class BedrockAssetObfuscator {
         }
     }
 
-    private static Map<String, String> definitionNames(Path pack, List<String> definitions) throws IOException {
+    private static Map<String, String> definitionNames(Path pack, List<String> definitions, Map<String, JsonObject> documents) throws IOException {
         Map<String, String> names = new HashMap<>();
         Set<String> geometries = new HashSet<>();
         for (String file : definitions) {
             if (file.startsWith("models/") && file.endsWith(".geo.json")) {
-                collectGeometryIds(pack.resolve(file), geometries);
+                collectGeometryIds(readDefinition(pack, file, documents), geometries);
             }
         }
         names.putAll(shortNames(geometries, GEOMETRY_PREFIX, GEOMETRY_PREFIX, "geometry.item_display.", "geometry.ce_native_"));
@@ -108,23 +120,32 @@ final class BedrockAssetObfuscator {
             Set<String> identifiers = new HashSet<>();
             for (String file : definitions) {
                 if (file.startsWith(type.section() + '/')) {
-                    identifiers.addAll(definitionKeys(pack.resolve(file), type.section()));
+                    identifiers.addAll(definitionKeys(pack, file, type.section(), documents));
                 }
             }
             String prefix = type.prefix();
             names.putAll(shortNames(identifiers, prefix + BedrockPackLayout.NAMESPACE + '.', prefix + BedrockPackLayout.NAMESPACE + '.', prefix + "item_display.", prefix + "ce_native_"));
         }
-        names.putAll(shortNames(definitionKeys(pack.resolve(SOUND_DEFINITIONS), "sound_definitions"), "ce.sound.", "ce.sound."));
-        names.putAll(shortNames(definitionKeys(pack.resolve(BLOCK_SOUNDS), "block_sounds"), "ce:block_", "ce:block_"));
+        names.putAll(shortNames(definitionKeys(pack, SOUND_DEFINITIONS, "sound_definitions", documents), "ce.sound.", "ce.sound."));
+        names.putAll(shortNames(definitionKeys(pack, BLOCK_SOUNDS, "block_sounds", documents), "ce:block_", "ce:block_"));
         return names;
     }
 
-    private static Set<String> definitionKeys(Path file, String section) throws IOException {
-        if (!Files.exists(file)) {
+    private static Set<String> definitionKeys(Path pack, String file, String section, Map<String, JsonObject> documents) throws IOException {
+        if (!documents.containsKey(file) && !Files.exists(pack.resolve(file))) {
             return Set.of();
         }
-        JsonObject definitions = GsonHelper.readJsonFromFile(file).getAsJsonObject().getAsJsonObject(section);
+        JsonObject definitions = readDefinition(pack, file, documents).getAsJsonObject(section);
         return definitions == null ? Set.of() : definitions.keySet();
+    }
+
+    private static JsonObject readDefinition(Path pack, String file, Map<String, JsonObject> documents) throws IOException {
+        JsonObject document = documents.get(file);
+        if (document == null) {
+            document = GsonHelper.readJsonFromFile(pack.resolve(file)).getAsJsonObject();
+            documents.put(file, document);
+        }
+        return document;
     }
 
     private static void shortenNativeEntities(Path file, Map<String, String> identifiers) throws IOException {
@@ -159,8 +180,8 @@ final class BedrockAssetObfuscator {
         renameFiles(pack, ui, "ui/ce", ".json", paths);
     }
 
-    private static void collectGeometryIds(Path file, Set<String> ids) throws IOException {
-        JsonArray geometries = GsonHelper.readJsonFromFile(file).getAsJsonObject().getAsJsonArray("minecraft:geometry");
+    private static void collectGeometryIds(JsonObject document, Set<String> ids) {
+        JsonArray geometries = document.getAsJsonArray("minecraft:geometry");
         if (geometries != null) {
             for (JsonElement geometry : geometries) {
                 ids.add(geometry.getAsJsonObject().getAsJsonObject("description").get("identifier").getAsString());
@@ -226,7 +247,10 @@ final class BedrockAssetObfuscator {
     }
 
     private static void rewriteReferences(Path file, UnaryOperator<String> values, Map<String, String> keys) throws IOException {
-        JsonElement document = GsonHelper.readJsonFromFile(file);
+        rewriteReferences(file, GsonHelper.readJsonFromFile(file), values, keys);
+    }
+
+    private static void rewriteReferences(Path file, JsonElement document, UnaryOperator<String> values, Map<String, String> keys) throws IOException {
         if (GsonHelper.replaceStrings(document, values, keys)) {
             GsonHelper.writeJsonFile(document, file);
         }

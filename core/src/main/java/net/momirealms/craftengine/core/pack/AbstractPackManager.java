@@ -1185,7 +1185,7 @@ public abstract class AbstractPackManager implements PackManager {
             Timestamp timestamp = new Timestamp();
             Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla_resource_pack")).download(VersionHelper.MINECRAFT_VERSION);
             Path dataPath = this.resolvePath(output);
-            try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
+            try (FileSystem fileSystem = JavaResourcePack.newInputFileSystem()) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
                 BedrockPackGenerator.generate(
                         resources,

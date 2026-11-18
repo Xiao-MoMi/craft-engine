@@ -37,6 +37,7 @@ public final class JavaPackTextureSource {
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
     private final Map<Key, Map<Texture, IOException>> textureFailures = new HashMap<>();
+    private final Map<Key, BufferedImage> spriteSheets = new HashMap<>();
     private final Map<Key, BufferedImage> paletteImages = new HashMap<>();
     private final Map<Key, TextureData> headSkins = new HashMap<>();
     private final Map<Key, TextureData> standaloneTextures = new HashMap<>();
@@ -237,6 +238,12 @@ public final class JavaPackTextureSource {
     }
 
     private TextureData loadResource(Key resourceId, @Nullable Atlas.TextureRegion region) throws IOException {
+        if (region != null) {
+            BufferedImage sheet = this.spriteSheets.get(resourceId);
+            if (sheet != null) {
+                return unstitch(resourceId, region, sheet);
+            }
+        }
         String texturePath = ResourcePackUtils.texturePath(resourceId);
         JsonObject metadata;
         try {
@@ -259,8 +266,12 @@ public final class JavaPackTextureSource {
             TextureData data = JavaTextureAnimation.read(image, metadata, this.pack.version().isAtOrAbove(MinecraftVersion.V1_21_11));
             return this.withVanillaReference(resourceId, metadata, data);
         }
+        this.spriteSheets.put(resourceId, image);
+        return unstitch(resourceId, region, image);
+    }
 
-        // unstitch 使用整张图片切片，不应用源图片的动画元数据。
+    private static TextureData unstitch(Key resourceId, Atlas.TextureRegion region, BufferedImage image) throws IOException {
+        // 同一张原图的切片共用像素数据，切片不应用源图片的动画元数据
         UnstitchSource.Region rectangle = region.region();
         double scaleX = image.getWidth() / region.divisorX();
         double scaleY = image.getHeight() / region.divisorY();

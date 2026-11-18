@@ -100,12 +100,19 @@ public final class PngOptimizer {
     }
 
     public void write(OutputStream os) throws IOException {
-        BufferedImage src = this.src;
-        final int width = src.getWidth();
-        final int height = src.getHeight();
+        write(os, this.src.getWidth(), this.src.getHeight(), readPixels(this.src), this.zopfliIterations);
+    }
 
-        ImageColorInfo info = createColorInfo(src);
-        ImageData bestChoice = findBestFileStructure(src, info);
+    public static void writeArgb(OutputStream output, int width, int height, int[] pixels) throws IOException {
+        if (width <= 0 || height <= 0 || pixels.length != Math.multiplyExact(width, height)) {
+            throw new IllegalArgumentException("ARGB pixel count does not match image dimensions");
+        }
+        write(output, width, height, pixels, 0);
+    }
+
+    private static void write(OutputStream os, int width, int height, int[] pixels, int zopfli) throws IOException {
+        ImageColorInfo info = createColorInfo(pixels);
+        ImageData bestChoice = findBestFileStructure(width, height, info, zopfli);
         {
             os.write(PNG_SIGNATURE);
         }
@@ -122,12 +129,11 @@ public final class PngOptimizer {
         os.close();
     }
 
-    private ImageColorInfo createColorInfo(final BufferedImage src) {
+    private static ImageColorInfo createColorInfo(int[] pixels) {
         Int2IntOpenHashMap ope = new Int2IntOpenHashMap();
         Int2IntOpenHashMap tra = new Int2IntOpenHashMap();
         boolean hasAlpha = false;
         boolean hasPalette = true;
-        int[] pixels = readPixels(src);
 
         for (int argb : pixels) {
             int alpha = (argb >> 24) & 0xFF;
@@ -175,6 +181,10 @@ public final class PngOptimizer {
     public static void readPixels(BufferedImage image, int[] pixels, int offset, int scanlineStride) {
         int width = image.getWidth();
         int height = image.getHeight();
+        if (image.getType() == BufferedImage.TYPE_INT_ARGB && offset == 0 && scanlineStride == width) {
+            image.getRaster().getDataElements(0, 0, width, height, pixels);
+            return;
+        }
         if (!isRawGrayscale(image)) {
             image.getRGB(0, 0, width, height, pixels, offset, scanlineStride);
             return;
@@ -202,11 +212,14 @@ public final class PngOptimizer {
         }
     }
 
-    private ImageData findBestFileStructure(BufferedImage src, ImageColorInfo info) throws IOException {
-        byte[] normalSize = tryNormal(info.pixels(), src.getWidth(), src.getHeight(), info.hasAlpha());
+    private static ImageData findBestFileStructure(int width, int height, ImageColorInfo info, int zopfli) throws IOException {
+        int channels = info.hasAlpha() ? 4 : 3;
+        int rowBytes = Math.addExact(1, Math.multiplyExact(width, channels));
+        byte[] normalSize = compressRows(height, rowBytes, zopfli,
+                (row, rows, data) -> writeNormalRows(info.pixels(), row * width, width, rows, info.hasAlpha(), data));
         // 可以考虑使用调色盘
         if (info.hasPalette()) {
-            Pair<Palette, byte[]> palettePair = tryPalette(src.getWidth(), src.getHeight(), info);
+            Pair<Palette, byte[]> palettePair = tryPalette(width, height, info, zopfli);
             byte[] paletteSize = palettePair.right();
             if (normalSize.length > paletteSize.length) {
                 return new ImageData(PngColorType.INDEXED_COLOR, (byte) palettePair.left().calculateBitDepth(), paletteSize);
@@ -217,18 +230,18 @@ public final class PngOptimizer {
         return new ImageData(info.hasAlpha() ? PngColorType.TRUE_COLOR_WITH_ALPHA : PngColorType.TRUE_COLOR, (byte) 8, normalSize);
     }
 
-    private byte[] tryNormal(int[] pixels, int width, int height, boolean hasAlpha) throws IOException {
-        byte[] bytes = generatePngData(pixels, width, height, hasAlpha);
-        int zopfli = this.zopfliIterations;
-        return zopfli > 0 ? compressImageZopfli(bytes, zopfli) : compressImageStandard(bytes);
+    private static byte[] compressRows(int height, int rowBytes, int zopfli, RowEncoder encoder) throws IOException {
+        if (zopfli > 0) {
+            byte[] data = new byte[Math.multiplyExact(height, rowBytes)];
+            encoder.encode(0, height, data);
+            return compressImageZopfli(data, zopfli);
+        }
+        return compressImageStandard(height, rowBytes, encoder);
     }
 
-    private byte[] generatePngData(int[] pixels, int width, int height, boolean hasAlpha) {
-        int channels = hasAlpha ? 4 : 3;
-        byte[] data = new byte[Math.multiplyExact(height, Math.addExact(1, Math.multiplyExact(width, channels)))];
+    private static void writeNormalRows(int[] pixels, int sourceIndex, int width, int rows, boolean hasAlpha, byte[] data) {
         int offset = 0;
-        int sourceIndex = 0;
-        for (int y = 0; y < height; y++) {
+        for (int y = 0; y < rows; y++) {
             data[offset++] = (byte) FilterType.NONE.ordinal();
             for (int x = 0; x < width; x++) {
                 final int argb = pixels[sourceIndex++];
@@ -244,10 +257,9 @@ public final class PngOptimizer {
                 }
             }
         }
-        return data;
     }
 
-    private Pair<Palette, byte[]> tryPalette(int width, int height, ImageColorInfo info) throws IOException {
+    private static Pair<Palette, byte[]> tryPalette(int width, int height, ImageColorInfo info, int zopfli) throws IOException {
         ByteArrayOutputStream paletteOs = new ByteArrayOutputStream();
         Palette palette;
         if (info.hasAlpha()) {
@@ -258,20 +270,17 @@ public final class PngOptimizer {
             palette = new ExactOpaquePalette(info.opaque);
             writeChunkPLTE(paletteOs, palette);
         }
-        byte[] bytes = generatePaletteData(info.pixels(), width, height, palette);
-        int zopfli = this.zopfliIterations;
-        paletteOs.write(zopfli > 0 ? compressImageZopfli(bytes, zopfli) : compressImageStandard(bytes));
+        int bits = palette.calculateBitDepth();
+        int rowBytes = Math.addExact(Math.toIntExact(((long) width * bits + 7) / 8), 1);
+        paletteOs.write(compressRows(height, rowBytes, zopfli,
+                (row, rows, data) -> writePaletteRows(info.pixels(), row * width, width, rows, rowBytes, bits, palette, data)));
         return Pair.of(palette, paletteOs.toByteArray());
     }
 
-    private byte[] generatePaletteData(int[] pixels, int width, int height, Palette palette) {
-        int bitsPerIndex = palette.calculateBitDepth();
-        int rowBytes = Math.toIntExact(((long) width * bitsPerIndex + 7) / 8);
-        byte[] data = new byte[Math.multiplyExact(height, Math.addExact(rowBytes, 1))];
-        int offset = 0;
-
-        for (int y = 0; y < height; y++) {
-            int rowOffset = y * width;
+    private static void writePaletteRows(int[] pixels, int rowOffset, int width, int rows, int rowBytes,
+                                         int bitsPerIndex, Palette palette, byte[] data) {
+        for (int y = 0; y < rows; y++) {
+            int offset = y * rowBytes;
             data[offset++] = (byte) FilterType.NONE.ordinal();
 
             // 根据位深度选择相应的处理方法
@@ -281,13 +290,12 @@ public final class PngOptimizer {
                 case 1 -> process1Bit(pixels, rowOffset, width, data, offset, palette);
                 default -> process8Bit(pixels, rowOffset, width, data, offset, palette);
             }
-            offset += rowBytes;
+            rowOffset += width;
         }
-        return data;
     }
 
     // 处理8位深度：每个索引占1字节
-    private void process8Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
+    private static void process8Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
         for (int x = 0; x < width; x++) {
             final int argb = pixels[rowOffset + x];
             final int index = palette.getPaletteIndex(argb);
@@ -296,7 +304,7 @@ public final class PngOptimizer {
     }
 
     // 处理4位深度：每2个索引打包到1字节中
-    private void process4Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
+    private static void process4Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
         for (int x = 0; x < width; x += 2) {
             final int argb1 = pixels[rowOffset + x];
             final int index1 = palette.getPaletteIndex(argb1);
@@ -316,7 +324,7 @@ public final class PngOptimizer {
     }
 
     // 处理2位深度：每4个索引打包到1字节中
-    private void process2Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
+    private static void process2Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
         for (int x = 0; x < width; x += 4) {
             int packed = 0;
             for (int i = 0; i < 4; i++) {
@@ -331,7 +339,7 @@ public final class PngOptimizer {
     }
 
     // 处理1位深度：每8个索引打包到1字节中
-    private void process1Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
+    private static void process1Bit(int[] pixels, int rowOffset, int width, byte[] data, int offset, Palette palette) {
         for (int x = 0; x < width; x += 8) {
             int packed = 0;
             for (int i = 0; i < 8; i++) {
@@ -345,7 +353,7 @@ public final class PngOptimizer {
         }
     }
 
-    private byte[] compressImageZopfli(byte[] uncompressed, int iterations) throws IOException {
+    private static byte[] compressImageZopfli(byte[] uncompressed, int iterations) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZopfliOutputStream dos = new ZopfliOutputStream(baos, new Options(Options.OutputFormat.ZLIB, Options.BlockSplitting.FIRST, iterations))) {
@@ -362,7 +370,9 @@ public final class PngOptimizer {
         return output.toByteArray();
     }
 
-    private byte[] compressImageStandard(byte[] uncompressed) throws IOException {
+    private static byte[] compressImageStandard(int height, int rowBytes, RowEncoder encoder) throws IOException {
+        int rowsPerChunk = Math.min(height, Math.max(1, (64 * 1024) / rowBytes));
+        byte[] data = new byte[rowsPerChunk * rowBytes];
         final ByteArrayOutputStream output = new ByteArrayOutputStream();
         final Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
 
@@ -370,7 +380,11 @@ public final class PngOptimizer {
              final DeflaterOutputStream dos = new DeflaterOutputStream(
                      baos, deflater)) {
 
-            dos.write(uncompressed);
+            for (int row = 0; row < height; row += rowsPerChunk) {
+                int rows = Math.min(rowsPerChunk, height - row);
+                encoder.encode(row, rows, data);
+                dos.write(data, 0, rows * rowBytes);
+            }
             dos.finish();
 
             final byte[] compressed = baos.toByteArray();
@@ -387,15 +401,20 @@ public final class PngOptimizer {
         return output.toByteArray();
     }
 
-    private void writeChunkIDAT(final OutputStream os, final byte[] bytes, int offset, int length) throws IOException {
+    @FunctionalInterface
+    private interface RowEncoder {
+        void encode(int row, int rows, byte[] data);
+    }
+
+    private static void writeChunkIDAT(final OutputStream os, final byte[] bytes, int offset, int length) throws IOException {
         writeChunk(os, IDAT, bytes, offset, length);
     }
 
-    private void writeChunkIEND(final OutputStream os) throws IOException {
+    private static void writeChunkIEND(final OutputStream os) throws IOException {
         writeChunk(os, IEND, null);
     }
 
-    private void writeChunkTRNS(final OutputStream os, final Palette palette) throws IOException {
+    private static void writeChunkTRNS(final OutputStream os, final Palette palette) throws IOException {
         int transparentColors = 0;
         while (transparentColors < palette.length() && (palette.getEntry(transparentColors) >>> 24) < 255) {
             transparentColors++;
@@ -413,7 +432,7 @@ public final class PngOptimizer {
         writeChunk(os, tRNS, bytes);
     }
 
-    private void writeChunkPLTE(final OutputStream os, final Palette palette) throws IOException {
+    private static void writeChunkPLTE(final OutputStream os, final Palette palette) throws IOException {
         final int length = palette.length();
         final byte[] bytes = new byte[length * 3];
         for (int i = 0; i < length; i++) {
@@ -426,7 +445,7 @@ public final class PngOptimizer {
         writeChunk(os, PLTE, bytes);
     }
 
-    private void writeChunkIHDR(final OutputStream os, final ImageHeader value) throws IOException {
+    private static void writeChunkIHDR(final OutputStream os, final ImageHeader value) throws IOException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         writeInt(baos, value.width);
         writeInt(baos, value.height);
@@ -438,19 +457,19 @@ public final class PngOptimizer {
         writeChunk(os, IHDR, baos.toByteArray());
     }
 
-    private void writeInt(final OutputStream os, final int value) throws IOException {
+    private static void writeInt(final OutputStream os, final int value) throws IOException {
         os.write(0xff & value >> 24);
         os.write(0xff & value >> 16);
         os.write(0xff & value >> 8);
         os.write(0xff & value >> 0);
     }
 
-    private void writeChunk(final OutputStream os, final byte[] chunkType, final byte[] data) throws IOException {
+    private static void writeChunk(final OutputStream os, final byte[] chunkType, final byte[] data) throws IOException {
         final int dataLength = data == null ? 0 : data.length;
         writeChunk(os, chunkType, data, 0, dataLength);
     }
 
-    private void writeChunk(final OutputStream os, final byte[] chunkType, final byte[] data, int offset, int length) throws IOException {
+    private static void writeChunk(final OutputStream os, final byte[] chunkType, final byte[] data, int offset, int length) throws IOException {
         writeInt(os, length);
         os.write(chunkType);
         if (length > 0) {

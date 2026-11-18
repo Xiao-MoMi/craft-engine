@@ -51,7 +51,7 @@ public final class BedrockItem3DAttachables {
     private final JsonObject localChannels = new JsonObject();
     private int[] contextGeometryIndices;
     private BedrockAttachablePose contextPose;
-    private BedrockEquipmentResources.Appearance armor;
+    private BedrockEquipmentResources.Appearance equipmentAppearance = BedrockEquipmentResources.Appearance.EMPTY;
 
     private BedrockItem3DAttachables(Key id, Path root, List<Stage> stages, List<Material> materials, JsonArray poseBones) {
         this.id = id;
@@ -77,10 +77,10 @@ public final class BedrockItem3DAttachables {
         writer.writeAttachable(preAnimation);
     }
 
-    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<Material> materials, BedrockAttachablePose pose, BedrockEquipmentResources.Appearance armor, Path root) throws IOException {
+    static void writeDisplayContexts(Key id, Key headId, List<Stage> stages, List<Material> materials, BedrockAttachablePose pose, BedrockEquipmentResources.Appearance equipmentAppearance, Path root) throws IOException {
         BedrockItem3DAttachables writer = new BedrockItem3DAttachables(id, root, stages, materials, new JsonArray());
         writer.contextPose = pose;
-        writer.armor = armor;
+        writer.equipmentAppearance = equipmentAppearance;
         writer.groupContextGeometries();
         writer.writeMaterialLayers();
         JsonObject animations = writer.contextAnimations(pose);
@@ -115,9 +115,7 @@ public final class BedrockItem3DAttachables {
             this.renderControllers.add(name, controller);
             this.activeControllers.add(name);
         }
-        if (this.armor != null) {
-            this.armor.addResources(this.prefix, this.textureNames, this.geometryNames, this.renderControllers, this.activeControllers);
-        }
+        this.equipmentAppearance.addResources(this.prefix, this.textureNames, this.geometryNames, this.renderControllers, this.activeControllers);
         ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
         ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
     }
@@ -335,9 +333,7 @@ public final class BedrockItem3DAttachables {
         // pre_animation 先计算 ce_stage 等变量，动画和渲染控制器再用这些值选择当前姿态与几何。
         JsonObject scripts = GsonHelper.createObject("animate", this.animate);
         scripts.add("pre_animation", preAnimation);
-        if (this.armor != null) {
-            this.armor.addMaterialsAndScripts(renderMaterials, scripts, this.animationNames);
-        }
+        this.equipmentAppearance.addMaterialsAndScripts(renderMaterials, scripts, this.animationNames);
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);

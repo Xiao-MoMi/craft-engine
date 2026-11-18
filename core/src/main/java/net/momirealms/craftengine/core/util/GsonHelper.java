@@ -1,7 +1,9 @@
 package net.momirealms.craftengine.core.util;
 
 import com.google.gson.*;
+import com.google.gson.internal.LazilyParsedNumber;
 import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonWriter;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -121,12 +123,28 @@ public final class GsonHelper {
 
     public static void writeJsonFile(JsonElement json, Path path) throws IOException {
         try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            get().toJson(json, writer);
+            writeJson(json, writer);
         }
     }
 
+    public static void writeJsonFileWithNulls(JsonElement json, Path path) throws IOException {
+        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+            JsonTreeWriter jsonWriter = new JsonTreeWriter(writer);
+            jsonWriter.setSerializeNulls(true);
+            jsonWriter.setStrictness(Strictness.LENIENT);
+            GSON.getAdapter(JsonElement.class).write(jsonWriter, json);
+        }
+    }
+
+    public static void writeJson(JsonElement json, Writer writer) {
+        GSON.toJson(json, new JsonTreeWriter(writer));
+    }
+
     public static JsonElement readJsonFromFile(Path path) throws IOException, JsonParseException {
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
+        if (Files.size(path) <= 4096) {
+            return JsonParser.parseString(Files.readString(path));
+        }
+        try (Reader reader = new InputStreamReader(Files.newInputStream(path), StandardCharsets.UTF_8.newDecoder())) {
             return JsonParser.parseReader(reader);
         }
     }
@@ -145,13 +163,8 @@ public final class GsonHelper {
     }
 
     public static JsonObject readJsonObjectFromFile(Path path) throws IOException, JsonParseException {
-        try (BufferedReader reader = Files.newBufferedReader(path)) {
-            JsonElement element = JsonParser.parseReader(reader);
-            if (element instanceof JsonObject jsonObject) {
-                return jsonObject;
-            }
-            return null;
-        }
+        JsonElement element = readJsonFromFile(path);
+        return element instanceof JsonObject object ? object : null;
     }
 
     public static JsonElement parseJson(String json) {
@@ -303,6 +316,59 @@ public final class GsonHelper {
             return json.getAsString();
         } catch (Exception e) {
             return defaultValue;
+        }
+    }
+
+    private static final class JsonTreeWriter extends JsonWriter {
+        private JsonTreeWriter(Writer writer) {
+            super(writer);
+        }
+
+        @Override
+        public JsonWriter value(Number value) throws IOException {
+            if (value instanceof LazilyParsedNumber number) {
+                // Preserve the original numeric text and avoid Gson allocating a matcher for each parsed number
+                String text = number.toString();
+                if (isJsonNumber(text)) {
+                    return super.jsonValue(text);
+                }
+            }
+            return super.value(value);
+        }
+
+        private static boolean isJsonNumber(String text) {
+            int length = text.length();
+            int index = text.startsWith("-") ? 1 : 0;
+            if (index == length || !isDigit(text.charAt(index))) {
+                return false;
+            }
+            index = text.charAt(index) == '0' ? index + 1 : skipDigits(text, index + 1);
+            if (index < length && text.charAt(index) == '.') {
+                int firstDigit = index + 1;
+                index = skipDigits(text, firstDigit);
+                if (index == firstDigit) {
+                    return false;
+                }
+            }
+            if (index < length && (text.charAt(index) == 'e' || text.charAt(index) == 'E')) {
+                index++;
+                if (index < length && (text.charAt(index) == '+' || text.charAt(index) == '-')) {
+                    index++;
+                }
+                return index < length && skipDigits(text, index) == length;
+            }
+            return index == length;
+        }
+
+        private static int skipDigits(String text, int index) {
+            while (index < text.length() && isDigit(text.charAt(index))) {
+                index++;
+            }
+            return index;
+        }
+
+        private static boolean isDigit(char character) {
+            return character >= '0' && character <= '9';
         }
     }
 }

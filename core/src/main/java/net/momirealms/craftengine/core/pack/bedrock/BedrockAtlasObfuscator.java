@@ -51,7 +51,7 @@ final class BedrockAtlasObfuscator {
         GsonHelper.replaceStringKeys(textures, aliases);
         GsonHelper.writeJsonFile(atlas, atlasFile);
         // 注册计划中的显式 null 用于删除原版组件，序列化时必须保留
-        Files.writeString(planFile, plan.toString());
+        GsonHelper.writeJsonFileWithNulls(plan, planFile);
     }
 
     private static void obfuscateTerrain(Path atlasFile, Path flipbooksFile, Path planFile) throws IOException {

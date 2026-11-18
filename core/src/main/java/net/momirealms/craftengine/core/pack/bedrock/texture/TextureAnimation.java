@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -71,14 +72,19 @@ public record TextureAnimation(BufferedImage sheet,
     public void forEachFrame(int color, FrameConsumer consumer) throws IOException {
         int interval = this.sampleInterval();
         BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
+        int[] nextPixels = this.interpolate ? new int[this.width * this.height] : null;
         // 所有采样复用同一画布；消费者必须在回调内完成读取或复制。
         for (int tick = 0; tick < this.duration; tick += interval) {
-            this.render(tick, color, image);
+            this.render(tick, color, image, nextPixels);
             consumer.accept(tick / interval, image);
         }
     }
 
     public void render(int tick, int color, BufferedImage target) {
+        this.render(tick, color, target, null);
+    }
+
+    private void render(int tick, int color, BufferedImage target, @Nullable int[] nextPixels) {
         int position = tick % this.duration;
         int frameIndex = 0;
         while (position >= this.frames.get(frameIndex).time()) {
@@ -89,27 +95,35 @@ public record TextureAnimation(BufferedImage sheet,
         int columns = this.sheet.getWidth() / this.width;
         int currentX = current.index() % columns * this.width;
         int currentY = current.index() / columns * this.height;
-        int nextX = next.index() % columns * this.width;
-        int nextY = next.index() / columns * this.height;
         double weight = this.interpolate ? (double) position / current.time() : 0;
         if (this.gpuInterpolation) {
             weight = (int) ((float) weight * 1000) / 1000.0;
         }
         int[] pixels = ((DataBufferInt) target.getRaster().getDataBuffer()).getData();
-        for (int y = 0; y < this.height; y++) {
-            for (int x = 0; x < this.width; x++) {
-                int pixel = this.sheet.getRGB(currentX + x, currentY + y);
-                int nextPixel = weight == 0 ? pixel : this.sheet.getRGB(nextX + x, nextY + y);
-                // 1.21.11 moved interpolation to a shader: quantized progress, RGBA mixing and UNORM rounding.
-                int red = this.mix((pixel >>> 16) & 255, (nextPixel >>> 16) & 255, weight);
-                int green = this.mix((pixel >>> 8) & 255, (nextPixel >>> 8) & 255, weight);
-                int blue = this.mix(pixel & 255, nextPixel & 255, weight);
-                int alpha = this.gpuInterpolation ? this.mix(pixel >>> 24, nextPixel >>> 24, weight) : pixel >>> 24;
-                red = red * ((color >>> 16) & 255) / 255;
-                green = green * ((color >>> 8) & 255) / 255;
-                blue = blue * (color & 255) / 255;
-                pixels[y * this.width + x] = (alpha << 24) | (red << 16) | (green << 8) | blue;
-            }
+        this.sheet.getRGB(currentX, currentY, this.width, this.height, pixels, 0, this.width);
+        if (weight == 0 && color == 0xffffff) {
+            return;
+        }
+        if (weight == 0) {
+            nextPixels = pixels;
+        } else {
+            int nextX = next.index() % columns * this.width;
+            int nextY = next.index() / columns * this.height;
+            nextPixels = this.sheet.getRGB(nextX, nextY, this.width, this.height, nextPixels, 0, this.width);
+        }
+        int redMultiplier = (color >>> 16) & 255;
+        int greenMultiplier = (color >>> 8) & 255;
+        int blueMultiplier = color & 255;
+        int size = this.width * this.height;
+        for (int i = 0; i < size; i++) {
+            int pixel = pixels[i];
+            int nextPixel = nextPixels[i];
+            // 1.21.11 moved interpolation to a shader: quantized progress, RGBA mixing and UNORM rounding
+            int red = this.mix((pixel >>> 16) & 255, (nextPixel >>> 16) & 255, weight) * redMultiplier / 255;
+            int green = this.mix((pixel >>> 8) & 255, (nextPixel >>> 8) & 255, weight) * greenMultiplier / 255;
+            int blue = this.mix(pixel & 255, nextPixel & 255, weight) * blueMultiplier / 255;
+            int alpha = this.gpuInterpolation ? this.mix(pixel >>> 24, nextPixel >>> 24, weight) : pixel >>> 24;
+            pixels[i] = (alpha << 24) | (red << 16) | (green << 8) | blue;
         }
     }
 

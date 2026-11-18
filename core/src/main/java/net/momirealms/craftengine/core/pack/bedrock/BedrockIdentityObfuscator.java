@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 final class BedrockIdentityObfuscator {
+    private static final String QUOTED_ID_PREFIX = "'" + ID_PREFIX;
+    private static final String QUOTED_GEYSER_BLOCK_PREFIX = "'" + GEYSER_CUSTOM_BLOCK_PREFIX;
     private static final Pattern MOLANG_IDENTIFIER = Pattern.compile("'((?:" + ID_PREFIX + "|" + GEYSER_CUSTOM_BLOCK_PREFIX + ")[a-z0-9_./-]+)'");
 
     private BedrockIdentityObfuscator() {
@@ -88,7 +90,7 @@ final class BedrockIdentityObfuscator {
             if (displays != null) {
                 GsonHelper.replaceStringKeys(displays.getAsJsonObject("items"), aliases);
             }
-            Files.writeString(file, plan.toString());
+            GsonHelper.writeJsonFileWithNulls(plan, file);
         }
         return aliases;
     }
@@ -119,7 +121,7 @@ final class BedrockIdentityObfuscator {
 
     @Nullable
     static String rewriteMolang(String value, Map<String, String> aliases) {
-        if (value.indexOf('\'') < 0 || aliases.isEmpty()) {
+        if (aliases.isEmpty() || (!value.contains(QUOTED_ID_PREFIX) && !value.contains(QUOTED_GEYSER_BLOCK_PREFIX))) {
             return null;
         }
         Matcher matcher = MOLANG_IDENTIFIER.matcher(value);

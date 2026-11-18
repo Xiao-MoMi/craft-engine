@@ -1,9 +1,10 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
-import net.momirealms.craftengine.core.util.ImageUtils;
+import net.momirealms.craftengine.core.util.PngOptimizer;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
@@ -20,13 +21,15 @@ final class GlyphPage {
 
     private final int index;
     private final int cellSize;
-    private final BufferedImage image;
+    private final int side;
+    private final int[] pixels;
     private int usedSlots;
 
     GlyphPage(int index, int cellSize) {
         this.index = index;
         this.cellSize = cellSize;
-        this.image = new BufferedImage(cellSize * CELLS_PER_ROW, cellSize * CELLS_PER_ROW, BufferedImage.TYPE_INT_ARGB);
+        this.side = cellSize * CELLS_PER_ROW;
+        this.pixels = new int[this.side * this.side];
     }
 
     int cellSize() {
@@ -38,7 +41,9 @@ final class GlyphPage {
     }
 
     void write(Path directory) throws IOException {
-        ImageUtils.writePng(this.image, file(directory, this.index));
+        try (OutputStream output = Files.newOutputStream(file(directory, this.index))) {
+            PngOptimizer.writeArgb(output, this.side, this.side, this.pixels);
+        }
     }
 
     static Path file(Path directory, int index) {
@@ -68,7 +73,7 @@ final class GlyphPage {
                 if (firstInkRow < 0 && (pixel >>> 24) != 0) {
                     firstInkRow = y;
                 }
-                this.image.setRGB(left + x, top + y, pixel);
+                this.pixels[(top + y) * this.side + left + x] = pixel;
             }
         }
 
@@ -79,8 +84,9 @@ final class GlyphPage {
     }
 
     private void markEdge(int x, int y) {
-        if ((this.image.getRGB(x, y) >>> 24) == 0) {
-            this.image.setRGB(x, y, ALMOST_TRANSPARENT);
+        int index = y * this.side + x;
+        if ((this.pixels[index] >>> 24) == 0) {
+            this.pixels[index] = ALMOST_TRANSPARENT;
         }
     }
 }

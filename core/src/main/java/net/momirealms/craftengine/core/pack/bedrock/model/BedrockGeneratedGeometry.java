@@ -26,9 +26,10 @@ public final class BedrockGeneratedGeometry {
         faces.add("north", face(material, u, 0, -u, v));
         cube(cubes, -8, 0, -depth, 16, 16, depth * 2, faces);
         byte[] edges = new byte[width * height];
+        int[] pixels = new int[edges.length];
         TextureAnimation animation = data.animation();
         if (animation == null) {
-            collectEdges(data.image(), edges);
+            collectEdges(data.image(), 0, 0, width, height, pixels, edges);
         } else {
             BitSet visited = new BitSet();
             int columns = animation.sheet().getWidth() / width;
@@ -36,19 +37,22 @@ public final class BedrockGeneratedGeometry {
             for (TextureAnimation.Frame frame : animation.frames()) {
                 if (!visited.get(frame.index())) {
                     visited.set(frame.index());
-                    collectEdges(animation.sheet().getSubimage(frame.index() % columns * width, frame.index() / columns * height, width, height), edges);
+                    collectEdges(animation.sheet(), frame.index() % columns * width, frame.index() / columns * height, width, height, pixels, edges);
                 }
             }
         }
+        float spanU = 0.8f * 16 / textureWidth;
+        float spanV = 0.8f * 16 / textureHeight;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 int edge = edges[y * width + x];
+                if (edge == 0) {
+                    continue;
+                }
                 float left = 8 - (x + 1) * 16f / width;
                 float bottom = 16 - (y + 1) * 16f / height;
                 float uvX = (x + 0.1f) * 16 / textureWidth;
                 float uvY = (y + 0.1f) * 16 / textureHeight;
-                float spanU = 0.8f * 16 / textureWidth;
-                float spanV = 0.8f * 16 / textureHeight;
                 for (int side = 0; side < 4; side++) {
                     if ((edge & (1 << side)) == 0) {
                         continue;
@@ -78,25 +82,24 @@ public final class BedrockGeneratedGeometry {
         }
     }
 
-    private static void collectEdges(BufferedImage image, byte[] edges) {
-        int width = image.getWidth();
-        int height = image.getHeight();
+    private static void collectEdges(BufferedImage image, int left, int top, int width, int height, int[] pixels, byte[] edges) {
+        image.getRGB(left, top, width, height, pixels, 0, width);
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if ((image.getRGB(x, y) >>> 24) == 0) {
+                int index = y * width + x;
+                if ((pixels[index] >>> 24) == 0) {
                     continue;
                 }
-                int index = y * width + x;
-                if (y == 0 || (image.getRGB(x, y - 1) >>> 24) == 0) {
+                if (y == 0 || (pixels[index - width] >>> 24) == 0) {
                     edges[index] |= 1;
                 }
-                if (y == height - 1 || (image.getRGB(x, y + 1) >>> 24) == 0) {
+                if (y == height - 1 || (pixels[index + width] >>> 24) == 0) {
                     edges[index] |= 2;
                 }
-                if (x == 0 || (image.getRGB(x - 1, y) >>> 24) == 0) {
+                if (x == 0 || (pixels[index - 1] >>> 24) == 0) {
                     edges[index] |= 4;
                 }
-                if (x == width - 1 || (image.getRGB(x + 1, y) >>> 24) == 0) {
+                if (x == width - 1 || (pixels[index + 1] >>> 24) == 0) {
                     edges[index] |= 8;
                 }
             }

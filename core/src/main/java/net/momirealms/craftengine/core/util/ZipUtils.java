@@ -40,8 +40,8 @@ public final class ZipUtils {
 
     private static void compress(Path in, Path out, boolean storePng, boolean includeDirectories,
                                  @Nullable Path storedFile, @Nullable String entryName) throws IOException {
-        byte[] crcBuffer = storePng || storedFile != null ? new byte[8192] : null;
-        CRC32 crc = crcBuffer == null ? null : new CRC32();
+        byte[] buffer = new byte[16 * 1024];
+        CRC32 crc = storePng || storedFile != null ? new CRC32() : null;
         try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out), ZIP_OUTPUT_BUFFER_SIZE);
              ZipOutputStream zos = new ZipOutputStream(os)) {
 
@@ -64,10 +64,12 @@ public final class ZipUtils {
                     ZipEntry entry = new ZipEntry(relativePath);
                     entry.setTime(0L);
                     if (storePng && FileUtils.isPngFile(file)) {
-                        prepareStoredEntry(entry, file, attrs.size(), crc, crcBuffer);
+                        prepareStoredEntry(entry, file, attrs.size(), crc, buffer);
                     }
                     zos.putNextEntry(entry);
-                    Files.copy(file, zos);
+                    try (InputStream input = Files.newInputStream(file)) {
+                        FileUtils.copy(input, zos, buffer);
+                    }
                     zos.closeEntry();
                     return FileVisitResult.CONTINUE;
                 }
@@ -75,9 +77,11 @@ public final class ZipUtils {
             if (storedFile != null) {
                 ZipEntry entry = new ZipEntry(entryName);
                 entry.setTime(0L);
-                prepareStoredEntry(entry, storedFile, Files.size(storedFile), crc, crcBuffer);
+                prepareStoredEntry(entry, storedFile, Files.size(storedFile), crc, buffer);
                 zos.putNextEntry(entry);
-                Files.copy(storedFile, zos);
+                try (InputStream input = Files.newInputStream(storedFile)) {
+                    FileUtils.copy(input, zos, buffer);
+                }
                 zos.closeEntry();
             }
         }

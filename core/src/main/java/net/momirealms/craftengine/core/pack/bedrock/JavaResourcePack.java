@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.pack.VanillaResourcePackDownloader;
@@ -13,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -23,6 +26,9 @@ import java.util.zip.ZipEntry;
 // 单版本、去除overlay后的资源包视图
 public final class JavaResourcePack {
     private static final int MAX_PATH = 260;
+    private static final Configuration INPUT_FILE_SYSTEM = Configuration.forCurrentPlatform().toBuilder()
+            .setBlockSize(4096)
+            .build();
     private final MinecraftVersion version;
     private final Path root;
     private final Path vanillaRoot;
@@ -84,14 +90,21 @@ public final class JavaResourcePack {
             resources.remove(placeholder);
         }
         Path assets = Files.createDirectories(root.resolve("assets"));
+        Set<Path> directories = new HashSet<>();
+        directories.add(assets);
+        byte[] buffer = new byte[16 * 1024];
         for (Map.Entry<String, ResourceEntry> resource : resources.entrySet()) {
             Path target = root.resolve(resource.getKey()).normalize();
             if (!target.startsWith(assets)) {
                 throw new IOException("Resource path outside assets: " + resource.getKey());
             }
-            Files.createDirectories(target.getParent());
-            try (InputStream input = archive.getInputStream(resource.getValue().entry())) {
-                Files.copy(input, target);
+            Path parent = target.getParent();
+            if (directories.add(parent)) {
+                Files.createDirectories(parent);
+            }
+            try (InputStream input = archive.getInputStream(resource.getValue().entry());
+                 OutputStream output = Files.newOutputStream(target, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+                FileUtils.copy(input, output, buffer);
             }
         }
     }
@@ -105,6 +118,10 @@ public final class JavaResourcePack {
         if (previous == null || priority > previous.priority() || (priority == previous.priority() && previous.entry().isDirectory() && !entry.isDirectory())) {
             resources.put(path, new ResourceEntry(entry, priority));
         }
+    }
+
+    public static FileSystem newInputFileSystem() {
+        return Jimfs.newFileSystem(INPUT_FILE_SYSTEM);
     }
 
     public static JavaResourcePack openZip(Path source, Path vanilla, MinecraftVersion version, FileSystem fileSystem) throws IOException {

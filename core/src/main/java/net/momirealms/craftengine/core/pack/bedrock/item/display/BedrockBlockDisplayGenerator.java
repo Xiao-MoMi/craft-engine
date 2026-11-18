@@ -17,6 +17,7 @@ import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.GrassTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VectorUtils;
 import org.joml.Matrix3d;
 import org.joml.Matrix4f;
@@ -26,11 +27,9 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 final class BedrockBlockDisplayGenerator {
     private BedrockBlockDisplayGenerator() {
@@ -45,8 +44,9 @@ final class BedrockBlockDisplayGenerator {
         }
         JavaBlockModelResolver resolver = resources.blockModels();
         Map<JsonArray, Integer> poses = new HashMap<>();
-        for (BlockStateWrapper state : select(selectors, BlockRegistryMirror.blockStates())) {
-            String key = BlockStateKey.parse(state.getAsString()).toString();
+        for (Map.Entry<BlockStateWrapper, BlockStateKey> entry : select(selectors, BlockRegistryMirror.blockStates()).entrySet()) {
+            BlockStateWrapper state = entry.getKey();
+            String key = entry.getValue().toString();
             try {
                 List<JavaBlockModelResolver.Part> resolved = state.isAir() ? List.of() : resolver.resolve(state);
                 Matrix4fc shared = sharedRotation(resolved);
@@ -74,21 +74,31 @@ final class BedrockBlockDisplayGenerator {
         return result;
     }
 
-    static Set<BlockStateWrapper> select(List<String> selectors, BlockStateWrapper[] states) {
-        Set<BlockStateWrapper> selected = new LinkedHashSet<>();
-        Map<BlockStateKey, BlockStateWrapper> available = new LinkedHashMap<>();
+    static Map<BlockStateWrapper, BlockStateKey> select(List<String> selectors, BlockStateWrapper[] states) {
+        Map<BlockStateWrapper, BlockStateKey> selected = new LinkedHashMap<>();
+        Map<Key, List<BlockStateWrapper>> statesByBlock = new HashMap<>();
         for (BlockStateWrapper state : states) {
-            if (state.ownerId().isMinecraftNamespace()) {
-                available.put(BlockStateKey.parse(state.getAsString()), state);
+            Key block = state.ownerId();
+            if (block.isMinecraftNamespace()) {
+                statesByBlock.computeIfAbsent(block, ignored -> new ArrayList<>()).add(state);
             }
         }
+        Map<Key, Map<BlockStateKey, BlockStateWrapper>> available = new HashMap<>();
         for (String value : selectors) {
             try {
                 BlockStateKey selector = BlockStateKey.parse(value);
+                Key block = Key.of(selector.identifier());
+                Map<BlockStateKey, BlockStateWrapper> blockStates = available.computeIfAbsent(block, key -> {
+                    Map<BlockStateKey, BlockStateWrapper> result = new LinkedHashMap<>();
+                    for (BlockStateWrapper state : statesByBlock.getOrDefault(key, List.of())) {
+                        result.put(BlockStateKey.parse(state.getAsString()), state);
+                    }
+                    return result;
+                });
                 boolean matched = false;
-                for (Map.Entry<BlockStateKey, BlockStateWrapper> entry : available.entrySet()) {
+                for (Map.Entry<BlockStateKey, BlockStateWrapper> entry : blockStates.entrySet()) {
                     if (selector.matches(entry.getKey())) {
-                        selected.add(entry.getValue());
+                        selected.putIfAbsent(entry.getValue(), entry.getKey());
                         matched = true;
                     }
                 }

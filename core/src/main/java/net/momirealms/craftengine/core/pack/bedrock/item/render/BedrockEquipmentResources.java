@@ -52,10 +52,9 @@ final class BedrockEquipmentResources {
         this.resources = resources;
     }
 
-    @Nullable
     Appearance resolve(ResolvedItemBinding entry, @Nullable String equipmentSlot, @Nullable Key asset, Path root) throws IOException {
         if (asset == null) {
-            return null;
+            return Appearance.EMPTY;
         }
         try {
             JsonObject definition = this.definitions.get(asset);
@@ -68,7 +67,7 @@ final class BedrockEquipmentResources {
             }
             JsonObject layers = definition.getAsJsonObject("layers");
             if (layers == null) {
-                return null;
+                return Appearance.EMPTY;
             }
             Integer dye = dye(entry.clientProperties().components().get(DataComponentKeys.DYED_COLOR));
             List<Layer> appearances = new ArrayList<>();
@@ -87,11 +86,11 @@ final class BedrockEquipmentResources {
                 }
                 appearances.add(new Layer(slot, texture));
             }
-            return appearances.isEmpty() ? null : new Appearance(List.copyOf(appearances));
+            return appearances.isEmpty() ? Appearance.EMPTY : new Appearance(List.copyOf(appearances));
         } catch (BedrockResourceException exception) {
             JsonElement equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
             TranslationManager.warn("resource_pack.bedrock.item.armor_skipped", entry.bedrockId().asString(), equipment.toString(), exception.getLocalizedMessage());
-            return null;
+            return Appearance.EMPTY;
         }
     }
 
@@ -181,13 +180,21 @@ final class BedrockEquipmentResources {
     }
 
     record Appearance(List<Layer> layers) {
+        static final Appearance EMPTY = new Appearance(List.of());
 
-        void registerAnimals(Key id, BedrockAnimalEquipment animals) {
+        void registerVariant(Key id, boolean generated, BedrockAnimalEquipment animals, BedrockElytraEquipment elytra) {
             for (Layer layer : this.layers) {
-                if (layer.slot == Slot.HORSE) {
-                    animals.registerHorse(id, layer.texture);
-                } else if (layer.slot == Slot.WOLF) {
-                    animals.enableWolf();
+                switch (layer.slot) {
+                    case HORSE -> animals.registerHorse(id, layer.texture);
+                    case WOLF -> animals.enableWolf();
+                    case WINGS -> {
+                        // 鞘翅贴图绑定到已生成的物品 ID，供客户端切换穿戴外观
+                        if (generated) {
+                            elytra.register(id, layer.texture);
+                        }
+                    }
+                    default -> {
+                    }
                 }
             }
         }
@@ -229,6 +236,9 @@ final class BedrockEquipmentResources {
         }
 
         void addMaterialsAndScripts(JsonObject materials, JsonObject scripts, JsonObject animations) {
+            if (this.layers.isEmpty()) {
+                return;
+            }
             StringBuilder parentSetup = new StringBuilder();
             for (Layer layer : this.layers) {
                 if (layer.slot.geometry == null) {

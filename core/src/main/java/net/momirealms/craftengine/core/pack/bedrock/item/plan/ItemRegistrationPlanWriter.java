@@ -9,7 +9,6 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -29,7 +28,7 @@ public final class ItemRegistrationPlanWriter {
         if (!itemDisplays.isEmpty()) {
             json.add("item_displays", itemDisplays);
         }
-        Files.writeString(itemPlanPath, json.toString());
+        GsonHelper.writeJsonFileWithNulls(json, itemPlanPath);
     }
 
     public static JsonObject toJson(ItemRegistrationPlan plan, BedrockItemResourceGenerator.Result generatedItems) {

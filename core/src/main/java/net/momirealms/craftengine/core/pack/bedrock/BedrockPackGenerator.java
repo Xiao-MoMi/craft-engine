@@ -37,6 +37,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -68,10 +69,12 @@ public final class BedrockPackGenerator {
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
             NativeModelAssets.write(nativeModels, pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
 
-            BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()));
-            BedrockDefinitionBundler.bundle(pack);
-            if (obfuscation && VersionHelper.PREMIUM) {
-                BedrockAssetObfuscator.obfuscate(pack, data);
+            boolean protection = obfuscation && VersionHelper.PREMIUM;
+            Map<Path, JsonObject> models = new HashMap<>();
+            BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()), models);
+            Map<String, JsonObject> bundles = BedrockDefinitionBundler.bundle(pack, models, protection);
+            if (protection) {
+                BedrockAssetObfuscator.obfuscate(pack, data, bundles);
             }
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {
