@@ -1,7 +1,10 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
@@ -12,6 +15,7 @@ import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.util.Key;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
@@ -19,21 +23,24 @@ import java.util.Map;
 
 record BedrockItemPresentation(ResolvedItemBinding item,
                                Key id,
-                               List<ItemBindingCondition> conditions,
-                               Map<ItemDisplayContext, List<ItemBindingRule>> rulesByContext,
-                               Map<ItemDisplayContext, ItemBindingRule> idleRules,
+                               List<ItemBindingCondition> conditions, // 决定这个物品栈用哪个基岩 ID
+                               Map<ItemDisplayContext, List<ItemBindingRule>> rulesByContext, // 当前变体各显示位置的模型规则，包含使用阶段
+                               Map<ItemDisplayContext, ItemBindingRule> idleRules, // 这个字段可以由 rulesByContext 算出，加在这里是为了减少重复扫描规则列表
                                BedrockItemRenderStrategy strategy,
                                boolean explicitViews,
                                boolean separateWorldViews) {
+
     static Plan plan(ResolvedItemBinding item, JavaModelResolver models) throws IOException {
         boolean explicitViews = DisplayContextVariants.usesDisplayContext(item);
         boolean separateWorldViews = explicitViews || item.definition().hasPlayerHead() || hasDifferentPartTransforms(item, models);
         List<? extends BedrockItemRenderStrategy> strategies = BedrockItemRenderStrategy.forItem(item);
+        ItemFeatures features = ItemFeatures.from(item);
         boolean contextual = separateWorldViews
                 || strategies.getFirst() != BedrockItemRenderStrategy.DEFAULT
                 || item.useBehavior().animation() != ItemBehaviorDescription.UseAnimation.NONE
-                || BedrockEquipmentResources.hasAsset(item)
-                || hasUseConditions(item.definition().rules()) || BedrockDyedItem.hasDye(item.definition().rules())
+                || features.hasEquipmentAsset()
+                || hasUseConditions(item.definition().rules())
+                || features.hasDye()
                 || requiresAffineBones(item.definition().rules());
 
         Key base = item.bedrockId();
@@ -50,7 +57,8 @@ record BedrockItemPresentation(ResolvedItemBinding item,
                 result.add(new BedrockItemPresentation(item, id, variant.conditions(), variant.rules(), variant.idleRules(strategy), strategy, explicitViews, separateWorldViews));
             }
         }
-        return new Plan(contextual, result);
+
+        return new Plan(contextual, features, result);
     }
 
     static boolean hasUseConditions(List<ItemBindingRule> rules) {
@@ -62,6 +70,7 @@ record BedrockItemPresentation(ResolvedItemBinding item,
         return false;
     }
 
+    @SuppressWarnings("DeconstructionCanBeUsed")
     private static boolean requiresAffineBones(List<ItemBindingRule> rules) {
         for (ItemBindingRule rule : rules) {
             if (!rule.transformations().isEmpty() && !BedrockModelTransform.canBakeCubes(BedrockModelTransform.compose(rule.transformations()))) {
@@ -116,6 +125,29 @@ record BedrockItemPresentation(ResolvedItemBinding item,
     }
 
     // contextual 决定生成路径；variants 为空表示没有输出，始终返回有效计划而非 null
-    record Plan(boolean contextual, List<BedrockItemPresentation> variants) {
+    record Plan(boolean contextual, ItemFeatures features, List<BedrockItemPresentation> variants) {
+    }
+
+    record ItemFeatures(@Nullable String equipmentSlot, @Nullable Key equipmentAssetId, boolean hasDye) {
+
+        static ItemFeatures from(ResolvedItemBinding item) {
+            boolean hasDye = BedrockDyedItem.hasDye(item.definition().rules());
+            JsonElement equippable = item.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
+            if (!(equippable instanceof JsonObject equipment)) {
+                return new ItemFeatures(null, null, hasDye);
+            }
+            String slot = equipment.get("slot").getAsString();
+            JsonElement assetId = equipment.get("asset_id");
+            return new ItemFeatures(slot, assetId == null ? null : Key.of(assetId.getAsString()), hasDye);
+        }
+
+        boolean hasEquipmentAsset() {
+            return this.equipmentAssetId != null;
+        }
+
+        boolean usesHeadModel() {
+            // 帽子可直接用物品模型生成 _view_head，声明装备外观的头盔使用装备贴图
+            return !this.hasEquipmentAsset() && "head".equals(this.equipmentSlot);
+        }
     }
 }

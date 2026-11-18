@@ -3,8 +3,9 @@ package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
+import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
@@ -206,7 +207,7 @@ public final class BedrockItemDisplayBlocks {
 
         // 几何文件根对象
         JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.21.0"); // 几何格式版本
+        file.addProperty(FORMAT_VERSION, BedrockFormatVersions.GEOMETRY); // 几何格式版本
         file.add("minecraft:geometry", geometries); // 几何定义入口
         Path geometryPath = root.resolve("models/blocks/" + display.name() + ".geo.json"); // 几何文件输出路径
         Files.createDirectories(geometryPath.getParent()); // 创建模型目录

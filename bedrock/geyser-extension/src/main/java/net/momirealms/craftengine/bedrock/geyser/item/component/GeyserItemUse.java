@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+
 final class GeyserItemUse {
     private static final Set<String> SPEAR_ITEMS = Set.of(
             "minecraft:wooden_spear",
@@ -31,12 +33,11 @@ final class GeyserItemUse {
         if (behavior == null) {
             return null;
         }
-        JsonObject use = behavior.getAsJsonObject("use");
-        String animation = use.get("animation").getAsString();
-        int ticks = use.getAsJsonObject("maximumDuration").get("value").getAsInt();
-        JsonObject chargeDuration = use.getAsJsonObject("chargeDuration");
-        int chargeTicks = chargeDuration == null ? 0 : chargeDuration.get("value").getAsInt();
-        boolean using = !animation.equals("NONE") || ticks > 0 || use.get("nativeUseOnRelease").getAsBoolean();
+        JsonObject use = behavior.getAsJsonObject(USE);
+        String animation = use.get(ANIMATION).getAsString();
+        int ticks = maximumDurationTicks(use);
+        int chargeTicks = chargeDurationTicks(use);
+        boolean using = !animation.equals("NONE") || ticks > 0 || use.get(NATIVE_USE_ON_RELEASE).getAsBoolean();
         boolean spearUse = animation.equals("SPEAR");
         boolean spearPose = spearUse || SPEAR_ITEMS.contains(itemType);
         JsonElement kinetic = components.get("minecraft:kinetic_weapon");
@@ -88,5 +89,19 @@ final class GeyserItemUse {
             converted.putCompound("item_properties", properties.build());
             return data.toBuilder().putCompound("components", converted.build()).build();
         };
+    }
+
+    static int maximumDurationTicks(JsonObject use) {
+        JsonElement ticks = use.get(MAX_DURATION_TICKS);
+        return ticks != null ? ticks.getAsInt() : use.getAsJsonObject("maximumDuration").get("value").getAsInt();
+    }
+
+    private static int chargeDurationTicks(JsonObject use) {
+        JsonElement ticks = use.get(CHARGE_DURATION_TICKS);
+        if (ticks != null) {
+            return ticks.getAsInt();
+        }
+        JsonObject chargeDuration = use.getAsJsonObject("chargeDuration");
+        return chargeDuration == null ? 0 : chargeDuration.get("value").getAsInt();
     }
 }

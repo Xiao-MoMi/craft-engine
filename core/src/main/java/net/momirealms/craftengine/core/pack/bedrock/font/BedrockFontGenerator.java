@@ -17,16 +17,14 @@ import java.nio.file.StandardCopyOption;
 
 /**
  * 生成基岩字形图集，并将字符映射和容器标题的布局度量写入 {@code craftengine/glyphs.json}。
- * {@code metrics} 先按字体 ID，再按 Java 字符码位的小写十六进制字符串索引。
+ * 根对象按字体 ID 索引，每个字体按 Java 字符码位的小写十六进制字符串索引
  * 普通文本从字形的 {@code character} 读取替换码位；容器标题还使用同一条记录里的布局度量。
  * <pre>{@code
  * {
- *   "metrics": {
- *     "test:ref": {
- *       "21": { "character": -1,    "advance": -2.0, "rendered_advance": 0, "bearing": 0 },
- *       "4e": { "character": 78,    "advance":  9.0, "rendered_advance": 9, "bearing": 0 },
- *       "5a": { "character": 58112, "advance":  8.0, "rendered_advance": 8, "bearing": 1 }
- *     }
+ *   "test:ref": {
+ *     "21": { "character": -1,    "advance": -2.0, "rendered_advance": 0, "bearing": 0 },
+ *     "4e": { "character": 78,    "advance":  9.0, "rendered_advance": 9, "bearing": 0 },
+ *     "5a": { "character": 58112, "advance":  8.0, "rendered_advance": 8, "bearing": 1 }
  *   }
  * }
  * }</pre>
@@ -61,10 +59,8 @@ public final class BedrockFontGenerator {
         copySpacerPage(directory);
 
         // 写入扩展所需数据
-        JsonObject result = new JsonObject();
-        result.add("metrics", layouts);
         Files.createDirectories(glyphData.getParent());
-        GsonHelper.writeJsonFile(result, glyphData);
+        GsonHelper.writeJsonFile(layouts, glyphData);
     }
 
     private static void addFont(Key font, Int2ObjectMap<Glyph> glyphs, GlyphAtlas atlas, JsonObject layouts) {

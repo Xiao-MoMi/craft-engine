@@ -212,15 +212,15 @@ public final class GeyserNativeModels {
         }
 
         private void register(GeyserDefineEntityPropertiesEvent event) {
-            this.dye = GeyserDyeProperties.register(event, this.id, "craftengine:model_dye");
-            this.sx = event.registerFloatProperty(this.id, Identifier.of("craftengine:model_sx"), -1000, 1000, 1f);
-            this.sy = event.registerFloatProperty(this.id, Identifier.of("craftengine:model_sy"), -1000, 1000, 1f);
-            this.sz = event.registerFloatProperty(this.id, Identifier.of("craftengine:model_sz"), -1000, 1000, 1f);
+            this.dye = GeyserDyeProperties.register(event, this.id, "ce:model_dye");
+            this.sx = event.registerFloatProperty(this.id, Identifier.of("ce:model_sx"), -1000, 1000, 1f);
+            this.sy = event.registerFloatProperty(this.id, Identifier.of("ce:model_sy"), -1000, 1000, 1f);
+            this.sz = event.registerFloatProperty(this.id, Identifier.of("ce:model_sz"), -1000, 1000, 1f);
             for (int i = 0; i < (this.animations.size() + 8) / 9; i++) {
-                this.animationProperties.add(event.registerIntegerProperty(this.id, Identifier.of("craftengine:model_anim" + i), 0, 262143, 0));
+                this.animationProperties.add(event.registerIntegerProperty(this.id, Identifier.of("ce:model_anim" + i), 0, 262143, 0));
             }
             for (int i = 0; i < (this.boneIndices.size() + 18) / 19; i++) {
-                this.boneProperties.add(event.registerIntegerProperty(this.id, Identifier.of("craftengine:model_bone" + i), 0, 524287, 0));
+                this.boneProperties.add(event.registerIntegerProperty(this.id, Identifier.of("ce:model_bone" + i), 0, 524287, 0));
             }
         }
 

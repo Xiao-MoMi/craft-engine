@@ -1,5 +1,4 @@
 {
-  "format_version": "1.10.0",
   "animations": {
     "animation.spear.held_first_person": {
       "loop": true,

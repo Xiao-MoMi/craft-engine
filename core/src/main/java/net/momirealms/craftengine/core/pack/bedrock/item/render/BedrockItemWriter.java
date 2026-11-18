@@ -36,39 +36,32 @@ public final class BedrockItemWriter {
     public List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemGenerationContext context) throws IOException {
         BedrockItemPresentation.Plan plan = BedrockItemPresentation.plan(entry, this.resources.models());
         if (plan.contextual()) {
-            return this.contextWriter.write(entry, plan.variants(), context);
+            return this.contextWriter.write(entry, plan, context);
         }
 
         // 资源分类仍按整个定义决定；注册分支、编号和闲置规则已在规划阶段选定
         ItemVisualType type = ItemVisualType.classify(entry.definition(), this.renderer);
         List<GeneratedItemVariant> variants = new ObjectArrayList<>(plan.variants().size());
         for (BedrockItemPresentation presentation : plan.variants()) {
-            ItemBindingRule rule = presentation.rulesByContext().get(ItemDisplayContext.GUI).getFirst();
-            Key id = presentation.id();
             try {
                 GeneratedItemVariant variant = this.writeVariant(presentation, context, type);
                 this.visuals.writeWorldAliases(variant, false, context, variants);
                 variants.add(variant);
             } catch (BedrockResourceException exception) {
-                TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", id.asString(), entry.itemModel().asString(), rule.sourcePath(), exception.getLocalizedMessage());
+                ItemBindingRule rule = presentation.rulesByContext().get(ItemDisplayContext.GUI).getFirst();
+                TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", presentation.id().asString(), entry.itemModel().asString(), rule.sourcePath(), exception.getLocalizedMessage());
             }
         }
         return variants;
     }
 
-    @SuppressWarnings("DeconstructionCanBeUsed")
     private GeneratedItemVariant writeVariant(BedrockItemPresentation presentation,
                                               BedrockItemGenerationContext context,
                                               ItemVisualType type) throws IOException {
-        Key id = presentation.id();
         ItemBindingRule rule = presentation.rulesByContext().get(ItemDisplayContext.GUI).getFirst();
-        if (rule.target() != ItemRenderTarget.Builtin.EMPTY && !(rule.target() instanceof ItemRenderTarget.Model)
-                && !(rule.target() instanceof ItemRenderTarget.Composite)) {
-            throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", rule.target().toString());
-        }
         List<ItemBindingRule> parts = BedrockItemVisualWriter.modelParts(rule);
         if (parts.isEmpty()) {
-            return BedrockItemVisualWriter.transparent(id, presentation.conditions(), presentation.idleRules(), context);
+            return BedrockItemVisualWriter.transparent(presentation.id(), presentation.conditions(), presentation.idleRules(), context);
         }
         return switch (type) {
             case DISPLAY_BLOCK -> this.writeDisplayBlock(presentation, context, rule, parts);
@@ -96,8 +89,8 @@ public final class BedrockItemWriter {
     private GeneratedItemVariant writeIcon(BedrockItemPresentation presentation,
                                            BedrockItemGenerationContext context,
                                            List<ItemBindingRule> parts) throws IOException {
-        Key id = presentation.id();
         BedrockTexture icon = this.visuals.renderIcon(parts, false);
+        Key id = presentation.id();
         String texture = BedrockItemVisualWriter.writeIconTexture(id, icon, context);
         JavaModel model = ((ItemRenderTarget.Model) parts.getFirst().target()).resolve(this.resources.models());
         boolean attachable = this.renderer.needsHandheldAttachable(model);

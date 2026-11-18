@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -35,7 +36,7 @@ public final class BedrockSpear2DAttachables {
         attachment.animationNames.addProperty("held_first_person", "animation.spear.held_first_person");
         attachment.animationNames.addProperty("held_third_person", "animation.spear.held_third_person");
         attachment.animationNames.addProperty("held", "controller.animation.spear.held");
-        attachment.animationNames.addProperty("hit", "animation.craftengine.spear.hit");
+        attachment.animationNames.addProperty("hit", "animation.ce.spear.hit");
         attachment.animationNames.addProperty("hit_controller", "controller.animation.spear.hit");
         attachment.animate.add("held");
         attachment.animate.add("hit_controller");
@@ -46,9 +47,8 @@ public final class BedrockSpear2DAttachables {
         JsonObject nativeAnimations = animationFile.getAsJsonObject("animations");
         JsonObject hit = nativeAnimations.remove("animation.spear.hit").getAsJsonObject();
         JsonObject hitAnimations = new JsonObject();
-        hitAnimations.add("animation.craftengine.spear.hit", hit);
-        animationFile.add("animations", hitAnimations);
-        ResourcePackUtils.writeJson(animationFile, root.resolve("animations/craftengine/shared/spear_hit.animation.json"));
+        hitAnimations.add("animation.ce.spear.hit", hit);
+        ResourcePackUtils.writeBedrockJson(BedrockFormatVersions.ANIMATION, "animations", hitAnimations, root.resolve("animations/ce/shared/spear_hit.animation.json"));
     }
 
     private static JsonObject geometry(String identifier, String texture) {

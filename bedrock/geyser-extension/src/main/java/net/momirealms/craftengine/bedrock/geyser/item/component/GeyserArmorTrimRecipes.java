@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.function.IntSupplier;
 
 final class GeyserArmorTrimRecipes {
-    static final String BASE_TAG_PREFIX = "craftengine:trim_base/";
+    static final String BASE_TAG_PREFIX = "ce:trim_base/";
 
     private GeyserArmorTrimRecipes() {
     }
@@ -35,7 +35,7 @@ final class GeyserArmorTrimRecipes {
             ItemDescriptorWithCount ingredient = new ItemDescriptorWithCount(
                     new ItemTagDescriptor(baseTag(base.getItemId().getIdentifier())), recipe.getBase().getCount());
             int netId = nextId.getAsInt();
-            packet.getSmithingTrimData().add(SmithingTrimRecipeData.of("craftengine:trim/" + netId,
+            packet.getSmithingTrimData().add(SmithingTrimRecipeData.of("ce:trim/" + netId,
                     ingredient, recipe.getAddition(), recipe.getTemplate(), recipe.getTag(), netId));
         }
         return packet;

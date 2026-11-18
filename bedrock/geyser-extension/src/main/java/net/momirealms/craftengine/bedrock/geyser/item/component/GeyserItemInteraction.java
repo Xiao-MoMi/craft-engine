@@ -5,6 +5,10 @@ import com.google.gson.JsonObject;
 import org.cloudburstmc.nbt.NbtMap;
 import org.jetbrains.annotations.Nullable;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ANIMATION;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NATIVE_USE_ON_RELEASE;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.USE;
+
 final class GeyserItemInteraction {
     private static final NbtMap USE_BUTTON = NbtMap.builder().putString("value", "action.interact.use").build();
 
@@ -14,10 +18,10 @@ final class GeyserItemInteraction {
     static GeyserItemComponentPatch read(@Nullable JsonObject behavior, JsonObject components) {
         boolean using = false;
         if (behavior != null) {
-            JsonObject use = behavior.getAsJsonObject("use");
-            using = !use.get("animation").getAsString().equals("NONE")
-                    || use.getAsJsonObject("maximumDuration").get("value").getAsInt() > 0
-                    || use.get("nativeUseOnRelease").getAsBoolean();
+            JsonObject use = behavior.getAsJsonObject(USE);
+            using = !use.get(ANIMATION).getAsString().equals("NONE")
+                    || GeyserItemUse.maximumDurationTicks(use) > 0
+                    || use.get(NATIVE_USE_ON_RELEASE).getAsBoolean();
         }
         JsonElement equippable = components.get("minecraft:equippable");
         boolean swappable = true;

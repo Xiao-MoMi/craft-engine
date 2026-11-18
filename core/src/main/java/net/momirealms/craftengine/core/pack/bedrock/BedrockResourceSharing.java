@@ -62,24 +62,26 @@ public final class BedrockResourceSharing {
     private static Map<String, String> shareTextures(Path root, Set<String> references, Set<String> animatedTiles, List<Path> redundantFiles) throws IOException {
         Map<String, String> pathsByHash = new HashMap<>();
         Map<String, String> aliases = new HashMap<>();
-        for (String directory : List.of("textures/ce", "textures/craftengine")) {
-            for (Path file : files(root.resolve(directory), ".png")) {
-                String path = root.relativize(file).toString().replace('\\', '/');
-                String texture = path.substring(0, path.length() - 4);
-                if (!references.contains(texture) && !references.contains(path)) {
-                    continue;
-                }
-                // flipbook 会更新地形图集槽位；首帧相同不代表整段动画相同，保留这些槽位的独立路径。
-                if (animatedTiles.contains(texture) || animatedTiles.contains(path)) {
-                    continue;
-                }
-                String shared = pathsByHash.putIfAbsent(HashUtils.sha1(file), path);
-                // 哈希只用于索引；逐字节确认相同，保留 PNG 元数据及透明像素的原始语义。
-                if (shared != null && Files.mismatch(root.resolve(shared), file) == -1L) {
-                    aliases.put(path, shared);
-                    aliases.put(texture, shared.substring(0, shared.length() - 4));
-                    redundantFiles.add(file);
-                }
+        Path nativeTextures = root.resolve(BedrockPackLayout.NATIVE_MODEL_TEXTURES);
+        for (Path file : files(root.resolve(BedrockPackLayout.CRAFTENGINE_TEXTURES), ".png")) {
+            if (file.startsWith(nativeTextures)) {
+                continue;
+            }
+            String path = root.relativize(file).toString().replace('\\', '/');
+            String texture = path.substring(0, path.length() - 4);
+            if (!references.contains(texture) && !references.contains(path)) {
+                continue;
+            }
+            // flipbook 会更新地形图集槽位；首帧相同不代表整段动画相同，保留这些槽位的独立路径。
+            if (animatedTiles.contains(texture) || animatedTiles.contains(path)) {
+                continue;
+            }
+            String shared = pathsByHash.putIfAbsent(HashUtils.sha1(file), path);
+            // 哈希只用于索引；逐字节确认相同，保留 PNG 元数据及透明像素的原始语义。
+            if (shared != null && Files.mismatch(root.resolve(shared), file) == -1L) {
+                aliases.put(path, shared);
+                aliases.put(texture, shared.substring(0, shared.length() - 4));
+                redundantFiles.add(file);
             }
         }
         return aliases;
@@ -105,7 +107,7 @@ public final class BedrockResourceSharing {
                 JsonObject geometry = iterator.next().getAsJsonObject();
                 JsonObject description = geometry.getAsJsonObject("description");
                 String id = description.get("identifier").getAsString();
-                if (!references.contains(id) || !(id.startsWith("geometry.craftengine.") || id.startsWith("geometry.item_display."))) {
+                if (!references.contains(id) || !(id.startsWith(BedrockPackLayout.GEOMETRY_PREFIX) || id.startsWith("geometry.item_display."))) {
                     continue;
                 }
                 // 仅忽略标识符；格式版本、骨骼名、UV、材质槽和所有显示变换都参与比较。
@@ -206,36 +208,6 @@ public final class BedrockResourceSharing {
         }
     }
 
-    private static boolean replaceStrings(JsonElement value, Map<String, String> aliases) {
-        boolean changed = false;
-        if (value instanceof JsonObject object) {
-            for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-                String replacement = alias(entry.getValue(), aliases);
-                if (replacement != null) {
-                    entry.setValue(new JsonPrimitive(replacement));
-                    changed = true;
-                } else {
-                    changed |= replaceStrings(entry.getValue(), aliases);
-                }
-            }
-        } else if (value instanceof JsonArray array) {
-            for (int i = 0; i < array.size(); i++) {
-                String replacement = alias(array.get(i), aliases);
-                if (replacement != null) {
-                    array.set(i, new JsonPrimitive(replacement));
-                    changed = true;
-                } else {
-                    changed |= replaceStrings(array.get(i), aliases);
-                }
-            }
-        }
-        return changed;
-    }
-
-    private static String alias(JsonElement value, Map<String, String> aliases) {
-        return value instanceof JsonPrimitive primitive && primitive.isString() ? aliases.get(primitive.getAsString()) : null;
-    }
-
     private record References(Path path, JsonElement document, List<Reference> textures, List<Reference> geometries) {
     }
 
@@ -245,13 +217,7 @@ public final class BedrockResourceSharing {
         }
 
         private boolean replace(Map<String, String> aliases) {
-            JsonElement value = this.value();
-            String replacement = alias(value, aliases);
-            if (replacement != null) {
-                this.object.addProperty(this.key, replacement);
-                return true;
-            }
-            return replaceStrings(value, aliases);
+            return GsonHelper.replaceStringValues(this.object, this.key, aliases);
         }
     }
 

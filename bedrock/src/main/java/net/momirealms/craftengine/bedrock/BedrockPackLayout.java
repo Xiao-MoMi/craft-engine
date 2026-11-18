@@ -1,27 +1,40 @@
 package net.momirealms.craftengine.bedrock;
 
 public final class BedrockPackLayout {
+    public static final String NAMESPACE = "ce";
+    public static final String ID_PREFIX = NAMESPACE + ':';
+    public static final String PATH_PREFIX = NAMESPACE + '/';
+    public static final String GEOMETRY_PREFIX = "geometry." + NAMESPACE + '.';
+    public static final String DYED_ICON_PREFIX = NAMESPACE + "_dye:";
+
     public static final String BOSS_BARS = "craftengine/boss_bars.json";
-    public static final String SOUND_MAPPINGS = "craftengine/sound_mappings.json";
+    public static final String SOUND_MAPPINGS = "craftengine/sounds.json";
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
     public static final String GLYPHS = "craftengine/glyphs.json";
+    public static final String CRAFTENGINE_TEXTURES = "textures/" + NAMESPACE;
+    public static final String NATIVE_MODEL_TEXTURES = CRAFTENGINE_TEXTURES + "/native";
+    public static final String CRAFTENGINE_PARTICLE_TEXTURES = "textures/particle/" + NAMESPACE;
+    public static final String CRAFTENGINE_SOUNDS = "sounds/" + NAMESPACE;
     public static final String TERRAIN_TEXTURE_ATLAS = "textures/terrain_texture.json";
     public static final String FLIPBOOK_TEXTURES = "textures/flipbook_textures.json";
     public static final String DYE_COLOR = "dye_color";
-    public static final String MAIN_HAND_DYE = "craftengine:main_hand_dye";
-    public static final String OFF_HAND_DYE = "craftengine:off_hand_dye";
-    public static final String DISPLAY_DYE = "craftengine:display_dye";
+    public static final String ICON = "icon";
+    public static final String DYED_ICON = "dyed_icon";
+    public static final String MAIN_HAND_DYE = ID_PREFIX + "main_hand_dye";
+    public static final String OFF_HAND_DYE = ID_PREFIX + "off_hand_dye";
+    public static final String DISPLAY_DYE = ID_PREFIX + "display_dye";
     public static final String ELYTRA_VARIANTS = "elytra_variants";
-    public static final String ELYTRA_VARIANT_PROPERTY = "craftengine:elytra_variant";
+    public static final String ELYTRA_VARIANT_PROPERTY = ID_PREFIX + "elytra_variant";
     public static final String DISPLAY_BLOCK = "display_block";
+    public static final String GEYSER_CUSTOM_BLOCK_PREFIX = "geyser_custom:";
     public static final String NAME = "name";
     public static final String GEOMETRY = "geometry";
     public static final String MATERIALS = "materials";
     public static final String TINT_METHODS = "tint_methods";
     public static final String ITEM_TEXTURE_ATLAS = "textures/item_texture.json";
-    public static final String PLAYER_ANIMATION_CONTROLLER = "animation_controllers/craftengine/shared/player.animation_controllers.json";
+    public static final String PLAYER_ANIMATION_CONTROLLER = "animation_controllers/" + PATH_PREFIX + "shared/player.animation_controllers.json";
 
     public static final String KIND = "kind";
     public static final String FORMAT_VERSION = "format_version";
@@ -44,8 +57,8 @@ public final class BedrockPackLayout {
     public static final String VALUES = "values";
     public static final String NEGATED = "negated";
     public static final String SCALE = "scale";
-    public static final String MIN = "min";
-    public static final String MAX = "max";
+    public static final String MIN_INCLUSIVE = "min_inclusive";
+    public static final String MAX_EXCLUSIVE = "max_exclusive";
 
     public static final String ATTACHABLE = "attachable";
     public static final String UNSUPPORTED_REASON = "unsupported_reason";
@@ -53,11 +66,16 @@ public final class BedrockPackLayout {
     public static final String ITEM_ID = "item_id";
     public static final String CLIENT_BEHAVIOR = "client_behavior";
     public static final String PLACES_BLOCK = "places_block";
+    public static final String USE = "use";
+    public static final String ANIMATION = "animation";
+    public static final String MAX_DURATION_TICKS = "max_duration_ticks";
+    public static final String CHARGE_DURATION_TICKS = "charge_duration_ticks";
+    public static final String NATIVE_USE_ON_RELEASE = "nativeUseOnRelease";
 
     private BedrockPackLayout() {
     }
 
     public static String dyedIconKey(String identifier) {
-        return "craftengine_dye:" + identifier.replace(':', '/');
+        return DYED_ICON_PREFIX + identifier.replace(':', '/');
     }
 }

@@ -13,6 +13,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+
 public final class BedrockShieldPlayerAnimations {
     private static final String MAIN_HAND = "ce_main_hand_shield";
     private static final String OFF_HAND = "ce_off_hand_shield";
@@ -46,9 +49,10 @@ public final class BedrockShieldPlayerAnimations {
 
     private static void writeBlockingPoses(Path root) throws IOException {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/shield.animation.json").getAsJsonObject();
+        animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         adaptHand(animationFile, "main_hand", "right", MAIN_BLOCKING, -30);
         adaptHand(animationFile, "off_hand", "left", OFF_BLOCKING, 30);
-        Path animationPath = root.resolve("animations/craftengine/shared/shield_player.animation.json");
+        Path animationPath = root.resolve("animations/ce/shared/shield_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
     }

@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+
 public final class BedrockItemAttachables {
     private static final float RADIANS = (float) (Math.PI / 180);
     private static final float PLAYER_SCALE = 0.9375f;
@@ -177,7 +179,7 @@ public final class BedrockItemAttachables {
         addRenderBindings(controller, "array.stage_geometries[variable.ce_stage]", "array.stage_textures[variable.ce_stage]");
         JsonObject definitions = new JsonObject();
         definitions.add(id, controller);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", definitions, path);
+        ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", definitions, path);
     }
 
     private static void addRenderBindings(JsonObject controller, String geometry, String texture) {

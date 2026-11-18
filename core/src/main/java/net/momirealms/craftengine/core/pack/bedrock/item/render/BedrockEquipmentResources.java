@@ -25,8 +25,24 @@ import java.util.Map;
 
 final class BedrockEquipmentResources {
     private static final List<String> TRIM_PATTERNS = List.of(
-            "bolt", "coast", "dune", "eye", "flow", "host", "raiser", "rib", "sentry",
-            "shaper", "silence", "snout", "spire", "tide", "vex", "ward", "wayfinder", "wild"
+            "bolt",
+            "coast",
+            "dune",
+            "eye",
+            "flow",
+            "host",
+            "raiser",
+            "rib",
+            "sentry",
+            "shaper",
+            "silence",
+            "snout",
+            "spire",
+            "tide",
+            "vex",
+            "ward",
+            "wayfinder",
+            "wild"
     );
     private final JavaModelResources resources;
     private final Map<Key, JsonObject> definitions = new HashMap<>();
@@ -36,20 +52,12 @@ final class BedrockEquipmentResources {
         this.resources = resources;
     }
 
-    static boolean hasAsset(ResolvedItemBinding entry) {
-        JsonElement value = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
-        return value != null && value.isJsonObject() && value.getAsJsonObject().has("asset_id");
-    }
-
     @Nullable
-    Appearance resolve(ResolvedItemBinding entry, Path root) throws IOException {
-        if (!hasAsset(entry)) {
+    Appearance resolve(ResolvedItemBinding entry, @Nullable String equipmentSlot, @Nullable Key asset, Path root) throws IOException {
+        if (asset == null) {
             return null;
         }
-        JsonObject equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE).getAsJsonObject();
         try {
-            String equipmentSlot = equipment.get("slot").getAsString();
-            Key asset = Key.of(equipment.get("asset_id").getAsString());
             JsonObject definition = this.definitions.get(asset);
             if (definition == null) {
                 definition = this.resources.pack().readJson("assets/" + asset.namespace() + "/equipment/" + asset.value() + ".json");
@@ -72,7 +80,7 @@ final class BedrockEquipmentResources {
                 String texture = this.textures.get(key);
                 if (texture == null) {
                     BufferedImage image = this.compose(layers.getAsJsonArray(slot.layer), slot.layer, dye);
-                    texture = "textures/craftengine/equipment/" + asset.namespace() + '/' + asset.value() + '/' + slot.layer
+                    texture = "textures/ce/equipment/" + asset.namespace() + '/' + asset.value() + '/' + slot.layer
                             + (dye == null ? "_undyed" : "_" + Integer.toHexString(dye));
                     ImageUtils.writePng(image, root.resolve(texture + ".png"));
                     this.textures.put(key, texture);
@@ -81,6 +89,7 @@ final class BedrockEquipmentResources {
             }
             return appearances.isEmpty() ? null : new Appearance(List.copyOf(appearances));
         } catch (BedrockResourceException exception) {
+            JsonElement equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
             TranslationManager.warn("resource_pack.bedrock.item.armor_skipped", entry.bedrockId().asString(), equipment.toString(), exception.getLocalizedMessage());
             return null;
         }
@@ -139,7 +148,7 @@ final class BedrockEquipmentResources {
         LEGGINGS("legs", "humanoid_leggings", "geometry.humanoid.armor.leggings", "leg"),
         BOOTS("feet", "humanoid", "geometry.humanoid.armor.boots", "boot"),
         WINGS("chest", "wings", "geometry.elytra", "chest"),
-        WOLF("body", "wolf_body", "geometry.craftengine.wolf.armor", null),
+        WOLF("body", "wolf_body", "geometry.ce.wolf.armor", null),
         HORSE("body", "horse_body", null, null);
 
         private final String equipmentSlot;

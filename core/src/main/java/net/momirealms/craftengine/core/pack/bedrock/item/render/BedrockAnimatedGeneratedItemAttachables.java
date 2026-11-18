@@ -21,6 +21,10 @@ import java.nio.file.Path;
 import java.util.BitSet;
 import java.util.List;
 
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
 import static net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource.WHITE;
 
 public final class BedrockAnimatedGeneratedItemAttachables {
@@ -115,7 +119,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         bones.add(child);
         JsonArray geometries = new JsonArray();
         geometries.add(geometry);
-        ResourcePackUtils.writeBedrockJson("1.16.0", "minecraft:geometry", geometries, root.resolve("models/entity/" + resource + ".geo.json"));
+        ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", geometries, root.resolve("models/entity/" + resource + ".geo.json"));
 
         JsonObject animations = new JsonObject();
         JsonObject names = new JsonObject();
@@ -132,7 +136,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         animations.add(animationPrefix + "mesh_pose", poseAnimation);
         names.addProperty("mesh_pose", animationPrefix + "mesh_pose");
         animate.add("mesh_pose");
-        ResourcePackUtils.writeBedrockJson("1.8.0", "animations", animations, root.resolve("animations/" + resource + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson(ANIMATION, "animations", animations, root.resolve("animations/" + resource + ".animation.json"));
 
         JsonObject controller = new JsonObject();
         controller.addProperty("geometry", "Geometry.default");
@@ -152,7 +156,7 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         controller.add("materials", selectedMaterials);
         JsonObject controllers = new JsonObject();
         controllers.add(controllerId, controller);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", controllers, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
+        ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", controllers, root.resolve("render_controllers/" + resource + ".render_controllers.json"));
 
         JsonObject attachment = new JsonObject();
         attachment.addProperty("identifier", id.asString());
@@ -175,6 +179,6 @@ public final class BedrockAnimatedGeneratedItemAttachables {
         attachment.add("render_controllers", activeControllers);
         JsonObject attachable = new JsonObject();
         attachable.add("description", attachment);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
+        ResourcePackUtils.writeBedrockJson(ATTACHABLE, "minecraft:attachable", attachable, root.resolve("attachables/" + resource + ".attachable.json"));
     }
 }

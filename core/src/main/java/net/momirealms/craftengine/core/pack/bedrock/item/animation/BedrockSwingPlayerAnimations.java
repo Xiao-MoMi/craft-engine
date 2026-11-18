@@ -16,6 +16,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+
 public final class BedrockSwingPlayerAnimations {
     private BedrockSwingPlayerAnimations() {
     }
@@ -71,6 +74,7 @@ public final class BedrockSwingPlayerAnimations {
 
     private static void writeRightArmAnimation(JsonObject rightArm, Path root) throws IOException {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/attack.animation.json").getAsJsonObject();
+        animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         JsonObject armBone = animationFile.getAsJsonObject("animations")
                 .getAsJsonObject("animation.player.first_person.attack_rotation")
                 .getAsJsonObject("bones")
@@ -82,7 +86,7 @@ public final class BedrockSwingPlayerAnimations {
                 vanilla.set(i, new JsonPrimitive("variable.ce_java_swing ? (" + replacement.get(i).getAsString() + ") : (" + vanilla.get(i).getAsString() + ")"));
             }
         }
-        Path animationPath = root.resolve("animations/craftengine/shared/swing_player.animation.json");
+        Path animationPath = root.resolve("animations/ce/shared/swing_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
     }

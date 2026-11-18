@@ -1,5 +1,4 @@
 {
-  "format_version": "1.20.60",
   "minecraft:attachable": {
     "description": {
       "identifier": "minecraft:elytra",
@@ -24,7 +23,7 @@
         "parent_setup": "variable.chest_layer_visible = 0.0;",
         "animate": [ "default_controller" ]
       },
-      "render_controllers": [ "controller.render.craftengine.elytra" ]
+      "render_controllers": [ "controller.render.ce.elytra" ]
     }
   }
 }

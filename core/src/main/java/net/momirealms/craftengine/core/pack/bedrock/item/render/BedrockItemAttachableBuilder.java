@@ -11,6 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+
 final class BedrockItemAttachableBuilder {
     static final String IN_HAND = "context.item_slot == 'main_hand' || context.item_slot == 'off_hand'";
 
@@ -50,11 +54,11 @@ final class BedrockItemAttachableBuilder {
     }
 
     void write(Path root, @Nullable JsonArray preAnimation) throws IOException {
-        ResourcePackUtils.writeBedrockJson("1.16.0", "minecraft:geometry", this.geometries,
+        ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", this.geometries,
                 root.resolve("models/entity/" + this.resource + ".geo.json"));
         // 仅引用原版动画的弩、矛没有本地动画定义，无需额外输出空文件。
         if (!this.animations.isEmpty()) {
-            ResourcePackUtils.writeBedrockJson(preAnimation == null ? "1.8.0" : "1.10.0", "animations", this.animations, root.resolve("animations/" + this.resource + ".animation.json"));
+            ResourcePackUtils.writeBedrockJson(ANIMATION, "animations", this.animations, root.resolve("animations/" + this.resource + ".animation.json"));
         }
 
         JsonObject description = new JsonObject();
@@ -73,6 +77,6 @@ final class BedrockItemAttachableBuilder {
         }
         description.add("scripts", scripts);
         description.add("render_controllers", this.controllers);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:attachable", GsonHelper.createObject("description", description), root.resolve("attachables/" + this.resource + ".attachable.json"));
+        ResourcePackUtils.writeBedrockJson(ATTACHABLE, "minecraft:attachable", GsonHelper.createObject("description", description), root.resolve("attachables/" + this.resource + ".attachable.json"));
     }
 }

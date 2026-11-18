@@ -20,6 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NAMESPACE;
+
 public final class BedrockItemResourceGenerator {
     private BedrockItemResourceGenerator() {
     }
@@ -68,7 +70,7 @@ public final class BedrockItemResourceGenerator {
             }
         }
         JsonObject atlas = new JsonObject();
-        atlas.addProperty("resource_pack_name", "craftengine");
+        atlas.addProperty("resource_pack_name", NAMESPACE);
         atlas.addProperty("texture_name", "atlas.items");
         atlas.add("texture_data", icons);
         Path output = root.resolve(BedrockPackLayout.ITEM_TEXTURE_ATLAS);

@@ -11,6 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+
 public final class BedrockBowPlayerAnimations {
     private BedrockBowPlayerAnimations() {
     }
@@ -36,6 +39,7 @@ public final class BedrockBowPlayerAnimations {
 
     private static void writeJavaBowPose(Set<Key> bowsUsingJavaPose, Path root) throws IOException {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/bow.animation.json").getAsJsonObject();
+        animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         JsonArray rotation = animationFile.getAsJsonObject("animations")
                 .getAsJsonObject("animation.player.bow_equipped")
                 .getAsJsonObject("bones")
@@ -43,7 +47,7 @@ public final class BedrockBowPlayerAnimations {
                 .getAsJsonArray("rotation");
         // Java display 已定义物品局部姿态，三维弓只复用双臂动作，不叠加原版挂点旋转。
         rotation.set(1, new JsonPrimitive(mainHandCondition(bowsUsingJavaPose) + " ? 0 : " + rotation.get(1).getAsString()));
-        Path animationPath = root.resolve("animations/craftengine/shared/bow_player.animation.json");
+        Path animationPath = root.resolve("animations/ce/shared/bow_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
     }

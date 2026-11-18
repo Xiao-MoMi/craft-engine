@@ -73,8 +73,17 @@ public final class ItemRegistrationPlanWriter {
         }
         json.add(VARIANTS, branches);
 
+        ItemBehaviorDescription.Use use = entry.useBehavior();
+        JsonObject useData = new JsonObject();
+        useData.addProperty(ANIMATION, use.animation().name());
+        useData.addProperty(MAX_DURATION_TICKS, use.maximumDuration().value());
+        if (use.chargeDuration() != null) {
+            useData.addProperty(CHARGE_DURATION_TICKS, use.chargeDuration().value());
+        }
+        useData.addProperty(NATIVE_USE_ON_RELEASE, use.nativeUseOnRelease());
+
         JsonObject behavior = new JsonObject();
-        behavior.add("use", GsonHelper.get().toJsonTree(entry.useBehavior()));
+        behavior.add(USE, useData);
         if (entry.clientBehavior().placesBlock()) {
             behavior.addProperty(PLACES_BLOCK, true);
         }
@@ -119,10 +128,10 @@ public final class ItemRegistrationPlanWriter {
                 range.property().writeProperty(json);
                 json.addProperty(SCALE, range.scale());
                 if (range.minInclusive() != null) {
-                    json.addProperty(MIN, range.minInclusive());
+                    json.addProperty(MIN_INCLUSIVE, range.minInclusive());
                 }
                 if (range.maxExclusive() != null) {
-                    json.addProperty(MAX, range.maxExclusive());
+                    json.addProperty(MAX_EXCLUSIVE, range.maxExclusive());
                 }
             }
         }

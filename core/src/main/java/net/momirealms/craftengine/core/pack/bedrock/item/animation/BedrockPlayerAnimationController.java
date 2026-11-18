@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.PLAYER_ANIMATION_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION_CONTROLLER;
 
 final class BedrockPlayerAnimationController {
     private final Path path;
@@ -30,6 +32,7 @@ final class BedrockPlayerAnimationController {
 
     void write() throws IOException {
         if (this.file != null) {
+            this.file.addProperty(FORMAT_VERSION, ANIMATION_CONTROLLER);
             Files.createDirectories(this.path.getParent());
             GsonHelper.writeJsonFile(this.file, this.path);
         }

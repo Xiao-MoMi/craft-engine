@@ -28,6 +28,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ATTACHABLE;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+
 public final class BedrockItem3DAttachables {
     private final Key id;
     private final Path root;
@@ -84,7 +89,7 @@ public final class BedrockItem3DAttachables {
         if (headId != null) {
             // 头槽和手持使用不同物品 ID，但引用同一套几何、动画和贴图。
             attachable.getAsJsonObject("description").addProperty("identifier", headId.asString());
-            ResourcePackUtils.writeBedrockJson("1.20.60", "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
+            ResourcePackUtils.writeBedrockJson(ATTACHABLE, "minecraft:attachable", attachable, root.resolve("attachables/" + headId.namespace() + '/' + headId.value() + ".attachable.json"));
         }
     }
 
@@ -113,8 +118,8 @@ public final class BedrockItem3DAttachables {
         if (this.armor != null) {
             this.armor.addResources(this.prefix, this.textureNames, this.geometryNames, this.renderControllers, this.activeControllers);
         }
-        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
-        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
+        ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", this.geometries, this.root.resolve("models/entity/" + this.resource + ".geo.json"));
+        ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", this.renderControllers, this.root.resolve("render_controllers/" + this.resource + ".render_controllers.json"));
     }
 
     private void groupContextGeometries() {
@@ -307,7 +312,7 @@ public final class BedrockItem3DAttachables {
             this.animate.add("local");
         }
         this.animate.addAll(poseAnimate);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson(ANIMATION, "animations", animations, this.root.resolve("animations/" + this.resource + ".animation.json"));
     }
 
     private JsonObject writeAttachable(JsonArray preAnimation) throws IOException {
@@ -336,7 +341,7 @@ public final class BedrockItem3DAttachables {
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);
-        ResourcePackUtils.writeBedrockJson("1.20.60", "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
+        ResourcePackUtils.writeBedrockJson(ATTACHABLE, "minecraft:attachable", attachable, this.root.resolve("attachables/" + this.resource + ".attachable.json"));
         return attachable;
     }
 

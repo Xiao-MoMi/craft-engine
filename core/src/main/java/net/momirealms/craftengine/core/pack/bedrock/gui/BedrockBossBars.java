@@ -19,7 +19,7 @@ import java.util.Map;
 
 public final class BedrockBossBars {
     private static final String SOURCE = "assets/minecraft/textures/gui/sprites/boss_bar/";
-    private static final String TEXTURES = "textures/craftengine/boss_bar/";
+    private static final String TEXTURES = "textures/ce/boss_bar/";
     private static final List<String> COLORS = List.of("pink", "blue", "red", "green", "yellow", "purple", "white");
     private static final List<String> DIVISIONS = List.of("none", "notched_6", "notched_10", "notched_12", "notched_20");
 

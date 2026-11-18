@@ -67,7 +67,7 @@ final class DisplayContextVariants {
             List<String> unsupportedProperties = new ObjectArrayList<>();
             boolean matchesFallback = true;
             for (ItemBindingCondition condition : rule.conditions()) {
-                // 显示位置由 branchesForView 筛选，使用状态由手持模型处理，两者都不区分物品变体
+                // 原规则保留完整条件。分组键只收集物品栈条件，显示位置用于筛选规则，使用状态留给渲染阶段
                 if (isDisplayCondition(condition) || strategy.isEquipmentCondition(condition)) {
                     continue;
                 }
@@ -86,7 +86,7 @@ final class DisplayContextVariants {
     }
 
     private static ViewBranches branchesForView(ResolvedItemBinding entry, List<PreparedRule> rules, ItemDisplayContext context) {
-        // 同一物品栈条件下可以有多个使用状态；列表保留 Java 分支顺序，交给后续阶段选择器处理
+        // 例如右手模型在损耗低于 200 时的松弦、拉弦规则同属一组，按 Java 分支顺序交给阶段选择器
         Map<List<ItemBindingCondition>, List<ItemBindingRule>> branches = new LinkedHashMap<>();
         String viewName = context.serializedName();
         JsonPrimitive view = new JsonPrimitive(viewName);
@@ -116,7 +116,8 @@ final class DisplayContextVariants {
         List<Variant> combined = new ObjectArrayList<>();
         for (Variant variant : variants) {
             for (Map.Entry<List<ItemBindingCondition>, List<ItemBindingRule>> branch : branches.byStackConditions().entrySet()) {
-                // 只有能同时满足各显示位置条件的物品栈，才需要一个共同的注册变体
+                // 同一物品栈需要满足各位置的分支条件。背包分支要求损耗至少 100、手持分支要求低于 200，交集为 [100, 200)
+                // 背包分支要求低于 100、手持分支要求至少 200 时，交集为空，丢弃这组搭配
                 List<ItemBindingCondition> conditions = ItemConditionIntersection.intersect(variant.conditions(), branch.getKey());
                 if (conditions == null) {
                     continue;
@@ -184,7 +185,7 @@ final class DisplayContextVariants {
         EnumMap<ItemDisplayContext, ItemBindingRule> idleRules(BedrockItemRenderStrategy strategy) {
             EnumMap<ItemDisplayContext, ItemBindingRule> result = new EnumMap<>(ItemDisplayContext.class);
             Map<List<ItemBindingRule>, ItemBindingRule> selected = new IdentityHashMap<>();
-            // 多个场景共享规则列表实例；闲置选择只取决于列表和当前策略，与场景无关。
+            // 按策略选中第一条闲置规则，供图标和展示实体使用。共享同一列表的场景只需扫描一次
             for (Map.Entry<ItemDisplayContext, List<ItemBindingRule>> entry : this.rules.entrySet()) {
                 ItemBindingRule idle = selected.get(entry.getValue());
                 if (idle == null) {

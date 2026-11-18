@@ -1173,7 +1173,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
-        public void generateBedrockPack(String input, String output) throws IOException {
+        public void generateBedrockPack(String input, String output, boolean protection) throws IOException {
             if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
                 throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.unsupported_version", MinecraftVersion.V1_21_4.version(), VersionHelper.MINECRAFT_VERSION.version()));
             }
@@ -1193,7 +1193,8 @@ public abstract class AbstractPackManager implements PackManager {
                         AbstractPackManager.this.collectGeyserWorldBlockSources(),
                         AbstractPackManager.this.collectGeyserNativeModels(),
                         AbstractPackManager.this.plugin.blockManager().soundReplacements(),
-                        dataPath
+                        dataPath,
+                        protection
                 );
             }
             TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));

@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
+
 public final class BedrockItemDisplayGenerator {
     private static final Key TRIDENT_ICON = Key.minecraft("item/trident");
     private static final Transformation SPECIAL_MODEL_FLIP = new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(1, -1, -1), new Quaternionf());
@@ -91,10 +93,10 @@ public final class BedrockItemDisplayGenerator {
         JsonObject result = new JsonObject();
         result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
         result.add("blocks", BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks()));
-        result.addProperty("vanilla_identifier", "craftengine:" + name + "_held");
+        result.addProperty("vanilla_identifier", ID_PREFIX + name + "_held");
         result.addProperty("convert_text", Config.bedrockConvertText());
         assets.finish();
-        result.addProperty("identifier", "craftengine:" + name);
+        result.addProperty("identifier", ID_PREFIX + name);
         result.add("items", items);
         result.add("appearances", appearances);
         if (!assets.customModelDataColors().isEmpty()) {

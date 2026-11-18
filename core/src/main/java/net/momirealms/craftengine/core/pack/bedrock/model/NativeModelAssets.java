@@ -28,6 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION_CONTROLLER;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+
 public final class NativeModelAssets {
     public static final String MANIFEST = BedrockPackLayout.NATIVE_MODELS;
     private final JsonObject blueprint;
@@ -71,7 +78,8 @@ public final class NativeModelAssets {
     }
 
     private JsonObject write(Path root, int maxLayers, String material) throws IOException {
-        int[] size = this.writeTexture(root);
+        String texture = BedrockPackLayout.NATIVE_MODEL_TEXTURES + '/' + this.stem;
+        int[] size = this.writeTexture(root.resolve(texture + ".png"));
         for (JsonElement element : this.blueprint.getAsJsonArray("elements")) {
             JsonObject cube = element.getAsJsonObject();
             if (cube.has("type") && List.of("bounding_box", "locator", "null_object", "camera").contains(cube.get("type").getAsString())) {
@@ -106,12 +114,12 @@ public final class NativeModelAssets {
         JsonObject geometry = new JsonObject();
         geometry.add("description", description);
         geometry.add("bones", this.bones);
-        JsonObject geometries = JsonParser.parseString("{\"format_version\":\"1.21.0\",\"minecraft:geometry\":[]}").getAsJsonObject();
+        JsonObject geometries = JsonParser.parseString("{\"minecraft:geometry\":[]}").getAsJsonObject();
         geometries.getAsJsonArray("minecraft:geometry").add(geometry);
-        this.save(root, "models/entity/craftengine/native/", ".geo.json", geometries);
+        this.save(root, "models/entity/ce/native/", ".geo.json", GEOMETRY, geometries);
 
         JsonObject manifest = new JsonObject();
-        manifest.addProperty("identifier", "craftengine:native_" + this.stem);
+        manifest.addProperty("identifier", "ce:native_" + this.stem);
         JsonObject names = new JsonObject();
         this.boneNames.forEach(names::addProperty);
         manifest.add("bones", names);
@@ -132,7 +140,7 @@ public final class NativeModelAssets {
                 String controllerId = "controller.animation.ce_native_" + this.stem + "." + alias;
                 JsonObject controller = JsonParser.parseString("{\"initial_state\":\"stop\",\"states\":{\"stop\":{\"transitions\":[]}}}").getAsJsonObject();
                 JsonObject states = controller.getAsJsonObject("states");
-                String property = "math.mod(math.floor(q.property('craftengine:model_anim" + index / 9 + "') / " + (1 << (index % 9 * 2)) + "), 4)";
+                String property = "math.mod(math.floor(q.property('ce:model_anim" + index / 9 + "') / " + (1 << (index % 9 * 2)) + "), 4)";
                 for (int mode = 1; mode <= 3; mode++) {
                     String variant = alias + "_" + mode;
                     JsonObject clip = converted.deepCopy();
@@ -158,18 +166,16 @@ public final class NativeModelAssets {
                 animate.add("c" + index);
             }
         }
-        JsonObject scaleAnimation = JsonParser.parseString("{\"loop\":true,\"bones\":{\"root\":{\"scale\":[\"q.property('craftengine:model_sx')\",\"q.property('craftengine:model_sy')\",\"q.property('craftengine:model_sz')\"]}}}").getAsJsonObject();
+        JsonObject scaleAnimation = JsonParser.parseString("{\"loop\":true,\"bones\":{\"root\":{\"scale\":[\"q.property('ce:model_sx')\",\"q.property('ce:model_sy')\",\"q.property('ce:model_sz')\"]}}}").getAsJsonObject();
         animations.add("animation.ce_native_" + this.stem + ".scale", scaleAnimation);
         aliases.addProperty("scale", "animation.ce_native_" + this.stem + ".scale");
         animate.add("scale");
         JsonObject animationFile = new JsonObject();
-        animationFile.addProperty("format_version", "1.8.0");
         animationFile.add("animations", animations);
-        this.save(root, "animations/craftengine/native/", ".json", animationFile);
+        this.save(root, "animations/ce/native/", ".json", ANIMATION, animationFile);
         JsonObject controllerFile = new JsonObject();
-        controllerFile.addProperty("format_version", "1.10.0");
         controllerFile.add("animation_controllers", controllers);
-        this.save(root, "animation_controllers/craftengine/native/", ".json", controllerFile);
+        this.save(root, "animation_controllers/ce/native/", ".json", ANIMATION_CONTROLLER, controllerFile);
 
         JsonObject render = JsonParser.parseString("{\"geometry\":\"Geometry.default\",\"materials\":[{\"*\":\"Material.default\"}],\"textures\":[\"Texture.default\"],\"part_visibility\":[]}").getAsJsonObject();
         int boneIndex = 0;
@@ -178,26 +184,26 @@ public final class NativeModelAssets {
             visible.addProperty(name, bit("bone", boneIndex++) + " == 0");
             render.getAsJsonArray("part_visibility").add(visible);
         }
-        JsonObject color = JsonParser.parseString("{\"r\":\"q.property('craftengine:model_dye_r') < 0 ? 1 : q.property('craftengine:model_dye_r') / 255\",\"g\":\"q.property('craftengine:model_dye_r') < 0 ? 1 : math.floor(q.property('craftengine:model_dye_gb') / 256) / 255\",\"b\":\"q.property('craftengine:model_dye_r') < 0 ? 1 : math.mod(q.property('craftengine:model_dye_gb'), 256) / 255\",\"a\":1}").getAsJsonObject();
-        JsonObject renderFile = JsonParser.parseString("{\"format_version\":\"1.8.0\",\"render_controllers\":{}}").getAsJsonObject();
+        JsonObject color = JsonParser.parseString("{\"r\":\"q.property('ce:model_dye_r') < 0 ? 1 : q.property('ce:model_dye_r') / 255\",\"g\":\"q.property('ce:model_dye_r') < 0 ? 1 : math.floor(q.property('ce:model_dye_gb') / 256) / 255\",\"b\":\"q.property('ce:model_dye_r') < 0 ? 1 : math.mod(q.property('ce:model_dye_gb'), 256) / 255\",\"a\":1}").getAsJsonObject();
+        JsonObject renderFile = JsonParser.parseString("{\"render_controllers\":{}}").getAsJsonObject();
         String renderId = "controller.render.ce_native_" + this.stem;
         renderFile.getAsJsonObject("render_controllers").add(renderId, render);
-        JsonObject entity = JsonParser.parseString("{\"format_version\":\"1.10.0\",\"minecraft:client_entity\":{\"description\":{\"materials\":{},\"textures\":{},\"geometry\":{},\"scripts\":{},\"render_controllers\":[]}}}").getAsJsonObject();
+        JsonObject entity = JsonParser.parseString("{\"minecraft:client_entity\":{\"description\":{\"materials\":{},\"textures\":{},\"geometry\":{},\"scripts\":{},\"render_controllers\":[]}}}").getAsJsonObject();
         JsonObject entityDescription = entity.getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
         entityDescription.getAsJsonObject("materials").addProperty("default", material);
         entityDescription.add("identifier", manifest.get("identifier"));
-        entityDescription.getAsJsonObject("textures").addProperty("default", "textures/ce_native/" + this.stem);
+        entityDescription.getAsJsonObject("textures").addProperty("default", texture);
         entityDescription.getAsJsonObject("geometry").addProperty("default", "geometry.ce_native_" + this.stem);
         entityDescription.add("animations", aliases);
         entityDescription.getAsJsonObject("scripts").add("animate", animate);
-        String defaultColor = "q.property('craftengine:model_dye_r') < 0 || (q.property('craftengine:model_dye_r') == 255 && q.property('craftengine:model_dye_gb') == 65535)";
+        String defaultColor = "q.property('ce:model_dye_r') < 0 || (q.property('ce:model_dye_r') == 255 && q.property('ce:model_dye_gb') == 65535)";
         JsonObject defaultController = new JsonObject();
         defaultController.addProperty(renderId, defaultColor);
         entityDescription.getAsJsonArray("render_controllers").add(defaultController);
         BitSet coverage = new BitSet(this.atlas.getWidth() * this.atlas.getHeight());
         coverage.set(0, this.atlas.getWidth() * this.atlas.getHeight());
         DisplayDyeMasks masks = new DisplayDyeMasks(new TextureData(this.atlas, null), coverage);
-        Int2ObjectMap<JsonArray> layers = masks.write("dye", "textures/ce_native/" + this.stem + "/", entityDescription.getAsJsonObject("textures"), root, maxLayers);
+        Int2ObjectMap<JsonArray> layers = masks.write("dye", texture + '/', entityDescription.getAsJsonObject("textures"), root, maxLayers);
         for (Int2ObjectMap.Entry<JsonArray> layer : layers.int2ObjectEntrySet()) {
             JsonObject tinted = render.deepCopy();
             tinted.add("textures", layer.getValue());
@@ -213,12 +219,12 @@ public final class NativeModelAssets {
             condition.addProperty(tintedId, "!(" + defaultColor + ")");
             entityDescription.getAsJsonArray("render_controllers").add(condition);
         }
-        this.save(root, "render_controllers/craftengine/native/", ".json", renderFile);
-        this.save(root, "entity/craftengine/native/", ".entity.json", entity);
+        this.save(root, "render_controllers/ce/native/", ".json", RENDER_CONTROLLER, renderFile);
+        this.save(root, "entity/ce/native/", ".entity.json", CLIENT_ENTITY, entity);
         return manifest;
     }
 
-    private int[] writeTexture(Path root) throws IOException {
+    private int[] writeTexture(Path output) throws IOException {
         int width = 1;
         int height = 0;
         JsonObject resolution = this.blueprint.getAsJsonObject("resolution");
@@ -248,7 +254,6 @@ public final class NativeModelAssets {
         } finally {
             graphics.dispose();
         }
-        Path output = root.resolve("textures/ce_native/" + this.stem + ".png");
         Files.createDirectories(output.getParent());
         try (java.io.OutputStream stream = Files.newOutputStream(output)) {
             ImageIO.write(atlas, "png", stream);
@@ -400,14 +405,15 @@ public final class NativeModelAssets {
         return value;
     }
 
-    private void save(Path root, String directory, String suffix, JsonObject value) throws IOException {
+    private void save(Path root, String directory, String suffix, String formatVersion, JsonObject value) throws IOException {
+        value.addProperty(FORMAT_VERSION, formatVersion);
         Path output = root.resolve(directory + this.stem + suffix);
         Files.createDirectories(output.getParent());
         GsonHelper.writeJsonFile(value, output);
     }
 
     private static String bit(String name, int index) {
-        return "math.mod(math.floor(q.property('craftengine:model_" + name + index / 19 + "') / " + (1 << (index % 19)) + "), 2)";
+        return "math.mod(math.floor(q.property('ce:model_" + name + index / 19 + "') / " + (1 << (index % 19)) + "), 2)";
     }
 
     private static JsonArray transformed(JsonArray value, double x, double y, double z, double fallback) {

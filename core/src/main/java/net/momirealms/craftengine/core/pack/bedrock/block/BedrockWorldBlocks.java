@@ -4,11 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
-import net.momirealms.craftengine.core.pack.bedrock.sound.BedrockSounds;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockElementGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.sound.BedrockSounds;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -93,7 +94,7 @@ public final class BedrockWorldBlocks {
                         visualState, first.id().asString(), group.toString(), source.id().asString(), other.toString()));
             }
         }
-        String name = "craftengine/world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
+        String name = PATH_PREFIX + "world/" + first.id().namespace() + '/' + first.id().value() + "/state_" + first.stateIndex();
         List<JavaBlockModelResolver.Part> parts = this.models.resolve(first.visual());
 
         JsonObject entry = this.writeGeometry(name, parts, sources, root);
@@ -167,7 +168,7 @@ public final class BedrockWorldBlocks {
         JsonArray cubes = this.buildCubes(parts, sources.getFirst().visual(), bindings);
         // 每个部件先应用自己的变换，再统一缩放整个方块以保留部件之间的相对位置。
         float scale = BedrockElementGeometry.fitWorldBlock(cubes);
-        String id = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(Key.ce(name.substring("craftengine/".length()))) + ".world";
+        String id = "geometry." + ResourcePackUtils.bedrockResourceIdentifier(Key.of(NAMESPACE, name.substring(PATH_PREFIX.length()))) + ".world";
         writeGeometryFile(root.resolve("models/blocks/" + name + ".geo.json"), id, cubes);
         if (scale < 1) {
             String percent = String.format(Locale.ROOT, "%.4f", scale * 100.0);
@@ -253,7 +254,7 @@ public final class BedrockWorldBlocks {
         JsonArray geometries = new JsonArray();
         geometries.add(geometry);
         JsonObject file = new JsonObject();
-        file.addProperty(FORMAT_VERSION, "1.21.0");
+        file.addProperty(FORMAT_VERSION, BedrockFormatVersions.GEOMETRY);
         file.add("minecraft:geometry", geometries);
         Files.createDirectories(path.getParent());
         GsonHelper.writeJsonFile(file, path);

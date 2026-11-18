@@ -13,6 +13,11 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
+
 public final class BedrockAnimalEquipment {
     private boolean wolf;
     private final Map<Key, String> horseTextures = new LinkedHashMap<>();
@@ -27,19 +32,23 @@ public final class BedrockAnimalEquipment {
 
     public void write(Path root) throws IOException {
         if (this.wolf) {
-            Path geometry = root.resolve("models/entity/craftengine_wolf_armor.geo.json");
+            Path geometry = root.resolve("models/entity/ce_wolf_armor.geo.json");
             Files.createDirectories(geometry.getParent());
-            GsonHelper.writeJsonFile(GsonHelper.readJsonFromResource("/bedrock/equipment/wolf.geo.json"), geometry);
+            JsonObject model = GsonHelper.readJsonFromResource("/bedrock/equipment/wolf.geo.json").getAsJsonObject();
+            model.addProperty(FORMAT_VERSION, GEOMETRY);
+            GsonHelper.writeJsonFile(model, geometry);
         }
         if (this.horseTextures.isEmpty()) {
             return;
         }
         JsonObject entity = GsonHelper.readJsonFromResource("/bedrock/equipment/horse.entity.json").getAsJsonObject();
+        entity.addProperty(FORMAT_VERSION, CLIENT_ENTITY);
         JsonObject description = entity.getAsJsonObject("minecraft:client_entity").getAsJsonObject("description");
         JsonObject controllerFile = GsonHelper.readJsonFromResource("/bedrock/equipment/horse.render_controllers.json").getAsJsonObject();
+        controllerFile.addProperty(FORMAT_VERSION, RENDER_CONTROLLER);
         JsonObject controllers = controllerFile.getAsJsonObject("render_controllers");
         JsonObject controller = controllers.remove("controller.render.horse.v4").getAsJsonObject();
-        String controllerName = "controller.render.craftengine.horse";
+        String controllerName = "controller.render.ce.horse";
         controllers.add(controllerName, controller);
         JsonArray active = new JsonArray();
         active.add(controllerName);
@@ -73,6 +82,6 @@ public final class BedrockAnimalEquipment {
         Files.createDirectories(root.resolve("entity"));
         Files.createDirectories(root.resolve("render_controllers"));
         GsonHelper.writeJsonFile(entity, root.resolve("entity/horse_v3.entity.json"));
-        GsonHelper.writeJsonFile(controllerFile, root.resolve("render_controllers/craftengine_horse.render_controllers.json"));
+        GsonHelper.writeJsonFile(controllerFile, root.resolve("render_controllers/ce_horse.render_controllers.json"));
     }
 }

@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+
 public final class BedrockSpearPlayerAnimations {
     private BedrockSpearPlayerAnimations() {
     }
@@ -38,7 +41,8 @@ public final class BedrockSpearPlayerAnimations {
         state.updateCondition("first_person_melee_spear_controller", original -> "(" + original + ") && !(" + firstPersonCondition + ")");
     }
 
-    private static void updateThirdPersonController(BedrockPlayerAnimationState state, Map<Key, List<String>> spearPoseScriptsByItem,
+    private static void updateThirdPersonController(BedrockPlayerAnimationState state,
+                                                    Map<Key, List<String>> spearPoseScriptsByItem,
                                                     JsonObject player) throws IOException {
         String setup = thirdPersonSetup(spearPoseScriptsByItem, player);
         state.updateCondition("third_person_melee_spear_controller",
@@ -76,6 +80,7 @@ public final class BedrockSpearPlayerAnimations {
 
     private static void writeHoldAnimation(JsonObject player, Path root) throws IOException {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/spear.animation.json").getAsJsonObject();
+        animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         JsonObject animations = new JsonObject();
         JsonObject hold = animationFile.getAsJsonObject("animations")
                 .getAsJsonObject("animation.humanoid.melee_spear_hold");
@@ -88,7 +93,7 @@ public final class BedrockSpearPlayerAnimations {
         }
         animations.add("animation.humanoid.melee_spear_hold", hold);
         animationFile.add("animations", animations);
-        Path animationPath = root.resolve("animations/craftengine/shared/spear_player.animation.json");
+        Path animationPath = root.resolve("animations/ce/shared/spear_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
     }

@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.util;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +20,7 @@ public final class ResourcePackUtils {
 
     public static void writeBedrockJson(String version, String key, JsonElement value, Path path) throws IOException {
         JsonObject file = new JsonObject();
-        file.addProperty("format_version", version);
+        file.addProperty(BedrockPackLayout.FORMAT_VERSION, version);
         file.add(key, value);
         writeJson(file, path);
     }

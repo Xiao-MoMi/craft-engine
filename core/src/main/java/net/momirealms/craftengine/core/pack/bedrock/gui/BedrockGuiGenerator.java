@@ -32,7 +32,7 @@ public final class BedrockGuiGenerator {
             } finally {
                 graphics.dispose();
             }
-            String texture = "textures/craftengine/gui/container_" + rows;
+            String texture = "textures/ce/gui/container_" + rows;
             Path file = root.resolve(texture + ".png");
             ImageUtils.writePng(image, file);
             ui.add(rows, texture);

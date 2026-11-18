@@ -148,6 +148,7 @@ public final class ItemModelBindingCompiler {
                 entries.add(new IndexedEntry(i, range.entries().get(i)));
             }
             entries.sort(Comparator.comparingDouble(entry -> entry.entry().threshold()));
+            // fallback 覆盖第一个阈值之前，每个条目覆盖从自身阈值到下一阈值的左闭右开区间
             Float firstThreshold = entries.isEmpty() ? null : entries.getFirst().entry().threshold();
             this.branch(new ItemBindingCondition.NumericRange(
                             range.property(),
@@ -179,6 +180,7 @@ public final class ItemModelBindingCompiler {
         }
 
         private void branch(ItemBindingCondition condition, ItemModel model, String path) {
+            // 沿 Java 条件树累积从根到当前分支的条件，供叶子规则记录。遍历兄弟分支前恢复父节点的条件
             this.conditions.add(condition);
             if (model == null) {
                 this.emit(ItemRenderTarget.Builtin.MISSING, path);

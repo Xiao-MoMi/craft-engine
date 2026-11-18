@@ -14,6 +14,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+
 public final class BedrockCrossbowPlayerAnimations {
     private static final String USING_MAIN_HAND = "query.is_using_item && query.main_hand_item_use_duration > 0";
     private final Map<Key, Integer> unloadedChargeTicks = new LinkedHashMap<>();
@@ -65,6 +68,7 @@ public final class BedrockCrossbowPlayerAnimations {
 
     private static void writePlayerAnimationFile(Path root) throws IOException {
         JsonObject animationFile = GsonHelper.readJsonFromResource("/bedrock/player/crossbow.animation.json").getAsJsonObject();
+        animationFile.addProperty(FORMAT_VERSION, ANIMATION);
         JsonObject animations = animationFile.getAsJsonObject("animations");
         JsonObject firstPersonBones = animations
                 .getAsJsonObject("animation.player.first_person.crossbow_equipped")
@@ -88,7 +92,7 @@ public final class BedrockCrossbowPlayerAnimations {
         for (int i = 0; i < leftRotation.size(); i++) {
             leftRotation.set(i, new JsonPrimitive(leftRotation.get(i).getAsString().replace("variable.item_use_normalized", armProgress)));
         }
-        Path animationPath = root.resolve("animations/craftengine/shared/crossbow_player.animation.json");
+        Path animationPath = root.resolve("animations/ce/shared/crossbow_player.animation.json");
         Files.createDirectories(animationPath.getParent());
         GsonHelper.writeJsonFile(animationFile, animationPath);
     }

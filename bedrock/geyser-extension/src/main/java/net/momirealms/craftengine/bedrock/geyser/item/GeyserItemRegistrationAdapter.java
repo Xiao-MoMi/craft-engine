@@ -104,10 +104,10 @@ public final class GeyserItemRegistrationAdapter {
      *     "minecraft:max_stack_size": 1 // 最大堆叠数量
      *   },
      *   "variants": [{ // variant 是其中一个分支
-     *     "bedrock_identifier": "craftengine:example/sword", // 分支基岩物品 ID
+     *     "bedrock_identifier": "ce:example/sword", // 分支基岩物品 ID
      *     "conditions": [], // 匹配条件，空数组表示无条件
      *     "resources": { // 分支显示资源
-     *       "display_block": "craftengine/example/sword", // 可选，缺省使用分支 ID 对应的图标
+     *       "display_block": "ce/example/sword", // 可选，缺省使用分支 ID 对应的图标
      *       "generated": true // 图标或展示方块已生成
      *     }
      *   }]
@@ -130,6 +130,7 @@ public final class GeyserItemRegistrationAdapter {
     }
 
     private static void applyConditions(CustomItemDefinition.Builder builder, JsonArray conditions) {
+        // 注册计划已对各显示位置的物品栈条件求交。Geyser 匹配时要求这些条件同时成立，才能使用此变体的 ID
         builder.predicateStrategy(PredicateStrategy.AND);
         for (JsonElement condition : conditions) {
             builder.predicate(GeyserItemPredicates.read(condition.getAsJsonObject()));
@@ -138,10 +139,12 @@ public final class GeyserItemRegistrationAdapter {
 
     private static void applyResources(CustomItemDefinition.Builder builder, Identifier bedrockId, JsonObject resources, Map<String, String> displayBlocks) {
         if (!resources.has(DISPLAY_BLOCK) || resources.has(DYE_COLOR)) {
-            CustomItemIcons.Builder icons = CustomItemIcons.builder().defaultIcon(bedrockId.toString());
+            String icon = resources.has(ICON) ? resources.get(ICON).getAsString() : bedrockId.toString();
+            CustomItemIcons.Builder icons = CustomItemIcons.builder().defaultIcon(icon);
             CustomItemBedrockOptions.Builder options = CustomItemBedrockOptions.builder();
             if (resources.has(DYE_COLOR)) {
-                icons.dyedIcon(dyedIconKey(bedrockId.toString()));
+                String dyedIcon = resources.has(DYED_ICON) ? resources.get(DYED_ICON).getAsString() : dyedIconKey(bedrockId.toString());
+                icons.dyedIcon(dyedIcon);
                 options.dyeable(resources.get(DYE_COLOR).getAsInt());
             }
             builder.bedrockOptions(options.icons(icons.build()));

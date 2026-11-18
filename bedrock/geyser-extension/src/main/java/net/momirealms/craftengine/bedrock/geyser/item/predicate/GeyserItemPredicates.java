@@ -116,8 +116,10 @@ public final class GeyserItemPredicates {
             default -> throw unsupported(property);
         };
         float scale = condition.get(SCALE).getAsFloat();
-        Float min = condition.has(MIN) ? condition.get(MIN).getAsFloat() : null;
-        Float max = condition.has(MAX) ? condition.get(MAX).getAsFloat() : null;
+        JsonElement minimum = condition.has(MIN_INCLUSIVE) ? condition.get(MIN_INCLUSIVE) : condition.get("min");
+        JsonElement maximum = condition.has(MAX_EXCLUSIVE) ? condition.get(MAX_EXCLUSIVE) : condition.get("max");
+        Float min = minimum == null ? null : minimum.getAsFloat();
+        Float max = maximum == null ? null : maximum.getAsFloat();
         return context -> {
             float scaled = (float) value.applyAsDouble(context) * scale;
             return (min == null || scaled >= min) && (max == null || !(scaled >= max));

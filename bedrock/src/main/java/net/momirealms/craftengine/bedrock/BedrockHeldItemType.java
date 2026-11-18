@@ -11,7 +11,7 @@ public enum BedrockHeldItemType {
     TRIDENT(7),
     SPEAR(8);
 
-    public static final String PROPERTY = "craftengine:held_item_type";
+    public static final String PROPERTY = BedrockPackLayout.ID_PREFIX + "held_item_type";
     private final int id;
 
     BedrockHeldItemType(int id) {

@@ -1,5 +1,4 @@
 {
-  "format_version": "1.8.0",
   "render_controllers": {
     "controller.render.horse.v4": {
       "part_visibility": [

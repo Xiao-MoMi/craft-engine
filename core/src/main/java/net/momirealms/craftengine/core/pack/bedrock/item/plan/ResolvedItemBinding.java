@@ -3,6 +3,8 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NAMESPACE;
+
 public record ResolvedItemBinding(Key itemId,
                                   Key serverItemType,
                                   Key clientItemType,
@@ -12,7 +14,7 @@ public record ResolvedItemBinding(Key itemId,
                                   ItemRegistrationProperties clientProperties) {
 
     public Key bedrockId() {
-        return Key.ce(this.itemId.namespace() + '/' + this.itemId.value());
+        return Key.of(NAMESPACE, this.itemId.namespace() + '/' + this.itemId.value());
     }
 
     public ItemBehaviorDescription.Use useBehavior() {

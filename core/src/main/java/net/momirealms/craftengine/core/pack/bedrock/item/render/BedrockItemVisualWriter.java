@@ -40,14 +40,18 @@ final class BedrockItemVisualWriter {
     }
 
     void writeWorldAliases(GeneratedItemVariant item, boolean separateWorldViews, BedrockItemGenerationContext context, List<GeneratedItemVariant> output) throws IOException {
+        // 同一件物品可用 display_context 指定不同模型，例如背包里是绿宝石，扔到地上是钻石
+        // 放进普通或发光展示框时是海洋之心，放上置物架时是胡萝卜
+        // Geyser 在对应场景匹配 _view_ground、_view_fixed 或 _view_on_shelf，捡回背包时仍使用主 ID
         ItemBindingRule gui = item.displayModels().get(ItemDisplayContext.GUI);
         for (ItemDisplayContext view : WORLD_VIEWS) {
             ItemBindingRule rule = item.displayModels().get(view);
-            // 普通流程已在主展示方块中写入常规姿态，只有置物架需要带额外补偿的独立外观。
+            // 以普通流程生成的一把三维剑为例，掉落时用主模型的 ground 姿态，放进展示框时用主模型的 fixed 姿态
+            // 放上置物架时用 _view_on_shelf 别名模型自己的 fixed 姿态，应用置物架的缩放和垂直居中补偿
             if (rule == null || (!separateWorldViews && (view != ItemDisplayContext.ON_SHELF || item.displayBlock() == null))) {
                 continue;
             }
-            // 世界模型和变换与背包图标相同时可直接复用主物品。三维展示方块仍需按该位置生成姿态。
+            // 图标物品的模型和变换与背包相同时直接复用主 ID，三维展示方块则按该位置生成姿态
             if (item.displayBlock() == null && rule.target().equals(gui.target()) && rule.transformations().equals(gui.transformations())) {
                 continue;
             }
@@ -63,6 +67,7 @@ final class BedrockItemVisualWriter {
         Key id = item.id();
         Key alias = Key.of(id.namespace(), id.value() + "_view_" + view.serializedName());
         try {
+            // 沿用主变体的损耗等匹配条件，再用 world_view 限定这个外观的生效场景
             GeneratedItemVariant visual = this.writeVisual(alias, item.conditions(), rule, DisplayPosition.valueOf(view.name()), context);
             output.add(GeneratedItemVariant.worldAlias(visual, view));
         } catch (BedrockResourceException e) {
@@ -83,7 +88,8 @@ final class BedrockItemVisualWriter {
         BedrockItemTint tint = BedrockItemTint.analyze(parts, this.resources);
         Integer dye = tint.defaultColor();
         if (dye != null) {
-            return BedrockDyedItem.writeIcon(id, conditions, parts, this.resources, context, view == null ? DisplayPosition.GUI : view, dye)
+            return BedrockDyedItem
+                    .writeIcon(id, conditions, parts, this.resources, context, view == null ? DisplayPosition.GUI : view, dye)
                     .withTintSources(Map.of(ItemDisplayContext.GUI, tint.source()));
         }
         // 只有所有部件都能画成图标时才合成贴图，否则交给展示方块保留整组模型的变换。
@@ -95,7 +101,6 @@ final class BedrockItemVisualWriter {
         return GeneratedItemVariant.block(id, conditions, block, false);
     }
 
-    @Contract("_, false -> !null")
     @Nullable
     BedrockTexture renderIcon(List<ItemBindingRule> parts, boolean allowBlockFallback) throws IOException {
         List<BedrockTexture> images = new ObjectArrayList<>(parts.size());
@@ -115,21 +120,26 @@ final class BedrockItemVisualWriter {
         return BedrockTexture.composite(images);
     }
 
-    @SuppressWarnings("DeconstructionCanBeUsed")
     static List<ItemBindingRule> modelParts(ItemBindingRule rule) {
-        if (rule.target() == ItemRenderTarget.Builtin.EMPTY) {
-            return List.of();
-        }
-        List<ItemBindingRule> parts = rule.target() instanceof ItemRenderTarget.Composite composite ? composite.parts() : List.of(rule);
-        for (ItemBindingRule part : parts) {
-            if (!(part.target() instanceof ItemRenderTarget.Model)) {
-                throw new BedrockResourceException("resource_pack.bedrock.reason.composite_child", part.sourcePath());
+        ItemRenderTarget target = rule.target();
+        return switch (target) {
+            case ItemRenderTarget.Builtin.EMPTY -> List.of();
+            case ItemRenderTarget.Model ignored -> List.of(rule);
+            case ItemRenderTarget.Composite composite -> {
+                List<ItemBindingRule> parts = composite.parts();
+                for (ItemBindingRule part : parts) {
+                    if (!(part.target() instanceof ItemRenderTarget.Model)) {
+                        throw new BedrockResourceException("resource_pack.bedrock.reason.composite_child", part.sourcePath());
+                    }
+                }
+                yield parts;
             }
-        }
-        return parts;
+            default -> throw new BedrockResourceException("resource_pack.bedrock.reason.render_target", target.toString());
+        };
     }
 
-    static GeneratedItemVariant transparent(Key id, List<ItemBindingCondition> conditions, Map<ItemDisplayContext, ItemBindingRule> displayModels,
+    static GeneratedItemVariant transparent(Key id, List<ItemBindingCondition> conditions,
+                                            Map<ItemDisplayContext, ItemBindingRule> displayModels,
                                             BedrockItemGenerationContext context) throws IOException {
         BedrockTexture image = new BedrockTexture(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
         String texture = writeIconTexture(id, image, context);

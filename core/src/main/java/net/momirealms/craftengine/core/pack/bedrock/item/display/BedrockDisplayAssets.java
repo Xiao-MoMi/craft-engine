@@ -27,7 +27,13 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.CRAFTENGINE_TEXTURES;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.ANIMATION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.CLIENT_ENTITY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.GEOMETRY;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.RENDER_CONTROLLER;
 import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 final class BedrockDisplayAssets {
@@ -35,6 +41,7 @@ final class BedrockDisplayAssets {
     private final JavaModelResources resources;
     private final Path root;
     private final String name;
+    private final String texturePrefix;
     private final JsonObject textures = new JsonObject();
     private final JsonObject customModelDataColors = new JsonObject();
     private final JsonObject geometryNames = new JsonObject();
@@ -52,6 +59,7 @@ final class BedrockDisplayAssets {
         this.resources = resources;
         this.root = root;
         this.name = name;
+        this.texturePrefix = CRAFTENGINE_TEXTURES + '/' + name + '/';
     }
 
     int add(List<BedrockItemDisplayGenerator.Part> parts) throws IOException {
@@ -93,7 +101,7 @@ final class BedrockDisplayAssets {
         if (mesh.customModelDataColorIndex() >= 0) {
             this.customModelDataColors.addProperty(Integer.toString(shape), mesh.customModelDataColorIndex());
         }
-        String condition = "query.property('craftengine:shape') == " + shape;
+        String condition = "query.property('ce:shape') == " + shape;
         JsonObject channels = new JsonObject();
         JsonArray geometries = new JsonArray();
         for (int layer = 0; layer < mesh.materials().size(); layer++) {
@@ -122,7 +130,7 @@ final class BedrockDisplayAssets {
                 this.addDyeMasks(shape, layer, alias, material.data(), bones);
             }
         }
-        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/s" + shape + ".geo.json"));
+        ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/s" + shape + ".geo.json"));
         if (!channels.isEmpty()) {
             String alias = "s" + shape;
             this.animation(alias, channels);
@@ -197,7 +205,7 @@ final class BedrockDisplayAssets {
         if (frames == null) {
             String texture = "t" + this.frames.size();
             frames = BedrockItemTextures.writeFrames(data, color, texture,
-                    "textures/ce/" + this.name + "/" + texture, this.textures, this.root);
+                    this.texturePrefix + texture, this.textures, this.root);
             this.frames.put(key, frames);
         }
         this.addDraw(shape, layer, alias, frames, data.animation(), pass, 0);
@@ -207,7 +215,7 @@ final class BedrockDisplayAssets {
         DisplayDyeMasks source = DisplayDyeMasks.from(data, bones);
         Int2ObjectMap<JsonArray> masks = this.dyeMasks.get(source);
         if (masks == null) {
-            masks = source.write("m" + this.dyeMasks.size(), "textures/ce/" + this.name + "/", this.textures, this.root);
+            masks = source.write("m" + this.dyeMasks.size(), this.texturePrefix, this.textures, this.root);
             this.dyeMasks.put(source, masks);
         }
         for (Int2ObjectMap.Entry<JsonArray> mask : masks.int2ObjectEntrySet()) {
@@ -243,7 +251,7 @@ final class BedrockDisplayAssets {
                     }
                 }
             }
-            String index = "(query.property('craftengine:shape') - " + first + ")";
+            String index = "(query.property('ce:shape') - " + first + ")";
             String sample = page.interval() == 0 ? index : index + " * " + page.frames()
                     + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
             JsonObject controller = new JsonObject();
@@ -272,7 +280,7 @@ final class BedrockDisplayAssets {
 
     private static String shapeCondition(int first, int last, Map<Integer, Draw> draws) {
         // 不启用当前形状缺少的蒙版，否则其他物品的底色也会占用绘制次数。
-        String property = "query.property('craftengine:shape')";
+        String property = "query.property('ce:shape')";
         StringJoiner ranges = new StringJoiner(" || ", "(", ")");
         for (int shape = first; shape <= last; shape++) {
             if (draws.containsKey(shape)) {
@@ -302,7 +310,7 @@ final class BedrockDisplayAssets {
         empty.add("bones", emptyBones);
         JsonArray geometries = new JsonArray();
         geometries.add(empty);
-        ResourcePackUtils.writeBedrockJson("1.21.0", "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/empty.geo.json"));
+        ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/empty.geo.json"));
         this.writeControllers();
         JsonObject held = new JsonObject();
         held.addProperty("geometry", "Geometry.empty");
@@ -315,15 +323,15 @@ final class BedrockDisplayAssets {
         this.textures.addProperty("default", "textures/items/apple");
         String heldController = "controller.render." + this.name + ".held";
         this.controllers.add(heldController, held);
-        this.activeControllers.add(createObject(heldController, new JsonPrimitive("query.property('craftengine:shape') == 0")));
+        this.activeControllers.add(createObject(heldController, new JsonPrimitive("query.property('ce:shape') == 0")));
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
-        yaw.add("query.property('craftengine:yaw')");
+        yaw.add("query.property('ce:yaw')");
         yaw.add(0);
         rig.add("yaw", createObject("rotation", yaw));
         JsonArray pitch = new JsonArray();
-        pitch.add("query.property('craftengine:pitch')");
+        pitch.add("query.property('ce:pitch')");
         pitch.add(0);
         pitch.add(0);
         rig.add("pitch", createObject("rotation", pitch));
@@ -335,7 +343,7 @@ final class BedrockDisplayAssets {
             String axis = List.of("x", "y", "z").get(i);
             JsonObject bone = i == 0 ? propertyVector("position", "model_pos") : new JsonObject();
             JsonArray angles = VectorUtils.toJson(0, 0, 0);
-            angles.set(i, new JsonPrimitive("query.property('craftengine:model_rot_" + axis + "')"));
+            angles.set(i, new JsonPrimitive("query.property('ce:model_rot_" + axis + "')"));
             bone.add("rotation", angles);
             if (i == 2) {
                 bone.add("scale", propertyVector("scale", "model_size").get("scale"));
@@ -345,7 +353,7 @@ final class BedrockDisplayAssets {
         this.animation("pose", rig);
         this.animate.add("pose");
         JsonObject description = new JsonObject();
-        description.addProperty("identifier", "craftengine:" + this.name);
+        description.addProperty("identifier", ID_PREFIX + this.name);
         description.addProperty("enable_attachables", true);
         JsonObject materials = createObject("default", new JsonPrimitive("entity_alphatest_one_sided"));
         description.add("materials", materials);
@@ -354,9 +362,9 @@ final class BedrockDisplayAssets {
         description.add("animations", this.animationNames);
         description.add("scripts", BedrockDisplayInterpolation.scripts(this.animate));
         description.add("render_controllers", this.activeControllers);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:client_entity", createObject("description", description), this.root.resolve("entity/" + this.name + ".entity.json"));
+        ResourcePackUtils.writeBedrockJson(CLIENT_ENTITY, "minecraft:client_entity", createObject("description", description), this.root.resolve("entity/" + this.name + ".entity.json"));
         JsonObject heldDescription = new JsonObject();
-        heldDescription.addProperty("identifier", "craftengine:" + this.name + "_held");
+        heldDescription.addProperty("identifier", ID_PREFIX + this.name + "_held");
         heldDescription.addProperty("enable_attachables", true);
         heldDescription.add("materials", materials);
         heldDescription.add("textures", createObject("default", new JsonPrimitive("textures/items/apple")));
@@ -385,9 +393,9 @@ final class BedrockDisplayAssets {
         JsonArray heldControllers = new JsonArray();
         heldControllers.add("controller.render.default");
         heldDescription.add("render_controllers", heldControllers);
-        ResourcePackUtils.writeBedrockJson("1.10.0", "minecraft:client_entity", createObject("description", heldDescription), this.root.resolve("entity/" + this.name + "_held.entity.json"));
-        ResourcePackUtils.writeBedrockJson("1.10.0", "animations", this.animations, this.root.resolve("animations/" + this.name + ".animation.json"));
-        ResourcePackUtils.writeBedrockJson("1.10.0", "render_controllers", this.controllers, this.root.resolve("render_controllers/" + this.name + ".json"));
+        ResourcePackUtils.writeBedrockJson(CLIENT_ENTITY, "minecraft:client_entity", createObject("description", heldDescription), this.root.resolve("entity/" + this.name + "_held.entity.json"));
+        ResourcePackUtils.writeBedrockJson(ANIMATION, "animations", this.animations, this.root.resolve("animations/" + this.name + ".animation.json"));
+        ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", this.controllers, this.root.resolve("render_controllers/" + this.name + ".json"));
     }
 
     private static JsonObject interpolatedVector(String channel, String group) {
@@ -401,7 +409,7 @@ final class BedrockDisplayAssets {
     private static JsonObject propertyVector(String channel, String property) {
         JsonArray values = new JsonArray();
         for (String axis : List.of("x", "y", "z")) {
-            values.add("query.property('craftengine:" + property + "_" + axis + "')");
+            values.add("query.property('ce:" + property + "_" + axis + "')");
         }
         return createObject(channel, values);
     }

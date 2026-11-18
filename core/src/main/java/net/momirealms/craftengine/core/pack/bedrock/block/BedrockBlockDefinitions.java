@@ -14,7 +14,7 @@ public final class BedrockBlockDefinitions {
     public void register(String name, String sound) {
         JsonObject block = new JsonObject();
         block.addProperty("sound", sound);
-        this.definitions.add("geyser_custom:" + name, block);
+        this.definitions.add(BedrockPackLayout.GEYSER_CUSTOM_BLOCK_PREFIX + name, block);
     }
 
     public void write(Path root) throws IOException {

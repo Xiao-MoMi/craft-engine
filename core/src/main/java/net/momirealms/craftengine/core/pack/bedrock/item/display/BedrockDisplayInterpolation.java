@@ -19,20 +19,20 @@ final class BedrockDisplayInterpolation {
         initialize.add("v.ce_seen = -1; v.ce_start = 0; v.ce_duration = 0; v.ce_active = 0; v.ce_t = -1;");
         result.add("initialize", initialize);
         JsonArray update = new JsonArray();
-        StringBuilder changed = new StringBuilder("v.ce_snap = v.ce_seen < 0 || math.mod(q.property('craftengine:interpolation'), 8) >= 4; ");
+        StringBuilder changed = new StringBuilder("v.ce_snap = v.ce_seen < 0 || math.mod(q.property('ce:interpolation'), 8) >= 4; ");
         // 中途换目标时先求旧动画在当前帧的姿态，避免从上一个目标或上一帧重新起步。
         changed.append("!v.ce_snap ? {").append(fraction()).append(sample()).append("}; ");
-        changed.append("v.ce_snap || math.mod(q.property('craftengine:interpolation'), 4) > 0 ? {");
+        changed.append("v.ce_snap || math.mod(q.property('ce:interpolation'), 4) > 0 ? {");
         for (String group : List.of("pos", "size", "left", "right")) {
             for (String axis : axes(group)) {
                 String name = group + '_' + axis;
-                changed.append("v.ce_from_").append(name).append(" = v.ce_snap ? q.property('craftengine:").append(name).append("') : v.ce_").append(name).append("; ");
-                changed.append("v.ce_to_").append(name).append(" = q.property('craftengine:").append(name).append("'); ");
+                changed.append("v.ce_from_").append(name).append(" = v.ce_snap ? q.property('ce:").append(name).append("') : v.ce_").append(name).append("; ");
+                changed.append("v.ce_to_").append(name).append(" = q.property('ce:").append(name).append("'); ");
             }
         }
-        changed.append("}; v.ce_snap ? {v.ce_active = 0;} : {math.mod(q.property('craftengine:interpolation'), 2) == 1 ? {v.ce_start = q.life_time + q.property('craftengine:delay'); v.ce_active = 1;};}; ");
-        changed.append("v.ce_duration = q.property('craftengine:duration'); v.ce_t = -1; v.ce_seen = q.property('craftengine:interpolation');");
-        update.add("v.ce_seen != q.property('craftengine:interpolation') ? {" + changed + "};");
+        changed.append("}; v.ce_snap ? {v.ce_active = 0;} : {math.mod(q.property('ce:interpolation'), 2) == 1 ? {v.ce_start = q.life_time + q.property('ce:delay'); v.ce_active = 1;};}; ");
+        changed.append("v.ce_duration = q.property('ce:duration'); v.ce_t = -1; v.ce_seen = q.property('ce:interpolation');");
+        update.add("v.ce_seen != q.property('ce:interpolation') ? {" + changed + "};");
         update.add(fraction());
         StringBuilder pose = new StringBuilder(sample());
         for (String group : List.of("left", "right")) {

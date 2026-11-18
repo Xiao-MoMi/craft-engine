@@ -1,10 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
-import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
@@ -56,51 +54,66 @@ final class BedrockItemContextWriter {
         this.equipmentResources = new BedrockEquipmentResources(resources);
     }
 
-    List<GeneratedItemVariant> write(ResolvedItemBinding entry, List<BedrockItemPresentation> plans, BedrockItemGenerationContext context) throws IOException {
+    List<GeneratedItemVariant> write(ResolvedItemBinding entry, BedrockItemPresentation.Plan plan, BedrockItemGenerationContext context) throws IOException {
         List<GeneratedItemVariant> output = new ObjectArrayList<>();
-        boolean hasArmor = BedrockEquipmentResources.hasAsset(entry);
-        BedrockEquipmentResources.Appearance armor = this.equipmentResources.resolve(entry, context.root());
-        boolean headEquipment = !hasArmor && isHeadEquipment(entry);
+        BedrockItemPresentation.ItemFeatures features = plan.features();
         Map<List<ItemBindingRule>, BedrockItemTint> cachedTints = new IdentityHashMap<>();
-        for (BedrockItemPresentation plan : plans) {
-            Key id = plan.id();
-            Map<ItemDisplayContext, BedrockItemTint> tints = new EnumMap<>(ItemDisplayContext.class);
-            Map<ItemDisplayContext, Integer> sources = new EnumMap<>(ItemDisplayContext.class);
+        boolean needsEquipmentAppearance = features.hasEquipmentAsset();
+        BedrockEquipmentResources.Appearance equipmentAppearance = null;
+        for (BedrockItemPresentation variant : plan.variants()) {
+            Map<ItemDisplayContext, BedrockItemTint> tints;
             try {
-                for (Map.Entry<ItemDisplayContext, List<ItemBindingRule>> view : plan.rulesByContext().entrySet()) {
-                    BedrockItemTint tint = cachedTints.get(view.getValue());
-                    if (tint == null) {
-                        this.validateTints(view.getValue());
-                        tint = BedrockItemTint.analyze(view.getValue(), this.resources);
-                        cachedTints.put(view.getValue(), tint);
-                    }
-                    tints.put(view.getKey(), tint);
-                    sources.put(view.getKey(), tint.dynamic() ? tint.source() : BedrockItemTint.NONE);
-                    if (tint.source() == BedrockItemTint.MULTIPLE) {
-                        TranslationManager.warn("resource_pack.bedrock.item.tint_fallback", id.asString(), view.getKey().serializedName());
-                    }
-                }
+                tints = this.resolveTints(variant, cachedTints);
             } catch (BedrockResourceException exception) {
-                TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", id.asString(), entry.itemModel().asString(), plan.idleRules().get(ItemDisplayContext.GUI).sourcePath(), exception.getLocalizedMessage());
+                ItemBindingRule gui = variant.idleRules().get(ItemDisplayContext.GUI);
+                TranslationManager.warn("resource_pack.bedrock.item.variant_skipped", variant.id().asString(), entry.itemModel().asString(), gui.sourcePath(), exception.getLocalizedMessage());
                 continue;
             }
-            Key headId = headEquipment ? Key.of(id.namespace(), id.value() + "_view_head") : null;
-            GeneratedItemVariant item = this.writeVariant(plan, headId, armor, hasArmor, tints, context);
-            if (BedrockDyedItem.hasDye(entry.definition().rules())) {
-                item = item.withTintSources(sources);
+            Key id = variant.id();
+            Key headId = features.usesHeadModel() ? Key.of(id.namespace(), id.value() + "_view_head") : null;
+            if (needsEquipmentAppearance) {
+                equipmentAppearance = this.equipmentResources.resolve(entry, features.equipmentSlot(), features.equipmentAssetId(), context.root());
+                needsEquipmentAppearance = false;
             }
-            this.visuals.writeWorldAliases(item, plan.separateWorldViews(), context, output);
-            if (armor != null) {
-                armor.registerAnimals(id, context.animalEquipment());
-                for (BedrockEquipmentResources.Layer layer : armor.layers()) {
-                    if (layer.slot() == BedrockEquipmentResources.Slot.WINGS && item.generated()) {
-                        context.elytraEquipment().register(id, layer.texture());
-                    }
-                }
+            GeneratedItemVariant item = this.writeVariant(variant, headId, equipmentAppearance, features, tints, context);
+            if (features.hasDye()) {
+                item = item.withTintSources(tintSources(tints));
             }
+            this.visuals.writeWorldAliases(item, variant.separateWorldViews(), context, output);
+            registerEquipmentAppearance(id, item, equipmentAppearance, context);
             output.add(item);
         }
         return output;
+    }
+
+    private Map<ItemDisplayContext, BedrockItemTint> resolveTints(BedrockItemPresentation plan,
+                                                                  Map<List<ItemBindingRule>, BedrockItemTint> cachedTints) throws IOException {
+        Map<ItemDisplayContext, BedrockItemTint> tints = new EnumMap<>(ItemDisplayContext.class);
+        for (Map.Entry<ItemDisplayContext, List<ItemBindingRule>> view : plan.rulesByContext().entrySet()) {
+            List<ItemBindingRule> rules = view.getValue();
+            // 背包和掉落等位置共用同一份规则列表时，只解析一次染色源
+            BedrockItemTint tint = cachedTints.get(rules);
+            if (tint == null) {
+                this.validateTints(rules);
+                tint = BedrockItemTint.analyze(rules, this.resources);
+                cachedTints.put(rules, tint);
+            }
+            ItemDisplayContext displayContext = view.getKey();
+            tints.put(displayContext, tint);
+            if (tint.source() == BedrockItemTint.MULTIPLE) {
+                TranslationManager.warn("resource_pack.bedrock.item.tint_fallback", plan.id().asString(), displayContext.serializedName());
+            }
+        }
+        return tints;
+    }
+
+    private static Map<ItemDisplayContext, Integer> tintSources(Map<ItemDisplayContext, BedrockItemTint> tints) {
+        Map<ItemDisplayContext, Integer> sources = new EnumMap<>(ItemDisplayContext.class);
+        for (Map.Entry<ItemDisplayContext, BedrockItemTint> entry : tints.entrySet()) {
+            BedrockItemTint tint = entry.getValue();
+            sources.put(entry.getKey(), tint.dynamic() ? tint.source() : BedrockItemTint.NONE);
+        }
+        return sources;
     }
 
     @SuppressWarnings("DeconstructionCanBeUsed")
@@ -127,63 +140,68 @@ final class BedrockItemContextWriter {
         };
     }
 
-    private static boolean isHeadEquipment(ResolvedItemBinding entry) {
-        JsonElement equipment = entry.clientProperties().components().get(DataComponentKeys.EQUIPPABLE);
-        return equipment != null && equipment.isJsonObject() && "head".equals(equipment.getAsJsonObject().get("slot").getAsString());
-    }
-
-    private GeneratedItemVariant writeVariant(BedrockItemPresentation plan, @Nullable Key headId, @Nullable BedrockEquipmentResources.Appearance armor, boolean hasArmor, Map<ItemDisplayContext, BedrockItemTint> tints,
+    private GeneratedItemVariant writeVariant(BedrockItemPresentation plan,
+                                              @Nullable Key headId,
+                                              @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
+                                              BedrockItemPresentation.ItemFeatures features,
+                                              Map<ItemDisplayContext, BedrockItemTint> tints,
                                               BedrockItemGenerationContext context) throws IOException {
-        Map<ItemDisplayContext, ItemBindingRule> idleRules = plan.idleRules();
-        Integer dye = tints.get(ItemDisplayContext.GUI).defaultColor();
-        if (headId == null && !hasArmor && !BedrockDyedItem.hasDye(plan.item().definition().rules())) {
-            // 专用策略返回 null 只表示不适用，随后继续通用生成；真正的资源读写异常向上传递。
+        if (headId == null && !features.hasEquipmentAsset() && !features.hasDye()) {
+            // 例如弓可以先尝试专用生成器，返回 null 时继续用下方的通用生成流程
             GeneratedItemVariant nativeItem = plan.strategy().tryWriteSpecialized(plan, this.resources, this.renderer, context);
             if (nativeItem != null) {
-                return GeneratedItemVariant.displayContextItem(nativeItem, idleRules, null);
+                return GeneratedItemVariant.displayContextItem(nativeItem, plan.idleRules(), null);
             }
-        }
-        ItemBindingRule gui = idleRules.get(ItemDisplayContext.GUI);
-        Key id = plan.id();
-        // GUI 模型可能被多个耐久或组件变体共用；注册条件必须取完整变体，不能从 GUI 规则反推。
-        List<ItemBindingCondition> conditions = plan.conditions();
-        GeneratedItemVariant inventory;
-        try {
-            if (dye == null) {
-                inventory = this.visuals.writeVisual(id, conditions, gui, plan.separateWorldViews() ? DisplayPosition.GUI : null, context);
-            } else {
-                List<ItemBindingRule> parts = BedrockItemVisualWriter.modelParts(gui);
-                inventory = BedrockDyedItem.writeIcon(id, conditions, parts, this.resources, context, DisplayPosition.GUI, dye);
-                if (plan.item().clientBehavior().placesBlock() && !parts.isEmpty()) {
-                    BedrockItemDisplayBlocks.DisplayBlock display = context.itemDisplayBlocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
-                    inventory = new GeneratedItemVariant(id, conditions, inventory.iconTexture(), display, false, dye);
-                }
-            }
-        } catch (BedrockResourceException e) {
-            // 背包外观生成失败时用透明图标完成注册，手持和世界模型仍可独立生成。
-            BedrockItemVisualWriter.warn(id, ItemDisplayContext.GUI, e);
-            inventory = BedrockItemVisualWriter.transparent(id, conditions, Map.of(), context);
         }
 
-        this.writeEquipment(plan, headId, armor, hasArmor, tints, context);
-        return GeneratedItemVariant.displayContextItem(inventory, idleRules, headId);
+        GeneratedItemVariant inventory = this.writeInventory(plan, tints.get(ItemDisplayContext.GUI).defaultColor(), context);
+        this.writeAttachables(plan, headId, equipmentAppearance, features.hasEquipmentAsset(), tints, context);
+        // 把各位置选好的闲置规则交给后续的世界物品外观和展示实体生成器
+        return GeneratedItemVariant.displayContextItem(inventory, plan.idleRules(), headId);
     }
 
-    private void writeEquipment(BedrockItemPresentation plan, @Nullable Key headId,
-                                @Nullable BedrockEquipmentResources.Appearance armor, boolean hasArmor,
-                                Map<ItemDisplayContext, BedrockItemTint> tints, BedrockItemGenerationContext context) throws IOException {
+    private GeneratedItemVariant writeInventory(BedrockItemPresentation plan,
+                                                @Nullable Integer defaultDye,
+                                                BedrockItemGenerationContext context) throws IOException {
         Key id = plan.id();
-        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), TextureUsage.ITEM, true, false);
+        // 两个耐久变体可以共用背包图标，注册时仍需匹配各自的物品栈条件
+        List<ItemBindingCondition> conditions = plan.conditions();
+        try {
+            ItemBindingRule gui = plan.idleRules().get(ItemDisplayContext.GUI);
+            if (defaultDye == null) {
+                return this.visuals.writeVisual(id, conditions, gui, plan.separateWorldViews() ? DisplayPosition.GUI : null, context);
+            }
+            List<ItemBindingRule> parts = BedrockItemVisualWriter.modelParts(gui);
+            GeneratedItemVariant inventory = BedrockDyedItem.writeIcon(id, conditions, parts, this.resources, context, DisplayPosition.GUI, defaultDye);
+            if (plan.item().clientBehavior().placesBlock() && !parts.isEmpty()) {
+                BedrockItemDisplayBlocks.DisplayBlock display = context.itemDisplayBlocks().write(id, parts, this.resources.models(), this.resources.textures(), context.root());
+                return new GeneratedItemVariant(id, conditions, inventory.iconTexture(), display, false, defaultDye);
+            }
+            return inventory;
+        } catch (BedrockResourceException e) {
+            // 例如只有 GUI 规则引用了无法转换的模型时，透明图标保留物品注册，右手和掉落仍可用自己的模型
+            BedrockItemVisualWriter.warn(id, ItemDisplayContext.GUI, e);
+            return BedrockItemVisualWriter.transparent(id, conditions, Map.of(), context);
+        }
+    }
+
+    private void writeAttachables(BedrockItemPresentation plan,
+                                  @Nullable Key headId,
+                                  @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
+                                  boolean hasEquipmentAsset,
+                                  Map<ItemDisplayContext, BedrockItemTint> tints,
+                                  BedrockItemGenerationContext context) throws IOException {
         JsonArray selectors = new JsonArray();
-        Map<Layer, List<String>> layers = collectEquipmentLayers(plan, selectors, hasArmor);
+        Map<Layer, List<String>> layers = collectEquipmentLayers(plan, selectors, hasEquipmentAsset);
+        BedrockItemGeometryBuilder mesh = new BedrockItemGeometryBuilder(this.resources.models(), this.resources.textures(), TextureUsage.ITEM, true, false);
+        // 第一和第三人称共用模型规则且动态染色模式相同时，可以复用几何，各自的姿态和显示条件仍按场景生成
+        // 材质编号由当前 mesh 分配，几何缓存只在本次 attachable 生成中使用
         Map<GeometryKey, BedrockItemGeometry> geometries = new HashMap<>();
         List<BedrockItem3DAttachables.Stage> stages = new ObjectArrayList<>(layers.size());
         boolean hasHandModel = false;
         for (Map.Entry<Layer, List<String>> entry : layers.entrySet()) {
             Layer layer = entry.getKey();
             try {
-                // 缓存只属于本次 writeEquipment；材质编号依赖当前 mesh，不能跨构建器复用。
-                // 共享几何构建后只读，场景条件和 display 动画仍分别生成。
                 boolean dynamic = tints.get(layer.view()).dynamic();
                 GeometryKey key = new GeometryKey(layer.part(), dynamic);
                 BedrockItemGeometry geometry = geometries.get(key);
@@ -194,43 +212,64 @@ final class BedrockItemContextWriter {
                 stages.add(new BedrockItem3DAttachables.Stage(geometry, String.join(" || ", entry.getValue()), equippedView(layer.view())));
                 hasHandModel |= layer.view() != ItemDisplayContext.HEAD && !geometry.cubes().isEmpty();
             } catch (BedrockResourceException e) {
-                BedrockItemVisualWriter.warn(id, layer.view(), e);
+                BedrockItemVisualWriter.warn(plan.id(), layer.view(), e);
             }
         }
         BedrockAttachablePose pose = plan.strategy().pose(plan.item());
-        for (BedrockItemGeometry.Material material : mesh.materials()) {
+        List<BedrockItemGeometry.Material> materials = mesh.materials();
+        for (BedrockItemGeometry.Material material : materials) {
             if (material.dyeColor() != null) {
                 pose.scripts().add(BedrockDyedItem.colorScript());
                 break;
             }
         }
         pose.scripts().addAll(selectors);
-        BedrockItem3DAttachables.writeDisplayContexts(id, headId, stages, mesh.materials(), pose, armor, context.root());
+        Key id = plan.id();
+        BedrockItem3DAttachables.writeDisplayContexts(id, headId, stages, materials, pose, equipmentAppearance, context.root());
         if (hasHandModel) {
             plan.strategy().registerHandModel(context.playerAnimations(), id, plan.item());
         }
     }
 
-    private static Map<Layer, List<String>> collectEquipmentLayers(BedrockItemPresentation plan, JsonArray selectors, boolean hasArmor) {
-        // 同一位置的同一模型部件只生成一次；任一使用条件成立时都应显示它。
+    private static void registerEquipmentAppearance(Key id,
+                                                    GeneratedItemVariant item,
+                                                    @Nullable BedrockEquipmentResources.Appearance equipmentAppearance,
+                                                    BedrockItemGenerationContext context) {
+        if (equipmentAppearance == null) {
+            return;
+        }
+        equipmentAppearance.registerAnimals(id, context.animalEquipment());
+        // 鞘翅贴图绑定到已生成的物品 ID，供客户端切换穿戴外观
+        if (item.generated()) {
+            for (BedrockEquipmentResources.Layer layer : equipmentAppearance.layers()) {
+                if (layer.slot() == BedrockEquipmentResources.Slot.WINGS) {
+                    context.elytraEquipment().register(id, layer.texture());
+                }
+            }
+        }
+    }
+
+    private static Map<Layer, List<String>> collectEquipmentLayers(BedrockItemPresentation plan, JsonArray selectors, boolean hasEquipmentAsset) {
+        // 同一位置的同一模型部件只生成一次，任一对应阶段生效时都显示它
         Map<Layer, List<String>> layers = new LinkedHashMap<>();
         Map<List<ItemBindingRule>, String> expressions = new IdentityHashMap<>();
         for (ItemDisplayContext view : EQUIPMENT_VIEWS) {
-            if (hasArmor && view == ItemDisplayContext.HEAD) {
+            if (hasEquipmentAsset && view == ItemDisplayContext.HEAD) {
                 continue;
             }
-            String viewCondition = equippedView(view).condition;
             List<ItemBindingRule> rules = plan.rulesByContext().get(view);
             String selector = "variable.ce_" + view.serializedName() + "_stage";
             String expression = expressions.get(rules);
             if (rules.size() > 1) {
-                // 只复用右侧表达式；各场景保留自己的变量名及 Java 分支顺序。
+                // 例如根据是否拉弓选中松弦或拉弦的规则编号，后续渲染条件同时匹配手持场景和编号
+                // 共用同一份规则列表的视角复用选择表达式，各自写入自己的阶段变量
                 if (expression == null) {
                     expression = BedrockItemAttachables.stageSelectionExpression(rules, plan.strategy()::stageCondition);
                     expressions.put(rules, expression);
                 }
                 selectors.add(selector + " = " + expression + ';');
             }
+            String viewCondition = equippedView(view).condition;
             for (int i = 0; i < rules.size(); i++) {
                 ItemBindingRule rule = rules.get(i);
                 try {
@@ -256,5 +295,4 @@ final class BedrockItemContextWriter {
 
     private record Layer(ItemDisplayContext view, ItemBindingRule part) {
     }
-
 }

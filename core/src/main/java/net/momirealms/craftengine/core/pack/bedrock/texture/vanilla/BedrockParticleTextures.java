@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -99,7 +100,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                     frames.add(data.image());
                 }
                 BufferedImage image = this.stitch(frames, first.rule());
-                String texture = "textures/particle/craftengine/" + target.file();
+                String texture = BedrockPackLayout.CRAFTENGINE_PARTICLE_TEXTURES + '/' + target.file();
                 JsonObject definition = target.create(texture, first.rule().selection(), frames.size(), frame);
                 if (!context.output().writeImage(first.rule().source(), texture + ".png", image)) {
                     continue;

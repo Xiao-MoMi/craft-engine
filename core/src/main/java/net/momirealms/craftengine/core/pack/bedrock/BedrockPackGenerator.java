@@ -28,6 +28,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.vanilla.BedrockVanil
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.util.ZipUtils;
 
 import java.io.IOException;
@@ -40,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+
 public final class BedrockPackGenerator {
 
     private BedrockPackGenerator() {
@@ -50,7 +53,8 @@ public final class BedrockPackGenerator {
                                 List<WorldBlockSource> blocks,
                                 List<NativeModelSource> nativeModels,
                                 Map<Key, Key> soundReplacements,
-                                Path output) throws IOException {
+                                Path output,
+                                boolean obfuscation) throws IOException {
         Path dataDestination = output.toAbsolutePath().normalize();
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
@@ -65,7 +69,10 @@ public final class BedrockPackGenerator {
             NativeModelAssets.write(nativeModels, pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
 
             BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()));
-            BedrockDefinitionBundler.bundle(pack, Config.bedrockMaxDefinitionsPerFile());
+            BedrockDefinitionBundler.bundle(pack);
+            if (obfuscation && VersionHelper.PREMIUM) {
+                BedrockAssetObfuscator.obfuscate(pack, data);
+            }
             try (InputStream icon = resources.openCustomResource("pack.png")) {
                 if (icon != null) {
                     Files.copy(icon, pack.resolve("pack_icon.png"));
@@ -153,7 +160,7 @@ public final class BedrockPackGenerator {
         modules.add(module);
 
         JsonObject manifest = new JsonObject();
-        manifest.addProperty("format_version", 2);
+        manifest.addProperty(FORMAT_VERSION, BedrockFormatVersions.MANIFEST);
         manifest.add("header", header);
         manifest.add("modules", modules);
         return manifest;

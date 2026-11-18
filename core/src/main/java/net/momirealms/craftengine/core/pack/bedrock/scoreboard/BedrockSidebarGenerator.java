@@ -50,7 +50,7 @@ public final class BedrockSidebarGenerator {
                 image.addProperty("x", element.x());
                 image.addProperty("y", element.y());
                 String source = "assets/" + element.texture().namespace() + "/textures/" + element.texture().value() + ".png";
-                String destination = "textures/craftengine/scoreboard/" + index + "_" + elements.size();
+                String destination = "textures/ce/scoreboard/" + index + "_" + elements.size();
                 Path file = root.resolve(destination + ".png");
                 Files.createDirectories(file.getParent());
                 try (InputStream input = resources.openResource(source)) {

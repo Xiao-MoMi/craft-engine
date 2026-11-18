@@ -62,7 +62,7 @@ final class PlaybackSounds {
                 TranslationManager.warn("resource_pack.bedrock.sound.unresolved", id.asString());
                 continue;
             }
-            String target = "craftengine.sound." + HashUtils.sha1(id.asString().getBytes(StandardCharsets.UTF_8));
+            String target = "ce.sound." + HashUtils.sha1(id.asString().getBytes(StandardCharsets.UTF_8));
             JsonArray files = new JsonArray();
             for (Sample sample : event.samples()) {
                 String path = BedrockSounds.copyAudio(root, sample.id(), this.audio.get(sample.id()), copied);

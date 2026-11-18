@@ -39,13 +39,13 @@ final class DisplayProperties {
     }
 
     void register(GeyserDefineEntityPropertiesEvent event) {
-        this.shape = event.registerIntegerProperty(this.id, Identifier.of("craftengine:shape"), 0, 1000000, 0);
+        this.shape = event.registerIntegerProperty(this.id, Identifier.of("ce:shape"), 0, 1000000, 0);
         this.dye = GeyserDyeProperties.register(event, this.id, DISPLAY_DYE);
         this.translation = this.axes(event, "pos", 0);
         this.left = new Rotation(this.axes(event, "left", 0), this.property(event, "left_w", 1));
         this.scale = this.axes(event, "size", 1);
         this.right = new Rotation(this.axes(event, "right", 0), this.property(event, "right_w", 1));
-        this.interpolation = event.registerIntegerProperty(this.id, Identifier.of("craftengine:interpolation"), 0, 1000000, 0);
+        this.interpolation = event.registerIntegerProperty(this.id, Identifier.of("ce:interpolation"), 0, 1000000, 0);
         this.duration = this.property(event, "duration", 0);
         this.delay = this.property(event, "delay", 0);
         this.modelPosition = this.axes(event, "model_pos", 0);
@@ -66,7 +66,7 @@ final class DisplayProperties {
     }
 
     private GeyserFloatEntityProperty property(GeyserDefineEntityPropertiesEvent event, String name, float initial) {
-        return event.registerFloatProperty(this.id, Identifier.of("craftengine:" + name), -1000000f, 1000000f, initial);
+        return event.registerFloatProperty(this.id, Identifier.of("ce:" + name), -1000000f, 1000000f, initial);
     }
 
     void write(BatchPropertyUpdater batch,

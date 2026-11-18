@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FLIPBOOK_TEXTURES;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.NAMESPACE;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.TERRAIN_TEXTURE_ATLAS;
 
 public final class BedrockTerrainAtlas {
@@ -91,7 +92,7 @@ public final class BedrockTerrainAtlas {
     public void finish(Path root) throws IOException {
         if (!this.terrain.isEmpty()) {
             JsonObject atlas = new JsonObject();
-            atlas.addProperty("resource_pack_name", "craftengine");
+            atlas.addProperty("resource_pack_name", NAMESPACE);
             atlas.addProperty("texture_name", "atlas.terrain");
             atlas.addProperty("padding", 8);
             atlas.addProperty("num_mip_levels", 4);

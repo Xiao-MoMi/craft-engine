@@ -7,7 +7,6 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +15,7 @@ public final class GeyserGlyphs {
     private GeyserGlyphs() {
     }
 
-    public static GeyserGlyphData parse(JsonObject glyphs) throws IOException {
+    public static GeyserGlyphData parse(JsonObject glyphs) {
         Map<String, Map<Integer, FontGlyph>> metrics = new HashMap<>();
         if (glyphs != null) {
             readMetrics(glyphs, metrics);
@@ -24,10 +23,7 @@ public final class GeyserGlyphs {
         return new GeyserGlyphData(replacements(metrics), metrics.isEmpty() ? null : new ContainerTitleLayout(metrics));
     }
 
-    private static void readMetrics(JsonObject root, Map<String, Map<Integer, FontGlyph>> metrics) throws IOException {
-        if (!(root.get("metrics") instanceof JsonObject layouts)) {
-            throw new IOException("Missing glyph metrics");
-        }
+    private static void readMetrics(JsonObject layouts, Map<String, Map<Integer, FontGlyph>> metrics) {
         for (Map.Entry<String, JsonElement> font : layouts.entrySet()) {
             Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new HashMap<>());
             for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {

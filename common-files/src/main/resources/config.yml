@@ -29,17 +29,16 @@ resource-pack:
       # - type: optimize
         - type: zip
           path: "./generated/resource_pack.zip"
-          # Skip outer ZIP compression for PNGs. Image quality is unchanged; ZIP size may increase.
-          store-png: false
       #   protection: true  # requires premium version
-      # - type: generate_bedrock_pack
-      #   input: "./generated/resource_pack.zip"
-      #   output: "../Geyser-Spigot/extensions/craftengine/data/craftengine.cedata"
         - type: upload
           pack: default
           path: "./generated/resource_pack.zip"
         - type: send_pack
           pack: default
+      # - type: generate_bedrock_pack
+      #   input: "./generated/resource_pack.zip"
+      #   output: "../Geyser-Spigot/extensions/craftengine/data/craftengine.cedata"
+      #   protection: false  # requires premium version
 
   # Keys are pack IDs. Selected packs are sent in configuration order.
   # Player overrides take precedence over default.
@@ -897,10 +896,6 @@ bedrock:
     item-icon-size: 64
     # Maximum layers per dyeable display material; excess colors are merged.
     display-dye-max-layers: 16
-    # Maximum definitions per generated geometry, animation, render controller,
-    # or animation controller file. Only compatible file formats are combined.
-    # 0 keeps the original file layout; texture and geometry deduplication still applies.
-    max-definitions-per-file: 32
   # Extra ways to identify Bedrock players when API detection does not identify them.
   # Geyser and Floodgate API detection remains active regardless of these options.
   additional-identification:

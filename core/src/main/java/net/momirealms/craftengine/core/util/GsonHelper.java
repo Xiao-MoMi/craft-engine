@@ -7,8 +7,10 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.UnaryOperator;
 
 public final class GsonHelper {
     private static final Gson GSON;
@@ -54,6 +56,67 @@ public final class GsonHelper {
             return result;
         }
         return element.deepCopy();
+    }
+
+    public static boolean replaceStringValues(JsonElement value, Map<String, String> aliases) {
+        return replaceStrings(value, aliases, Map.of());
+    }
+
+    public static boolean replaceStrings(JsonElement value, Map<String, String> values, Map<String, String> keys) {
+        return replaceStrings(value, values::get, keys);
+    }
+
+    public static boolean replaceStrings(JsonElement value, UnaryOperator<String> values, Map<String, String> keys) {
+        boolean changed = false;
+        if (value instanceof JsonObject object) {
+            for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
+                String replacement = stringAlias(entry.getValue(), values);
+                if (replacement != null) {
+                    entry.setValue(new JsonPrimitive(replacement));
+                    changed = true;
+                } else {
+                    changed |= replaceStrings(entry.getValue(), values, keys);
+                }
+            }
+            changed |= replaceStringKeys(object, keys);
+        } else if (value instanceof JsonArray array) {
+            for (int i = 0; i < array.size(); i++) {
+                JsonElement element = array.get(i);
+                String replacement = stringAlias(element, values);
+                if (replacement != null) {
+                    array.set(i, new JsonPrimitive(replacement));
+                    changed = true;
+                } else {
+                    changed |= replaceStrings(element, values, keys);
+                }
+            }
+        }
+        return changed;
+    }
+
+    public static boolean replaceStringKeys(JsonObject object, Map<String, String> aliases) {
+        if (aliases.isEmpty() || object.keySet().stream().noneMatch(aliases::containsKey)) {
+            return false;
+        }
+        Map<String, JsonElement> entries = LinkedHashMap.newLinkedHashMap(object.size());
+        object.entrySet().forEach(entry -> entries.put(aliases.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue()));
+        object.asMap().clear();
+        object.asMap().putAll(entries);
+        return true;
+    }
+
+    public static boolean replaceStringValues(JsonObject object, String key, Map<String, String> aliases) {
+        JsonElement value = object.get(key);
+        String replacement = stringAlias(value, aliases::get);
+        if (replacement != null) {
+            object.addProperty(key, replacement);
+            return true;
+        }
+        return replaceStringValues(value, aliases);
+    }
+
+    private static String stringAlias(JsonElement value, UnaryOperator<String> aliases) {
+        return value instanceof JsonPrimitive primitive && primitive.isString() ? aliases.apply(primitive.getAsString()) : null;
     }
 
     public static void writeJsonFile(JsonElement json, Path path) throws IOException {

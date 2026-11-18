@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.bedrock;
 
 public enum RegistrationPlanKind {
-    ITEM("craftengine:item_registration_plan", "craftengine/item_registration_plan.json", 1),
-    BLOCK("craftengine:block_registration_plan", "craftengine/block_registration_plan.json", 1);
+    ITEM("craftengine:item_registration_plan", "craftengine/items.json", 1),
+    BLOCK("craftengine:block_registration_plan", "craftengine/blocks.json", 1);
 
     private final String id;
     private final String file;

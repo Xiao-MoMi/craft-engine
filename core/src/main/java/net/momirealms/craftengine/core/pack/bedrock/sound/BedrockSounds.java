@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock.sound;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.block.BlockSounds;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -22,6 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
+import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.SOUND_DEFINITIONS;
 
 public final class BedrockSounds {
     private static final JsonObject REGISTRY = GsonHelper.readJsonFromResource("/bedrock/vanilla_block_sounds.json").getAsJsonObject();
@@ -70,7 +74,7 @@ public final class BedrockSounds {
         if (vanilla != null) {
             return vanilla;
         }
-        return this.groups.computeIfAbsent(group, key -> "craftengine:block_" + hash(String.join("\n", key.events())));
+        return this.groups.computeIfAbsent(group, key -> "ce:block_" + hash(String.join("\n", key.events())));
     }
 
     public void write(Path root, JsonObject playback) throws IOException {
@@ -111,7 +115,7 @@ public final class BedrockSounds {
         if (!definitions.isEmpty()) {
             Files.createDirectories(root.resolve("sounds"));
             JsonObject sounds = GsonHelper.createObject("sound_definitions", definitions);
-            sounds.addProperty("format_version", "1.14.0");
+            sounds.addProperty(FORMAT_VERSION, SOUND_DEFINITIONS);
             GsonHelper.writeJsonFile(sounds, root.resolve("sounds/sound_definitions.json"));
         }
     }
@@ -133,7 +137,7 @@ public final class BedrockSounds {
     static String copyAudio(Path root, Key sample, Path source, Map<Key, String> copied) throws IOException {
         String path = copied.get(sample);
         if (path == null) {
-            path = "sounds/craftengine/" + hash(sample.asString());
+            path = BedrockPackLayout.CRAFTENGINE_SOUNDS + '/' + hash(sample.asString());
             Path target = root.resolve(path + ".ogg");
             Files.createDirectories(target.getParent());
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
