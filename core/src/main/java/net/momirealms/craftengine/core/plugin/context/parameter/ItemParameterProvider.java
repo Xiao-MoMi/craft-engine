@@ -23,7 +23,8 @@ public final class ItemParameterProvider implements ChainParameterProvider<Item>
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_BLOCK_ITEM, Item::isBlockItem);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.RANDOM, ItemParameterProvider::randomValues);
         CONTEXT_FUNCTIONS.put(DirectContextParameters.IS_EMPTY, Item::isEmpty);
-        CONTEXT_FUNCTIONS.put(DirectContextParameters.COMPONENTS, item -> VersionHelper.isOrAbove1_20_5 ? new ItemComponentParameters(item) : null);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.COMPONENTS, item -> VersionHelper.isOrAbove1_20_5 ? ItemDataParameters.components(item) : null);
+        CONTEXT_FUNCTIONS.put(DirectContextParameters.NBT, item -> VersionHelper.isOrAbove1_20_5 ? null : ItemDataParameters.nbt(item));
     }
 
     @SuppressWarnings("unchecked")

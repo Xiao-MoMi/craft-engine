@@ -57,6 +57,7 @@ public final class DirectContextParameters {
     public static final ContextKey<Item> OFF_HAND_ITEM = ContextKey.direct("off_hand_item");
     public static final ContextKey<Item> ITEM = ContextKey.direct("item");
     public static final ContextKey<ChainParameterSource> COMPONENTS = ContextKey.direct("components");
+    public static final ContextKey<ChainParameterSource> NBT = ContextKey.direct("nbt");
     public static final ContextKey<BlockDefinition> CUSTOM_BLOCK = ContextKey.direct("custom_block");
     public static final ContextKey<ExistingBlock> BLOCK = ContextKey.direct("block");
     public static final ContextKey<Long> TIME = ContextKey.direct("time");

@@ -10,14 +10,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-record ItemComponentParameters(Item item) implements ChainParameterSource {
+record ItemDataParameters(Item item, boolean legacy) implements ChainParameterSource {
+
+    static ItemDataParameters components(Item item) {
+        return new ItemDataParameters(item, false);
+    }
+
+    static ItemDataParameters nbt(Item item) {
+        return new ItemDataParameters(item, true);
+    }
 
     @Override
     public <T> Optional<T> getParameter(ContextKey<T> key) {
         String node = key.node();
         int firstIndex = node.indexOf('[');
-        String component = firstIndex < 0 ? node : node.substring(0, firstIndex);
-        return value(this.item.getComponentAsJava(component), node, firstIndex);
+        String root = firstIndex < 0 ? node : node.substring(0, firstIndex);
+        Object data = this.legacy ? this.item.getTagAsJava(root) : this.item.getComponentAsJava(root);
+        return value(data, node, firstIndex);
     }
 
     @SuppressWarnings("unchecked")
