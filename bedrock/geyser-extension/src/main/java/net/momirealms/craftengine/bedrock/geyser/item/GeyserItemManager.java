@@ -18,12 +18,16 @@ import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.util.Identifier;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class GeyserItemManager {
     private final CraftEngineGeyserExtension extension;
+    private final Set<String> registeredItems = new HashSet<>();
+    private GeyserActiveItemMetadata activeItemMetadata;
     private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private final Map<String, String> headIdentifiers = new HashMap<>();
@@ -42,6 +46,7 @@ public final class GeyserItemManager {
     }
 
     public void registerItems(JsonObject plan, GeyserDefineCustomItemsEvent event) {
+        this.registeredItems.clear();
         this.contextualItems.clear();
         this.headIdentifiers.clear();
         this.extension.blockManager().clearBlockItems();
@@ -119,6 +124,7 @@ public final class GeyserItemManager {
         Integer elytraVariant = elytra == null ? null : elytra.getAsInt();
         registration.event.register(item.itemType(), definition);
         registration.registered++;
+        this.registeredItems.add(identifier);
         if (elytraVariant != null) {
             registration.elytraVariants.put(identifier, elytraVariant);
         }
@@ -150,6 +156,7 @@ public final class GeyserItemManager {
 
     public void init() {
         this.worldItemViews.install();
+        this.activeItemMetadata = GeyserActiveItemMetadata.install();
     }
 
     public GeyserHeldDye initPlayerDye(GeyserPlayer player) {
@@ -173,7 +180,14 @@ public final class GeyserItemManager {
         return null;
     }
 
+    public boolean isRegisteredItem(String identifier) {
+        return this.registeredItems.contains(identifier);
+    }
+
     public void disable() {
+        if (this.activeItemMetadata != null) {
+            this.activeItemMetadata.uninstall();
+        }
         this.worldItemViews.uninstall();
     }
 

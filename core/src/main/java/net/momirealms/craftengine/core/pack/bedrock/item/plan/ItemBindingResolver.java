@@ -2,7 +2,10 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.setting.ItemSettings;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +42,13 @@ public final class ItemBindingResolver {
                 ? clientItem.itemModel().map(Key::of).orElse(null)
                 : clientItem.vanillaId();
         ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.apply(itemModel);
+        if (definition != null) {
+            ItemDefinition item = serverItem.getDefinitionOrNull();
+            ItemSettings.SharedModelData modelData = item == null ? null : item.settings().sharedModelData();
+            if (modelData != null && (itemModel.equals(modelData.model()) || itemModel.equals(ItemModelMappings.getMappings().get(modelData.model())))) {
+                definition = definition.withModelDataId(modelData.id());
+            }
+        }
         ItemBehaviorDescription behavior = this.behaviorReader.read(serverItem, clientItem);
         ItemRegistrationProperties properties = this.registrationReader.read(clientItem, behavior);
         Key headTexture = properties.headTexture();

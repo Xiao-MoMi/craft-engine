@@ -689,11 +689,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 ConfigSection legacyModelSection = section.getSection(LEGACY_MODEL);
                 boolean hasModelSection = modelValue != null || textureValue != null || blueprintValue != null || legacyModelSection != null;
 
-                if (customModelData > 0 && (hasModelSection || forceCustomModelData)) {
+                boolean applyModelData = customModelData > 0 && (hasModelSection || forceCustomModelData);
+                boolean applyItemModel = itemModel != null && (hasModelSection || forceItemModel);
+                if (applyModelData) {
                     if (clientBoundModel) itemBuilder.clientBoundProcessor(new OverwritableCustomModelDataProcessor(ConstantNumberProvider.constant(customModelData)));
                     else itemBuilder.dataProcessor(new CustomModelDataProcessor(ConstantNumberProvider.constant(customModelData)));
                 }
-                if (itemModel != null && (hasModelSection || forceItemModel)) {
+                if (applyItemModel) {
                     if (clientBoundModel) {
                         itemBuilder.clientBoundProcessor(new OverwritableItemModelProcessor(itemModel));
                     }
@@ -733,6 +735,12 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 // 设置
                 ItemSettings settings = ItemSettings.forItem(isVanillaItem);
+                if (applyModelData) {
+                    Key baseModel = applyItemModel ? itemModel : clientBoundMaterial;
+                    if (AbstractPackManager.PRESET_ITEMS.containsKey(baseModel)) {
+                        settings.sharedModelData(new ItemSettings.SharedModelData(baseModel, customModelData));
+                    }
+                }
                 try {
                     ItemSettings.applyModifiers(settings, section.getSection("settings"));
                 } catch (KnownResourceException e) {

@@ -46,7 +46,11 @@ final class DisplayContextVariants {
         }
 
         // 先固定策略自身的注册状态（如弩的装填类型），再逐组加入各显示位置的物品栈条件
-        List<Variant> variants = List.of(new Variant(strategy.stateConditions(), new EnumMap<>(ItemDisplayContext.class)));
+        List<ItemBindingCondition> initial = ItemConditionIntersection.intersect(strategy.stateConditions(), entry.definition().identityConditions());
+        if (initial == null) {
+            return List.of();
+        }
+        List<Variant> variants = List.of(new Variant(initial, new EnumMap<>(ItemDisplayContext.class)));
         for (Map.Entry<ViewBranches, List<ItemDisplayContext>> group : contextsByBranches.entrySet()) {
             variants = mergeVariants(variants, group.getKey(), group.getValue());
         }

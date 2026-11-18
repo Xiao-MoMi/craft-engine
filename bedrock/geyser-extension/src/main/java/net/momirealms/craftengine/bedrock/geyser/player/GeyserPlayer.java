@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserActiveItemUse;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserElytraEquipment;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public final class GeyserPlayer {
     private final CraftEngineGeyserExtension extension;
     private final GeyserSession session;
+    private final GeyserActiveItemUse activeUse;
     private final GeyserNetworkManager network = new GeyserNetworkManager();
     private GeyserPacketHandler packetHandler;
     private GeyserContainerCloseHandler containerCloseHandler;
@@ -44,6 +46,7 @@ public final class GeyserPlayer {
     GeyserPlayer(CraftEngineGeyserExtension extension, GeyserSession session) {
         this.extension = extension;
         this.session = session;
+        this.activeUse = new GeyserActiveItemUse(session, extension.itemManager()::isRegisteredItem);
     }
 
     synchronized void initialize() {
@@ -53,11 +56,16 @@ public final class GeyserPlayer {
         this.extension.blockManager().initPlayer(this);
         this.heldDye = this.extension.itemManager().initPlayerDye(this);
         this.items = this.extension.itemManager().initPlayer(this);
+        this.activeUse.listen(this.network);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
         this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
         this.packetHandler = new GeyserPacketHandler(this);
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
+    }
+
+    public GeyserActiveItemUse activeUse() {
+        return this.activeUse;
     }
 
     public GeyserSession session() {

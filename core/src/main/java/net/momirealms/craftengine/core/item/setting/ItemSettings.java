@@ -63,6 +63,20 @@ public final class ItemSettings {
     EquipmentSetPart equipmentSetPart;
     AttributeModifiers attributeModifiers;
     EquipmentPotionEffects equipmentPotionEffects;
+    @Nullable
+    private SharedModelData sharedModelData;
+
+    public record SharedModelData(Key model, int id) {
+    }
+
+    @Nullable
+    public SharedModelData sharedModelData() {
+        return this.sharedModelData;
+    }
+
+    public void sharedModelData(SharedModelData sharedModelData) {
+        this.sharedModelData = sharedModelData;
+    }
 
     private ItemSettings() {
         this(CustomItemSettingType.newDataArray());
@@ -162,6 +176,7 @@ public final class ItemSettings {
 
     public static ItemSettings ofFullCopy(ItemSettings settings) {
         ItemSettings newSettings = new ItemSettings(settings.customData.clone());
+        newSettings.sharedModelData = settings.sharedModelData;
         newSettings.fuelTime = settings.fuelTime;
         newSettings.breakPower = settings.breakPower;
         newSettings.tags = settings.tags;

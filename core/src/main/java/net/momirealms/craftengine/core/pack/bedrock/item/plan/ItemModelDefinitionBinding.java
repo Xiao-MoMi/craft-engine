@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CustomModelDataRangeDispatchProperty;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.ArrayList;
@@ -9,10 +10,17 @@ public record ItemModelDefinitionBinding(Key definitionId,
                                          boolean handAnimationOnSwap,
                                          boolean oversizedInGui,
                                          float swapAnimationScale,
-                                         List<ItemBindingRule> rules /* 全部变体分支 */) {
+                                         List<ItemBindingRule> rules,
+                                         List<ItemBindingCondition> identityConditions) {
+    private static final CustomModelDataRangeDispatchProperty MODEL_DATA_ID = new CustomModelDataRangeDispatchProperty(0);
+
+    public ItemModelDefinitionBinding(Key definitionId, boolean handAnimationOnSwap, boolean oversizedInGui, float swapAnimationScale, List<ItemBindingRule> rules) {
+        this(definitionId, handAnimationOnSwap, oversizedInGui, swapAnimationScale, rules, List.of());
+    }
 
     public ItemModelDefinitionBinding {
         rules = List.copyOf(rules);
+        identityConditions = List.copyOf(identityConditions);
     }
 
     public boolean hasPlayerHead() {
@@ -26,7 +34,24 @@ public record ItemModelDefinitionBinding(Key definitionId,
 
     ItemModelDefinitionBinding withHeadSkin(Key skin) {
         List<ItemBindingRule> updated = bindHeadSkin(this.rules, skin);
-        return updated == this.rules ? this : new ItemModelDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, updated);
+        return updated == this.rules ? this : new ItemModelDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, updated, this.identityConditions);
+    }
+
+    ItemModelDefinitionBinding withModelDataId(int id) {
+        List<ItemBindingRule> reachable = new ArrayList<>();
+        for (ItemBindingRule rule : this.rules) {
+            if (rule.hasCondition(condition -> condition instanceof ItemBindingCondition.NumericRange range
+                    && MODEL_DATA_ID.equals(range.property()) && !range.matches(id))) {
+                continue;
+            }
+            List<ItemBindingCondition> remaining = rule.conditions().stream()
+                    .filter(condition -> !(condition instanceof ItemBindingCondition.NumericRange range && MODEL_DATA_ID.equals(range.property())))
+                    .toList();
+            reachable.add(new ItemBindingRule(remaining, rule.target(), rule.transformations(), rule.sourcePath()));
+        }
+        // Geyser 的区间是左闭右开，相邻 float 之间没有其他可匹配的模型值。
+        ItemBindingCondition exact = new ItemBindingCondition.NumericRange(MODEL_DATA_ID, 1F, (float) id, Math.nextUp((float) id));
+        return new ItemModelDefinitionBinding(this.definitionId, this.handAnimationOnSwap, this.oversizedInGui, this.swapAnimationScale, reachable, List.of(exact));
     }
 
     @SuppressWarnings("DeconstructionCanBeUsed")
