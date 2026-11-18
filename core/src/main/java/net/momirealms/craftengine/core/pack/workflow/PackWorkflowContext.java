@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.pack.workflow;
 
 import net.momirealms.craftengine.core.pack.PackGenerationOptions;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
@@ -20,7 +19,7 @@ public interface PackWorkflowContext {
 
     void export(String path) throws Exception;
 
-    void generateBedrockPack(String input, @Nullable String packOutput, String output) throws Exception;
+    void generateBedrockPack(String input, String output) throws Exception;
 
     void validatePack() throws Exception;
 

@@ -41,42 +41,23 @@ public final class ItemSettings {
     Key fuelRemainder = null;
     List<DamageSource> invulnerable = List.of();
     boolean canEnchant = true;
-    float compostProbability= 0.5f;
+    float compostProbability = 0.5f;
     boolean respectRepairableComponent = false;
     List<Key> ingredientSubstitutes = List.of();
-    @Nullable
     ItemEquipment equipment;
-    @Nullable
     EquipmentFallback equipmentFallback;
-    @Nullable
     Color dyeColor;
-    @Nullable
     Color fireworkColor;
     float keepOnDeathChance = 0f;
     float destroyOnDeathChance = 0f;
-    @Nullable
     String dropDisplay = Config.defaultDropDisplayFormat();
-    @Nullable
     LegacyChatFormatter glowColor = null;
     boolean triggerAdvancement = false;
     Set<Key> allowedProjectiles = Set.of();
     EquipmentSetPart equipmentSetPart;
     AttributeModifiers attributeModifiers;
     EquipmentPotionEffects equipmentPotionEffects;
-    @Nullable
-    private SharedModelData sharedModelData;
-
-    public record SharedModelData(Key model, int id) {
-    }
-
-    @Nullable
-    public SharedModelData sharedModelData() {
-        return this.sharedModelData;
-    }
-
-    public void sharedModelData(SharedModelData sharedModelData) {
-        this.sharedModelData = sharedModelData;
-    }
+    SharedModelData sharedModelData;
 
     private ItemSettings() {
         this(CustomItemSettingType.newDataArray());
@@ -409,6 +390,15 @@ public final class ItemSettings {
     @Nullable
     public EquipmentPotionEffects equipmentPotionEffects() {
         return this.equipmentPotionEffects;
+    }
+
+    @Nullable
+    public SharedModelData sharedModelData() {
+        return this.sharedModelData;
+    }
+
+    public void sharedModelData(SharedModelData sharedModelData) {
+        this.sharedModelData = sharedModelData;
     }
 
     public ItemSettings fireworkColor(Color color) {

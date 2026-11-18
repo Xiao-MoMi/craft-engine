@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser;
 
+import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
@@ -37,6 +38,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     private GeyserPlayerManager playerManager;
     private GeyserSidebarManager sidebarManager;
+    private GeyserBossBars bossBars;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserItemDisplays itemDisplays;
@@ -91,6 +93,9 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
+        if (this.extensionData.bossBars() != null && !this.extensionData.bossBars().isEmpty()) {
+            this.bossBars = GeyserBossBars.install(this.extensionData.bossBars());
+        }
         this.sounds.install(this.extensionData.soundMappings());
         this.itemDisplays.install();
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
@@ -121,6 +126,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
+        if (this.bossBars != null) {
+            this.bossBars.uninstall();
+            this.bossBars = null;
+        }
         this.sounds.uninstall();
         if (this.guiMenus != null) {
             this.guiMenus.uninstall();

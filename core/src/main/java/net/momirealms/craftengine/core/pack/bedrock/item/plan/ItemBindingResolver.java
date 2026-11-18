@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
-import net.momirealms.craftengine.core.item.setting.ItemSettings;
+import net.momirealms.craftengine.core.item.setting.value.SharedModelData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ public final class ItemBindingResolver {
         ItemModelDefinitionBinding definition = itemModel == null ? null : this.definitions.apply(itemModel);
         if (definition != null) {
             ItemDefinition item = serverItem.getDefinitionOrNull();
-            ItemSettings.SharedModelData modelData = item == null ? null : item.settings().sharedModelData();
+            SharedModelData modelData = item == null ? null : item.settings().sharedModelData();
             if (modelData != null && (itemModel.equals(modelData.model()) || itemModel.equals(ItemModelMappings.getMappings().get(modelData.model())))) {
                 definition = definition.withModelDataId(modelData.id());
             }

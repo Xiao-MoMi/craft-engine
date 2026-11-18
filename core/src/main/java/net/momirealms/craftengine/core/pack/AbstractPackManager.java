@@ -1172,7 +1172,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         @Override
-        public void generateBedrockPack(String input, @Nullable String packOutput, String output) throws IOException {
+        public void generateBedrockPack(String input, String output) throws IOException {
             if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
                 throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.unsupported_version", MinecraftVersion.V1_21_4.version(), VersionHelper.MINECRAFT_VERSION.version()));
             }
@@ -1183,7 +1183,6 @@ public abstract class AbstractPackManager implements PackManager {
             TranslationManager.info("resource_pack.bedrock.workflow.started");
             Timestamp timestamp = new Timestamp();
             Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla_resource_pack")).download(VersionHelper.MINECRAFT_VERSION);
-            Path packPath = packOutput == null ? null : this.resolvePath(packOutput);
             Path dataPath = this.resolvePath(output);
             try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
                 JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION, fileSystem);
@@ -1193,15 +1192,10 @@ public abstract class AbstractPackManager implements PackManager {
                         AbstractPackManager.this.collectGeyserWorldBlockSources(),
                         AbstractPackManager.this.collectGeyserNativeModels(),
                         AbstractPackManager.this.plugin.blockManager().soundReplacements(),
-                        packPath,
                         dataPath
                 );
             }
-            if (packPath == null) {
-                TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
-            } else {
-                TranslationManager.info("resource_pack.bedrock.workflow.finished", packPath.toString(), dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
-            }
+            TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
         }
 
         @Override

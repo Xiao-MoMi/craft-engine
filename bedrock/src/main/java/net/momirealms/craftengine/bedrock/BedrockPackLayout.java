@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock;
 
 public final class BedrockPackLayout {
+    public static final String BOSS_BARS = "craftengine/boss_bars.json";
     public static final String SOUND_MAPPINGS = "craftengine/sound_mappings.json";
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";

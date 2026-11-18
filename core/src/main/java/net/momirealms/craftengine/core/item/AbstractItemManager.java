@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.item.network.GlobalNetworkItemProcessors;
 import net.momirealms.craftengine.core.item.processor.*;
 import net.momirealms.craftengine.core.item.setting.CustomItemSettingType;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
+import net.momirealms.craftengine.core.item.setting.value.SharedModelData;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.item.updater.ItemUpdater;
@@ -738,7 +739,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 if (applyModelData) {
                     Key baseModel = applyItemModel ? itemModel : clientBoundMaterial;
                     if (AbstractPackManager.PRESET_ITEMS.containsKey(baseModel)) {
-                        settings.sharedModelData(new ItemSettings.SharedModelData(baseModel, customModelData));
+                        settings.sharedModelData(new SharedModelData(baseModel, customModelData));
                     }
                 }
                 try {

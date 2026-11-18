@@ -27,7 +27,8 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null, null);
+    private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final JsonObject items;
     private final boolean convertText;
@@ -39,7 +40,8 @@ public final class GeyserExtensionData {
     private final Path clientPack;
 
     private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard,
-                                @Nullable JsonObject nativeModels, @Nullable JsonObject soundMappings, @Nullable Path clientPack) {
+                               @Nullable JsonObject nativeModels, @Nullable JsonObject soundMappings, @Nullable JsonObject bossBars, @Nullable Path clientPack) {
+        this.bossBars = bossBars;
         this.soundMappings = soundMappings;
         this.clientPack = clientPack;
         this.scoreboard = scoreboard;
@@ -67,6 +69,7 @@ public final class GeyserExtensionData {
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
                     readJson(archive, BedrockPackLayout.NATIVE_MODELS), readJson(archive, BedrockPackLayout.SOUND_MAPPINGS),
+                    readJson(archive, BedrockPackLayout.BOSS_BARS),
                     cacheDirectory == null ? null : extractClientPack(archive, cacheDirectory));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
@@ -90,6 +93,11 @@ public final class GeyserExtensionData {
         } finally {
             Files.deleteIfExists(temporary);
         }
+    }
+
+    @Nullable
+    public JsonObject bossBars() {
+        return this.bossBars;
     }
 
     @Nullable

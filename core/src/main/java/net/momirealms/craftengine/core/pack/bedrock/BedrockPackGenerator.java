@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanW
 import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockSource;
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockBossBars;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplayGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
@@ -28,7 +29,6 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ZipUtils;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,19 +45,10 @@ public final class BedrockPackGenerator {
     private BedrockPackGenerator() {
     }
 
-    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, @Nullable Path packOutput, Path dataOutput) throws IOException {
-        generate(resources, plan, blocks, List.of(), packOutput, dataOutput);
-    }
-
-    public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels, @Nullable Path packOutput, Path dataOutput) throws IOException {
-        generate(resources, plan, blocks, nativeModels, Map.of(), packOutput, dataOutput);
-    }
-
     public static void generate(JavaResourcePack resources, ItemRegistrationPlan plan, List<WorldBlockSource> blocks, List<NativeModelSource> nativeModels,
-                                Map<Key, Key> soundReplacements, @Nullable Path packOutput, Path dataOutput) throws IOException {
-        Path packDestination = packOutput == null ? null : packOutput.toAbsolutePath().normalize();
-        Path dataDestination = dataOutput.toAbsolutePath().normalize();
-        String packName = packDestination == null ? BedrockPackFiles.clientPackName(dataDestination) : packDestination.getFileName().toString();
+                                Map<Key, Key> soundReplacements, Path output) throws IOException {
+        Path dataDestination = output.toAbsolutePath().normalize();
+        String packName = BedrockPackFiles.clientPackName(dataDestination);
 
         try (FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform())) {
             Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
@@ -67,6 +58,7 @@ public final class BedrockPackGenerator {
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
+            BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
             NativeModelAssets.write(nativeModels, pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
 
             BedrockResourceSharing.share(pack, data.resolve(RegistrationPlanKind.BLOCK.file()));
@@ -76,7 +68,7 @@ public final class BedrockPackGenerator {
                     Files.copy(icon, pack.resolve("pack_icon.png"));
                 }
             }
-            writeArchives(pack, data, packDestination, dataDestination);
+            writeArchives(pack, data, dataDestination);
         }
     }
 
@@ -106,24 +98,18 @@ public final class BedrockPackGenerator {
         definitions.write(pack);
     }
 
-    private static void writeArchives(Path pack, Path data, @Nullable Path packDestination, Path dataDestination) throws IOException {
+    private static void writeArchives(Path pack, Path data, Path dataDestination) throws IOException {
         JsonObject manifest = manifest();
         GsonHelper.writeJsonFile(manifest, pack.resolve("manifest.json"));
         GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
 
         Path dataDirectory = Files.createDirectories(dataDestination.getParent());
-        Path packDirectory = packDestination == null ? dataDirectory : Files.createDirectories(packDestination.getParent());
-        Path temporaryPack = Files.createTempFile(packDirectory, "bedrock-pack-", ".tmp");
+        Path temporaryPack = Files.createTempFile(dataDirectory, "bedrock-pack-", ".tmp");
         try {
             ZipUtils.compress(pack, temporaryPack, false, false);
             Path temporaryData = Files.createTempFile(dataDirectory, "bedrock-data-", ".tmp");
             try {
-                if (packDestination == null) {
-                    ZipUtils.compressWithStoredFile(data, temporaryData, temporaryPack, BedrockPackFiles.CLIENT_PACK);
-                } else {
-                    ZipUtils.compress(data, temporaryData, false, false);
-                    Files.move(temporaryPack, packDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-                }
+                ZipUtils.compressWithStoredFile(data, temporaryData, temporaryPack, BedrockPackFiles.CLIENT_PACK);
                 Files.move(temporaryData, dataDestination, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
             } finally {
                 Files.deleteIfExists(temporaryData);

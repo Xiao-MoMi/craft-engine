@@ -12,6 +12,7 @@ public final class BedrockPackFiles {
             BedrockPackLayout.NATIVE_MODELS,
             BedrockPackLayout.TRANSLATIONS,
             BedrockPackLayout.SCOREBOARD,
+            BedrockPackLayout.BOSS_BARS,
             BedrockPackLayout.GLYPHS
     );
 
