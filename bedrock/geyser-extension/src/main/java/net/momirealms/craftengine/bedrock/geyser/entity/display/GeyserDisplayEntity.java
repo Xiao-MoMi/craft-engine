@@ -14,6 +14,7 @@ import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
+import org.cloudburstmc.protocol.bedrock.packet.MoveEntityAbsolutePacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityLinkPacket;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
@@ -49,21 +50,20 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
     private float sentYaw;
     private float sentPitch;
     private int teleportDuration;
-    private int moveStep;
-    private Vector3f moveFrom;
-    private Vector3f moveTo;
-    private float yawFrom;
-    private float pitchFrom;
-    private float targetYaw;
-    private float targetPitch;
+    private int movementTicks;
+    private Vector3f renderPosition;
+    private float renderYaw;
+    private float renderPitch;
+    private Vector3f seatOffset;
 
     GeyserDisplayEntity(EntitySpawnContext context, GeyserItemDisplays displays, DisplayProperties carrier) {
         super(context);
         this.displays = displays;
         this.heldItemTypes = displays.heldItemTypes(this.session.protocolVersion());
         this.carrier = carrier;
-        this.targetYaw = this.yaw;
-        this.targetPitch = this.pitch;
+        this.renderPosition = this.position;
+        this.renderYaw = this.yaw;
+        this.renderPitch = this.pitch;
     }
 
     @Override
@@ -194,7 +194,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         boolean modelChanged = fullUpdate || appearance != this.sentAppearance;
         boolean dyeChanged = fullUpdate || dyeColor != this.sentDyeColor;
         boolean interpolationChanged = fullUpdate || this.transform.dirty();
-        boolean orientationChanged = fullUpdate || this.yaw != this.sentYaw || this.pitch != this.sentPitch;
+        boolean orientationChanged = fullUpdate || this.renderYaw != this.sentYaw || this.renderPitch != this.sentPitch;
         int style = BedrockDisplayStyle.pack(this.billboard, this.hidden, this.heldItemType);
         boolean styleChanged = fullUpdate || style != this.sentStyle;
         if (!modelChanged && !dyeChanged && !interpolationChanged && !orientationChanged && !styleChanged) {
@@ -205,7 +205,7 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.updatePropertiesBatched(batch -> {
             this.carrier.write(batch, pose, previous, appearance, modelChanged, dyeColor, dyeChanged, interpolation, this.transform.duration(), this.transform.delay());
             if (orientationChanged) {
-                this.carrier.orientation(batch, this.yaw, this.pitch);
+                this.carrier.orientation(batch, this.renderYaw, this.renderPitch);
             }
             if (styleChanged) {
                 this.carrier.style(batch, style);
@@ -215,8 +215,8 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         this.sentAppearance = appearance;
         this.sentStyle = style;
         this.sentDyeColor = dyeColor;
-        this.sentYaw = this.yaw;
-        this.sentPitch = this.pitch;
+        this.sentYaw = this.renderYaw;
+        this.sentPitch = this.renderPitch;
         if (changeCarrier && this.valid && !spawning) {
             // 新载体生成后才发装备，保留 Java 实体、运行时 ID 和乘客关系
             RemoveEntityPacket remove = new RemoveEntityPacket();
@@ -273,44 +273,113 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
 
     @Override
     public void tick() {
-        if (this.moveTo != null) {
-            float fraction = Math.min(1, ++this.moveStep / (float) Math.max(1, this.teleportDuration));
-            this.move(GenericMath.lerp(this.moveFrom, this.moveTo, fraction),
-                    this.yawFrom + GenericMath.wrapAngleDeg(this.targetYaw - this.yawFrom) * fraction,
-                    this.pitchFrom + GenericMath.wrapAngleDeg(this.targetPitch - this.pitchFrom) * fraction, false);
-            if (fraction == 1) {
-                this.moveTo = null;
-            }
+        int ticks = this.movementTicks;
+        if (ticks > 0) {
+            this.movementTicks = ticks - 1;
+            this.sampleMovement(ticks);
         }
         this.updateDisplay(false);
     }
 
+    private void sampleMovement(int ticks) {
+        double step = 1.0 / ticks;
+        if (!this.renderPosition.equals(this.position)) {
+            Vector3f from = this.renderPosition;
+            Vector3f to = this.position;
+            this.renderPosition = ticks == 1 ? to : Vector3f.from(
+                    from.getX() + (to.getX() - (double) from.getX()) * step,
+                    from.getY() + (to.getY() - (double) from.getY()) * step,
+                    from.getZ() + (to.getZ() - (double) from.getZ()) * step
+            );
+            if (!this.renderPosition.equals(from)) {
+                this.sendMovement(false);
+            }
+        }
+        float yaw = (float) (this.renderYaw + GenericMath.wrapAngleDeg(this.yaw - this.renderYaw) * step);
+        float pitch = (float) (this.renderPitch + (this.pitch - (double) this.renderPitch) * step);
+        this.renderRotation(yaw, pitch);
+    }
+
     @Override
     public void moveRelativeRaw(double x, double y, double z, float yaw, float pitch, float headYaw, boolean grounded) {
-        Vector3f base = this.moveTo == null ? this.position : this.moveTo;
-        this.moveAbsoluteRaw(base.add(x, y, z), yaw, pitch, headYaw, grounded, false);
+        Vector3f target = x == 0 && y == 0 && z == 0 ? this.position : this.position.add(x, y, z);
+        this.moveAbsoluteRaw(target, yaw, pitch, headYaw, grounded, false);
     }
 
     @Override
     public void moveAbsoluteRaw(Vector3f position, float yaw, float pitch, float headYaw, boolean grounded, boolean teleported) {
+        boolean groundChanged = this.onGround != grounded;
         this.setOnGround(grounded);
-        this.targetYaw = yaw;
-        this.targetPitch = pitch;
-        if (!teleported && this.teleportDuration > 0) {
-            this.moveFrom = this.position;
-            this.moveTo = position;
-            this.yawFrom = this.yaw;
-            this.pitchFrom = this.pitch;
-            this.moveStep = 0;
-        } else {
-            this.moveTo = null;
-            this.move(position, yaw, pitch, teleported);
+        // Geyser 用上一包的目标解码相对坐标和缺省朝向，基岩只接收插值后的显示值
+        boolean changed = !position.equals(this.position) || yaw != this.yaw || pitch != this.pitch;
+        this.setPosition(position);
+        this.setYaw(yaw);
+        this.setPitch(pitch);
+        this.setHeadYaw(yaw);
+        if (teleported || this.teleportDuration == 0) {
+            this.movementTicks = 0;
+            boolean positionChanged = !position.equals(this.renderPosition);
+            this.renderPosition = position;
+            this.renderRotation(yaw, pitch);
+            if (positionChanged || groundChanged) {
+                this.sendMovement(teleported);
+            }
+        } else if (changed) {
+            this.movementTicks = this.teleportDuration;
         }
     }
 
-    private void move(Vector3f position, float yaw, float pitch, boolean teleported) {
-        this.orientationDirty |= yaw != this.yaw || pitch != this.pitch;
-        super.moveAbsoluteRaw(position, yaw, pitch, yaw, this.onGround, teleported);
+    @Override
+    public void updateHeadLookRotation(float headYaw) {
+        // 展示实体没有独立的头部朝向
+    }
+
+    @Override
+    public void setVehicle(Entity vehicle) {
+        if (vehicle != this.vehicle) {
+            this.seatOffset = null;
+        }
+        super.setVehicle(vehicle);
+    }
+
+    @Override
+    public void setRiderSeatPosition(Vector3f offset) {
+        this.seatOffset = offset;
+        super.setRiderSeatPosition(offset);
+    }
+
+    private void renderRotation(float yaw, float pitch) {
+        if (yaw != this.renderYaw || pitch != this.renderPitch) {
+            this.renderYaw = yaw;
+            this.renderPitch = pitch;
+            this.orientationDirty = true;
+        }
+    }
+
+    private void sendMovement(boolean teleported) {
+        if (this.valid) {
+            MoveEntityAbsolutePacket packet = new MoveEntityAbsolutePacket();
+            packet.setRuntimeEntityId(this.geyserId);
+            packet.setPosition(this.bedrockPosition());
+            packet.setRotation(Vector3f.ZERO);
+            packet.setOnGround(this.onGround);
+            packet.setTeleported(teleported);
+            this.session.sendUpstreamPacket(packet);
+        }
+    }
+
+    Vector3f renderPosition() {
+        return this.renderPosition;
+    }
+
+    float renderYaw() {
+        return this.renderYaw;
+    }
+
+    @Override
+    public Vector3f bedrockPosition() {
+        float offset = this.getOffset();
+        return offset == 0 ? this.renderPosition : this.renderPosition.up(offset);
     }
 
     @Override
@@ -324,6 +393,9 @@ final class GeyserDisplayEntity extends Entity implements Tickable {
         super.addAdditionalSpawnData(packet);
         packet.getMetadata().put(EntityDataTypes.WIDTH, this.getBoundingBoxWidth());
         packet.getMetadata().put(EntityDataTypes.HEIGHT, this.getBoundingBoxHeight());
+        if (this.vehicle != null && this.seatOffset != null) {
+            packet.getMetadata().put(EntityDataTypes.SEAT_OFFSET, this.seatOffset);
+        }
         packet.setRotation(Vector2f.ZERO);
         packet.setHeadRotation(0);
         packet.setBodyRotation(0);

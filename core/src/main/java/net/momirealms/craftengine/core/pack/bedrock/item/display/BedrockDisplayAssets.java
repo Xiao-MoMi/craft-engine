@@ -338,7 +338,8 @@ final class BedrockDisplayAssets {
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
-        yaw.add("(v.ce_billboard == 1 || v.ce_billboard == 3) ? q.camera_rotation(1) - 180 : q.property('ce:yaw')");
+        // 载体的偏航已应用到乘客，骨骼只需补上从载体朝向到目标朝向的差值
+        yaw.add("((v.ce_billboard == 1 || v.ce_billboard == 3) ? q.camera_rotation(1) - 180 : q.property('ce:yaw')) - q.ride_body_y_rotation");
         yaw.add(0);
         rig.add("yaw", createObject("rotation", yaw));
         JsonArray pitch = new JsonArray();

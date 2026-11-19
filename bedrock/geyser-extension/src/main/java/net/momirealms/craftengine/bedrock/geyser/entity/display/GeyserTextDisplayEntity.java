@@ -325,11 +325,12 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         if (this.vehicle == null) {
             return null;
         }
-        Vector3f position = this.vehicle.getPosition();
+        GeyserDisplayEntity displayVehicle = this.vehicle instanceof GeyserDisplayEntity display ? display : null;
+        Vector3f position = displayVehicle == null ? this.vehicle.getPosition() : displayVehicle.renderPosition();
         Vector3f seat = this.seatOffset;
         float height = seat == null ? this.vehicle.getBoundingBoxHeight() : seat.getY();
         boolean offsetSideways = seat != null && (seat.getX() != 0 || seat.getZ() != 0);
-        float yaw = offsetSideways ? this.vehicle.getYaw() : 0;
+        float yaw = offsetSideways ? (displayVehicle == null ? this.vehicle.getYaw() : displayVehicle.renderYaw()) : 0;
         if (position.equals(this.vehiclePosition) && yaw == this.vehicleYaw && height == this.seatHeight) {
             return this.passengerAnchor;
         }

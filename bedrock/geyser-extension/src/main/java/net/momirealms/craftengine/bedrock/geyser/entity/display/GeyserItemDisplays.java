@@ -71,8 +71,7 @@ public final class GeyserItemDisplays {
             DisplayProperties heldProperties = new DisplayProperties(heldId);
             this.carriers.put(heldId, heldProperties);
             if (this.heldBlock == null) {
-                this.heldBlock = new Model(heldProperties, new Appearance[]{new Appearance(0,
-                        Vector3f.from(8, 8, -8), Vector3f.from(0, 180, 0), Vector3f.ONE)});
+                this.heldBlock = new Model(heldProperties, new Appearance[]{new Appearance(0, Vector3f.from(8, 8, -8), Vector3f.from(0, 180, 0), Vector3f.ONE)});
             }
             for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("vanilla").entrySet()) {
                 JsonArray contexts = entry.getValue().getAsJsonArray();
@@ -93,8 +92,7 @@ public final class GeyserItemDisplays {
         }
         if (displays.has("blocks")) {
             for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("blocks").entrySet()) {
-                this.blocks.putIfAbsent(BlockStateKey.parse(entry.getKey()),
-                        new Model(properties, new Appearance[]{appearances[entry.getValue().getAsInt()]}));
+                this.blocks.putIfAbsent(BlockStateKey.parse(entry.getKey()), new Model(properties, new Appearance[]{appearances[entry.getValue().getAsInt()]}));
             }
         }
     }
