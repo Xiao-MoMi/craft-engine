@@ -3,10 +3,11 @@ package net.momirealms.craftengine.bedrock.geyser.entity.display;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import net.momirealms.craftengine.bedrock.BlockStateKey;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import org.cloudburstmc.math.vector.Vector3f;
-import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
@@ -15,10 +16,9 @@ import org.geysermc.geyser.entity.BedrockEntityDefinition;
 import org.geysermc.geyser.entity.EntityTypeBase;
 import org.geysermc.geyser.entity.VanillaEntityType;
 import org.geysermc.geyser.registry.Registries;
-import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.registry.type.ItemMapping;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
-import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
@@ -30,6 +30,7 @@ public final class GeyserItemDisplays {
     private final Map<String, Model> items = new LinkedHashMap<>();
     private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
     private final Map<BlockStateKey, Model> blocks = new LinkedHashMap<>();
+    private Int2ObjectMap<GeyserHeldItemTypes> heldItemTypes = Int2ObjectMaps.emptyMap();
     private Model heldBlock;
     private VanillaEntityType<GeyserDisplayEntity> itemDefinition;
     private VanillaEntityType<GeyserDisplayEntity> blockDefinition;
@@ -120,6 +121,9 @@ public final class GeyserItemDisplays {
         if (this.itemDefinition != null || this.carriers.isEmpty()) {
             return;
         }
+        if (this.heldBlock != null) {
+            this.heldItemTypes = GeyserHeldItemTypes.load();
+        }
         DisplayProperties first = this.carriers.values().iterator().next();
         BedrockEntityDefinition bedrock = Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id());
         this.itemDefinition = this.displayBase(bedrock, first, EntityType.ITEM_DISPLAY)
@@ -156,8 +160,13 @@ public final class GeyserItemDisplays {
                 .addTranslator(MetadataTypes.QUATERNION, (entity, meta) -> entity.left(meta.getValue()))
                 .addTranslator(MetadataTypes.QUATERNION, (entity, meta) -> entity.right(meta.getValue()))
                 .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.billboard(meta.getValue()))
-                .addTranslator(null).addTranslator(null).addTranslator(null).addTranslator(null)
-                .addTranslator(null).addTranslator(null).addTranslator(null);
+                .addTranslator(null)
+                .addTranslator(MetadataTypes.FLOAT, (entity, meta) -> entity.viewRange(meta.getValue()))
+                .addTranslator(null)
+                .addTranslator(null)
+                .addTranslator(null)
+                .addTranslator(null)
+                .addTranslator(null);
     }
 
     public void disable() {
@@ -166,12 +175,13 @@ public final class GeyserItemDisplays {
         this.items.clear();
         this.vanillaItems.clear();
         this.blocks.clear();
+        this.heldItemTypes = Int2ObjectMaps.emptyMap();
         this.heldBlock = null;
         this.carriers.clear();
     }
 
-    Model resolve(ItemData item) {
-        return this.items.get(item.getDefinition().getIdentifier());
+    Model resolve(String identifier) {
+        return this.items.get(identifier);
     }
 
     Model block(String state) {
@@ -182,8 +192,12 @@ public final class GeyserItemDisplays {
         return this.heldBlock;
     }
 
-    Model vanilla(GeyserSession session, ItemStack stack) {
-        return this.vanillaItems.get(session.getItemMappings().getMapping(stack).getJavaItem().javaIdentifier().toString());
+    GeyserHeldItemTypes heldItemTypes(int protocol) {
+        return this.heldItemTypes.getOrDefault(protocol, GeyserHeldItemTypes.EMPTY);
+    }
+
+    Model vanilla(ItemMapping mapping) {
+        return this.vanillaItems.get(mapping.getJavaItem().javaIdentifier().toString());
     }
 
     record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale, int customModelDataColorIndex) {

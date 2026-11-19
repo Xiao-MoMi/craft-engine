@@ -338,17 +338,21 @@ final class BedrockDisplayAssets {
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
-        yaw.add("query.property('ce:yaw')");
+        yaw.add("(v.ce_billboard == 1 || v.ce_billboard == 3) ? q.camera_rotation(1) - 180 : q.property('ce:yaw')");
         yaw.add(0);
         rig.add("yaw", createObject("rotation", yaw));
         JsonArray pitch = new JsonArray();
-        pitch.add("query.property('ce:pitch')");
+        pitch.add("v.ce_billboard >= 2 ? -q.camera_rotation(0) : q.property('ce:pitch')");
         pitch.add(0);
         pitch.add(0);
         rig.add("pitch", createObject("rotation", pitch));
         rig.add("translation", interpolatedVector("position", "pos"));
         rig.add("left", interpolatedVector("rotation", "left"));
-        rig.add("size", interpolatedVector("scale", "size"));
+        JsonArray size = new JsonArray(AXES.length);
+        for (String axis : AXES) {
+            size.add("v.ce_hidden ? 0 : v.ce_size_" + axis);
+        }
+        rig.add("size", createObject("scale", size));
         rig.add("right", interpolatedVector("rotation", "right"));
         for (int i = 0; i < AXES.length; i++) {
             String axis = AXES[i];
@@ -398,7 +402,7 @@ final class BedrockDisplayAssets {
             String alias = "held_" + type.id();
             this.animation(alias, channels);
             heldAnimations.add(alias, this.animationNames.get(alias));
-            heldAnimate.add(createObject(alias, new JsonPrimitive("query.property('" + BedrockHeldItemType.PROPERTY + "') == " + type.id())));
+            heldAnimate.add(createObject(alias, new JsonPrimitive("v.ce_held_type == " + type.id())));
         }
         heldDescription.add("scripts", BedrockDisplayInterpolation.scripts(heldAnimate));
         JsonArray heldControllers = new JsonArray();

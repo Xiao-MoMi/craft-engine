@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.display;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockDisplayStyle;
 
 import java.util.List;
 
@@ -52,6 +53,10 @@ final class BedrockDisplayInterpolation {
         }
         pose.append("v.ce_t = v.ce_fraction;");
         return List.of(
+                "v.ce_style = q.property('" + BedrockDisplayStyle.PROPERTY + "'); "
+                        + "v.ce_billboard = math.mod(v.ce_style, " + BedrockDisplayStyle.HIDDEN_FLAG + "); "
+                        + "v.ce_hidden = math.mod(v.ce_style, " + BedrockDisplayStyle.HELD_ITEM_STRIDE + ") >= " + BedrockDisplayStyle.HIDDEN_FLAG + "; "
+                        + "v.ce_held_type = math.floor(v.ce_style / " + BedrockDisplayStyle.HELD_ITEM_STRIDE + ");",
                 "v.ce_seen != q.property('ce:interpolation') ? {" + changed + "};",
                 FRACTION,
                 "v.ce_t != v.ce_fraction ? {" + pose + "};"

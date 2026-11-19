@@ -18,6 +18,7 @@ import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.TextDisplayEntity;
 import org.geysermc.geyser.entity.type.Tickable;
+import org.geysermc.geyser.network.bedrock.GameProtocol;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
 
 import java.awt.Color;
@@ -353,11 +354,12 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                 this.writeShape(
                         0,
                         line.text(),
-                        this.position.up(4.5f * DisplayTextPlane.PIXEL * scale),
+                        this.position.up(DisplayTextPlane.LINE_CENTER * DisplayTextPlane.PIXEL * scale),
                         Vector3f.ZERO,
                         scale,
                         this.foreground,
                         this.background,
+                        0,
                         false,
                         depthTest,
                         renderDistance
@@ -370,7 +372,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         float pitch = followsPitch ? -this.cameraPitch : this.pitch;
         Vector3f base = this.passengerAnchor == null ? this.position : this.passengerAnchor;
         if (this.plane == null) {
-            this.plane = new DisplayTextPlane();
+            this.plane = new DisplayTextPlane(GameProtocol.is26_50orHigher(this.session.protocolVersion()));
         }
         float alignment = (this.style & ALIGN_LEFT) != 0 ? -0.5f : ((this.style & ALIGN_RIGHT) != 0 ? 0.5f : 0);
         if (!this.plane.prepare(pose, base, yaw, pitch, this.layout, alignment)) {
@@ -391,6 +393,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                     scale,
                     INVISIBLE_TEXT,
                     this.background,
+                    this.plane.backgroundLineGap(),
                     true,
                     depthTest,
                     renderDistance
@@ -412,6 +415,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                         scale,
                         this.shadowColor,
                         TRANSPARENT,
+                        0,
                         true,
                         depthTest,
                         renderDistance
@@ -425,6 +429,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                     scale,
                     this.foreground,
                     lineBackground,
+                    0,
                     true,
                     depthTest,
                     renderDistance
@@ -508,6 +513,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                             float scale,
                             Color color,
                             Color background,
+                            float lineGap,
                             boolean useRotation,
                             boolean depthTest,
                             float renderDistance) {
@@ -523,6 +529,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
                 && sameScale && previous.getText().equals(text)
                 && Objects.equals(previous.getColor(), color)
                 && Objects.equals(previous.getBackgroundColor(), background)
+                && previous.getLineGapHeight() == lineGap
                 && previous.isUseRotation() == useRotation
                 && previous.isDepthTest() == depthTest
                 && sameDistance) {
@@ -540,6 +547,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         shape.setUseRotation(useRotation);
         shape.setColor(color);
         shape.setBackgroundColor(background);
+        shape.setLineGapHeight(lineGap);
         shape.setText(text);
         shape.setDepthTest(depthTest);
         shape.setMaximumRenderDistance(sameDistance ? previousDistance : Float.valueOf(renderDistance));

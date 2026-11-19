@@ -8,6 +8,13 @@ import java.util.Arrays;
 
 final class DisplayTextPlane {
     static final float PIXEL = 0.025f;
+    static final float LINE_CENTER = 4.5f;
+    private static final int LINE_HEIGHT = 10;
+    // 让基岩背景的逐行高度与 Java 的 10 像素行距对齐
+    private static final float BACKGROUND_LINE_GAP = -0.625f;
+    private static final float BACKGROUND_LINE_OFFSET = LINE_HEIGHT * 0.5f * PIXEL;
+    private static final float BACKGROUND_DEPTH = 0.003f;
+    private final float backgroundLineGap;
     private DisplayPose pose;
     private Vector3f base;
     private float yaw;
@@ -16,6 +23,7 @@ final class DisplayTextPlane {
     private Vector3f anchor;
     private Vector3f right;
     private Vector3f up;
+    private Vector3f renderUp;
     private Vector3f normal;
     private Vector3f rotation;
     private float scale;
@@ -26,6 +34,10 @@ final class DisplayTextPlane {
     private Vector3f shadowAnchor;
     private Vector3f[] lines;
     private Vector3f[] shadows;
+
+    DisplayTextPlane(boolean supportsLineGap) {
+        this.backgroundLineGap = supportsLineGap ? BACKGROUND_LINE_GAP : 0;
+    }
 
     boolean prepare(DisplayPose pose, Vector3f base, float yaw, float pitch, DisplayTextLayout layout, float alignment) {
         boolean orientationChanged = this.orientation == null || this.yaw != yaw || this.pitch != pitch;
@@ -71,10 +83,20 @@ final class DisplayTextPlane {
         return this.rotation;
     }
 
+    float backgroundLineGap() {
+        return this.backgroundLineGap;
+    }
+
     Vector3f background() {
         if (this.background == null) {
-            Vector3f base = this.anchor.sub(this.normal.mul(0.003f));
-            this.background = this.position(base, 1, this.layout.lines().size() * 5 - 0.5f);
+            // 基岩每多一行就沿渲染平面的上方向移动固定半行距离，从首行锚点反向抵消
+            float lineY = this.lineY(0) * PIXEL;
+            float offset = (this.layout.lines().size() - 1) * BACKGROUND_LINE_OFFSET;
+            this.background = this.anchor.add(
+                    this.right.getX() * PIXEL + this.up.getX() * lineY - this.renderUp.getX() * offset - this.normal.getX() * BACKGROUND_DEPTH,
+                    this.right.getY() * PIXEL + this.up.getY() * lineY - this.renderUp.getY() * offset - this.normal.getY() * BACKGROUND_DEPTH,
+                    this.right.getZ() * PIXEL + this.up.getZ() * lineY - this.renderUp.getZ() * offset - this.normal.getZ() * BACKGROUND_DEPTH
+            );
         }
         return this.background;
     }
@@ -113,7 +135,7 @@ final class DisplayTextPlane {
     }
 
     private float lineY(int index) {
-        return this.layout.lines().size() * 10 - index * 10 - 5.5f;
+        return (this.layout.lines().size() - 1 - index) * LINE_HEIGHT + LINE_CENTER;
     }
 
     private boolean updateAxes() {
@@ -135,7 +157,8 @@ final class DisplayTextPlane {
         }
         this.normal = normal.div(normalLength);
         Vector3f unitRight = this.right.div(rightLength);
-        this.rotation = textRotation(unitRight, this.normal.cross(unitRight), this.normal);
+        this.renderUp = this.normal.cross(unitRight);
+        this.rotation = textRotation(unitRight, this.renderUp, this.normal);
         this.scale = (float) Math.sqrt(rightLength * upLength);
         return true;
     }

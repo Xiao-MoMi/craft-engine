@@ -5,6 +5,10 @@ import org.cloudburstmc.math.vector.Vector3f;
 
 final class DisplayInterpolation {
     private DisplayPose target = DisplayPose.IDENTITY;
+    private Vector3f translation = Vector3f.ZERO;
+    private Vector3f scale = Vector3f.ONE;
+    private Quaternionf left = Quaternionf.IDENTITY;
+    private Quaternionf right = Quaternionf.IDENTITY;
     private int duration;
     private int delay;
     private int sequence;
@@ -17,6 +21,9 @@ final class DisplayInterpolation {
     }
 
     DisplayPose target() {
+        if (this.target == null) {
+            this.target = new DisplayPose(this.translation, this.left, this.scale, this.right);
+        }
         return this.target;
     }
 
@@ -41,34 +48,35 @@ final class DisplayInterpolation {
     }
 
     void translation(Vector3f value) {
-        if (!this.target.translation().equals(value)) {
-            this.target = new DisplayPose(value, this.target.left(), this.target.scale(), this.target.right());
+        if (!this.translation.equals(value)) {
+            this.translation = value;
             this.change();
         }
     }
 
     void scale(Vector3f value) {
-        if (!this.target.scale().equals(value)) {
-            this.target = new DisplayPose(this.target.translation(), this.target.left(), value, this.target.right());
+        if (!this.scale.equals(value)) {
+            this.scale = value;
             this.change();
         }
     }
 
     void left(Quaternionf value) {
-        if (!this.target.left().equals(value)) {
-            this.target = new DisplayPose(this.target.translation(), value, this.target.scale(), this.target.right());
+        if (!this.left.equals(value)) {
+            this.left = value;
             this.change();
         }
     }
 
     void right(Quaternionf value) {
-        if (!this.target.right().equals(value)) {
-            this.target = new DisplayPose(this.target.translation(), this.target.left(), this.target.scale(), value);
+        if (!this.right.equals(value)) {
+            this.right = value;
             this.change();
         }
     }
 
     private void change() {
+        this.target = null;
         this.dirty = true;
         this.changed = true;
     }
