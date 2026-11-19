@@ -3,10 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
 import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
-import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
-import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
-import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
-import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
+import net.momirealms.craftengine.bedrock.geyser.entity.GeyserEntityManager;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
@@ -41,22 +38,20 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserBossBars bossBars;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
-    private GeyserItemDisplays itemDisplays;
+    private GeyserEntityManager entityManager;
     private GeyserGuiMenus guiMenus;
-    private GeyserTextDisplayManager textDisplayManager;
-    private GeyserHardHitboxManager hardHitboxManager;
     private GeyserGlyphManager glyphManager;
     private GeyserLanguageManager languageManager;
     private GeyserBlockManager blockManager;
     private GeyserItemManager itemManager;
     private GeyserExtensionData extensionData;
-    private final GeyserSoundMappings sounds = new GeyserSoundMappings();
+    private GeyserSoundMappings sounds;
     private GeyserCustomPayloads customPayloads;
-    private GeyserNativeModels nativeModels;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
         instance = this;
+        this.sounds = new GeyserSoundMappings();
         this.playerManager = new GeyserPlayerManager(this);
         this.config = new GeyserConfig(this.dataFolder(), this.logger());
         this.config.load();
@@ -66,8 +61,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         } catch (IOException exception) {
             throw new IllegalStateException("Failed to initialize translations", exception);
         }
-        this.itemDisplays = new GeyserItemDisplays();
-        this.hardHitboxManager = new GeyserHardHitboxManager(this);
         this.blockManager = new GeyserBlockManager();
         this.customPayloads = new GeyserCustomPayloads();
         this.glyphManager = new GeyserGlyphManager();
@@ -75,7 +68,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemManager = new GeyserItemManager(this);
         try {
             this.extensionData = GeyserExtensionData.read(this.config.dataFile(), this.dataFolder().resolve("cache"));
-            this.nativeModels = new GeyserNativeModels(this.extensionData.nativeModels());
+            this.entityManager = new GeyserEntityManager(this.playerManager, this.extensionData.nativeModels());
             this.languageManager.load(this.extensionData.languages());
             this.glyphManager.load(this.extensionData.glyphs());
         } catch (IOException exception) {
@@ -97,14 +90,10 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.bossBars = GeyserBossBars.install(this.extensionData.bossBars());
         }
         this.sounds.install(this.extensionData.soundMappings());
-        this.itemDisplays.install();
+        this.entityManager.initialize(this.glyphManager.glyphs());
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
             this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
             this.sidebarManager.install();
-        }
-        if (this.extensionData.convertText()) {
-            this.textDisplayManager = new GeyserTextDisplayManager();
-            this.textDisplayManager.install();
         }
         this.itemManager.init();
         this.blockManager.init();
@@ -114,13 +103,13 @@ public final class CraftEngineGeyserExtension implements Extension {
     }
 
     @Subscribe
-    public void onHardHitboxSpawn(ServerSpawnEntityEvent event) {
-        this.hardHitboxManager.onSpawn(event);
+    public void onEntitySpawn(ServerSpawnEntityEvent event) {
+        this.entityManager.onSpawn(event);
     }
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
-        this.nativeModels.disconnect((GeyserSession) event.connection());
+        this.entityManager.disconnect((GeyserSession) event.connection());
         this.playerManager.remove(event.connection());
     }
 
@@ -134,6 +123,9 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (this.guiMenus != null) {
             this.guiMenus.uninstall();
             this.guiMenus = null;
+        }
+        if (this.entityManager != null) {
+            this.entityManager.disable();
         }
         if (this.playerManager != null) {
             this.playerManager.disable();
@@ -150,10 +142,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (this.itemManager != null) {
             this.itemManager.disable();
         }
-        if (this.textDisplayManager != null) {
-            this.textDisplayManager.uninstall();
-        }
-        this.itemDisplays.uninstall();
         if (this.blockManager != null) {
             this.blockManager.disable();
         }
@@ -172,14 +160,12 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDefineEntities(GeyserDefineEntitiesEvent event) {
-        this.nativeModels.register(event);
-        this.itemDisplays.registerEntities(this.extensionData.items(), event);
+        this.entityManager.registerEntities(this.extensionData.items(), event);
     }
 
     @Subscribe
     public void onDefineEntityProperties(GeyserDefineEntityPropertiesEvent event) {
-        this.nativeModels.properties(event);
-        this.itemDisplays.properties(event);
+        this.entityManager.registerProperties(event);
         this.itemManager.registerProperties(event);
     }
 
@@ -197,6 +183,10 @@ public final class CraftEngineGeyserExtension implements Extension {
         return instance;
     }
 
+    public GeyserConfig config() {
+        return this.config;
+    }
+
     public GeyserPlayerManager playerManager() {
         return this.playerManager;
     }
@@ -205,24 +195,12 @@ public final class CraftEngineGeyserExtension implements Extension {
         return this.sidebarManager;
     }
 
-    public GeyserConfig config() {
-        return this.config;
-    }
-
     public GeyserTranslationManager translationManager() {
         return this.translations;
     }
 
-    public GeyserHardHitboxManager hardHitboxManager() {
-        return this.hardHitboxManager;
-    }
-
-    public GeyserTextDisplayManager textDisplayManager() {
-        return this.textDisplayManager;
-    }
-
-    public GeyserItemDisplays itemDisplays() {
-        return this.itemDisplays;
+    public GeyserEntityManager entityManager() {
+        return this.entityManager;
     }
 
     public GeyserGlyphManager glyphManager() {
@@ -247,9 +225,5 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserCustomPayloads customPayloads() {
         return this.customPayloads;
-    }
-
-    public GeyserNativeModels nativeModels() {
-        return this.nativeModels;
     }
 }

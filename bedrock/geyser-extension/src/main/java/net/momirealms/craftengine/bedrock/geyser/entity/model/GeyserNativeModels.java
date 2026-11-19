@@ -40,6 +40,7 @@ public final class GeyserNativeModels {
         }
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     public void register(GeyserDefineEntitiesEvent event) {
         for (Model model : this.models.values()) {
             model.definition = CustomEntityDefinition.of(model.id);

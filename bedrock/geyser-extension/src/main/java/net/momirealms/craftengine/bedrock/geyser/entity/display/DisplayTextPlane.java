@@ -1,0 +1,184 @@
+package net.momirealms.craftengine.bedrock.geyser.entity.display;
+
+import org.cloudburstmc.math.GenericMath;
+import org.cloudburstmc.math.imaginary.Quaternionf;
+import org.cloudburstmc.math.vector.Vector3f;
+
+import java.util.Arrays;
+
+final class DisplayTextPlane {
+    static final float PIXEL = 0.025f;
+    private DisplayPose pose;
+    private Vector3f base;
+    private float yaw;
+    private float pitch;
+    private Quaternionf orientation;
+    private Vector3f anchor;
+    private Vector3f right;
+    private Vector3f up;
+    private Vector3f normal;
+    private Vector3f rotation;
+    private float scale;
+    private boolean drawable;
+    private DisplayTextLayout layout;
+    private float alignment;
+    private Vector3f background;
+    private Vector3f shadowAnchor;
+    private Vector3f[] lines;
+    private Vector3f[] shadows;
+
+    boolean prepare(DisplayPose pose, Vector3f base, float yaw, float pitch, DisplayTextLayout layout, float alignment) {
+        boolean orientationChanged = this.orientation == null || this.yaw != yaw || this.pitch != pitch;
+        boolean planeChanged = orientationChanged || this.pose != pose;
+        boolean anchorChanged = planeChanged || !base.equals(this.base);
+        boolean layoutChanged = this.layout != layout || this.alignment != alignment;
+        if (!anchorChanged && !layoutChanged) {
+            return this.drawable;
+        }
+
+        if (orientationChanged) {
+            this.yaw = yaw;
+            this.pitch = pitch;
+            this.orientation = Quaternionf.fromAngleDegAxis(-yaw, Vector3f.UNIT_Y)
+                    .mul(Quaternionf.fromAngleDegAxis(pitch, Vector3f.UNIT_X));
+        }
+        if (planeChanged) {
+            this.pose = pose;
+            this.drawable = this.updateAxes();
+        }
+        if (anchorChanged) {
+            this.base = base;
+            this.anchor = Vector3f.ZERO.equals(pose.translation()) ? base : base.add(this.orientation.rotate(pose.translation()));
+            this.shadowAnchor = null;
+        }
+        this.layout = layout;
+        this.alignment = alignment;
+        this.background = null;
+        if (this.lines != null) {
+            Arrays.fill(this.lines, null);
+        }
+        if (this.shadows != null) {
+            Arrays.fill(this.shadows, null);
+        }
+        return this.drawable;
+    }
+
+    float scale() {
+        return this.scale;
+    }
+
+    Vector3f rotation() {
+        return this.rotation;
+    }
+
+    Vector3f background() {
+        if (this.background == null) {
+            Vector3f base = this.anchor.sub(this.normal.mul(0.003f));
+            this.background = this.position(base, 1, this.layout.lines().size() * 5 - 0.5f);
+        }
+        return this.background;
+    }
+
+    Vector3f line(int index) {
+        int lineCount = this.layout.lines().size();
+        if (this.lines == null || this.lines.length < lineCount) {
+            this.lines = new Vector3f[lineCount];
+        }
+        Vector3f position = this.lines[index];
+        if (position == null) {
+            position = this.position(this.anchor, this.lineX(index) + 1, this.lineY(index));
+            this.lines[index] = position;
+        }
+        return position;
+    }
+
+    Vector3f shadow(int index) {
+        int lineCount = this.layout.lines().size();
+        if (this.shadows == null || this.shadows.length < lineCount) {
+            this.shadows = new Vector3f[lineCount];
+        }
+        Vector3f position = this.shadows[index];
+        if (position == null) {
+            if (this.shadowAnchor == null) {
+                this.shadowAnchor = this.anchor.sub(this.normal.mul(0.001f));
+            }
+            position = this.position(this.shadowAnchor, this.lineX(index) + 2, this.lineY(index) - 1);
+            this.shadows[index] = position;
+        }
+        return position;
+    }
+
+    private float lineX(int index) {
+        return (this.layout.width() - this.layout.lines().get(index).width()) * this.alignment;
+    }
+
+    private float lineY(int index) {
+        return this.layout.lines().size() * 10 - index * 10 - 5.5f;
+    }
+
+    private boolean updateAxes() {
+        float quaternionScale = this.pose.left().lengthSquared() * this.pose.right().lengthSquared();
+        if (quaternionScale < 1e-8f) {
+            return false;
+        }
+        this.right = this.axis(Vector3f.UNIT_X, quaternionScale);
+        this.up = this.axis(Vector3f.UNIT_Y, quaternionScale);
+        float rightLength = this.right.length();
+        float upLength = this.up.length();
+        if (rightLength < 0.0001f || upLength < 0.0001f) {
+            return false;
+        }
+        Vector3f normal = this.right.cross(this.up);
+        float normalLength = normal.length();
+        if (normalLength < 1e-8f) {
+            return false;
+        }
+        this.normal = normal.div(normalLength);
+        Vector3f unitRight = this.right.div(rightLength);
+        this.rotation = textRotation(unitRight, this.normal.cross(unitRight), this.normal);
+        this.scale = (float) Math.sqrt(rightLength * upLength);
+        return true;
+    }
+
+    private Vector3f axis(Vector3f axis, float quaternionScale) {
+        // Java 按右旋转、逐轴缩放、左旋转的顺序计算文本平面
+        Vector3f local = Quaternionf.IDENTITY.equals(this.pose.right()) ? axis : this.pose.right().rotate(axis);
+        local = Vector3f.ONE.equals(this.pose.scale()) ? local : local.mul(this.pose.scale());
+        local = Quaternionf.IDENTITY.equals(this.pose.left()) ? local : this.pose.left().rotate(local);
+        Vector3f world = this.orientation.rotate(local);
+        return quaternionScale == 1 ? world : world.mul(quaternionScale);
+    }
+
+    private Vector3f position(Vector3f origin, float x, float y) {
+        x *= PIXEL;
+        y *= PIXEL;
+        return origin.add(
+                this.right.getX() * x + this.up.getX() * y,
+                this.right.getY() * x + this.up.getY() * y,
+                this.right.getZ() * x + this.up.getZ() * y
+        );
+    }
+
+    private static Vector3f textRotation(Vector3f right, Vector3f up, Vector3f normal) {
+        double sinYaw = Math.clamp(right.getZ(), -1, 1);
+        double pitch;
+        double yaw;
+        double roll;
+        // DebugText 的正面沿 -Z，且采用 XYZ 欧拉旋转
+        if (Math.abs(sinYaw) < 0.9999) {
+            pitch = Math.toDegrees(Math.atan2(up.getZ(), -normal.getZ()));
+            yaw = Math.toDegrees(Math.asin(sinYaw));
+            roll = Math.toDegrees(Math.atan2(-right.getY(), -right.getX()));
+        } else {
+            pitch = Math.toDegrees(Math.atan2(normal.getY(), up.getY()));
+            yaw = Math.copySign(90, sinYaw);
+            roll = 0;
+        }
+        if (Math.abs(pitch) > 90) {
+            pitch = GenericMath.wrapAngleDeg((float) (pitch + 180));
+            yaw = GenericMath.wrapAngleDeg((float) (180 - yaw));
+            roll = GenericMath.wrapAngleDeg((float) (roll + 180));
+        }
+        return Vector3f.from(pitch, yaw, roll);
+    }
+}

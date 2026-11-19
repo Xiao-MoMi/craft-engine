@@ -310,7 +310,6 @@ public final class Config {
     private BedrockModelIntegration bedrock$integrations$modelengine = BedrockModelIntegration.DISABLED;
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
-    private boolean bedrock$display_entity$convert_text = true;
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
     private List<Pattern> bedrock$resource_pack$exclude_fonts = List.of();
@@ -808,7 +807,6 @@ public final class Config {
         this.bedrock$integrations$modelengine = config.getEnum("bedrock.integrations.modelengine", BedrockModelIntegration.class, BedrockModelIntegration.DISABLED);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
-        this.bedrock$display_entity$convert_text = config.getBoolean("bedrock.display-entity.convert-text", true);
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$resource_pack$exclude_fonts = config.getPatterns("bedrock.resource-pack.exclude-fonts");
@@ -1784,10 +1782,6 @@ public final class Config {
 
     public static List<String> bedrockVanillaDisplayBlocks() {
         return instance.bedrock$display_entity$vanilla_blocks;
-    }
-
-    public static boolean bedrockConvertText() {
-        return instance.bedrock$display_entity$convert_text;
     }
 
     public static boolean bedrockEnabled() {

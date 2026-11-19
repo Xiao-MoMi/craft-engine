@@ -14,27 +14,24 @@ import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.entity.BedrockEntityDefinition;
 import org.geysermc.geyser.entity.EntityTypeBase;
 import org.geysermc.geyser.entity.VanillaEntityType;
-import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
-import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEntityPacket> {
+public final class GeyserItemDisplays {
     private final Map<Identifier, DisplayProperties> carriers = new LinkedHashMap<>();
     private final Map<String, Model> items = new LinkedHashMap<>();
     private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
     private final Map<BlockStateKey, Model> blocks = new LinkedHashMap<>();
     private Model heldBlock;
-    private PacketTranslator<ClientboundAddEntityPacket> original;
-    private VanillaEntityType<GeyserDisplayEntity> definition;
+    private VanillaEntityType<GeyserDisplayEntity> itemDefinition;
     private VanillaEntityType<GeyserDisplayEntity> blockDefinition;
 
     public void registerEntities(JsonObject plan, GeyserDefineEntitiesEvent event) {
@@ -110,7 +107,7 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
     }
 
     public BedrockEntityDefinition emptyCarrier() {
-        return this.definition == null ? null : this.definition.defaultBedrockDefinition();
+        return this.itemDefinition == null ? null : this.itemDefinition.defaultBedrockDefinition();
     }
 
     public void properties(GeyserDefineEntityPropertiesEvent event) {
@@ -119,24 +116,28 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public void install() {
-        if (this.original != null || this.carriers.isEmpty()) {
+    public void initialize() {
+        if (this.itemDefinition != null || this.carriers.isEmpty()) {
             return;
         }
         DisplayProperties first = this.carriers.values().iterator().next();
-        this.definition = this.definition(Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id()), first);
-        this.blockDefinition = this.displayBase(Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id()), first, EntityType.BLOCK_DISPLAY)
-                .addTranslator(MetadataTypes.BLOCK_STATE, (entity, meta) -> entity.block((int) meta.getValue())).build(false);
-        this.original = (PacketTranslator<ClientboundAddEntityPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundAddEntityPacket.class);
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundAddEntityPacket.class, this);
-    }
-
-    VanillaEntityType<GeyserDisplayEntity> definition(BedrockEntityDefinition bedrock, DisplayProperties first) {
-        return this.displayBase(bedrock, first, EntityType.ITEM_DISPLAY)
+        BedrockEntityDefinition bedrock = Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id());
+        this.itemDefinition = this.displayBase(bedrock, first, EntityType.ITEM_DISPLAY)
                 .addTranslator(MetadataTypes.ITEM_STACK, (entity, meta) -> entity.item(meta.getValue()))
                 .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.context(meta.getValue()))
                 .build(false);
+        this.blockDefinition = this.displayBase(bedrock, first, EntityType.BLOCK_DISPLAY)
+                .addTranslator(MetadataTypes.BLOCK_STATE, (entity, meta) -> entity.block((int) meta.getValue())).build(false);
+    }
+
+    @Nullable
+    VanillaEntityType<GeyserDisplayEntity> itemDefinition() {
+        return this.itemDefinition;
+    }
+
+    @Nullable
+    VanillaEntityType<GeyserDisplayEntity> blockDefinition() {
+        return this.blockDefinition;
     }
 
     private VanillaEntityType.Builder<GeyserDisplayEntity> displayBase(BedrockEntityDefinition bedrock, DisplayProperties first, EntityType type) {
@@ -159,35 +160,14 @@ public final class GeyserItemDisplays extends PacketTranslator<ClientboundAddEnt
                 .addTranslator(null).addTranslator(null).addTranslator(null);
     }
 
-    public void uninstall() {
-        if (this.original != null) {
-            Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundAddEntityPacket.class, this, this.original);
-            this.original = null;
-        }
+    public void disable() {
+        this.itemDefinition = null;
+        this.blockDefinition = null;
         this.items.clear();
         this.vanillaItems.clear();
         this.blocks.clear();
         this.heldBlock = null;
-        this.blockDefinition = null;
         this.carriers.clear();
-    }
-
-    @Override
-    public void translate(GeyserSession session, ClientboundAddEntityPacket packet) {
-        if (packet.getType() != EntityType.ITEM_DISPLAY && packet.getType() != EntityType.BLOCK_DISPLAY) {
-            this.original.translate(session, packet);
-            return;
-        }
-        VanillaEntityType<GeyserDisplayEntity> selected = packet.getType() == EntityType.BLOCK_DISPLAY ? this.blockDefinition : this.definition;
-        EntitySpawnContext context = EntitySpawnContext.fromPacket(session, selected, packet);
-        if (!context.callServerSpawnEvent()) {
-            return;
-        }
-        GeyserDisplayEntity entity = selected.factory().create(context);
-        if (context.consumers() != null) {
-            context.consumers().forEach(consumer -> consumer.accept(entity));
-        }
-        session.getEntityCache().spawnEntity(entity);
     }
 
     Model resolve(ItemData item) {

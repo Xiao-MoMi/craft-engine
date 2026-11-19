@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class GeyserTextParts {
@@ -27,9 +28,30 @@ public final class GeyserTextParts {
     }
 
     public static String serializePart(GuiTitlePart part, String text, String locale) {
+        Object component = component(part, text, RESOLVED_FONT);
+        return MessageTranslatorProxy.INSTANCE.convertMessage(component, locale);
+    }
+
+    public static String serializeParts(List<GuiTitlePart> parts, String locale) {
+        if (parts.isEmpty()) {
+            return "";
+        }
+        if (parts.size() == 1) {
+            GuiTitlePart part = parts.getFirst();
+            return MessageTranslatorProxy.INSTANCE.convertMessage(component(part, part.text(), AdventureKeyProxy.INSTANCE.key(part.font())), locale);
+        }
+        List<Object> children = new ArrayList<>(parts.size());
+        for (GuiTitlePart part : parts) {
+            children.add(component(part, part.text(), AdventureKeyProxy.INSTANCE.key(part.font())));
+        }
+        AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
+        return MessageTranslatorProxy.INSTANCE.convertMessage(proxy.children(proxy.text(""), children), locale);
+    }
+
+    private static Object component(GuiTitlePart part, String text, Object font) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         Object component = proxy.color(proxy.text(text), AdventureTextColorProxy.INSTANCE.color(part.color()));
-        component = proxy.font(component, RESOLVED_FONT);
+        component = proxy.font(component, font);
         // 将片段的装饰位标记还原为 Adventure 样式，再交给 Geyser 序列化
         for (Object decoration : AdventureTextDecorationProxy.VALUES) {
             int flag = switch (((Enum<?>) decoration).name()) {
@@ -44,15 +66,15 @@ public final class GeyserTextParts {
                 component = proxy.decorate(component, decoration);
             }
         }
-        return MessageTranslatorProxy.INSTANCE.convertMessage(component, locale);
+        return component;
     }
 
     public static boolean collectParts(Object component,
-                                 String inheritedFont,
-                                 int inheritedColor,
-                                 int inheritedDecorations,
-                                 List<GuiTitlePart> parts,
-                                 String locale) {
+                                       String inheritedFont,
+                                       int inheritedColor,
+                                       int inheritedDecorations,
+                                       List<GuiTitlePart> parts,
+                                       String locale) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         // 当前组件显式设置的样式覆盖父级；未设置的样式继续继承
         Object ownFont = proxy.font(component);

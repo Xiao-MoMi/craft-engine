@@ -48,8 +48,6 @@ final class GeyserHeldItemTypes {
             }
         }
         // Geyser 的原版组件表不包含所有旧物品；这些原版工具由客户端内置的 hand_equipped 分支渲染。
-        return id.endsWith("_sword") || id.endsWith("_axe") || id.endsWith("_pickaxe")
-                || id.endsWith("_shovel") || id.endsWith("_hoe")
-                ? BedrockHeldItemType.HANDHELD : BedrockHeldItemType.SPRITE;
+        return id.endsWith("_sword") || id.endsWith("_axe") || id.endsWith("_pickaxe") || id.endsWith("_shovel") || id.endsWith("_hoe") ? BedrockHeldItemType.HANDHELD : BedrockHeldItemType.SPRITE;
     }
 }

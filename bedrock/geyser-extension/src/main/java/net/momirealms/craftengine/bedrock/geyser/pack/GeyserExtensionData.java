@@ -31,7 +31,6 @@ public final class GeyserExtensionData {
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final JsonObject items;
-    private final boolean convertText;
     private final JsonObject blocks;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
@@ -47,8 +46,6 @@ public final class GeyserExtensionData {
         this.scoreboard = scoreboard;
         this.nativeModels = nativeModels;
         this.items = items;
-        JsonObject displays = items == null ? null : items.getAsJsonObject("item_displays");
-        this.convertText = displays != null && displays.has("convert_text") && displays.get("convert_text").getAsBoolean();
         this.blocks = blocks;
         this.glyphs = glyphs;
         this.languages = languages;
@@ -150,10 +147,6 @@ public final class GeyserExtensionData {
     @Nullable
     public JsonObject blocks() {
         return this.blocks;
-    }
-
-    public boolean convertText() {
-        return this.convertText;
     }
 
     public SidebarProfiles scoreboard() {

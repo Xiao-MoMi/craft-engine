@@ -19,6 +19,6 @@ public record ClientboundNativeModelPacket(NativeModelPayload state) implements 
 
     @Override
     public void handle(GeyserPlayer player) {
-        CraftEngineGeyserExtension.instance().nativeModels().accept(player, this.state);
+        CraftEngineGeyserExtension.instance().entityManager().acceptNativeModel(player, this.state);
     }
 }

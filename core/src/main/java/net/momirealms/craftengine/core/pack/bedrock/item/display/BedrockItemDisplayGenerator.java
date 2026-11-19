@@ -106,7 +106,6 @@ public final class BedrockItemDisplayGenerator {
         result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
         result.add("blocks", BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks()));
         result.addProperty("vanilla_identifier", ID_PREFIX + name + "_held");
-        result.addProperty("convert_text", Config.bedrockConvertText());
         assets.finish();
         result.addProperty("identifier", ID_PREFIX + name);
         result.add("items", items);

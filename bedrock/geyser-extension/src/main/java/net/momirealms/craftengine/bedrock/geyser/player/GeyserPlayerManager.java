@@ -11,22 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class GeyserPlayerManager {
     private final CraftEngineGeyserExtension extension;
-    private final Map<GeyserSession, GeyserPlayer> players = new ConcurrentHashMap<>();
-    private boolean closed;
+    private final Map<GeyserConnection, GeyserPlayer> players = new ConcurrentHashMap<>();
+    private volatile boolean closed;
 
     public GeyserPlayerManager(CraftEngineGeyserExtension extension) {
         this.extension = extension;
     }
 
     public void add(GeyserSession session) {
-        GeyserPlayer player;
-        synchronized (this) {
-            if (this.closed || session.isClosed() || this.players.containsKey(session)) {
-                return;
-            }
-            player = new GeyserPlayer(this.extension, session);
-            this.players.put(session, player);
+        if (this.closed || session.isClosed() || this.players.containsKey(session)) {
+            return;
         }
+        GeyserPlayer player = new GeyserPlayer(this.extension, session);
+        this.players.put(session, player);
         try {
             player.initialize();
         } catch (Throwable e) {
@@ -38,8 +35,7 @@ public final class GeyserPlayerManager {
 
     @Nullable
     public GeyserPlayer get(GeyserConnection connection) {
-        GeyserPlayer player = this.players.get(connection);
-        return player == null || player.isClosed() ? null : player;
+        return this.players.get(connection);
     }
 
     public void remove(GeyserConnection connection) {
@@ -50,13 +46,9 @@ public final class GeyserPlayerManager {
     }
 
     public void disable() {
-        List<GeyserPlayer> players;
-        synchronized (this) {
-            this.closed = true;
-            players = List.copyOf(this.players.values());
-            this.players.clear();
-        }
-        // Sidebar cleanup takes its own lock; never hold the registry lock while closing a player.
+        this.closed = true;
+        List<GeyserPlayer> players = List.copyOf(this.players.values());
+        this.players.clear();
         for (GeyserPlayer player : players) {
             player.close();
         }

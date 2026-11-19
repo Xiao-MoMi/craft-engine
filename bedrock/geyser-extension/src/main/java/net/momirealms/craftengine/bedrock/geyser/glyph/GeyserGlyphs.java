@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 
 import java.util.HashMap;
@@ -20,12 +20,12 @@ public final class GeyserGlyphs {
         if (glyphs != null) {
             readMetrics(glyphs, metrics);
         }
-        return new GeyserGlyphData(replacements(metrics), metrics.isEmpty() ? null : new ContainerTitleLayout(metrics));
+        return new GeyserGlyphData(replacements(metrics), metrics);
     }
 
     private static void readMetrics(JsonObject layouts, Map<String, Map<Integer, FontGlyph>> metrics) {
         for (Map.Entry<String, JsonElement> font : layouts.entrySet()) {
-            Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new HashMap<>());
+            Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new Int2ObjectOpenHashMap<>());
             for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {
                 int codepoint = Integer.parseInt(value.getKey(), 16);
                 JsonObject data = value.getValue().getAsJsonObject();

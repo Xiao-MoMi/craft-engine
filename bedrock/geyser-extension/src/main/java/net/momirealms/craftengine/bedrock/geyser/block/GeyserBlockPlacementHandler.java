@@ -42,8 +42,7 @@ public final class GeyserBlockPlacementHandler extends PacketTranslator<Inventor
     @Override
     public void translate(GeyserSession session, InventoryTransactionPacket packet) {
         ItemData item = packet.getItemInHand();
-        if (packet.getTransactionType() != InventoryTransactionType.ITEM_USE || packet.getActionType() != 0
-                || item == null || !this.blockItems.contains(item.getDefinition().getIdentifier())) {
+        if (packet.getTransactionType() != InventoryTransactionType.ITEM_USE || packet.getActionType() != 0 || item == null || !this.blockItems.contains(item.getDefinition().getIdentifier())) {
             this.delegate.translate(session, packet);
             return;
         }

@@ -16,13 +16,18 @@ import net.momirealms.craftengine.bedrock.geyser.network.ServerCustomPacket;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarConnection;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
+import org.cloudburstmc.math.vector.Vector2f;
+import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.data.debugshape.DebugShape;
 import org.cloudburstmc.protocol.bedrock.packet.DebugDrawerPacket;
+import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BlockBreakHandler;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public final class GeyserPlayer {
     private final CraftEngineGeyserExtension extension;
@@ -33,6 +38,9 @@ public final class GeyserPlayer {
     private GeyserContainerCloseHandler containerCloseHandler;
     private Int2ObjectMap<HardHitboxPayload> pendingHitboxes;
     private Long2ObjectLinkedOpenHashMap<DebugShape> pendingShapes;
+    private Vector3f cameraDirection;
+    private Vector3f sampledCameraDirection;
+    private Vector2f cameraAngles;
     private GeyserSidebarConnection sidebar;
     private GeyserItemRuntime items;
     private GeyserHeldDye heldDye;
@@ -58,6 +66,7 @@ public final class GeyserPlayer {
         this.items = this.extension.itemManager().initPlayer(this);
         this.activeUse.listen(this.network);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
+        this.network.onReceive(PlayerAuthInputPacket.class, event -> this.cameraDirection = event.packet().getCameraOrientation());
         this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
         this.packetHandler = new GeyserPacketHandler(this);
@@ -70,6 +79,25 @@ public final class GeyserPlayer {
 
     public GeyserSession session() {
         return this.session;
+    }
+
+    @Nullable
+    public Vector2f displayCameraAngles() {
+        Vector3f direction = this.cameraDirection;
+        if (!Objects.equals(direction, this.sampledCameraDirection)) {
+            this.sampledCameraDirection = direction;
+            float lengthSquared = direction == null ? 0 : direction.lengthSquared();
+            if (lengthSquared >= 0.8f && lengthSquared <= 1.2f) {
+                double horizontal = Math.hypot(direction.getX(), direction.getZ());
+                float yaw = horizontal < 1e-5 ? this.session.getPlayerEntity().getYaw()
+                        : (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
+                float pitch = (float) Math.toDegrees(Math.atan2(-direction.getY(), horizontal));
+                this.cameraAngles = Vector2f.from(yaw, pitch);
+            } else {
+                this.cameraAngles = null;
+            }
+        }
+        return this.cameraAngles;
     }
 
     public String locale() {
@@ -127,10 +155,10 @@ public final class GeyserPlayer {
         if (this.isClosed()) {
             return;
         }
-        boolean schedule = this.pendingShapes == null;
-        if (schedule) {
+        if (this.pendingShapes == null) {
             this.pendingShapes = new Long2ObjectLinkedOpenHashMap<>();
         }
+        boolean schedule = this.pendingShapes.isEmpty();
         this.pendingShapes.put(shape.getId(), shape);
         if (schedule) {
             this.session.executeInEventLoop(this::flushShapes);
@@ -139,12 +167,16 @@ public final class GeyserPlayer {
 
     private void flushShapes() {
         Long2ObjectLinkedOpenHashMap<DebugShape> shapes = this.pendingShapes;
-        this.pendingShapes = null;
-        if (shapes == null || this.isClosed()) {
+        if (shapes == null || shapes.isEmpty()) {
+            return;
+        }
+        if (this.isClosed()) {
+            shapes.clear();
             return;
         }
         DebugDrawerPacket packet = new DebugDrawerPacket();
         packet.getShapes().addAll(shapes.values());
+        shapes.clear();
         this.session.sendUpstreamPacket(packet);
     }
 

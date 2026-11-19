@@ -883,7 +883,6 @@ bedrock:
     #   - "minecraft:oak_stairs[facing=east]"
     #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
     vanilla-blocks: []
-    convert-text: true
   resource-pack:
     # Resource pack name shown in the Bedrock client.
     name: "CraftEngine ResourcePack"
