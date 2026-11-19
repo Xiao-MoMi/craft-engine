@@ -28,18 +28,28 @@ public final class BedrockSidebarGenerator {
     }
 
     public static void write(JavaResourcePack resources, Path root, Path scoreboardData, BedrockSidebarConfig config) throws IOException {
-        JsonObject data = new JsonObject();
-        data.addProperty("enabled", config.enable());
-        JsonArray entries = new JsonArray();
+        if (!config.enable()) {
+            return;
+        }
+        JsonArray matches = new JsonArray();
+        JsonArray layouts = new JsonArray();
         for (BedrockSidebarConfig.Profile profile : config.profiles()) {
-            JsonObject entry = new JsonObject();
-            entry.addProperty("objective-id", profile.objectiveId());
-            entry.addProperty("title-contains", profile.titleContains());
-            entry.addProperty("offset-x", profile.offsetX());
-            int index = entries.size() + 1;
-            entry.addProperty("index", index);
+            int index = matches.size() + 1;
+            JsonObject match = new JsonObject();
+            match.addProperty("index", index);
+            if (!profile.objectiveId().isEmpty()) {
+                match.addProperty("objective-id", profile.objectiveId());
+            }
+            if (!profile.titleContains().isEmpty()) {
+                match.addProperty("title-contains", profile.titleContains());
+            }
+            matches.add(match);
+
+            JsonObject layout = new JsonObject();
+            layout.addProperty("index", index);
+            layout.addProperty("offset-x", profile.offsetX());
             JsonArray elements = new JsonArray();
-            entry.add("elements", elements);
+            layout.add("elements", elements);
             for (BedrockSidebarConfig.Element element : profile.elements()) {
                 JsonObject image = new JsonObject();
                 image.addProperty("id", element.id());
@@ -63,13 +73,10 @@ public final class BedrockSidebarGenerator {
                 image.addProperty("texture", destination);
                 elements.add(image);
             }
-            entries.add(entry);
+            layouts.add(layout);
         }
-        data.add("profiles", entries);
         Files.createDirectories(scoreboardData.getParent());
-        GsonHelper.writeJsonFile(data, scoreboardData);
-        if (config.enable()) {
-            new BedrockSidebarWriter(entries).write(root);
-        }
+        GsonHelper.writeJsonFile(GsonHelper.createObject("profiles", matches), scoreboardData);
+        new BedrockSidebarWriter(layouts).write(root);
     }
 }

@@ -160,7 +160,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDefineEntities(GeyserDefineEntitiesEvent event) {
-        this.entityManager.registerEntities(this.extensionData.items(), event);
+        this.entityManager.registerEntities(this.extensionData.modelDisplays(), event);
     }
 
     @Subscribe
@@ -171,7 +171,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDefineCustomItems(GeyserDefineCustomItemsEvent event) {
-        this.itemManager.registerItems(this.extensionData.items(), event);
+        this.itemManager.registerItems(this.extensionData.items(), this.extensionData.elytraVariants(), event);
     }
 
     @Subscribe

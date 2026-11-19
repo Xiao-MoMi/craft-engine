@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public record BedrockTexture(BufferedImage image, @Nullable String reference) {
+    public static final int MAX_FLIPBOOK_SIZE = 2048;
 
     public BedrockTexture(BufferedImage image) {
         this(image, null);

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.scoreboard;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -10,11 +11,15 @@ public record SidebarProfiles(boolean enabled, List<Profile> profiles) {
     public static final SidebarProfiles EMPTY = new SidebarProfiles(false, List.of());
 
     public static SidebarProfiles parse(JsonObject data) {
-        if (data == null || !data.get("enabled").getAsBoolean()) {
+        if (data == null) {
             return EMPTY;
         }
-        List<Profile> profiles = new ArrayList<>();
-        for (JsonElement value : data.getAsJsonArray("profiles")) {
+        JsonArray entries = data.getAsJsonArray("profiles");
+        if (entries.isEmpty()) {
+            return EMPTY;
+        }
+        List<Profile> profiles = new ArrayList<>(entries.size());
+        for (JsonElement value : entries) {
             JsonObject profile = value.getAsJsonObject();
             profiles.add(new Profile(profile.get("index").getAsInt(), text(profile, "objective-id"), text(profile, "title-contains")));
         }

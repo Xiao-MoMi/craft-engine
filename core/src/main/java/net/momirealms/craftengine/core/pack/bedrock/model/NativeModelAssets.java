@@ -55,6 +55,9 @@ public final class NativeModelAssets {
     }
 
     public static void write(List<NativeModelSource> sources, Path root, Path modelData, int maxLayers) throws IOException {
+        if (sources.isEmpty()) {
+            return;
+        }
         JsonObject models = new JsonObject();
         for (NativeModelSource source : sources) {
             try {

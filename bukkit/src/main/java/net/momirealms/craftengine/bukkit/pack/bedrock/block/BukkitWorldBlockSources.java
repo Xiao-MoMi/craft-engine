@@ -4,7 +4,9 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.bukkit.block.BukkitVanillaBlockStateWrapper;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.CollisionUtils;
+import net.momirealms.craftengine.bukkit.util.SoundUtils;
 import net.momirealms.craftengine.core.block.BlockDefinition;
+import net.momirealms.craftengine.core.block.BlockSounds;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.pack.bedrock.block.JavaBlockModelResolver;
@@ -16,6 +18,8 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EmptyBlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidStateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.material.FluidsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class BukkitWorldBlockSources {
 
@@ -33,7 +39,8 @@ public final class BukkitWorldBlockSources {
     public static WorldBlockPlan plan(BukkitCraftEngine plugin, JavaBlockModelResolver models) {
         Object collisionContext = CollisionContextProxy.INSTANCE.empty();
         List<WorldBlockSource> customBlocks = collect(plugin.blockManager().loadedBlocks().values(), collisionContext);
-        return WorldBlockPlan.create(plugin, models, customBlocks, state -> vanillaProperties(state, collisionContext));
+        Map<Object, BlockSounds> sounds = new IdentityHashMap<>();
+        return WorldBlockPlan.create(plugin, models, customBlocks, state -> vanillaProperties(state, collisionContext, sounds));
     }
 
     private static List<WorldBlockSource> collect(Collection<BlockDefinition> definitions, Object collisionContext) {
@@ -49,16 +56,25 @@ public final class BukkitWorldBlockSources {
         return sources;
     }
 
-    private static WorldBlockProperties vanillaProperties(BlockStateWrapper state, Object collisionContext) {
+    private static WorldBlockPlan.VanillaProperties vanillaProperties(BlockStateWrapper state, Object collisionContext, Map<Object, BlockSounds> sounds) {
         Object minecraftState = state.minecraftState();
-        return new WorldBlockProperties(
-                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getDestroySpeed(minecraftState),
-                BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getLightEmission(minecraftState),
+        BlockBehaviourProxy.BlockStateBaseProxy proxy = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE;
+        if (proxy.hasBlockEntity(minecraftState)) {
+            throw new UnsupportedOperationException("the Bedrock replacement cannot preserve the vanilla block entity");
+        }
+        if (FluidStateProxy.INSTANCE.getType(proxy.getFluidState(minecraftState)) != FluidsProxy.EMPTY) {
+            throw new UnsupportedOperationException("the Bedrock replacement cannot preserve the vanilla fluid state");
+        }
+        WorldBlockProperties properties = new WorldBlockProperties(
+                proxy.getDestroySpeed(minecraftState),
+                proxy.getLightEmission(minecraftState),
                 lightDampening(minecraftState),
-                BlockBehaviourProxy.INSTANCE.getFriction(BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getBlock(minecraftState)),
+                BlockBehaviourProxy.INSTANCE.getFriction(proxy.getBlock(minecraftState)),
                 collisionBoxes(minecraftState, collisionContext),
                 selectionBox(minecraftState, collisionContext)
         );
+        BlockSounds blockSounds = sounds.computeIfAbsent(proxy.getSoundType(minecraftState), SoundUtils::fromNMSSoundType);
+        return new WorldBlockPlan.VanillaProperties(properties, blockSounds);
     }
 
     private static WorldBlockSource createSource(BlockDefinition block, ImmutableBlockState state, int stateIndex, Object collisionContext) {

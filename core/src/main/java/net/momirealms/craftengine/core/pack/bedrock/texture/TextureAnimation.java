@@ -40,13 +40,27 @@ public record TextureAnimation(BufferedImage sheet,
         return interval;
     }
 
+    public int keyFrameCount() {
+        return (this.sheet.getWidth() / this.width) * (this.sheet.getHeight() / this.height);
+    }
+
+    public int uniformFrameTime() {
+        int interval = this.frames.getFirst().time();
+        for (Frame frame : this.frames) {
+            if (frame.time() != interval) {
+                return 0;
+            }
+        }
+        return interval;
+    }
+
     public BufferedImage keyFrameStrip(int color) {
         BufferedImage source = color == 0xffffff ? this.sheet : ImageUtils.multiplyColor(this.sheet, color);
         int columns = source.getWidth() / this.width;
         if (columns == 1 && this.width == this.height) {
             return source;
         }
-        int count = columns * (source.getHeight() / this.height);
+        int count = this.keyFrameCount();
         int size = Math.max(this.width, this.height);
         BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB);
         int[] pixels = new int[this.width * this.height];

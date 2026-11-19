@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.hitbox;
 
-import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
@@ -12,9 +12,9 @@ import org.geysermc.geyser.entity.type.living.monster.ShulkerEntity;
 
 public final class GeyserHardHitboxManager {
     private final GeyserPlayerManager players;
-    private final GeyserItemDisplays displays;
+    private final GeyserModelDisplayManager displays;
 
-    public GeyserHardHitboxManager(GeyserPlayerManager players, GeyserItemDisplays displays) {
+    public GeyserHardHitboxManager(GeyserPlayerManager players, GeyserModelDisplayManager displays) {
         this.players = players;
         this.displays = displays;
     }

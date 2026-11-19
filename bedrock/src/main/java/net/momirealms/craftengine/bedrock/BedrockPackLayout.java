@@ -9,6 +9,8 @@ public final class BedrockPackLayout {
 
     public static final String BOSS_BARS = "craftengine/boss_bars.json";
     public static final String SOUND_MAPPINGS = "craftengine/sounds.json";
+    public static final String MODEL_DISPLAYS = "craftengine/model_displays.json";
+    public static final String ELYTRA_VARIANTS = "craftengine/elytra_variants.json";
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
@@ -25,7 +27,6 @@ public final class BedrockPackLayout {
     public static final String MAIN_HAND_DYE = ID_PREFIX + "main_hand_dye";
     public static final String OFF_HAND_DYE = ID_PREFIX + "off_hand_dye";
     public static final String DISPLAY_DYE = ID_PREFIX + "display_dye";
-    public static final String ELYTRA_VARIANTS = "elytra_variants";
     public static final String ELYTRA_VARIANT_PROPERTY = ID_PREFIX + "elytra_variant";
     public static final String DISPLAY_BLOCK = "display_block";
     public static final String GEYSER_CUSTOM_BLOCK_PREFIX = "geyser_custom:";
@@ -48,6 +49,7 @@ public final class BedrockPackLayout {
     public static final String WORLD_VIEW = "world_view";
     public static final String TINT_SOURCES = "tint_sources";
     public static final String ITEM_TYPE = "item_type";
+    public static final String VANILLA_MODEL_OVERRIDE = "vanilla_model_override";
     public static final String MODEL = "model";
     public static final String COMPONENTS = "components";
     public static final String RESOURCES = "resources";
@@ -61,10 +63,8 @@ public final class BedrockPackLayout {
     public static final String MIN_INCLUSIVE = "min_inclusive";
     public static final String MAX_EXCLUSIVE = "max_exclusive";
 
-    public static final String ATTACHABLE = "attachable";
     public static final String UNSUPPORTED_REASON = "unsupported_reason";
     public static final String GENERATED = "generated";
-    public static final String ITEM_ID = "item_id";
     public static final String CLIENT_BEHAVIOR = "client_behavior";
     public static final String PLACES_BLOCK = "places_block";
     public static final String USE = "use";

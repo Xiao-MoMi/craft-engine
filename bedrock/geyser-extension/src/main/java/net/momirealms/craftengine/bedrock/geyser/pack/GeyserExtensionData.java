@@ -27,18 +27,23 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null, null);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, null, null,
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null, null);
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final JsonObject items;
     private final JsonObject blocks;
+    private final JsonObject modelDisplays;
+    private final JsonObject elytraVariants;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
     private final JsonObject nativeModels;
     private final JsonObject soundMappings;
     private final Path clientPack;
 
-    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard,
+    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, @Nullable JsonObject modelDisplays,
+                               @Nullable JsonObject elytraVariants,
+                               GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard,
                                @Nullable JsonObject nativeModels, @Nullable JsonObject soundMappings, @Nullable JsonObject bossBars, @Nullable Path clientPack) {
         this.bossBars = bossBars;
         this.soundMappings = soundMappings;
@@ -47,6 +52,8 @@ public final class GeyserExtensionData {
         this.nativeModels = nativeModels;
         this.items = items;
         this.blocks = blocks;
+        this.modelDisplays = modelDisplays;
+        this.elytraVariants = elytraVariants;
         this.glyphs = glyphs;
         this.languages = languages;
     }
@@ -65,7 +72,9 @@ public final class GeyserExtensionData {
             JsonObject sounds = readJson(archive, findEntry(archive, BedrockPackLayout.SOUND_MAPPINGS, "craftengine/sound_mappings.json"));
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
-            return new GeyserExtensionData(items, blocks, glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
+            return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
+                    readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
+                    glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
                     readJson(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     readJson(archive, BedrockPackLayout.BOSS_BARS),
                     cacheDirectory == null ? null : extractClientPack(archive, cacheDirectory));
@@ -147,6 +156,16 @@ public final class GeyserExtensionData {
     @Nullable
     public JsonObject blocks() {
         return this.blocks;
+    }
+
+    @Nullable
+    public JsonObject modelDisplays() {
+        return this.modelDisplays;
+    }
+
+    @Nullable
+    public JsonObject elytraVariants() {
+        return this.elytraVariants;
     }
 
     public SidebarProfiles scoreboard() {

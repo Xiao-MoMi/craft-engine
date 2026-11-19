@@ -297,16 +297,19 @@ public final class JavaResourcePack {
                         if (!Files.isRegularFile(file) || name.equals("deprecated.json")) {
                             continue;
                         }
-                        String locale = name.substring(0, name.length() - 5);
-                        JsonObject language = translations.getAsJsonObject(locale);
-                        if (language == null) {
-                            language = new JsonObject();
-                            translations.add(locale, language);
-                        }
                         try {
                             JsonObject source = readJson(file);
                             if (source == null) {
                                 throw new IOException("Missing or non-object language file " + file);
+                            }
+                            if (source.isEmpty()) {
+                                continue;
+                            }
+                            String locale = name.substring(0, name.length() - 5);
+                            JsonObject language = translations.getAsJsonObject(locale);
+                            if (language == null) {
+                                language = new JsonObject();
+                                translations.add(locale, language);
                             }
                             for (Map.Entry<String, JsonElement> entry : source.entrySet()) {
                                 language.addProperty(entry.getKey(), entry.getValue().getAsString());

@@ -67,12 +67,14 @@ public final class GeyserItemPredicates {
     }
 
     private static MinecraftPredicate<ItemPredicateContext> readSelect(JsonObject condition, String property) {
+        JsonElement negatedValue = condition.get(NEGATED);
+        boolean negated = negatedValue != null && negatedValue.getAsBoolean();
         if (property.equals("context_dimension")) {
             List<String> dimensions = new ArrayList<>();
             for (JsonElement value : condition.getAsJsonArray(VALUES)) {
                 dimensions.add(Identifier.of(value.getAsString()).toString());
             }
-            return new Dimension(List.copyOf(dimensions), condition.get(NEGATED).getAsBoolean());
+            return new Dimension(List.copyOf(dimensions), negated);
         }
         List<MinecraftPredicate<ItemPredicateContext>> predicates = new ArrayList<>();
         for (JsonElement value : condition.getAsJsonArray(VALUES)) {
@@ -87,7 +89,6 @@ public final class GeyserItemPredicates {
                 default -> throw unsupported(property);
             });
         }
-        boolean negated = condition.get(NEGATED).getAsBoolean();
         return context -> {
             for (MinecraftPredicate<ItemPredicateContext> predicate : predicates) {
                 if (predicate.test(context)) {
@@ -115,7 +116,8 @@ public final class GeyserItemPredicates {
             case "bundle/fullness" -> ItemPredicateContext::bundleFullness;
             default -> throw unsupported(property);
         };
-        float scale = condition.get(SCALE).getAsFloat();
+        JsonElement scaleValue = condition.get(SCALE);
+        float scale = scaleValue == null ? 1.0f : scaleValue.getAsFloat();
         JsonElement minimum = condition.has(MIN_INCLUSIVE) ? condition.get(MIN_INCLUSIVE) : condition.get("min");
         JsonElement maximum = condition.has(MAX_EXCLUSIVE) ? condition.get(MAX_EXCLUSIVE) : condition.get("max");
         Float min = minimum == null ? null : minimum.getAsFloat();

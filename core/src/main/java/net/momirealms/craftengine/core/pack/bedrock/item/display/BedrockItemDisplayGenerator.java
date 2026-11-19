@@ -103,12 +103,20 @@ public final class BedrockItemDisplayGenerator {
             }
         }
         JsonObject result = new JsonObject();
-        result.add("vanilla", vanilla(resources, assets, indices, meshes, appearances));
-        result.add("blocks", BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks()));
+        JsonObject vanillaItems = vanilla(resources, assets, indices, meshes, appearances);
+        if (!vanillaItems.isEmpty()) {
+            result.add("vanilla", vanillaItems);
+        }
+        JsonObject blocks = BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks());
+        if (!blocks.isEmpty()) {
+            result.add("blocks", blocks);
+        }
         result.addProperty("vanilla_identifier", ID_PREFIX + name + "_held");
         assets.finish();
         result.addProperty("identifier", ID_PREFIX + name);
-        result.add("items", items);
+        if (!items.isEmpty()) {
+            result.add("items", items);
+        }
         result.add("appearances", appearances);
         if (!assets.customModelDataColors().isEmpty()) {
             result.add("custom_model_data_colors", assets.customModelDataColors());

@@ -97,8 +97,8 @@ public final class BedrockSounds {
             steps.addProperty("fall", group.fall());
             steps.addProperty("jump", group.step());
             steps.addProperty("land", group.fall());
-            blocks.add(entry.getValue(), GsonHelper.createObject("events", actions));
-            movement.add(entry.getValue(), GsonHelper.createObject("events", steps));
+            blocks.add(entry.getValue(), soundGroup(actions));
+            movement.add(entry.getValue(), soundGroup(steps));
             for (String id : group.events()) {
                 JavaSoundEvents.Event event = this.customEvents.get(id);
                 if (event != null && !definitions.has(id)) {
@@ -118,6 +118,13 @@ public final class BedrockSounds {
             sounds.addProperty(FORMAT_VERSION, SOUND_DEFINITIONS);
             GsonHelper.writeJsonFile(sounds, root.resolve("sounds/sound_definitions.json"));
         }
+    }
+
+    private static JsonObject soundGroup(JsonObject events) {
+        JsonObject group = GsonHelper.createObject("events", events);
+        group.addProperty("pitch", 1);
+        group.addProperty("volume", 1);
+        return group;
     }
 
     private JsonObject writeEvent(Path root, JavaSoundEvents.Event event, Map<Key, String> copied) throws IOException {

@@ -25,36 +25,81 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
-public final class GeyserItemDisplays {
-    private final Map<Identifier, DisplayProperties> carriers = new LinkedHashMap<>();
+public final class GeyserModelDisplayManager {
+    static final int DEFAULT_DISPLAY_CONTEXT = 0;
+
+    private final Map<Identifier, ModelDisplayProperties> carriers = new LinkedHashMap<>();
     private final Map<String, Model> items = new LinkedHashMap<>();
     private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
     private final Map<BlockStateKey, Model> blocks = new LinkedHashMap<>();
     private Int2ObjectMap<GeyserHeldItemTypes> heldItemTypes = Int2ObjectMaps.emptyMap();
     private Model heldBlock;
-    private VanillaEntityType<GeyserDisplayEntity> itemDefinition;
-    private VanillaEntityType<GeyserDisplayEntity> blockDefinition;
+    private VanillaEntityType<GeyserModelDisplayEntity> itemDefinition;
+    private VanillaEntityType<GeyserModelDisplayEntity> blockDefinition;
 
-    public void registerEntities(JsonObject plan, GeyserDefineEntitiesEvent event) {
-        if (plan == null) {
+    public void registerEntities(@Nullable JsonObject displays, GeyserDefineEntitiesEvent event) {
+        if (displays == null) {
             return;
         }
         try {
-            this.define(plan, event);
+            this.define(displays, event);
         } catch (RuntimeException exception) {
             GeyserTranslationManager.error("display.registration_failed", exception);
         }
     }
 
-    public void define(JsonObject plan, GeyserDefineEntitiesEvent event) {
-        if (!plan.has("item_displays")) {
+    public void define(JsonObject displays, GeyserDefineEntitiesEvent event) {
+        ModelDisplayProperties modelCarrier = this.registerCarrier(event, displays.get("identifier").getAsString());
+        Appearance[] appearances = readAppearances(displays);
+
+        if (displays.has("vanilla_identifier")) {
+            this.registerVanillaModels(displays, event, modelCarrier, appearances);
+        }
+        JsonObject items = displays.getAsJsonObject("items");
+        if (items != null) {
+            for (Map.Entry<String, JsonElement> entry : items.entrySet()) {
+                Appearance[] contexts = readContextAppearances(entry.getValue().getAsJsonArray(), appearances);
+                this.items.putIfAbsent(entry.getKey(), new Model(modelCarrier, contexts));
+            }
+        }
+        if (displays.has("blocks")) {
+            for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("blocks").entrySet()) {
+                BlockStateKey state = BlockStateKey.parse(entry.getKey());
+                Appearance appearance = appearances[entry.getValue().getAsInt()];
+                this.blocks.putIfAbsent(state, new Model(modelCarrier, new Appearance[]{appearance}));
+            }
+        }
+    }
+
+    private ModelDisplayProperties registerCarrier(GeyserDefineEntitiesEvent event, String identifier) {
+        Identifier id = Identifier.of(identifier);
+        event.register(CustomEntityDefinition.of(id));
+        ModelDisplayProperties carrier = new ModelDisplayProperties(id);
+        this.carriers.put(id, carrier);
+        return carrier;
+    }
+
+    private void registerVanillaModels(JsonObject displays,
+                                       GeyserDefineEntitiesEvent event,
+                                       ModelDisplayProperties modelCarrier,
+                                       Appearance[] appearances) {
+        ModelDisplayProperties heldCarrier = this.registerCarrier(event, displays.get("vanilla_identifier").getAsString());
+        if (this.heldBlock == null) {
+            Appearance blockAppearance = new Appearance(0, Vector3f.from(8, 8, -8), Vector3f.from(0, 180, 0), Vector3f.ONE);
+            this.heldBlock = new Model(heldCarrier, new Appearance[]{blockAppearance});
+        }
+        JsonObject vanilla = displays.getAsJsonObject("vanilla");
+        if (vanilla == null) {
             return;
         }
-        JsonObject displays = plan.getAsJsonObject("item_displays");
-        Identifier id = Identifier.of(displays.get("identifier").getAsString());
-        event.register(CustomEntityDefinition.of(id));
-        DisplayProperties properties = new DisplayProperties(id);
-        this.carriers.put(id, properties);
+        for (Map.Entry<String, JsonElement> entry : vanilla.entrySet()) {
+            Appearance[] contexts = readContextAppearances(entry.getValue().getAsJsonArray(), appearances);
+            ModelDisplayProperties carrier = contexts[DEFAULT_DISPLAY_CONTEXT].shape() == 0 ? heldCarrier : modelCarrier;
+            this.vanillaItems.put(entry.getKey(), new Model(carrier, contexts));
+        }
+    }
+
+    private static Appearance[] readAppearances(JsonObject displays) {
         JsonArray values = displays.getAsJsonArray("appearances");
         JsonObject colors = displays.getAsJsonObject("custom_model_data_colors");
         Appearance[] appearances = new Appearance[values.size()];
@@ -63,41 +108,26 @@ public final class GeyserItemDisplays {
             JsonArray pose = values.get(i).getAsJsonArray();
             int shape = pose.get(0).getAsInt();
             JsonElement color = colors == null ? null : colors.get(Integer.toString(shape));
-            appearances[i] = new Appearance(shape, vector(pose, 1, Vector3f.ZERO), vector(pose, 2, Vector3f.ZERO), vector(pose, 3, Vector3f.ONE), color == null ? -1 : color.getAsInt());
+            appearances[i] = new Appearance(
+                    shape,
+                    readVector(pose, 1, Vector3f.ZERO),
+                    readVector(pose, 2, Vector3f.ZERO),
+                    readVector(pose, 3, Vector3f.ONE),
+                    color == null ? -1 : color.getAsInt()
+            );
         }
-        if (displays.has("vanilla_identifier")) {
-            Identifier heldId = Identifier.of(displays.get("vanilla_identifier").getAsString());
-            event.register(CustomEntityDefinition.of(heldId));
-            DisplayProperties heldProperties = new DisplayProperties(heldId);
-            this.carriers.put(heldId, heldProperties);
-            if (this.heldBlock == null) {
-                this.heldBlock = new Model(heldProperties, new Appearance[]{new Appearance(0, Vector3f.from(8, 8, -8), Vector3f.from(0, 180, 0), Vector3f.ONE)});
-            }
-            for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("vanilla").entrySet()) {
-                JsonArray contexts = entry.getValue().getAsJsonArray();
-                Appearance[] poses = new Appearance[contexts.size()];
-                for (int i = 0; i < poses.length; i++) {
-                    poses[i] = appearances[contexts.get(i).getAsInt()];
-                }
-                this.vanillaItems.put(entry.getKey(), new Model(poses[0].shape() == 0 ? heldProperties : properties, poses));
-            }
-        }
-        for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("items").entrySet()) {
-            JsonArray contexts = entry.getValue().getAsJsonArray();
-            Appearance[] shapes = new Appearance[contexts.size()];
-            for (int i = 0; i < shapes.length; i++) {
-                shapes[i] = appearances[contexts.get(i).getAsInt()];
-            }
-            this.items.putIfAbsent(entry.getKey(), new Model(properties, shapes));
-        }
-        if (displays.has("blocks")) {
-            for (Map.Entry<String, JsonElement> entry : displays.getAsJsonObject("blocks").entrySet()) {
-                this.blocks.putIfAbsent(BlockStateKey.parse(entry.getKey()), new Model(properties, new Appearance[]{appearances[entry.getValue().getAsInt()]}));
-            }
-        }
+        return appearances;
     }
 
-    private static Vector3f vector(JsonArray pose, int index, Vector3f fallback) {
+    private static Appearance[] readContextAppearances(JsonArray indices, Appearance[] appearances) {
+        Appearance[] contexts = new Appearance[indices.size()];
+        for (int i = 0; i < contexts.length; i++) {
+            contexts[i] = appearances[indices.get(i).getAsInt()];
+        }
+        return contexts;
+    }
+
+    private static Vector3f readVector(JsonArray pose, int index, Vector3f fallback) {
         if (pose.size() <= index) {
             return fallback;
         }
@@ -110,7 +140,7 @@ public final class GeyserItemDisplays {
     }
 
     public void properties(GeyserDefineEntityPropertiesEvent event) {
-        for (DisplayProperties carrier : this.carriers.values()) {
+        for (ModelDisplayProperties carrier : this.carriers.values()) {
             carrier.register(event);
         }
     }
@@ -122,33 +152,36 @@ public final class GeyserItemDisplays {
         if (this.heldBlock != null) {
             this.heldItemTypes = GeyserHeldItemTypes.load();
         }
-        DisplayProperties first = this.carriers.values().iterator().next();
-        BedrockEntityDefinition bedrock = Registries.BEDROCK_ENTITY_DEFINITIONS.get(first.id());
-        this.itemDefinition = this.displayBase(bedrock, first, EntityType.ITEM_DISPLAY)
+        ModelDisplayProperties initialCarrier = this.carriers.values().iterator().next();
+        BedrockEntityDefinition bedrock = Registries.BEDROCK_ENTITY_DEFINITIONS.get(initialCarrier.id());
+        this.itemDefinition = this.displayEntityBuilder(bedrock, initialCarrier, EntityType.ITEM_DISPLAY)
                 .addTranslator(MetadataTypes.ITEM_STACK, (entity, meta) -> entity.item(meta.getValue()))
                 .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.context(meta.getValue()))
                 .build(false);
-        this.blockDefinition = this.displayBase(bedrock, first, EntityType.BLOCK_DISPLAY)
-                .addTranslator(MetadataTypes.BLOCK_STATE, (entity, meta) -> entity.block((int) meta.getValue())).build(false);
+        this.blockDefinition = this.displayEntityBuilder(bedrock, initialCarrier, EntityType.BLOCK_DISPLAY)
+                .addTranslator(MetadataTypes.BLOCK_STATE, (entity, meta) -> entity.block((int) meta.getValue()))
+                .build(false);
     }
 
     @Nullable
-    VanillaEntityType<GeyserDisplayEntity> itemDefinition() {
+    VanillaEntityType<GeyserModelDisplayEntity> itemDefinition() {
         return this.itemDefinition;
     }
 
     @Nullable
-    VanillaEntityType<GeyserDisplayEntity> blockDefinition() {
+    VanillaEntityType<GeyserModelDisplayEntity> blockDefinition() {
         return this.blockDefinition;
     }
 
-    private VanillaEntityType.Builder<GeyserDisplayEntity> displayBase(BedrockEntityDefinition bedrock, DisplayProperties first, EntityType type) {
-        EntityTypeBase.Builder<GeyserDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserDisplayEntity.class);
+    private VanillaEntityType.Builder<GeyserModelDisplayEntity> displayEntityBuilder(BedrockEntityDefinition bedrock,
+                                                                                     ModelDisplayProperties initialCarrier,
+                                                                                     EntityType type) {
+        EntityTypeBase.Builder<GeyserModelDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserModelDisplayEntity.class);
         // MCProtocolLib 的公共实体字段占 0..7。第 8 个字段起是 Display，物品栈和上下文在 23、24。
         for (int i = 0; i < 8; i++) {
             base.addTranslator(null);
         }
-        return VanillaEntityType.inherited(context -> new GeyserDisplayEntity(context, this, first), base.build())
+        return VanillaEntityType.inherited(context -> new GeyserModelDisplayEntity(context, this, initialCarrier), base.build())
                 .type(type).bedrockDefinition(bedrock).heightAndWidth(0)
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.startInterpolation((int) meta.getValue()))
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.duration((int) meta.getValue()))
@@ -201,14 +234,15 @@ public final class GeyserItemDisplays {
     record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale, int customModelDataColorIndex) {
         static final Appearance EMPTY = new Appearance(0, Vector3f.ZERO, Vector3f.ZERO, Vector3f.ONE);
 
+
         Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale) {
             this(shape, translation, rotation, scale, -1);
         }
     }
 
-    record Model(DisplayProperties carrier, Appearance[] shapes) {
+    record Model(ModelDisplayProperties carrier, Appearance[] appearances) {
         Appearance appearance(int context) {
-            return context >= 0 && context < this.shapes.length ? this.shapes[context] : Appearance.EMPTY;
+            return context >= 0 && context < this.appearances.length ? this.appearances[context] : Appearance.EMPTY;
         }
     }
 }

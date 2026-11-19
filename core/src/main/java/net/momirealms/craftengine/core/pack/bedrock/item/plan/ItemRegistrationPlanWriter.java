@@ -20,15 +20,7 @@ public final class ItemRegistrationPlanWriter {
     }
 
     public static void write(ItemRegistrationPlan plan, Path itemPlanPath, BedrockItemResourceGenerator.Result generatedItems) throws IOException {
-        write(plan, itemPlanPath, generatedItems, new JsonObject());
-    }
-
-    public static void write(ItemRegistrationPlan plan, Path itemPlanPath, BedrockItemResourceGenerator.Result generatedItems, JsonObject itemDisplays) throws IOException {
-        JsonObject json = toJson(plan, generatedItems);
-        if (!itemDisplays.isEmpty()) {
-            json.add("item_displays", itemDisplays);
-        }
-        GsonHelper.writeJsonFileWithNulls(json, itemPlanPath);
+        GsonHelper.writeJsonFileWithNulls(toJson(plan, generatedItems), itemPlanPath);
     }
 
     public static JsonObject toJson(ItemRegistrationPlan plan, BedrockItemResourceGenerator.Result generatedItems) {
@@ -38,21 +30,20 @@ public final class ItemRegistrationPlanWriter {
         result.addProperty(SOURCE_VERSION, VersionHelper.MINECRAFT_VERSION.version());
 
         JsonArray entries = new JsonArray(plan.size());
-        appendEntries(entries, plan.explicitItems(), generatedItems);
-        appendEntries(entries, plan.vanillaOverrides(), generatedItems);
+        appendEntries(entries, plan.explicitItems(), generatedItems, false);
+        appendEntries(entries, plan.vanillaOverrides(), generatedItems, true);
         result.add(ENTRIES, entries);
-        if (!generatedItems.elytraVariants().isEmpty()) {
-            JsonObject elytraVariants = new JsonObject();
-            generatedItems.elytraVariants().forEach((id, variant) -> elytraVariants.addProperty(id.asString(), variant));
-            result.add(ELYTRA_VARIANTS, elytraVariants);
-        }
         return GsonHelper.sortObjectKeys(result).getAsJsonObject();
     }
 
-    private static void appendEntries(JsonArray entries, List<ResolvedItemBinding> items, BedrockItemResourceGenerator.Result generatedItems) {
+    private static void appendEntries(JsonArray entries, List<ResolvedItemBinding> items, BedrockItemResourceGenerator.Result generatedItems, boolean vanillaModelOverride) {
         for (ResolvedItemBinding entry : items) {
             List<GeneratedItemVariant> variants = generatedItems.variants().getOrDefault(entry.bedrockId(), List.of());
-            entries.add(entryToJson(entry, variants));
+            JsonObject json = entryToJson(entry, variants);
+            if (vanillaModelOverride) {
+                json.addProperty(VANILLA_MODEL_OVERRIDE, true);
+            }
+            entries.add(json);
         }
     }
 
@@ -60,7 +51,6 @@ public final class ItemRegistrationPlanWriter {
         JsonObject json = new JsonObject();
         json.addProperty(BEDROCK_IDENTIFIER, entry.bedrockId().asString());
         json.addProperty(ITEM_TYPE, entry.clientItemType().asString());
-        json.addProperty(ITEM_ID, entry.itemId().asString());
         json.addProperty(MODEL, entry.itemModel().asString());
 
         if (!entry.clientProperties().components().isEmpty()) {
@@ -105,11 +95,13 @@ public final class ItemRegistrationPlanWriter {
             json.addProperty(WORLD_VIEW, variant.worldView().name());
         }
         List<ItemBindingCondition> conditions = variant.conditions();
-        JsonArray matches = new JsonArray(conditions.size());
-        for (ItemBindingCondition condition : conditions) {
-            matches.add(conditionToJson(condition));
+        if (!conditions.isEmpty()) {
+            JsonArray matches = new JsonArray(conditions.size());
+            for (ItemBindingCondition condition : conditions) {
+                matches.add(conditionToJson(condition));
+            }
+            json.add(CONDITIONS, matches);
         }
-        json.add(CONDITIONS, matches);
         json.add(RESOURCES, resourcesToJson(variant));
         return json;
     }
@@ -126,11 +118,15 @@ public final class ItemRegistrationPlanWriter {
                 JsonArray values = new JsonArray(select.values().size());
                 select.values().forEach(values::add);
                 json.add(VALUES, values);
-                json.addProperty(NEGATED, select.negated());
+                if (select.negated()) {
+                    json.addProperty(NEGATED, true);
+                }
             }
             case ItemBindingCondition.NumericRange range -> {
                 range.property().writeProperty(json);
-                json.addProperty(SCALE, range.scale());
+                if (range.scale() != 1.0f) {
+                    json.addProperty(SCALE, range.scale());
+                }
                 if (range.minInclusive() != null) {
                     json.addProperty(MIN_INCLUSIVE, range.minInclusive());
                 }
@@ -155,7 +151,6 @@ public final class ItemRegistrationPlanWriter {
             variant.tintSources().forEach((view, source) -> sources.addProperty(view.serializedName(), source));
             resources.add(TINT_SOURCES, sources);
         }
-        resources.addProperty(ATTACHABLE, variant.attachable());
         resources.addProperty(GENERATED, variant.generated());
         return resources;
     }

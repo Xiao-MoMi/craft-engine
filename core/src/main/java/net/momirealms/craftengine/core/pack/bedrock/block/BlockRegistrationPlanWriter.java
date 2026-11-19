@@ -38,7 +38,10 @@ public final class BlockRegistrationPlanWriter {
         if (!generatedBlocks.vanillaOverrides().isEmpty()) {
             plan.add(VANILLA_OVERRIDES, generatedBlocks.vanillaOverrides());
         }
-        plan.add(WORLD_STATE_MAPPINGS, worldStateMappings(worldBlocks));
+        JsonObject mappings = worldStateMappings(worldBlocks);
+        if (!mappings.isEmpty()) {
+            plan.add(WORLD_STATE_MAPPINGS, mappings);
+        }
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(plan), blockPlanPath);
     }
 

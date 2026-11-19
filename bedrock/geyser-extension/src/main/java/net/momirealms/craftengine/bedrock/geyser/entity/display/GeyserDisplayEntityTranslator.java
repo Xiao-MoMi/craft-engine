@@ -33,7 +33,7 @@ public final class GeyserDisplayEntityTranslator extends PacketTranslator<Client
     }
 
     @SuppressWarnings("unchecked")
-    public static GeyserDisplayEntityTranslator install(GeyserItemDisplays itemDisplays, GeyserTextDisplayManager textDisplays) {
+    public static GeyserDisplayEntityTranslator install(GeyserModelDisplayManager itemDisplays, GeyserTextDisplayManager textDisplays) {
         VanillaEntityType<?> itemDefinition = itemDisplays.itemDefinition();
         VanillaEntityType<?> blockDefinition = itemDisplays.blockDefinition();
         PacketTranslator<ClientboundAddEntityPacket> delegate = (PacketTranslator<ClientboundAddEntityPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundAddEntityPacket.class);

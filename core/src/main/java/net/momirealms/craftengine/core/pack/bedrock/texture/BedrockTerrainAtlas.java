@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+import static net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture.MAX_FLIPBOOK_SIZE;
 
 public final class BedrockTerrainAtlas {
     private final JsonObject terrain = new JsonObject();
@@ -40,6 +41,28 @@ public final class BedrockTerrainAtlas {
         this.terrain.add(tile, texture);
     }
 
+    public static void validateAnimation(TextureData data, String texture) {
+        TextureAnimation animation = data.animation();
+        if (animation != null) {
+            int frameLimit = MAX_FLIPBOOK_SIZE / Math.max(animation.width(), animation.height());
+            if (!canBakeInterpolation(animation, frameLimit)) {
+                keyFrameInterval(animation, frameLimit, texture);
+            }
+        }
+    }
+
+    private static boolean canBakeInterpolation(TextureAnimation animation, int frameLimit) {
+        return animation.interpolate() && animation.duration() <= frameLimit;
+    }
+
+    private static int keyFrameInterval(TextureAnimation animation, int frameLimit, String texture) {
+        int interval = animation.interpolate() ? animation.uniformFrameTime() : animation.sampleInterval();
+        if (interval == 0 || animation.keyFrameCount() > frameLimit) {
+            throw new UnsupportedOperationException("texture " + texture + " cannot fit its animation in a " + MAX_FLIPBOOK_SIZE + " px Bedrock flipbook while preserving frame timing");
+        }
+        return interval;
+    }
+
     private String writeTexture(TextureData data, int color, String tile, Path root) throws IOException {
         String path = "textures/" + tile;
         TextureAnimation animation = data.animation();
@@ -54,10 +77,12 @@ public final class BedrockTerrainAtlas {
             }
             first = texture.image();
         } else {
-            int interval = animation.sampleInterval(); // 所有帧时长的最大公约数
+            int frameLimit = MAX_FLIPBOOK_SIZE / size;
+            boolean bakeInterpolation = canBakeInterpolation(animation, frameLimit);
+            int interval = bakeInterpolation ? 1 : keyFrameInterval(animation, frameLimit, tile);
             JsonObject flipbook = new JsonObject();
             BufferedImage strip;
-            if (animation.interpolate()) {
+            if (bakeInterpolation) {
                 int count = animation.duration() / interval;
                 strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB);
                 int[] pixels = new int[width * height];
@@ -75,7 +100,7 @@ public final class BedrockTerrainAtlas {
             flipbook.addProperty("atlas_tile", tile);
             flipbook.addProperty("flipbook_texture", path + "_anim");
             flipbook.addProperty("ticks_per_frame", interval);
-            flipbook.addProperty("blend_frames", false);
+            flipbook.addProperty("blend_frames", animation.interpolate() && !bakeInterpolation);
             this.flipbooks.put(flipbookKey(flipbook), flipbook);
         }
         if (first.getWidth() != size || first.getHeight() != size) {

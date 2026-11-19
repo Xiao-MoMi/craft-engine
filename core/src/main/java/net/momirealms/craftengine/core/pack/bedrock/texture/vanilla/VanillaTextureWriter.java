@@ -17,6 +17,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Function;
 
+import static net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture.MAX_FLIPBOOK_SIZE;
+
 final class VanillaTextureWriter {
     private final Path root;
     private final VanillaTextureRegistry textures;
@@ -73,14 +75,21 @@ final class VanillaTextureWriter {
 
     private boolean writeKeyFrames(String owner, BedrockTextureRule.Target target, TextureData data) throws IOException {
         TextureAnimation animation = data.animation();
-        if (animation == null || animation.interpolate() || target.tiles().isEmpty() || animation.width() != animation.height()) {
+        if (animation == null || target.tiles().isEmpty() || animation.width() != animation.height()) {
             return false;
         }
-        int interval = animation.sampleInterval();
+        int frameLimit = MAX_FLIPBOOK_SIZE / animation.width();
+        if (animation.interpolate() && animation.duration() <= frameLimit) {
+            return false;
+        }
+        int interval = animation.interpolate() ? animation.uniformFrameTime() : animation.sampleInterval();
+        if (interval == 0 || animation.keyFrameCount() > frameLimit) {
+            throw new IOException("Cannot fit animation in a " + MAX_FLIPBOOK_SIZE + " px Bedrock flipbook: " + target.path());
+        }
         // 通过帧索引和时长复用关键帧，避免为重复帧复制像素。
         BufferedImage strip = animation.keyFrameStrip(0xffffff);
         if (this.writeAnimationImages(owner, target, strip, data.image())) {
-            this.registerFlipbook(target, target.animationPath(), interval, animation.frameSequence(interval));
+            this.registerFlipbook(target, target.animationPath(), interval, animation.frameSequence(interval), animation.interpolate());
         }
         return true;
     }
@@ -116,6 +125,9 @@ final class VanillaTextureWriter {
         }
         // 将一个完整周期按固定间隔采样，每张合成帧从上到下排成竖直条带。
         int count = duration / interval;
+        if (count > MAX_FLIPBOOK_SIZE / first.getHeight()) {
+            throw new IOException("Cannot fit animation in a " + MAX_FLIPBOOK_SIZE + " px Bedrock flipbook: " + target.path());
+        }
         BufferedImage strip = new BufferedImage(first.getWidth(), Math.multiplyExact(first.getHeight(), count), BufferedImage.TYPE_INT_ARGB);
         // 动画输入分配可重复写入的帧缓冲区；静态输入始终复用原图。
         for (int index = 0; index < inputs.size(); index++) {
@@ -145,7 +157,7 @@ final class VanillaTextureWriter {
         // 写出成功后才注册播放规则；目标已被其他规则占用时，不覆盖其动画配置。
         if (this.writeAnimationImages(owner, target, strip, first)) {
             // flipbook 引用不带扩展名的贴图路径，同一条带可供多个 terrain 条目使用。
-            this.registerFlipbook(target, target.animationPath(), interval, null);
+            this.registerFlipbook(target, target.animationPath(), interval, null, false);
         }
     }
 
@@ -175,13 +187,13 @@ final class VanillaTextureWriter {
     private void registerStaticFlipbook(BedrockTextureRule.Target target) {
         JsonArray frames = new JsonArray(1);
         frames.add(0);
-        this.registerFlipbook(target, target.path(), 1, frames);
+        this.registerFlipbook(target, target.path(), 1, frames, false);
     }
 
-    private void registerFlipbook(BedrockTextureRule.Target target, String file, int interval, JsonArray frames) {
+    private void registerFlipbook(BedrockTextureRule.Target target, String file, int interval, JsonArray frames, boolean blendFrames) {
         String path = file.substring(0, file.lastIndexOf('.'));
         for (BedrockTextureRule.Tile tile : target.tiles()) {
-            this.textures.flipbook(tile.name(), tile.index(), path, interval, tile.replicate(), frames, false);
+            this.textures.flipbook(tile.name(), tile.index(), path, interval, tile.replicate(), frames, blendFrames);
         }
     }
 }

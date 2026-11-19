@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.block;
 
+import net.momirealms.craftengine.core.block.BlockSounds;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 
@@ -15,12 +16,15 @@ public record WorldBlockPlan(List<WorldBlockSource> customBlocks, List<VanillaOv
     public static WorldBlockPlan create(CraftEngine plugin,
                                         JavaBlockModelResolver models,
                                         List<WorldBlockSource> customBlocks,
-                                        Function<BlockStateWrapper, WorldBlockProperties> vanillaProperties) {
+                                        Function<BlockStateWrapper, VanillaProperties> vanillaProperties) {
         return new WorldBlockPlan(customBlocks, VanillaBlockOverrides.plan(plugin, models, customBlocks, vanillaProperties));
     }
 
+    public record VanillaProperties(WorldBlockProperties components, BlockSounds sounds) {
+    }
+
     public record VanillaOverride(BlockStateWrapper state,
-                                  WorldBlockProperties properties,
+                                  VanillaProperties properties,
                                   JavaBlockModelResolver.VanillaModelSelection model) {
     }
 }

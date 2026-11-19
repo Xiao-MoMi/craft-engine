@@ -2,7 +2,7 @@ package net.momirealms.craftengine.bedrock.geyser.entity;
 
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserDisplayEntityTranslator;
-import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserItemDisplays;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.hitbox.GeyserHardHitboxManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
@@ -14,35 +14,36 @@ import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.session.GeyserSession;
+import org.jetbrains.annotations.Nullable;
 
 public final class GeyserEntityManager {
     private final GeyserPlayerManager players;
-    private final GeyserItemDisplays itemDisplays = new GeyserItemDisplays();
+    private final GeyserModelDisplayManager modelDisplays = new GeyserModelDisplayManager();
     private final GeyserHardHitboxManager hardHitboxes;
     private final GeyserNativeModels nativeModels;
     private GeyserDisplayEntityTranslator displayTranslator;
 
     public GeyserEntityManager(GeyserPlayerManager players, JsonObject nativeModels) {
         this.players = players;
-        this.hardHitboxes = new GeyserHardHitboxManager(players, this.itemDisplays);
+        this.hardHitboxes = new GeyserHardHitboxManager(players, this.modelDisplays);
         this.nativeModels = new GeyserNativeModels(nativeModels);
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    public void registerEntities(JsonObject items, GeyserDefineEntitiesEvent event) {
+    public void registerEntities(@Nullable JsonObject modelDisplayData, GeyserDefineEntitiesEvent event) {
         this.nativeModels.register(event);
-        this.itemDisplays.registerEntities(items, event);
+        this.modelDisplays.registerEntities(modelDisplayData, event);
     }
 
     public void registerProperties(GeyserDefineEntityPropertiesEvent event) {
         this.nativeModels.properties(event);
-        this.itemDisplays.properties(event);
+        this.modelDisplays.properties(event);
     }
 
     public void initialize(GeyserGlyphData glyphs) {
-        this.itemDisplays.initialize();
+        this.modelDisplays.initialize();
         GeyserTextDisplayManager textDisplays = new GeyserTextDisplayManager(this.players, glyphs);
-        this.displayTranslator = GeyserDisplayEntityTranslator.install(this.itemDisplays, textDisplays);
+        this.displayTranslator = GeyserDisplayEntityTranslator.install(this.modelDisplays, textDisplays);
     }
 
     @SuppressWarnings("UnstableApiUsage")
@@ -63,6 +64,6 @@ public final class GeyserEntityManager {
             this.displayTranslator.uninstall();
             this.displayTranslator = null;
         }
-        this.itemDisplays.disable();
+        this.modelDisplays.disable();
     }
 }

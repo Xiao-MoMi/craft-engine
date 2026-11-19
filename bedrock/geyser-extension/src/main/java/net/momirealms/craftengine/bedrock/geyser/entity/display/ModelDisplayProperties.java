@@ -12,7 +12,7 @@ import org.geysermc.geyser.api.util.Identifier;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
 
-final class DisplayProperties {
+final class ModelDisplayProperties {
     private final Identifier id;
     private GeyserIntEntityProperty style;
     private GeyserIntEntityProperty shape;
@@ -30,7 +30,7 @@ final class DisplayProperties {
     private GeyserFloatEntityProperty pitch;
     private GeyserFloatEntityProperty yaw;
 
-    DisplayProperties(Identifier id) {
+    ModelDisplayProperties(Identifier id) {
         this.id = id;
     }
 
@@ -77,7 +77,7 @@ final class DisplayProperties {
     void write(BatchPropertyUpdater batch,
                DisplayPose pose,
                DisplayPose previous,
-               GeyserItemDisplays.Appearance model,
+               GeyserModelDisplayManager.Appearance model,
                boolean modelChanged,
                int dyeColor,
                boolean dyeChanged,

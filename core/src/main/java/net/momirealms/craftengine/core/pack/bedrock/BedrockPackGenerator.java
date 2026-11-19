@@ -71,7 +71,10 @@ public final class BedrockPackGenerator {
             Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
             Path data = fileSystem.getPath("extension-data").toAbsolutePath();
             writeItemsAndBlocks(models, plan, pack, data);
-            GsonHelper.writeJsonFile(resources.translations(), data.resolve(BedrockPackLayout.TRANSLATIONS));
+            JsonObject translations = resources.translations();
+            if (!translations.isEmpty()) {
+                GsonHelper.writeJsonFile(translations, data.resolve(BedrockPackLayout.TRANSLATIONS));
+            }
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
@@ -105,8 +108,17 @@ public final class BedrockPackGenerator {
         BedrockBlockDefinitions definitions = new BedrockBlockDefinitions();
 
         BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan.items(), pack, atlas, definitions);
-        JsonObject displays = BedrockItemDisplayGenerator.write(models, items, pack);
-        ItemRegistrationPlanWriter.write(plan.items(), itemPlanPath, items, displays);
+        JsonObject modelDisplays = BedrockItemDisplayGenerator.write(models, items, pack);
+        ItemRegistrationPlanWriter.write(plan.items(), itemPlanPath, items);
+        if (!modelDisplays.isEmpty()) {
+            GsonHelper.writeJsonFile(modelDisplays, data.resolve(BedrockPackLayout.MODEL_DISPLAYS));
+        }
+        Map<Key, Integer> elytraVariants = items.elytraVariants();
+        if (!elytraVariants.isEmpty()) {
+            JsonObject elytra = new JsonObject();
+            elytraVariants.forEach((id, variant) -> elytra.addProperty(id.asString(), variant));
+            GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(elytra), data.resolve(BedrockPackLayout.ELYTRA_VARIANTS));
+        }
 
         BedrockSounds sounds = new BedrockSounds(resources, plan.soundReplacements());
         BedrockWorldBlocks.Result blocks = BedrockWorldBlocks.write(models, plan.blocks(), pack, atlas, definitions, sounds);
@@ -123,9 +135,7 @@ public final class BedrockPackGenerator {
     }
 
     private static void writeArchives(Path pack, Path data, Path dataDestination) throws IOException {
-        JsonObject manifest = manifest();
-        GsonHelper.writeJsonFile(manifest, pack.resolve("manifest.json"));
-        GsonHelper.writeJsonFile(manifest, data.resolve("manifest.json"));
+        GsonHelper.writeJsonFile(manifest(), pack.resolve("manifest.json"));
 
         Path dataDirectory = Files.createDirectories(dataDestination.getParent());
         Path temporaryPack = Files.createTempFile(dataDirectory, "bedrock-pack-", ".tmp");

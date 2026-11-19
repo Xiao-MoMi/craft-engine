@@ -29,11 +29,14 @@ public final class GeyserGlyphs {
             for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {
                 int codepoint = Integer.parseInt(value.getKey(), 16);
                 JsonObject data = value.getValue().getAsJsonObject();
+                JsonElement character = data.get("character");
+                JsonElement renderedAdvance = data.get("rendered_advance");
+                JsonElement bearing = data.get("bearing");
                 FontGlyph glyph = new FontGlyph(
-                        data.get("character").getAsInt(),
+                        character == null ? codepoint : character.getAsInt(),
                         data.get("advance").getAsFloat(),
-                        data.has("rendered_advance") ? data.get("rendered_advance").getAsInt() : -1,
-                        data.get("bearing").getAsInt()
+                        renderedAdvance == null ? -1 : renderedAdvance.getAsInt(),
+                        bearing == null ? 0 : bearing.getAsInt()
                 );
                 glyphs.put(codepoint, glyph);
             }

@@ -21,8 +21,7 @@ final class GeyserArmorTrimRecipes {
     }
 
     static boolean supports(SmithingTrimRecipeData recipe, Set<String> bases) {
-        return recipe.getBase().getDescriptor() instanceof DefaultDescriptor base
-                && bases.contains(baseTag(base.getItemId().getIdentifier()));
+        return recipe.getBase().getDescriptor() instanceof DefaultDescriptor base && bases.contains(baseTag(base.getItemId().getIdentifier()));
     }
 
     static CraftingDataPacket translate(List<SmithingTrimRecipeData> recipes, Set<String> bases, IntSupplier nextId) {
@@ -32,11 +31,9 @@ final class GeyserArmorTrimRecipes {
                 continue;
             }
             DefaultDescriptor base = (DefaultDescriptor) recipe.getBase().getDescriptor();
-            ItemDescriptorWithCount ingredient = new ItemDescriptorWithCount(
-                    new ItemTagDescriptor(baseTag(base.getItemId().getIdentifier())), recipe.getBase().getCount());
+            ItemDescriptorWithCount ingredient = new ItemDescriptorWithCount(new ItemTagDescriptor(baseTag(base.getItemId().getIdentifier())), recipe.getBase().getCount());
             int netId = nextId.getAsInt();
-            packet.getSmithingTrimData().add(SmithingTrimRecipeData.of("ce:trim/" + netId,
-                    ingredient, recipe.getAddition(), recipe.getTemplate(), recipe.getTag(), netId));
+            packet.getSmithingTrimData().add(SmithingTrimRecipeData.of("ce:trim/" + netId, ingredient, recipe.getAddition(), recipe.getTemplate(), recipe.getTag(), netId));
         }
         return packet;
     }

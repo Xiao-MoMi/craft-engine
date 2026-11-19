@@ -16,6 +16,7 @@ import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public final class GeyserItemManager {
         this.extension = extension;
     }
 
-    public void registerItems(JsonObject plan, GeyserDefineCustomItemsEvent event) {
+    public void registerItems(@Nullable JsonObject plan, @Nullable JsonObject elytraPlan, GeyserDefineCustomItemsEvent event) {
         this.registeredItems.clear();
         this.contextualItems.clear();
         this.headIdentifiers.clear();
@@ -64,7 +65,7 @@ public final class GeyserItemManager {
         try {
             adapter = new GeyserItemRegistrationAdapter(plan.get(SOURCE_VERSION).getAsString());
             entries = plan.get(ENTRIES).getAsJsonArray();
-            registration = new Registration(event, plan.getAsJsonObject(ELYTRA_VARIANTS));
+            registration = new Registration(event, elytraPlan);
         } catch (RuntimeException exception) {
             GeyserTranslationManager.error("item.prepare_failed", exception);
             return;
@@ -200,7 +201,7 @@ public final class GeyserItemManager {
         private int skipped;
         private int failed;
 
-        private Registration(GeyserDefineCustomItemsEvent event, JsonObject elytraPlan) {
+        private Registration(GeyserDefineCustomItemsEvent event, @Nullable JsonObject elytraPlan) {
             this.event = event;
             this.elytraPlan = elytraPlan;
         }

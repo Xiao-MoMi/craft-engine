@@ -38,6 +38,7 @@ public final class GeyserItemRegistrationAdapter {
     public ConvertedItem convert(JsonObject entry, Map<String, String> displayBlocks) {
         Identifier itemType = Identifier.of(entry.get(ITEM_TYPE).getAsString());
         Identifier model = Identifier.of(entry.get(MODEL).getAsString());
+        String displayName = entry.has(VANILLA_MODEL_OVERRIDE) && entry.get(VANILLA_MODEL_OVERRIDE).getAsBoolean() ? GeyserVanillaItemNames.nameKey(itemType.toString()) : null;
         JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
         boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
         JsonArray variants = entry.getAsJsonArray(VARIANTS);
@@ -55,7 +56,7 @@ public final class GeyserItemRegistrationAdapter {
             }
             JsonObject variant = branch.getAsJsonObject();
             try {
-                ConvertedVariant result = convertVariant(model, variant, displayBlocks, branchPriority);
+                ConvertedVariant result = convertVariant(model, variant, displayBlocks, branchPriority, displayName);
                 converted.add(result);
                 contextual |= result.definition().predicates().stream().anyMatch(GeyserItemPredicates::requiresSession);
             } catch (UnsupportedOperationException exception) {
@@ -69,7 +70,11 @@ public final class GeyserItemRegistrationAdapter {
         return new ConvertedItem(itemType, converted, contextual, placesBlock, GeyserItemComponentPatches.read(entry, this.sourceVersion), skipped, failed);
     }
 
-    private static ConvertedVariant convertVariant(Identifier model, JsonObject variant, Map<String, String> displayBlocks, int priority) {
+    private static ConvertedVariant convertVariant(Identifier model,
+                                                   JsonObject variant,
+                                                   Map<String, String> displayBlocks,
+                                                   int priority,
+                                                   @Nullable String displayName) {
         JsonObject resources = variant.get(RESOURCES).getAsJsonObject();
         if (resources.has(UNSUPPORTED_REASON)) {
             throw new UnsupportedOperationException(resources.get(UNSUPPORTED_REASON).getAsString());
@@ -78,11 +83,11 @@ public final class GeyserItemRegistrationAdapter {
             throw new UnsupportedOperationException(GeyserTranslationManager.message("item.reason.missing_resource"));
         }
         Identifier id = Identifier.of(variant.get(BEDROCK_IDENTIFIER).getAsString());
-        CustomItemDefinition definition = buildDefinition(model, variant, id, id, displayBlocks, priority);
+        CustomItemDefinition definition = buildDefinition(model, variant, id, id, displayBlocks, priority, displayName);
         CustomItemDefinition head = null;
         if (variant.has(HEAD_IDENTIFIER)) {
             Identifier headId = Identifier.of(variant.get(HEAD_IDENTIFIER).getAsString());
-            head = buildDefinition(model, variant, headId, id, displayBlocks, 0);
+            head = buildDefinition(model, variant, headId, id, displayBlocks, 0, displayName);
         }
         return new ConvertedVariant(definition, head, tintSources(resources));
     }
@@ -113,8 +118,17 @@ public final class GeyserItemRegistrationAdapter {
      *   }]
      * }
      */
-    private static CustomItemDefinition buildDefinition(Identifier model, JsonObject variant, Identifier bedrockId, Identifier iconId, Map<String, String> displayBlocks, int priority) {
+    private static CustomItemDefinition buildDefinition(Identifier model,
+                                                        JsonObject variant,
+                                                        Identifier bedrockId,
+                                                        Identifier iconId,
+                                                        Map<String, String> displayBlocks,
+                                                        int priority,
+                                                        @Nullable String displayName) {
         CustomItemDefinition.Builder builder = CustomItemDefinition.builder(bedrockId, model);
+        if (displayName != null) {
+            builder.displayName(displayName);
+        }
         builder.priority(priority);
         applyConditions(builder, variant.getAsJsonArray(CONDITIONS));
         if (!bedrockId.equals(iconId)) {
@@ -129,9 +143,12 @@ public final class GeyserItemRegistrationAdapter {
         return builder.build();
     }
 
-    private static void applyConditions(CustomItemDefinition.Builder builder, JsonArray conditions) {
+    private static void applyConditions(CustomItemDefinition.Builder builder, @Nullable JsonArray conditions) {
         // 注册计划已对各显示位置的物品栈条件求交。Geyser 匹配时要求这些条件同时成立，才能使用此变体的 ID
         builder.predicateStrategy(PredicateStrategy.AND);
+        if (conditions == null) {
+            return;
+        }
         for (JsonElement condition : conditions) {
             builder.predicate(GeyserItemPredicates.read(condition.getAsJsonObject()));
         }

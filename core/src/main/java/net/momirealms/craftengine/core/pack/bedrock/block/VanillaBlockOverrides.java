@@ -23,7 +23,7 @@ final class VanillaBlockOverrides {
     static List<WorldBlockPlan.VanillaOverride> plan(CraftEngine plugin,
                                                      JavaBlockModelResolver models,
                                                      List<WorldBlockSource> customBlocks,
-                                                     Function<BlockStateWrapper, WorldBlockProperties> properties) {
+                                                     Function<BlockStateWrapper, WorldBlockPlan.VanillaProperties> properties) {
         Int2ObjectOpenHashMap<WorldBlockSource> occupied = new Int2ObjectOpenHashMap<>();
         for (WorldBlockSource custom : customBlocks) {
             if (custom.visual() != null) {

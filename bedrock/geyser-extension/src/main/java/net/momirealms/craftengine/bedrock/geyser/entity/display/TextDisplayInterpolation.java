@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.entity.display;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector3f;
 
-final class DisplayTransform {
+final class TextDisplayInterpolation {
     private static final State INITIAL = new State(DisplayPose.IDENTITY, 0x40000000, 255);
     private int duration;
     private int delay;

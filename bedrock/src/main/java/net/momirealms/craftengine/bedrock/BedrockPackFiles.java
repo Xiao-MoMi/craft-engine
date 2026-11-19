@@ -9,6 +9,8 @@ public final class BedrockPackFiles {
     public static final List<String> SERVER_FILES = List.of(
             RegistrationPlanKind.ITEM.file(),
             RegistrationPlanKind.BLOCK.file(),
+            BedrockPackLayout.MODEL_DISPLAYS,
+            BedrockPackLayout.ELYTRA_VARIANTS,
             BedrockPackLayout.NATIVE_MODELS,
             BedrockPackLayout.TRANSLATIONS,
             BedrockPackLayout.SCOREBOARD,

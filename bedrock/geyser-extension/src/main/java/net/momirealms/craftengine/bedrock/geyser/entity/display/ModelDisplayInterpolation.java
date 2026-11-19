@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.entity.display;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector3f;
 
-final class DisplayInterpolation {
+final class ModelDisplayInterpolation {
     private DisplayPose target = DisplayPose.IDENTITY;
     private Vector3f translation = Vector3f.ZERO;
     private Vector3f scale = Vector3f.ONE;

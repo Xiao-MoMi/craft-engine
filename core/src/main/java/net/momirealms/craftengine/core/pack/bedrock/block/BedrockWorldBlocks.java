@@ -55,14 +55,15 @@ public final class BedrockWorldBlocks {
                                BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
         BedrockWorldBlocks writer = new BedrockWorldBlocks(resources, atlas);
         JsonArray customBlocks = writer.writeBlocks(plan.customBlocks(), root, definitions, sounds);
-        return new Result(customBlocks, writer.writeVanillaOverrides(plan.vanillaOverrides(), root));
+        return new Result(customBlocks, writer.writeVanillaOverrides(plan.vanillaOverrides(), root, definitions, sounds));
     }
 
-    private JsonArray writeVanillaOverrides(List<WorldBlockPlan.VanillaOverride> overrides, Path root) throws IOException {
+    private JsonArray writeVanillaOverrides(List<WorldBlockPlan.VanillaOverride> overrides, Path root,
+                                            BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
         JsonArray entries = new JsonArray(overrides.size());
         for (WorldBlockPlan.VanillaOverride override : overrides) {
             try {
-                entries.add(this.writeVanillaState(override, root));
+                entries.add(this.writeVanillaState(override, root, definitions, sounds));
             } catch (UnsupportedOperationException exception) {
                 CraftEngine.instance().logger().warn("Skipped Bedrock vanilla model for " + override.state().getAsString() + ": " + exception.getLocalizedMessage());
             }
@@ -70,11 +71,14 @@ public final class BedrockWorldBlocks {
         return entries;
     }
 
-    private JsonObject writeVanillaState(WorldBlockPlan.VanillaOverride override, Path root) throws IOException {
+    private JsonObject writeVanillaState(WorldBlockPlan.VanillaOverride override, Path root,
+                                         BedrockBlockDefinitions definitions, BedrockSounds sounds) throws IOException {
         BlockStateWrapper state = override.state();
         Key block = state.ownerId();
-        JsonObject properties = components(override.properties());
+        WorldBlockProperties blockProperties = override.properties().components();
+        JsonObject properties = components(blockProperties);
         List<JavaBlockModelResolver.Part> parts = this.models.resolveVanillaOverride(override.model());
+        BedrockSounds.Group sound = sounds.resolve(override.properties().sounds(), block);
         String name = PATH_PREFIX + "vanilla/" + block.namespace() + '/' + block.value() + "/state_" + state.registryId();
         GeneratedGeometry geometry = this.writeGeometry(name, parts, state, root);
         if (geometry.scale() < 1) {
@@ -82,10 +86,11 @@ public final class BedrockWorldBlocks {
         }
         JsonObject entry = geometry.entry();
         entry.addProperty("java_state", state.getAsString());
-        entry.addProperty("hardness", override.properties().hardness());
+        entry.addProperty("hardness", blockProperties.hardness());
         for (Map.Entry<String, JsonElement> property : properties.entrySet()) {
             entry.add(property.getKey(), property.getValue());
         }
+        definitions.register(name, sounds.register(sound));
         return entry;
     }
 
@@ -198,8 +203,6 @@ public final class BedrockWorldBlocks {
             JsonObject state = new JsonObject();
             state.addProperty("id", source.serverStateId());
             state.addProperty("state", source.serverState());
-            state.addProperty("block_id", source.id().asString());
-            state.addProperty("hardness", source.properties().hardness());
             states.add(state);
         }
         return states;
@@ -243,6 +246,7 @@ public final class BedrockWorldBlocks {
                     BedrockElementGeometry.Material material = bindings.get(key);
                     if (material == null) {
                         TextureData data = this.textures.read(face.texture(), TextureUsage.BLOCK);
+                        BedrockTerrainAtlas.validateAnimation(data, face.texture().sprite().asString());
                         float size = Math.max(data.image().getWidth(), data.image().getHeight());
                         String slot = "layer" + bindings.size();
                         material = new BedrockElementGeometry.Material(slot, data.image().getWidth() / size, data.image().getHeight() / size);

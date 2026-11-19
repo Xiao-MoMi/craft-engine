@@ -48,7 +48,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
     }
     private final GeyserPlayer player;
     private final GeyserGlyphData glyphs;
-    private final DisplayTransform transform = new DisplayTransform();
+    private final TextDisplayInterpolation transform = new TextDisplayInterpolation();
     private final List<DebugText> shapes = new ArrayList<>();
     private Object textComponent;
     private String text = "";
@@ -91,7 +91,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         this.glyphs = glyphs;
     }
 
-    DisplayTransform transform() {
+    TextDisplayInterpolation transform() {
         return this.transform;
     }
 
@@ -325,7 +325,7 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         if (this.vehicle == null) {
             return null;
         }
-        GeyserDisplayEntity displayVehicle = this.vehicle instanceof GeyserDisplayEntity display ? display : null;
+        GeyserModelDisplayEntity displayVehicle = this.vehicle instanceof GeyserModelDisplayEntity display ? display : null;
         Vector3f position = displayVehicle == null ? this.vehicle.getPosition() : displayVehicle.renderPosition();
         Vector3f seat = this.seatOffset;
         float height = seat == null ? this.vehicle.getBoundingBoxHeight() : seat.getY();

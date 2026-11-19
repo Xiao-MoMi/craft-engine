@@ -22,14 +22,15 @@ import java.nio.file.StandardCopyOption;
  * <pre>{@code
  * {
  *   "test:ref": {
- *     "21": { "character": -1,    "advance": -2.0, "rendered_advance": 0, "bearing": 0 },
- *     "4e": { "character": 78,    "advance":  9.0, "rendered_advance": 9, "bearing": 0 },
+ *     "21": { "character": -1,    "advance": -2.0, "rendered_advance": 0 },
+ *     "4e": {                     "advance":  9.0, "rendered_advance": 9 },
  *     "5a": { "character": 58112, "advance":  8.0, "rendered_advance": 8, "bearing": 1 }
  *   }
  * }
  * }</pre>
  * {@code character} 是基岩输出的码位，-1 表示只移动光标。{@code advance} 是 Java 布局的光标位移，
  * {@code rendered_advance} 是基岩绘制字符后的前进宽度，{@code bearing} 是从绘制起点到字形左缘的水平偏移。
+ * 省略 {@code character} 时使用原码位，省略 {@code bearing} 时偏移为零
  *
  * <p>以上例中的普通字重标题 {@code Z!N} 为例：Z 映射到 U+E300，光标前进 8 像素；
  * ! 不绘制，光标回退 2 像素；N 沿用原生码位，从距起点 6 像素处开始绘制。</p>
@@ -58,9 +59,10 @@ public final class BedrockFontGenerator {
         atlas.writePages(directory);
         copySpacerPage(directory);
 
-        // 写入扩展所需数据
-        Files.createDirectories(glyphData.getParent());
-        GsonHelper.writeJsonFile(layouts, glyphData);
+        if (!layouts.isEmpty()) {
+            Files.createDirectories(glyphData.getParent());
+            GsonHelper.writeJsonFile(layouts, glyphData);
+        }
     }
 
     private static void addFont(Key font, Int2ObjectMap<Glyph> glyphs, GlyphAtlas atlas, JsonObject layouts) {
@@ -70,22 +72,27 @@ public final class BedrockFontGenerator {
         }
         JsonObject layout = new JsonObject();
         for (Int2ObjectMap.Entry<GlyphAtlas.Allocation> entry : allocations.int2ObjectEntrySet()) {
+            int codepoint = entry.getIntKey();
             GlyphAtlas.Allocation glyph = entry.getValue();
-            layout.add(Integer.toHexString(entry.getIntKey()), layoutGlyph(glyph.character(), glyph.advance(), glyph.renderedAdvance(), glyph.bearing()));
+            layout.add(Integer.toHexString(codepoint), layoutGlyph(codepoint, glyph));
         }
         if (!layout.isEmpty()) {
             layouts.add(font.asString(), layout);
         }
     }
 
-    private static JsonObject layoutGlyph(int character, float advance, int renderedAdvance, int bearing) {
+    private static JsonObject layoutGlyph(int codepoint, GlyphAtlas.Allocation allocation) {
         JsonObject glyph = new JsonObject();
-        glyph.addProperty("character", character);
-        glyph.addProperty("advance", advance);
-        if (renderedAdvance >= 0) {
-            glyph.addProperty("rendered_advance", renderedAdvance);
+        if (allocation.character() != codepoint) {
+            glyph.addProperty("character", allocation.character());
         }
-        glyph.addProperty("bearing", bearing);
+        glyph.addProperty("advance", allocation.advance());
+        if (allocation.renderedAdvance() >= 0) {
+            glyph.addProperty("rendered_advance", allocation.renderedAdvance());
+        }
+        if (allocation.bearing() != 0) {
+            glyph.addProperty("bearing", allocation.bearing());
+        }
         return glyph;
     }
 
