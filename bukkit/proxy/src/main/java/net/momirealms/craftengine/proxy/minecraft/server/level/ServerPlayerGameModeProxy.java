@@ -14,6 +14,9 @@ public interface ServerPlayerGameModeProxy {
     @FieldGetter(name = "isDestroyingBlock")
     boolean isDestroyingBlock(Object target);
 
+    @FieldGetter(name = "destroyPos")
+    Object getDestroyPos(Object target);
+
     @FieldSetter(name = "isDestroyingBlock")
     void setIsDestroyingBlock(Object target, boolean isDestroyingBlock);
 
