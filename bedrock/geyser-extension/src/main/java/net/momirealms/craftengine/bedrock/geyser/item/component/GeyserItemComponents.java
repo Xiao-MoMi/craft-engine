@@ -138,8 +138,7 @@ final class GeyserItemComponents {
     }
 
     static GeyserItemComponentPatch tool(JsonElement value) {
-        boolean canDestroy = value.isJsonNull() || !value.getAsJsonObject().has("can_destroy_blocks_in_creative")
-                || value.getAsJsonObject().get("can_destroy_blocks_in_creative").getAsBoolean();
+        boolean canDestroy = value.isJsonNull() || !value.getAsJsonObject().has("can_destroy_blocks_in_creative") || value.getAsJsonObject().get("can_destroy_blocks_in_creative").getAsBoolean();
         NbtMap component = NbtMap.builder().putBoolean("value", canDestroy).build();
         return update((components, properties) -> {
             components.putCompound("minecraft:can_destroy_in_creative", component);

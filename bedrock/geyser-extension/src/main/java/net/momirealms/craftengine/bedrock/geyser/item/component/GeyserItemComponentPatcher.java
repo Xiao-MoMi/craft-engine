@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.item.component;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.nbt.NbtMap;
@@ -11,16 +13,15 @@ import org.cloudburstmc.protocol.bedrock.packet.CraftingDataPacket;
 import org.cloudburstmc.protocol.bedrock.packet.ItemComponentPacket;
 import org.geysermc.geyser.registry.type.ItemMappings;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public final class GeyserItemComponentPatcher {
     private final Map<String, GeyserItemComponentPatch> patches;
     private final ItemMappings mappings;
-    private final Set<String> trimBases = new HashSet<>();
+    private final Map<String, Int2ObjectMap<ItemDefinition>> trimItems = new HashMap<>();
 
     GeyserItemComponentPatcher(Map<String, GeyserItemComponentPatch> patches, ItemMappings mappings) {
         this.patches = patches;
@@ -35,14 +36,13 @@ public final class GeyserItemComponentPatcher {
 
     private void patchRecipes(GeyserPlayer player, CraftingDataPacket packet) {
         List<SmithingTrimRecipeData> recipes = packet.getSmithingTrimData();
-        if (recipes.stream().noneMatch(recipe -> GeyserArmorTrimRecipes.supports(recipe, this.trimBases))) {
+        if (this.trimItems.isEmpty() || recipes.stream().noneMatch(recipe -> GeyserArmorTrimRecipes.supports(recipe, this.trimItems))) {
             return;
         }
         List<SmithingTrimRecipeData> snapshot = List.copyOf(recipes);
         // Geyser 在发包返回后更新配方 ID，延后分配，避免新 ID 被覆盖或与原配方冲突。
         player.session().scheduleInEventLoop(() -> {
-            CraftingDataPacket extra = GeyserArmorTrimRecipes.translate(snapshot, this.trimBases,
-                    player.session().getLastRecipeNetId()::incrementAndGet);
+            CraftingDataPacket extra = GeyserArmorTrimRecipes.translate(snapshot, this.trimItems, player.session().getLastRecipeNetId()::incrementAndGet);
             player.session().sendUpstreamPacket(extra);
         }, 0, TimeUnit.MILLISECONDS);
     }
@@ -58,7 +58,7 @@ public final class GeyserItemComponentPatcher {
                 NbtMap data = patch.apply(original, this.mappings);
                 for (String tag : data.getCompound("components").getList("item_tags", NbtType.STRING)) {
                     if (tag.startsWith(GeyserArmorTrimRecipes.BASE_TAG_PREFIX)) {
-                        this.trimBases.add(tag);
+                        this.trimItems.computeIfAbsent(tag, key -> new Int2ObjectOpenHashMap<>()).putIfAbsent(definition.getRuntimeId(), definition);
                     }
                 }
                 if (data == original) {

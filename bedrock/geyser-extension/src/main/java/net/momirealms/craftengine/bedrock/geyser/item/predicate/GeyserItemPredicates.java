@@ -78,7 +78,7 @@ public final class GeyserItemPredicates {
         }
         List<MinecraftPredicate<ItemPredicateContext>> predicates = new ArrayList<>();
         for (JsonElement value : condition.getAsJsonArray(VALUES)) {
-            predicates.add(switch (property) {
+            MinecraftPredicate<ItemPredicateContext> predicate = switch (property) {
                 case "custom_model_data" -> {
                     int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
                     String expected = value.getAsString();
@@ -87,7 +87,8 @@ public final class GeyserItemPredicates {
                 case "trim_material" -> ItemMatchPredicate.trimMaterial(Identifier.of(value.getAsString()));
                 case "charge_type" -> ItemMatchPredicate.chargeType(ChargedProjectile.ChargeType.valueOf(value.getAsString().toUpperCase(Locale.ROOT)));
                 default -> throw unsupported(property);
-            });
+            };
+            predicates.add(predicate);
         }
         return context -> {
             for (MinecraftPredicate<ItemPredicateContext> predicate : predicates) {

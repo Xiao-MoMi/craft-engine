@@ -449,8 +449,10 @@ final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickabl
         }
         int background = (this.style & USE_DEFAULT_BACKGROUND) != 0 ? DEFAULT_BACKGROUND : this.transform.currentBackground();
         if (this.light != 255) {
-            background = background & 0xFF000000 | ((background >>> 16) & 255) * this.light / 255 << 16
-                    | ((background >>> 8) & 255) * this.light / 255 << 8 | (background & 255) * this.light / 255;
+            background = background & 0xFF000000
+                    | ((background >>> 16) & 255) * this.light / 255 << 16
+                    | ((background >>> 8) & 255) * this.light / 255 << 8
+                    | (background & 255) * this.light / 255;
         }
         if (this.background.getRGB() != background) {
             this.background = new Color(background, true);

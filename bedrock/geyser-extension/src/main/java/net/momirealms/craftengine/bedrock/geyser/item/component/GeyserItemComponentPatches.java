@@ -54,7 +54,9 @@ public final class GeyserItemComponentPatches {
         String itemType = entry.get(ITEM_TYPE).getAsString();
         // 先按 Java 最终行为补齐使用入口，再应用组件覆写，最后决定触屏按钮
         GeyserItemComponentPatch patch = combine(GeyserItemUse.read(behavior, components, itemType), read(components, sourceVersion, itemType));
-        patch = combine(patch, GeyserItemComponents.armorTrim(itemType));
+        if (behavior != null && behavior.has(TRIMMABLE_ARMOR) && behavior.get(TRIMMABLE_ARMOR).getAsBoolean()) {
+            patch = combine(patch, GeyserItemComponents.armorTrim(itemType));
+        }
         return combine(patch, GeyserItemInteraction.read(behavior, components));
     }
 

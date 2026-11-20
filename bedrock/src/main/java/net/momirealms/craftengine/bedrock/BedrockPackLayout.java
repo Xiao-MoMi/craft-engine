@@ -67,6 +67,7 @@ public final class BedrockPackLayout {
     public static final String GENERATED = "generated";
     public static final String CLIENT_BEHAVIOR = "client_behavior";
     public static final String PLACES_BLOCK = "places_block";
+    public static final String TRIMMABLE_ARMOR = "trimmable_armor";
     public static final String USE = "use";
     public static final String ANIMATION = "animation";
     public static final String MAX_DURATION_TICKS = "max_duration_ticks";

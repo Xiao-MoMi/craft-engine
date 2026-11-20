@@ -182,8 +182,13 @@ public final class GeyserItemRegistrationAdapter {
         );
     }
 
-    public record ConvertedItem(Identifier itemType, List<ConvertedVariant> variants, boolean contextual, boolean placesBlock,
-                                @Nullable GeyserItemComponentPatch componentPatch, int skipped, int failed) {
+    public record ConvertedItem(Identifier itemType,
+                                List<ConvertedVariant> variants,
+                                boolean contextual,
+                                boolean placesBlock,
+                                @Nullable GeyserItemComponentPatch componentPatch,
+                                int skipped,
+                                int failed) {
     }
 
     public record ConvertedVariant(CustomItemDefinition definition, @Nullable CustomItemDefinition head, Map<String, Integer> tintSources) {

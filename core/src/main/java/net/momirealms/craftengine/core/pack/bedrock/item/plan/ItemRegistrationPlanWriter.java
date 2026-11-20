@@ -81,6 +81,9 @@ public final class ItemRegistrationPlanWriter {
         if (entry.clientBehavior().placesBlock()) {
             behavior.addProperty(PLACES_BLOCK, true);
         }
+        if (entry.trimmableArmor()) {
+            behavior.addProperty(TRIMMABLE_ARMOR, true);
+        }
         json.add(CLIENT_BEHAVIOR, behavior);
         return json;
     }

@@ -57,7 +57,7 @@ final class ExternalItemModelBindings {
                 ItemRegistrationProperties properties = registrationReader.read(clientItem, behavior);
                 String identity = model.baseItem().asString() + '\n' + model.itemModel().asString();
                 Key id = Key.of("external", UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8)).toString());
-                ResolvedItemBinding binding = new ResolvedItemBinding(id, model.baseItem(), clientItem.vanillaId(), clientModel, definition, behavior, properties);
+                ResolvedItemBinding binding = new ResolvedItemBinding(id, model.baseItem(), clientItem.vanillaId(), clientModel, definition, behavior, properties, false);
                 if (!index.add(binding)) {
                     throw new IllegalArgumentException("Conflicting generated identifier: " + binding.bedrockId());
                 }

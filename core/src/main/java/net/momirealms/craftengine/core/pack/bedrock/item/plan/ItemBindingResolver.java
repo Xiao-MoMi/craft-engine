@@ -3,8 +3,10 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.item.network.ItemModelMappings;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.setting.value.ItemEquipment;
 import net.momirealms.craftengine.core.item.setting.value.SharedModelData;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -14,6 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public final class ItemBindingResolver {
+    private static final Key TRIMMABLE_ARMOR_TAG = Key.of("minecraft:trimmable_armor");
     private final Function<Key, ItemModelDefinitionBinding> definitions;
     private final ItemBehaviorReader behaviorReader;
     private final ItemRegistrationReader registrationReader;
@@ -46,10 +49,10 @@ public final class ItemBindingResolver {
     }
 
     ResolvedItemBinding resolve(Item serverItem, Item clientItem, @Nullable Key itemModel, @Nullable ItemModelDefinitionBinding definition) {
+        ItemDefinition item = serverItem.getDefinitionOrNull();
         if (definition != null) {
-            ItemDefinition item = serverItem.getDefinitionOrNull();
             SharedModelData modelData = item == null ? null : item.settings().sharedModelData();
-            if (modelData != null && (itemModel.equals(modelData.model()) || itemModel.equals(ItemModelMappings.getMappings().get(modelData.model())))) {
+            if (modelData != null && itemModel != null && (itemModel.equals(modelData.model()) || itemModel.equals(ItemModelMappings.getMappings().get(modelData.model())))) {
                 definition = definition.withModelDataId(modelData.id());
             }
         }
@@ -59,6 +62,11 @@ public final class ItemBindingResolver {
         if (definition != null && headTexture != null) {
             definition = definition.withHeadSkin(headTexture);
         }
+        boolean trimmableArmor = false;
+        if (item != null && item.is(TRIMMABLE_ARMOR_TAG)) {
+            ItemEquipment equipment = item.settings().equipment();
+            trimmableArmor = equipment == null || !(equipment.equipment() instanceof TrimBasedEquipment);
+        }
         return new ResolvedItemBinding(
                 serverItem.id(),
                 serverItem.vanillaId(),
@@ -66,7 +74,8 @@ public final class ItemBindingResolver {
                 itemModel,
                 definition,
                 behavior,
-                properties
+                properties,
+                trimmableArmor
         );
     }
 }

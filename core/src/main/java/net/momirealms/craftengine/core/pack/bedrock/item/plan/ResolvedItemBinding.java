@@ -11,7 +11,8 @@ public record ResolvedItemBinding(Key itemId,
                                   Key itemModel,
                                   ItemModelDefinitionBinding definition, // 可能为空，但是空的不会参与生成
                                   ItemBehaviorDescription clientBehavior,
-                                  ItemRegistrationProperties clientProperties) {
+                                  ItemRegistrationProperties clientProperties,
+                                  boolean trimmableArmor) {
 
     public Key bedrockId() {
         return Key.of(NAMESPACE, this.itemId.namespace() + '/' + this.itemId.value());
