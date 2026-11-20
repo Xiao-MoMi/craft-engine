@@ -26,6 +26,7 @@ public final class BedrockPackLayout {
     public static final String DYED_ICON = "dyed_icon";
     public static final String MAIN_HAND_DYE = ID_PREFIX + "main_hand_dye";
     public static final String OFF_HAND_DYE = ID_PREFIX + "off_hand_dye";
+    public static final String HEAD_DYE = ID_PREFIX + "head_dye";
     public static final String DISPLAY_DYE = ID_PREFIX + "display_dye";
     public static final String ELYTRA_VARIANT_PROPERTY = ID_PREFIX + "elytra_variant";
     public static final String DISPLAY_BLOCK = "display_block";

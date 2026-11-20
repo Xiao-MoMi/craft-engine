@@ -5,17 +5,23 @@ import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ContainerId;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.AddPlayerPacket;
+import org.cloudburstmc.protocol.bedrock.packet.InventoryContentPacket;
+import org.cloudburstmc.protocol.bedrock.packet.InventorySlotPacket;
+import org.cloudburstmc.protocol.bedrock.packet.MobArmorEquipmentPacket;
 import org.cloudburstmc.protocol.bedrock.packet.MobEquipmentPacket;
+import org.cloudburstmc.protocol.bedrock.packet.RespawnPacket;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.player.PlayerEntity;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.EquipmentSlot;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class GeyserHeldDye {
+    private static final int JAVA_HELMET_SLOT = 5;
     private final GeyserPlayer player;
     private final GeyserSession session;
     private ScheduledFuture<?> task;
@@ -23,24 +29,45 @@ public final class GeyserHeldDye {
     private final GeyserDyeProperties off;
     private final GeyserDyeProperties mainThird;
     private final GeyserDyeProperties offThird;
+    private final GeyserDyeProperties head;
     private int mainThirdColor = Integer.MIN_VALUE;
     private int offThirdColor = Integer.MIN_VALUE;
     private int mainColor = Integer.MIN_VALUE;
     private int offColor = Integer.MIN_VALUE;
+    private int headColor = Integer.MIN_VALUE;
 
-    private GeyserHeldDye(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off, GeyserDyeProperties mainThird, GeyserDyeProperties offThird) {
+    private GeyserHeldDye(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off, GeyserDyeProperties mainThird, GeyserDyeProperties offThird, GeyserDyeProperties head) {
         this.player = player;
         this.session = player.session();
         this.main = main;
         this.off = off;
         this.mainThird = mainThird;
         this.offThird = offThird;
+        this.head = head;
     }
 
-    public static GeyserHeldDye install(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off, GeyserDyeProperties mainThird, GeyserDyeProperties offThird) {
-        GeyserHeldDye handler = new GeyserHeldDye(player, main, off, mainThird, offThird);
+    public static GeyserHeldDye install(GeyserPlayer player, GeyserDyeProperties main, GeyserDyeProperties off, GeyserDyeProperties mainThird, GeyserDyeProperties offThird, GeyserDyeProperties head) {
+        GeyserHeldDye handler = new GeyserHeldDye(player, main, off, mainThird, offThird, head);
+        long self = player.session().getPlayerEntity().geyserId();
         player.network().onSend(AddPlayerPacket.class, handler::onAddPlayer);
         player.network().onSend(MobEquipmentPacket.class, handler::onEquipment);
+        player.network().onSend(InventoryContentPacket.class, event -> {
+            if (event.packet().getContainerId() == ContainerId.ARMOR) {
+                handler.queueHead(self, false);
+            }
+        });
+        player.network().onSend(InventorySlotPacket.class, event -> {
+            InventorySlotPacket slot = event.packet();
+            if (slot.getContainerId() == ContainerId.ARMOR && slot.getSlot() == 0) {
+                handler.queueHead(self, false);
+            }
+        });
+        player.network().onSend(MobArmorEquipmentPacket.class, event -> handler.queueHead(event.packet().getRuntimeEntityId(), false));
+        player.network().onSend(RespawnPacket.class, event -> {
+            if (event.packet().getState() == RespawnPacket.State.SERVER_READY) {
+                handler.queueHead(self, true);
+            }
+        });
         player.session().executeInEventLoop(handler::syncOwnHands);
         return handler;
     }
@@ -56,6 +83,9 @@ public final class GeyserHeldDye {
             return;
         }
         if (this.session.isSpawned()) {
+            if (this.headColor == Integer.MIN_VALUE) {
+                this.syncOwnHead();
+            }
             PlayerInventory inventory = this.session.getPlayerInventory();
             GeyserItemStack mainStack = inventory.getItemInHand();
             GeyserItemStack offStack = inventory.getOffhand();
@@ -87,8 +117,44 @@ public final class GeyserHeldDye {
             this.offColor = Integer.MIN_VALUE;
             this.mainThirdColor = Integer.MIN_VALUE;
             this.offThirdColor = Integer.MIN_VALUE;
+            this.headColor = Integer.MIN_VALUE;
         }
         this.task = this.session.scheduleInEventLoop(this::syncOwnHands, 50, TimeUnit.MILLISECONDS);
+    }
+
+    private void queueHead(long id, boolean respawn) {
+        this.session.executeInEventLoop(() -> {
+            if (this.player.isClosed()) {
+                return;
+            }
+            if (id == this.session.getPlayerEntity().geyserId()) {
+                if (respawn) {
+                    this.headColor = Integer.MIN_VALUE;
+                }
+                if (this.session.isSpawned()) {
+                    this.syncOwnHead();
+                }
+            } else if (this.session.getEntityCache().getEntityByGeyserId(id) instanceof PlayerEntity entity && entity.isValid()) {
+                int color = this.resolveHeadColor(entity.getItemInSlot(EquipmentSlot.HELMET));
+                entity.updatePropertiesBatched(batch -> this.head.write(batch, color), true);
+            }
+        });
+    }
+
+    private void syncOwnHead() {
+        int color = this.resolveHeadColor(this.session.getPlayerInventory().getItem(JAVA_HELMET_SLOT));
+        if (this.headColor != color) {
+            this.session.getPlayerEntity().updatePropertiesBatched(batch -> this.head.write(batch, color), true);
+            this.headColor = color;
+        }
+    }
+
+    private int resolveHeadColor(GeyserItemStack stack) {
+        GeyserItemRuntime runtime = this.player.items();
+        if (runtime == null || stack.isEmpty()) {
+            return -1;
+        }
+        return runtime.tints().color(stack, stack.getItemData(this.session), "head");
     }
 
     private int color(GeyserItemStack stack, boolean offhand, boolean firstPerson, boolean selected) {

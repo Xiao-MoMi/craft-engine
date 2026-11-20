@@ -37,6 +37,7 @@ public final class GeyserItemManager {
     private GeyserDyeProperties offHandDye;
     private GeyserDyeProperties mainHandThirdDye;
     private GeyserDyeProperties offHandThirdDye;
+    private GeyserDyeProperties headDye;
     private boolean hasDyedItems;
     private final Map<String, Map<String, Integer>> tintSources = new HashMap<>();
     private Map<String, Integer> elytraVariants = Map.of();
@@ -152,6 +153,7 @@ public final class GeyserItemManager {
             this.offHandDye = GeyserDyeProperties.register(event, player, OFF_HAND_DYE);
             this.mainHandThirdDye = GeyserDyeProperties.register(event, player, MAIN_HAND_DYE + "_third");
             this.offHandThirdDye = GeyserDyeProperties.register(event, player, OFF_HAND_DYE + "_third");
+            this.headDye = GeyserDyeProperties.register(event, player, HEAD_DYE);
         }
     }
 
@@ -162,7 +164,7 @@ public final class GeyserItemManager {
 
     public GeyserHeldDye initPlayerDye(GeyserPlayer player) {
         if (this.hasDyedItems) {
-            return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye, this.mainHandThirdDye, this.offHandThirdDye);
+            return GeyserHeldDye.install(player, this.mainHandDye, this.offHandDye, this.mainHandThirdDye, this.offHandThirdDye, this.headDye);
         }
         return null;
     }

@@ -19,6 +19,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.util.List;
 
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.HEAD_DYE;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.MAIN_HAND_DYE;
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.OFF_HAND_DYE;
 
@@ -63,14 +64,16 @@ public final class BedrockDyedItem {
     }
 
     public static String colorScript() {
-        return "variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + viewColor(OFF_HAND_DYE) + ") : (context.item_slot == 'main_hand' ? (" + viewColor(MAIN_HAND_DYE) + ") : -1);";
+        return "variable.ce_hand_dye = context.item_slot == 'off_hand' ? (" + viewColor(OFF_HAND_DYE) + ")"
+                + " : (context.item_slot == 'main_hand' ? (" + viewColor(MAIN_HAND_DYE) + ")"
+                + " : (context.item_slot == 'head' ? (" + propertyColor(HEAD_DYE) + ") : -1));";
     }
 
     private static String viewColor(String property) {
-        return "context.is_first_person ? (" + handColor(property) + ") : (" + handColor(property + "_third") + ")";
+        return "context.is_first_person ? (" + propertyColor(property) + ") : (" + propertyColor(property + "_third") + ")";
     }
 
-    private static String handColor(String property) {
+    private static String propertyColor(String property) {
         String owner = "context.owning_entity->query.";
         String high = owner + "property('" + property + "_r')";
         return owner + "has_property('" + property + "_r') && " + high + " >= 0 ? " + high + " * 65536 + " + owner + "property('" + property + "_gb') : -1";
