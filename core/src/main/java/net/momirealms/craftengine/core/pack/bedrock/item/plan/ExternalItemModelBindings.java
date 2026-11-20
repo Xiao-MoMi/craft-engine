@@ -15,22 +15,27 @@ final class ExternalItemModelBindings {
     private ExternalItemModelBindings() {
     }
 
-    static void append(List<ResolvedItemBinding> entries,
-                       ItemRegistrationIndex index,
-                       Function<Key, ItemModelDefinitionBinding> definitions,
-                       Map<String, List<ExternalItemModel>> contributions,
-                       Function<Key, Item> itemFactory,
-                       ItemBehaviorReader behaviorReader,
-                       ItemRegistrationReader registrationReader) throws IOException {
+    static Map<Key, Set<Key>> append(List<ResolvedItemBinding> entries,
+                                     ItemRegistrationIndex index,
+                                     Function<Key, ItemModelDefinitionBinding> definitions,
+                                     Map<String, List<ExternalItemModel>> contributions,
+                                     Function<Key, Item> itemFactory,
+                                     ItemBehaviorReader behaviorReader,
+                                     ItemRegistrationReader registrationReader) throws IOException {
         if (contributions.isEmpty()) {
-            return;
+            return Map.of();
         }
-        Map<ExternalItemModel, String> ordered = new TreeMap<>(Comparator
+        TreeMap<ExternalItemModel, String> ordered = new TreeMap<>(Comparator
                 .comparing((ExternalItemModel model) -> model.baseItem().asString())
                 .thenComparing(model -> model.itemModel().asString()));
+        Map<ExternalItemModel, Set<Key>> owners = new TreeMap<>(ordered.comparator());
+        Map<Key, Set<Key>> entityModels = new HashMap<>();
         new TreeMap<>(contributions).forEach((owner, models) -> {
             for (ExternalItemModel model : models) {
                 ordered.putIfAbsent(model, owner);
+                if (model.entityModel() != null) {
+                    owners.computeIfAbsent(model, ignored -> new LinkedHashSet<>()).add(model.entityModel());
+                }
             }
         });
         for (Map.Entry<ExternalItemModel, String> entry : ordered.entrySet()) {
@@ -46,7 +51,11 @@ final class ExternalItemModelBindings {
                 if (clientModel == null) {
                     continue;
                 }
-                if (index.containsModel(clientItem.vanillaId(), clientModel)) {
+                Key existing = index.identifier(clientItem.vanillaId(), clientModel);
+                if (existing != null) {
+                    if (owners.containsKey(model)) {
+                        entityModels.computeIfAbsent(existing, ignored -> new LinkedHashSet<>()).addAll(owners.get(model));
+                    }
                     continue;
                 }
                 ItemModelDefinitionBinding definition = definitions.apply(clientModel);
@@ -62,9 +71,13 @@ final class ExternalItemModelBindings {
                     throw new IllegalArgumentException("Conflicting generated identifier: " + binding.bedrockId());
                 }
                 entries.add(binding);
+                if (owners.containsKey(model)) {
+                    entityModels.put(binding.bedrockId(), new LinkedHashSet<>(owners.get(model)));
+                }
             } catch (RuntimeException exception) {
                 throw new IOException("Failed to register external item model from " + entry.getValue() + ": " + model.baseItem() + " + " + model.itemModel() + ": " + exception.getMessage(), exception);
             }
         }
+        return entityModels;
     }
 }

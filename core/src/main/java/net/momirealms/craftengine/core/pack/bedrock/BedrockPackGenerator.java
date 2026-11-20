@@ -13,11 +13,9 @@ import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockBossBars;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplayGenerator;
-import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelAssets;
-import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.sound.BedrockSounds;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
@@ -35,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -44,16 +41,6 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 public final class BedrockPackGenerator {
 
     private BedrockPackGenerator() {
-    }
-
-    public static void generate(JavaResourcePack resources,
-                                ItemRegistrationPlan plan,
-                                List<WorldBlockSource> blocks,
-                                List<NativeModelSource> nativeModels,
-                                Map<Key, Key> soundReplacements,
-                                Path output,
-                                boolean obfuscation) throws IOException {
-        generate(new JavaModelResources(resources), new BedrockPackPlan(plan, new WorldBlockPlan(blocks, List.of()), nativeModels, soundReplacements), output, obfuscation);
     }
 
     public static void generate(JavaModelResources models,
@@ -75,7 +62,7 @@ public final class BedrockPackGenerator {
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
-            NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockDisplayDyeMaxLayers());
+            NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockEntities()::dye);
 
             boolean protection = obfuscation && VersionHelper.PREMIUM;
             Map<Path, JsonObject> geometryDocuments = new HashMap<>();
@@ -104,7 +91,7 @@ public final class BedrockPackGenerator {
         BedrockBlockDefinitions definitions = new BedrockBlockDefinitions();
 
         BedrockItemResourceGenerator.Result items = BedrockItemResourceGenerator.write(models, plan.items(), pack, atlas, definitions);
-        JsonObject modelDisplays = BedrockItemDisplayGenerator.write(models, items, pack);
+        JsonObject modelDisplays = BedrockItemDisplayGenerator.write(models, items, plan.items(), pack);
         ItemRegistrationPlanWriter.write(plan.items(), itemPlanPath, items);
         if (!modelDisplays.isEmpty()) {
             GsonHelper.writeJsonFile(modelDisplays, data.resolve(BedrockPackLayout.MODEL_DISPLAYS));

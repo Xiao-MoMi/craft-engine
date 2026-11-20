@@ -19,7 +19,7 @@ import java.util.function.Predicate;
 public abstract class NativeModelBridge implements Listener {
     protected final BukkitCraftEngine plugin;
     private final Plugin owner;
-    private final Map<UUID, Map<UUID, NativeModelPayload>> sent = new HashMap<>();
+    private final Map<UUID, Map<UUID, NativeModelPayload.Snapshot>> sent = new HashMap<>();
     private SchedulerTask task;
     private boolean failed;
     private int ticks;
@@ -43,29 +43,32 @@ public abstract class NativeModelBridge implements Listener {
 
     private synchronized void tick() {
         try {
-            if (!this.enabled() && this.sent.isEmpty()) {
+            boolean enabled = this.enabled() && this.owner.isEnabled();
+            if (!enabled && this.sent.isEmpty()) {
                 return;
             }
             boolean refresh = this.ticks++ % 20 == 0;
-            List<ModelState> states = this.enabled() && this.owner.isEnabled() ? this.collect() : List.of();
+            List<ModelState> states = null;
             Set<UUID> online = new HashSet<>();
             for (Player player : this.plugin.networkManager().onlineUsers()) {
                 if (!player.hasBedrockExtension()) {
                     continue;
                 }
+                if (states == null) {
+                    states = enabled ? this.collect() : List.of();
+                }
                 UUID viewer = player.uuid();
                 online.add(viewer);
-                Map<UUID, NativeModelPayload> previous = this.sent.computeIfAbsent(viewer, ignored -> new HashMap<>());
+                Map<UUID, NativeModelPayload.Snapshot> previous = this.sent.computeIfAbsent(viewer, ignored -> new HashMap<>());
                 Set<UUID> visible = new HashSet<>();
                 for (ModelState state : states) {
                     if (!state.visible().test(player)) {
                         continue;
                     }
-                    NativeModelPayload payload = state.payload();
+                    NativeModelPayload.Snapshot payload = state.payload();
                     visible.add(payload.instance());
-                    if (!payload.equals(previous.put(payload.instance(), payload)) || refresh) {
-                        player.sendCustomPacket(new ClientboundNativeModelPacket(payload));
-                    }
+                    NativeModelPayload.Snapshot old = previous.put(payload.instance(), payload);
+                    sendUpdate(player, payload, old, refresh);
                 }
                 previous.entrySet().removeIf(entry -> {
                     if (visible.contains(entry.getKey())) {
@@ -85,6 +88,23 @@ public abstract class NativeModelBridge implements Listener {
         }
     }
 
+    private static void sendUpdate(Player player, NativeModelPayload.Snapshot current, NativeModelPayload.Snapshot previous, boolean refresh) {
+        NativeModelPayload update = current;
+        if (previous != null) {
+            if (current.getClass() != previous.getClass() || !current.model().equals(previous.model())) {
+                player.sendCustomPacket(new ClientboundNativeModelPacket(previous.remove()));
+            } else if (!refresh) {
+                if (current.equals(previous)) {
+                    return;
+                }
+                if (current instanceof NativeModelPayload.NativeState state && previous instanceof NativeModelPayload.NativeState last) {
+                    update = state.changesSince(last);
+                }
+            }
+        }
+        player.sendCustomPacket(new ClientboundNativeModelPacket(update));
+    }
+
     @EventHandler
     public synchronized void onDisable(PluginDisableEvent event) {
         if (event.getPlugin() != this.owner && event.getPlugin() != this.plugin.javaPlugin()) {
@@ -92,9 +112,9 @@ public abstract class NativeModelBridge implements Listener {
         }
         this.task.cancel();
         for (Player player : this.plugin.networkManager().onlineUsers()) {
-            Map<UUID, NativeModelPayload> states = this.sent.get(player.uuid());
+            Map<UUID, NativeModelPayload.Snapshot> states = this.sent.get(player.uuid());
             if (states != null) {
-                for (NativeModelPayload state : states.values()) {
+                for (NativeModelPayload.Snapshot state : states.values()) {
                     player.sendCustomPacket(new ClientboundNativeModelPacket(state.remove()));
                 }
             }
@@ -104,7 +124,7 @@ public abstract class NativeModelBridge implements Listener {
         HandlerList.unregisterAll(this);
     }
 
-    protected record ModelState(NativeModelPayload payload, Predicate<Player> visible) {
+    protected record ModelState(NativeModelPayload.Snapshot payload, Predicate<Player> visible) {
         public ModelState {
         }
     }

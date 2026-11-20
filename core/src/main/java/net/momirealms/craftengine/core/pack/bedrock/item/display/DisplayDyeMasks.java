@@ -8,7 +8,6 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
-import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ImageUtils;
 
 import java.awt.image.BufferedImage;
@@ -58,10 +57,6 @@ public record DisplayDyeMasks(TextureData texture, BitSet coverage) {
 
     private static int endPixel(double start, double end, int size, int first) {
         return Math.clamp((int) Math.ceil(Math.max(start, end) * size / 16), first + 1, size);
-    }
-
-    Int2ObjectMap<JsonArray> write(String prefix, String directory, JsonObject textures, Path root) throws IOException {
-        return this.write(prefix, directory, textures, root, Config.bedrockDisplayDyeMaxLayers());
     }
 
     public Int2ObjectMap<JsonArray> write(String prefix, String directory, JsonObject textures, Path root, int maxLayers) throws IOException {

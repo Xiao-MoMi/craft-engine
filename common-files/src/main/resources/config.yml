@@ -807,30 +807,71 @@ client-optimization:
 
 bedrock:
   enable: true
-  # Register external item models for Bedrock conversion without defining CE items.
-  # base-item: the vanilla item type used by the item stack.
-  # item-model: its minecraft:item_model component, not a path under assets/<namespace>/models/.
-  # The item definition (assets/<namespace>/items/<path>.json) and its dependencies
-  # must be included in the merged Java resource pack.
-  # Example:
-  # external-item-models:
-  #   - base-item: minecraft:paper
-  #     item-model: myplugin:example
-  external-item-models: []
-  # Bedrock model rendering. Choose per plugin; no automatic fallback.
-  #
-  # disabled       - No automatic model support
-  # display_entity - Server-driven bone poses; better for dynamic effects, but more entities
-  #                  and usually a larger pack.
-  # custom_entity  - Native model + client animations; fewer entities, often a smaller pack.
-  #                  Requires .bbmodel files with embedded PNGs; server bone calculations remain.
-  #
-  # custom_entity supports: play/stop/loop/hold, bone visibility, scale, whole-model tint/hurt.
-  # Not faithfully synced: speed changes, seeking, blending, procedural bones (tracking/aiming/IK).
-  # Use display_entity for these effects. Pack size varies; tint uses color-layer approximation.
-  integrations:
-    bettermodel: disabled
-    modelengine: disabled
+  resource-pack:
+    # Resource pack name shown in the Bedrock client.
+    name: "CraftEngine ResourcePack"
+    # Resource pack description shown in the Bedrock client.
+    description: "Generated from the Java resource pack"
+  item:
+    # Generated icon width and height in pixels (currently for dyeable items).
+    icon-size: 64
+    # Register external item models for Bedrock conversion without defining CE items.
+    # base-item: the vanilla item type used by the item stack.
+    # item-model: its minecraft:item_model component, not a path under assets/<namespace>/models/.
+    # The item definition (assets/<namespace>/items/<path>.json) and its dependencies
+    # must be included in the merged Java resource pack.
+    # Example:
+    # external:
+    #   - base-item: minecraft:paper
+    #     item-model: myplugin:example
+    external: []
+  font:
+    # Full font ID regexes excluded from Bedrock glyph conversion, including references.
+    exlude:
+      - 'nameplates:.*'
+  custom-entity:
+    # Per-plugin defaults. disabled, display_entity (server-driven bones), or custom_entity
+    # (embedded PNG .bbmodel and Bedrock animations; procedural poses may differ).
+    integrations:
+      bettermodel: disabled
+      modelengine: disabled
+    # -1 disables dynamic tinting. Positive values limit mask layers per dyeable material.
+    dye-max-layers: -1
+    # Exact RGB matches use baked textures, including when dynamic tinting is disabled.
+    # display_entity can prebake the plugin's hurt tint. custom_entity uses the native hurt event.
+    prebaked-colors: ["#FF8080"]
+    # A matching entry replaces BOTH dye settings. Omitted settings mean -1 and [].
+    # Omit mode to inherit the plugin's mode.
+    # overrides:
+    #   - model: "bettermodel:demon_knight"
+    #     mode: display_entity
+    #     dye-max-layers: 8
+    #     prebaked-colors: []
+    overrides: []
+  display-entity:
+    # Dyeable materials on ordinary displays and furniture. -1 disables dynamic dye.
+    dye-max-layers: 10
+    # Match the original Java minecraft:item_model ID
+    # overrides:
+    #   - item-model: "myserver:sofa"
+    #     dye-max-layers: 4
+    overrides: []
+    # Vanilla item IDs whose Java models are converted for item display entities.
+    # These items more closely match their Java Edition appearance than their Bedrock Edition counterparts.
+    # Vanilla items not listed here use approximate Bedrock held-item rendering.
+    # Example:
+    # vanilla-items:
+    #   - minecraft:apple
+    #   - minecraft:diamond_sword
+    vanilla-items: []
+    # Block states whose Java models are converted for block display entities.
+    # Omitted properties match all legal values; a bare block ID selects all its states.
+    # Unlisted states use approximate Bedrock held-item rendering without extra models.
+    # vanilla-blocks:
+    #   - "minecraft:oak_log"
+    #   - "minecraft:oak_stairs[facing=east]"
+    #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
+    vanilla-blocks: []
   scoreboard:
     # Match an existing sidebar to image decorations and a horizontal offset.
     #
@@ -865,35 +906,6 @@ bedrock:
     #         y: -22
     #         layer: 3
     profiles: []
-  display-entity:
-    # Vanilla item IDs whose Java models are converted for item display entities.
-    # These items more closely match their Java Edition appearance than their Bedrock Edition counterparts.
-    # Vanilla items not listed here use approximate Bedrock held-item rendering.
-    # Example:
-    # vanilla-items:
-    #   - minecraft:apple
-    #   - minecraft:diamond_sword
-    vanilla-items: []
-    # Block states whose Java models are converted for block display entities.
-    # Omitted properties match all legal values; a bare block ID selects all its states.
-    # Unlisted states use approximate Bedrock held-item rendering without extra models.
-    # vanilla-blocks:
-    #   - "minecraft:oak_log"
-    #   - "minecraft:oak_stairs[facing=east]"
-    #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
-    vanilla-blocks: []
-  resource-pack:
-    # Resource pack name shown in the Bedrock client.
-    name: "CraftEngine ResourcePack"
-    # Resource pack description shown in the Bedrock client.
-    description: "Generated from the Java resource pack"
-    # Full font ID regexes excluded from Bedrock glyph conversion, including references.
-    exclude-fonts:
-      - 'nameplates:.*'
-    # Generated icon width and height in pixels (currently for dyeable items).
-    item-icon-size: 64
-    # Maximum layers per dyeable display material; excess colors are merged.
-    display-dye-max-layers: 16
   # Extra ways to identify Bedrock players when API detection does not identify them.
   # Geyser and Floodgate API detection remains active regardless of these options.
   additional-identification:

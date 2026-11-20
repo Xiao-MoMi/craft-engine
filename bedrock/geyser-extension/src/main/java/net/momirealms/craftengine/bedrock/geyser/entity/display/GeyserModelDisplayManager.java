@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import net.momirealms.craftengine.bedrock.BlockStateKey;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntitiesEvent;
@@ -17,12 +19,15 @@ import org.geysermc.geyser.entity.EntityTypeBase;
 import org.geysermc.geyser.entity.VanillaEntityType;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.registry.type.ItemMapping;
+import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class GeyserModelDisplayManager {
@@ -30,6 +35,8 @@ public final class GeyserModelDisplayManager {
 
     private final Map<Identifier, ModelDisplayProperties> carriers = new LinkedHashMap<>();
     private final Map<String, Model> items = new LinkedHashMap<>();
+    private final Map<String, Map<String, Model>> entityItems = new LinkedHashMap<>();
+    private final Map<GeyserSession, GeyserDisplayModelOwners> owners = new ConcurrentHashMap<>();
     private final Map<String, Model> vanillaItems = new LinkedHashMap<>();
     private final Map<BlockStateKey, Model> blocks = new LinkedHashMap<>();
     private Int2ObjectMap<GeyserHeldItemTypes> heldItemTypes = Int2ObjectMaps.emptyMap();
@@ -88,14 +95,22 @@ public final class GeyserModelDisplayManager {
         ModelDisplayProperties modelCarrier = this.registerCarrier(event, displays.get("identifier").getAsString());
         Appearance[] appearances = readAppearances(displays);
 
-        if (displays.has("vanilla_identifier")) {
-            this.registerVanillaModels(displays, event, modelCarrier, appearances);
-        }
+        this.registerVanillaModels(displays, event, modelCarrier, appearances);
         JsonObject items = displays.getAsJsonObject("items");
         if (items != null) {
             for (Map.Entry<String, JsonElement> entry : items.entrySet()) {
                 Appearance[] contexts = readContextAppearances(entry.getValue().getAsJsonArray(), appearances);
                 this.items.putIfAbsent(entry.getKey(), new Model(modelCarrier, contexts));
+            }
+        }
+        JsonObject entityItems = displays.getAsJsonObject("entity_items");
+        if (entityItems != null) {
+            for (Map.Entry<String, JsonElement> item : entityItems.entrySet()) {
+                for (Map.Entry<String, JsonElement> owner : item.getValue().getAsJsonObject().entrySet()) {
+                    Appearance[] contexts = readContextAppearances(owner.getValue().getAsJsonArray(), appearances);
+                    this.entityItems.computeIfAbsent(owner.getKey(), ignored -> new LinkedHashMap<>())
+                            .putIfAbsent(item.getKey(), new Model(modelCarrier, contexts));
+                }
             }
         }
         if (displays.has("blocks")) {
@@ -203,6 +218,8 @@ public final class GeyserModelDisplayManager {
         this.itemDefinition = null;
         this.blockDefinition = null;
         this.items.clear();
+        this.entityItems.clear();
+        this.owners.clear();
         this.vanillaItems.clear();
         this.blocks.clear();
         this.heldItemTypes = Int2ObjectMaps.emptyMap();
@@ -210,7 +227,40 @@ public final class GeyserModelDisplayManager {
         this.carriers.clear();
     }
 
-    Model resolve(String identifier) {
+    public void updateOwner(GeyserPlayer player, NativeModelPayload.DisplayBones state) {
+        if (!this.entityItems.containsKey(state.model())) {
+            return;
+        }
+        GeyserSession session = player.session();
+        session.ensureInEventLoop(() -> {
+            if (!session.isClosed()) {
+                this.owners.computeIfAbsent(session, ignored -> new GeyserDisplayModelOwners(player)).update(state);
+            }
+        });
+    }
+
+    public void removeOwner(GeyserPlayer player, UUID instance) {
+        GeyserSession session = player.session();
+        session.ensureInEventLoop(() -> {
+            GeyserDisplayModelOwners tracked = this.owners.get(session);
+            if (tracked != null) {
+                tracked.remove(instance);
+            }
+        });
+    }
+
+    public void disconnect(GeyserSession session) {
+        this.owners.remove(session);
+    }
+
+    Model resolve(String identifier, GeyserSession session, int entityId) {
+        GeyserDisplayModelOwners tracked = this.owners.get(session);
+        if (tracked != null) {
+            Map<String, Model> models = this.entityItems.get(tracked.model(entityId));
+            if (models != null) {
+                return models.getOrDefault(identifier, this.items.get(identifier));
+            }
+        }
         return this.items.get(identifier);
     }
 

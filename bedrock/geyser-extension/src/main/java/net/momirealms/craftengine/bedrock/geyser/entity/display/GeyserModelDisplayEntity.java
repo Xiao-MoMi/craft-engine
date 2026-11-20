@@ -34,6 +34,7 @@ final class GeyserModelDisplayEntity extends Entity implements Tickable {
 
     private ModelDisplayProperties carrier;
     private Model model;
+    private String itemIdentifier;
     private GeyserItemStack displayItem;
     private ItemData equipment = ItemData.AIR;
     private BedrockHeldItemType heldItemType = BedrockHeldItemType.NATIVE;
@@ -80,7 +81,8 @@ final class GeyserModelDisplayEntity extends Entity implements Tickable {
         ItemData translated = stack == null || stack.getAmount() <= 0 ? ItemData.AIR : ItemTranslator.translateToBedrock(this.session, stack);
         ItemDefinition definition = translated.getDefinition();
         String identifier = definition.getIdentifier();
-        this.model = this.displays.resolve(identifier);
+        this.itemIdentifier = identifier;
+        this.model = this.displays.resolve(identifier, this.session, this.entityId);
         this.displayItem = GeyserItemStack.from(this.session, stack);
         this.clearHeldEquipment();
         if (this.model != null || translated == ItemData.AIR || !identifier.startsWith("minecraft:")) {
@@ -93,6 +95,17 @@ final class GeyserModelDisplayEntity extends Entity implements Tickable {
         }
     }
 
+    void refreshModel() {
+        if (this.itemIdentifier != null) {
+            Model model = this.displays.resolve(this.itemIdentifier, this.session, this.entityId);
+            if (model != null && model != this.model) {
+                this.model = model;
+                this.appearanceDirty = true;
+                this.updateBedrockMetadata();
+            }
+        }
+    }
+
     void context(byte value) {
         if (this.displayContext != value) {
             this.displayContext = value;
@@ -101,6 +114,7 @@ final class GeyserModelDisplayEntity extends Entity implements Tickable {
     }
 
     void block(int stateId) {
+        this.itemIdentifier = null;
         this.appearanceDirty = true;
         this.displayContext = DEFAULT_DISPLAY_CONTEXT;
         this.displayItem = null;

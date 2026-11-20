@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
@@ -54,7 +55,7 @@ final class BedrockDisplayAssets {
     private final JsonObject controllers = new JsonObject();
     private final JsonArray activeControllers = new JsonArray();
     private final Map<TextureFrames, JsonArray> frames = new HashMap<>();
-    private final Map<DisplayDyeMasks, Int2ObjectMap<JsonArray>> dyeMasks = new HashMap<>();
+    private final Map<MaskKey, Int2ObjectMap<JsonArray>> dyeMasks = new HashMap<>();
     private final Map<RenderPage, Map<Integer, Draw>> pages = new LinkedHashMap<>();
     private int shapes;
 
@@ -65,15 +66,11 @@ final class BedrockDisplayAssets {
         this.texturePrefix = CRAFTENGINE_TEXTURES + '/' + name + '/';
     }
 
-    int add(List<BedrockItemDisplayGenerator.Part> parts) throws IOException {
-        return this.add(parts, TextureUsage.ITEM);
-    }
-
     JsonObject customModelDataColors() {
         return this.customModelDataColors;
     }
 
-    int add(List<BedrockItemDisplayGenerator.Part> parts, TextureUsage textureUsage) throws IOException {
+    int add(List<BedrockItemDisplayGenerator.Part> parts, TextureUsage textureUsage, BedrockEntityDye dye) throws IOException {
         if (parts.isEmpty()) {
             // shape 0 会显示原物品；显式 empty 需要一个没有绘制控制器的独立 shape。
             return ++this.shapes;
@@ -131,10 +128,15 @@ final class BedrockDisplayAssets {
             this.geometryNames.addProperty(alias, geometry);
             BedrockItemGeometry.Material material = materials.get(layer);
             if (material.dyeColor() == null) {
-                this.addDraw(shape, layer, alias, material.data(), material.color(), DyePass.NONE);
+                this.addDraw(shape, layer, alias, material.data(), material.color(), "");
             } else {
-                this.addDraw(shape, layer, alias, material.data(), material.dyeColor(), DyePass.DEFAULT);
-                this.addDyeMasks(shape, layer, alias, material.data(), bones);
+                this.addDraw(shape, layer, alias, material.data(), material.dyeColor(), dye.baseCondition(DISPLAY_DYE, false));
+                for (int rgb : dye.prebakedColors()) {
+                    this.addDraw(shape, layer, alias, material.data(), rgb, BedrockEntityDye.matches(DISPLAY_DYE, rgb));
+                }
+                if (dye.maxLayers() > 0) {
+                    this.addDyeMasks(shape, layer, alias, material.data(), bones, dye);
+                }
             }
         }
         ResourcePackUtils.writeBedrockJson(GEOMETRY, "minecraft:geometry", geometries, this.root.resolve("models/entity/" + this.name + "/s" + shape + ".geo.json"));
@@ -230,7 +232,7 @@ final class BedrockDisplayAssets {
         }
     }
 
-    private void addDraw(int shape, int layer, String alias, TextureData data, int color, DyePass pass) throws IOException {
+    private void addDraw(int shape, int layer, String alias, TextureData data, int color, String condition) throws IOException {
         TextureFrames key = new TextureFrames(data, color);
         JsonArray frames = this.frames.get(key);
         if (frames == null) {
@@ -239,25 +241,26 @@ final class BedrockDisplayAssets {
                     this.texturePrefix + texture, this.textures, this.root);
             this.frames.put(key, frames);
         }
-        this.addDraw(shape, layer, alias, frames, data.animation(), pass, 0);
+        this.addDraw(shape, layer, alias, frames, data.animation(), condition, -1);
     }
 
-    private void addDyeMasks(int shape, int layer, String alias, TextureData data, JsonArray bones) throws IOException {
+    private void addDyeMasks(int shape, int layer, String alias, TextureData data, JsonArray bones, BedrockEntityDye dye) throws IOException {
         DisplayDyeMasks source = DisplayDyeMasks.from(data, bones);
-        Int2ObjectMap<JsonArray> masks = this.dyeMasks.get(source);
+        MaskKey key = new MaskKey(source, dye.maxLayers());
+        Int2ObjectMap<JsonArray> masks = this.dyeMasks.get(key);
         if (masks == null) {
-            masks = source.write("m" + this.dyeMasks.size(), this.texturePrefix, this.textures, this.root);
-            this.dyeMasks.put(source, masks);
+            masks = source.write("m" + this.dyeMasks.size(), this.texturePrefix, this.textures, this.root, dye.maxLayers());
+            this.dyeMasks.put(key, masks);
         }
         for (Int2ObjectMap.Entry<JsonArray> mask : masks.int2ObjectEntrySet()) {
-            this.addDraw(shape, layer, alias, mask.getValue(), data.animation(), DyePass.DYED, mask.getIntKey());
+            this.addDraw(shape, layer, alias, mask.getValue(), data.animation(), dye.dynamicCondition(DISPLAY_DYE, false), mask.getIntKey());
         }
     }
 
-    private void addDraw(int shape, int layer, String alias, JsonArray frames, TextureAnimation animation, DyePass pass, int shade) {
+    private void addDraw(int shape, int layer, String alias, JsonArray frames, TextureAnimation animation, String dyeCondition, int shade) {
         int pageSize = Math.clamp(256 / frames.size(), 1, 64);
         int start = (shape - 1) / pageSize * pageSize + 1;
-        RenderPage page = new RenderPage(start, layer, frames.size(), animation == null ? 0 : animation.sampleInterval(), pass, shade);
+        RenderPage page = new RenderPage(start, layer, frames.size(), animation == null ? 0 : animation.sampleInterval(), dyeCondition, shade);
         this.pages.computeIfAbsent(page, ignored -> new TreeMap<>()).put(shape, new Draw(alias, frames));
     }
 
@@ -286,27 +289,39 @@ final class BedrockDisplayAssets {
             String sample = page.interval() == 0 ? index : index + " * " + page.frames()
                     + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
             JsonObject controller = new JsonObject();
-            JsonObject arrays = createObject("geometries", createObject("array.meshes", meshes));
-            arrays.add("textures", createObject("array.frames", textures));
-            controller.add("arrays", arrays);
-            controller.addProperty("geometry", "array.meshes[" + index + "]");
+            JsonObject arrays = new JsonObject();
+            controller.add("geometry", selectResource(arrays, "geometries", "array.meshes", meshes, index));
             JsonArray materials = new JsonArray();
             materials.add(createObject("*", new JsonPrimitive("Material.default")));
             controller.add("materials", materials);
-            if (page.pass() == DyePass.DYED) {
+            if (page.shade() >= 0) {
                 controller.add("overlay_color", displayColor(page.shade()));
             }
             JsonArray selected = new JsonArray();
-            selected.add("array.frames[" + sample + "]");
+            selected.add(selectResource(arrays, "textures", "array.frames", textures, sample));
             controller.add("textures", selected);
+            if (!arrays.isEmpty()) {
+                controller.add("arrays", arrays);
+            }
             String id = "controller.render." + this.name + ".p" + this.controllers.size();
             this.controllers.add(id, controller);
             String condition = VISIBLE + " && " + shapeCondition(first, last, draws);
-            if (page.pass() != DyePass.NONE) {
-                condition += " && query.property('" + DISPLAY_DYE + "_r') " + (page.pass() == DyePass.DYED ? ">= 0" : "< 0");
+            if (!page.dyeCondition().isEmpty()) {
+                condition += " && (" + page.dyeCondition() + ")";
             }
             this.activeControllers.add(createObject(id, new JsonPrimitive(condition)));
         }
+    }
+
+    private static JsonElement selectResource(JsonObject arrays, String type, String name, JsonArray entries, String index) {
+        JsonElement first = entries.get(0);
+        for (int i = 1; i < entries.size(); i++) {
+            if (!first.equals(entries.get(i))) {
+                arrays.add(type, createObject(name, entries));
+                return new JsonPrimitive(name + "[" + index + "]");
+            }
+        }
+        return first;
     }
 
     private static String shapeCondition(int first, int last, Map<Integer, Draw> draws) {
@@ -471,14 +486,13 @@ final class BedrockDisplayAssets {
         return color;
     }
 
-    private enum DyePass {
-        NONE, DEFAULT, DYED
+    private record MaskKey(DisplayDyeMasks masks, int maxLayers) {
     }
 
     private record TextureFrames(TextureData data, int color) {
     }
 
-    private record RenderPage(int start, int layer, int frames, int interval, DyePass pass, int shade) {
+    private record RenderPage(int start, int layer, int frames, int interval, String dyeCondition, int shade) {
     }
 
     private record Draw(String geometry, JsonArray frames) {

@@ -25,6 +25,9 @@ class BedrockItemRenderStrategy {
     private static final List<BedrockItemRenderStrategy> DEFAULT_STRATEGIES = List.of(DEFAULT);
 
     static List<? extends BedrockItemRenderStrategy> forItem(ResolvedItemBinding entry) {
+        if (entry.useBehavior().animation() == ItemBehaviorDescription.UseAnimation.EAT) {
+            return DEFAULT_STRATEGIES;
+        }
         return Registry.STRATEGIES.getOrDefault(entry.clientItemType(), DEFAULT_STRATEGIES);
     }
 
@@ -75,7 +78,13 @@ class BedrockItemRenderStrategy {
     }
 
     BedrockAttachablePose pose(ResolvedItemBinding entry) throws IOException {
-        return BedrockAttachablePose.withoutBones(useScripts(entry.useBehavior()));
+        ItemBehaviorDescription.Use use = entry.useBehavior();
+        JsonArray scripts = useScripts(use);
+        int duration = use.maximumDuration().value();
+        if (use.animation() == ItemBehaviorDescription.UseAnimation.EAT && duration > 0) {
+            return BedrockFoodAttachables.eatPose(scripts, duration);
+        }
+        return BedrockAttachablePose.withoutBones(scripts);
     }
 
     void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {

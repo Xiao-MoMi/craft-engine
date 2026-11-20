@@ -3,9 +3,12 @@ package net.momirealms.craftengine.core.pack.bedrock.model;
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.DisplayDyeMasks;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemTextures;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.Key;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,17 +20,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 public final class NativeModelAssets {
-    public static final String MANIFEST = BedrockPackLayout.NATIVE_MODELS;
-    private static final String DEFAULT_COLOR = "q.property('ce:model_dye_r') < 0 || (q.property('ce:model_dye_r') == 255 && q.property('ce:model_dye_gb') == 65535)";
-    private static final String DYE_RED = "q.property('ce:model_dye_r') < 0 ? 1 : q.property('ce:model_dye_r') / 255";
-    private static final String DYE_GREEN = "q.property('ce:model_dye_r') < 0 ? 1 : math.floor(q.property('ce:model_dye_gb') / 256) / 255";
-    private static final String DYE_BLUE = "q.property('ce:model_dye_r') < 0 ? 1 : math.mod(q.property('ce:model_dye_gb'), 256) / 255";
     private static final List<String> NON_RENDERABLE_TYPES = List.of("bounding_box", "locator", "null_object", "camera");
     private static final List<String> ANIMATION_CHANNELS = List.of("rotation", "position", "scale");
     private static final List<String> AXES = List.of("x", "y", "z");
@@ -46,15 +45,7 @@ public final class NativeModelAssets {
         this.stem = UUID.nameUUIDFromBytes(source.id().asString().getBytes(StandardCharsets.UTF_8)).toString().replace("-", "");
     }
 
-    public static void write(List<NativeModelSource> sources, Path root) throws IOException {
-        write(sources, root, 16);
-    }
-
-    public static void write(List<NativeModelSource> sources, Path root, int maxLayers) throws IOException {
-        write(sources, root, root.resolve(MANIFEST), maxLayers);
-    }
-
-    public static void write(List<NativeModelSource> sources, Path root, Path modelData, int maxLayers) throws IOException {
+    public static void write(List<NativeModelSource> sources, Path root, Path modelData, Function<Key, BedrockEntityDye> dyes) throws IOException {
         if (sources.isEmpty()) {
             return;
         }
@@ -65,7 +56,7 @@ public final class NativeModelAssets {
                     case "bettermodel", "modelengine" -> "entity_alphatest_one_sided";
                     default -> "entity_alphatest";
                 };
-                models.add(source.id().asString(), new NativeModelAssets(source).write(root, maxLayers, material));
+                models.add(source.id().asString(), new NativeModelAssets(source).write(root, dyes.apply(source.id()), material));
             } catch (RuntimeException exception) {
                 throw new IOException("Cannot convert native model " + source.id() + " from " + source.blueprint(), exception);
             }
@@ -74,7 +65,11 @@ public final class NativeModelAssets {
         GsonHelper.writeJsonFile(models, modelData);
     }
 
-    private JsonObject write(Path root, int maxLayers, String material) throws IOException {
+    private JsonObject write(Path root, BedrockEntityDye dye, String material) throws IOException {
+        // 白色直接使用基础贴图，不参与原生模型的预染色匹配和属性注册。
+        if (dye.prebakedColors().contains(0xffffff)) {
+            dye = new BedrockEntityDye(dye.maxLayers(), dye.prebakedColors().stream().filter(rgb -> rgb != 0xffffff).toList());
+        }
         String texture = BedrockPackLayout.NATIVE_MODEL_TEXTURES + '/' + this.stem;
         int[] size = this.writeTexture(root.resolve(texture + ".png"));
         for (JsonElement element : this.blueprint.getAsJsonArray("elements")) {
@@ -114,7 +109,9 @@ public final class NativeModelAssets {
         geometry.add("bones", this.bones);
         this.save(root, "models/entity/ce/native/", ".geo.json", GEOMETRY, createObject("minecraft:geometry", single(geometry)));
 
+        // Geyser 用清单中的原始名称，把插件传来的骨骼和动画状态映射到资源包里的编号。
         JsonObject manifest = new JsonObject();
+        manifest.addProperty("dye", dye.maxLayers() > 0 || !dye.prebakedColors().isEmpty());
         manifest.addProperty("identifier", "ce:native_" + this.stem);
         JsonObject names = new JsonObject();
         this.boneNames.forEach(names::addProperty);
@@ -140,6 +137,7 @@ public final class NativeModelAssets {
                 JsonObject controller = new JsonObject();
                 controller.addProperty("initial_state", "stop");
                 controller.add("states", states);
+                // 每个实体属性打包 9 个动画，每个动画占 2 位，依次表示停止、单次播放、循环和停在末帧
                 String property = "math.mod(math.floor(q.property('ce:model_anim" + index / 9 + "') / " + (1 << (index % 9 * 2)) + "), 4)";
                 for (int mode = 1; mode <= 3; mode++) {
                     String variant = alias + "_" + mode;
@@ -173,8 +171,11 @@ public final class NativeModelAssets {
         aliases.addProperty("scale", scaleId);
         animate.add("scale");
         this.save(root, "animations/ce/native/", ".json", ANIMATION, createObject("animations", animations));
-        this.save(root, "animation_controllers/ce/native/", ".json", ANIMATION_CONTROLLER, createObject("animation_controllers", controllers));
+        if (!controllers.isEmpty()) {
+            this.save(root, "animation_controllers/ce/native/", ".json", ANIMATION_CONTROLLER, createObject("animation_controllers", controllers));
+        }
 
+        // 每个属性记录 19 根骨骼的隐藏位。这里的遍历顺序要与清单中的骨骼编号一致。
         JsonArray partVisibility = new JsonArray(this.boneNames.size());
         int boneIndex = 0;
         for (String name : this.boneNames.values()) {
@@ -194,28 +195,57 @@ public final class NativeModelAssets {
         entityDescription.add("render_controllers", activeControllers);
         entityDescription.add("identifier", manifest.get("identifier"));
         entityDescription.add("animations", aliases);
-        activeControllers.add(createObject(renderId, Templates.DEFAULT_COLOR_CONDITION));
+        // 预染色按 RGB 精确匹配；其余颜色在允许动态染色时使用蒙版，否则回到基础贴图。
+        String base = dye.baseCondition("ce:model_dye", true);
+        if (base.isEmpty()) {
+            activeControllers.add(renderId);
+        } else {
+            activeControllers.add(createObject(renderId, new JsonPrimitive(base)));
+        }
+        TextureData atlasTexture = new TextureData(this.atlas, null);
+        for (int rgb : dye.prebakedColors()) {
+            String alias = "baked_" + Integer.toHexString(rgb);
+            JsonArray frames = BedrockItemTextures.writeFrames(atlasTexture, rgb, alias, texture + '/' + alias, entityTextures, root);
+            String bakedId = renderId + "." + alias;
+            renderControllers.add(bakedId, renderController(frames, partVisibility));
+            activeControllers.add(createObject(bakedId, new JsonPrimitive(BedrockEntityDye.matches("ce:model_dye", rgb))));
+        }
+        if (dye.maxLayers() > 0) {
+            this.addDynamicDye(root, texture, atlasTexture, dye, entityTextures, renderId, renderControllers, activeControllers, partVisibility);
+        }
+        this.save(root, "render_controllers/ce/native/", ".json", RENDER_CONTROLLER, createObject("render_controllers", renderControllers));
+        JsonObject entity = createObject("minecraft:client_entity", createObject("description", entityDescription));
+        this.save(root, "entity/ce/native/", ".json", CLIENT_ENTITY, entity);
+        return manifest;
+    }
+
+    private void addDynamicDye(Path root,
+                               String texture,
+                               TextureData atlasTexture,
+                               BedrockEntityDye dye,
+                               JsonObject entityTextures,
+                               String renderId,
+                               JsonObject renderControllers,
+                               JsonArray activeControllers,
+                               JsonArray partVisibility) throws IOException {
         BitSet coverage = new BitSet(this.atlas.getWidth() * this.atlas.getHeight());
         coverage.set(0, this.atlas.getWidth() * this.atlas.getHeight());
-        DisplayDyeMasks masks = new DisplayDyeMasks(new TextureData(this.atlas, null), coverage);
-        Int2ObjectMap<JsonArray> layers = masks.write("dye", texture + '/', entityTextures, root, maxLayers);
+        DisplayDyeMasks masks = new DisplayDyeMasks(atlasTexture, coverage);
+        Int2ObjectMap<JsonArray> layers = masks.write("dye", texture + '/', entityTextures, root, dye.maxLayers());
+        String condition = dye.dynamicCondition("ce:model_dye", true);
         for (Int2ObjectMap.Entry<JsonArray> layer : layers.int2ObjectEntrySet()) {
             JsonObject tinted = renderController(layer.getValue(), partVisibility);
             int shade = layer.getIntKey();
             JsonObject overlay = new JsonObject();
-            overlay.addProperty("r", "(" + DYE_RED + ") * " + (shade >> 16) + " / 255 * 0.72");
-            overlay.addProperty("g", "(" + DYE_GREEN + ") * " + (shade >> 8 & 255) + " / 255 * 0.72");
-            overlay.addProperty("b", "(" + DYE_BLUE + ") * " + (shade & 255) + " / 255 * 0.72");
+            overlay.addProperty("r", "q.property('ce:model_dye_r') / 255 * " + (shade >> 16) + " / 255 * 0.72");
+            overlay.addProperty("g", "math.floor(q.property('ce:model_dye_gb') / 256) / 255 * " + (shade >> 8 & 255) + " / 255 * 0.72");
+            overlay.addProperty("b", "math.mod(q.property('ce:model_dye_gb'), 256) / 255 * " + (shade & 255) + " / 255 * 0.72");
             overlay.addProperty("a", 1);
             tinted.add("overlay_color", overlay);
             String tintedId = renderId + ".d" + Integer.toHexString(shade);
             renderControllers.add(tintedId, tinted);
-            activeControllers.add(createObject(tintedId, Templates.TINTED_COLOR_CONDITION));
+            activeControllers.add(createObject(tintedId, new JsonPrimitive(condition)));
         }
-        this.save(root, "render_controllers/ce/native/", ".json", RENDER_CONTROLLER, createObject("render_controllers", renderControllers));
-        JsonObject entity = createObject("minecraft:client_entity", createObject("description", entityDescription));
-        this.save(root, "entity/ce/native/", ".entity.json", CLIENT_ENTITY, entity);
-        return manifest;
     }
 
     private int[] writeTexture(Path output) throws IOException {
@@ -234,6 +264,7 @@ public final class NativeModelAssets {
             }
             double uvWidth = texture.has("uv_width") ? texture.get("uv_width").getAsDouble() : resolution.get("width").getAsDouble();
             double uvHeight = texture.has("uv_height") ? texture.get("uv_height").getAsDouble() : resolution.get("height").getAsDouble();
+            // 原图纵向拼入图集。保留每张图的纵向偏移和 UV 到像素的比例，供转换方块面时使用。
             this.textures.add(new Texture(image, height, image.getWidth() / uvWidth, image.getHeight() / uvHeight));
             width = Math.max(width, image.getWidth());
             height += image.getHeight();
@@ -312,7 +343,7 @@ public final class NativeModelAssets {
             double v = uv.get(1).getAsDouble() * texture.sy() + texture.offset();
             double du = (uv.get(2).getAsDouble() - uv.get(0).getAsDouble()) * texture.sx();
             double dv = (uv.get(3).getAsDouble() - uv.get(1).getAsDouble()) * texture.sy();
-            // Bedrock uses the opposite UV corner for horizontal faces. Face names stay unchanged.
+            // 基岩版从 UV 矩形的对角读取顶面和底面，因此把起点移到对角，并反转两个方向的步长。
             if (entry.getKey().equals("up") || entry.getKey().equals("down")) {
                 u += du;
                 v += dv;
@@ -333,12 +364,6 @@ public final class NativeModelAssets {
 
     private JsonObject animation(JsonObject source) {
         JsonObject animation = new JsonObject();
-        String loop = source.has("loop") ? source.get("loop").getAsString() : "once";
-        if (loop.equals("loop")) {
-            animation.addProperty("loop", true);
-        } else if (loop.equals("hold")) {
-            animation.addProperty("loop", "hold_on_last_frame");
-        }
         animation.add("animation_length", source.get("length"));
         JsonObject channels = new JsonObject();
         animation.add("bones", channels);
@@ -366,6 +391,7 @@ public final class NativeModelAssets {
                     timeline = new JsonObject();
                     output.add(channel, timeline);
                 }
+                // 同一关键帧有多个采样点时，首尾分别对应进入和离开该帧的值，以保留帧上的突变
                 JsonArray points = frame.getAsJsonArray("data_points");
                 JsonObject keyframe = new JsonObject();
                 keyframe.add("post", animationPoint(points.get(points.size() - 1).getAsJsonObject(), channel));
@@ -428,8 +454,6 @@ public final class NativeModelAssets {
                 """).getAsJsonObject();
         private static final JsonArray DEFAULT_MATERIALS = single(createObject("*", new JsonPrimitive("Material.default")));
         private static final JsonArray DEFAULT_TEXTURES = single(new JsonPrimitive("Texture.default"));
-        private static final JsonPrimitive DEFAULT_COLOR_CONDITION = new JsonPrimitive(DEFAULT_COLOR);
-        private static final JsonPrimitive TINTED_COLOR_CONDITION = new JsonPrimitive("!(" + DEFAULT_COLOR + ")");
     }
 
     private void save(Path root, String directory, String suffix, String formatVersion, JsonObject value) throws IOException {

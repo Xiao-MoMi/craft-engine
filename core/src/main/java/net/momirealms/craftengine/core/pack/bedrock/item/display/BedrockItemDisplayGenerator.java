@@ -6,6 +6,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
@@ -32,6 +34,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.ID_PREFIX;
 
@@ -56,58 +59,55 @@ public final class BedrockItemDisplayGenerator {
 
     public static JsonObject write(JavaModelResources resources,
                                    BedrockItemResourceGenerator.Result generated,
+                                   ItemRegistrationPlan plan,
                                    Path root) throws IOException {
+        Map<Key, BedrockEntityDye> itemDyes = new HashMap<>();
+        Stream.concat(plan.explicitItems().stream(), plan.vanillaOverrides().stream()).forEach(binding -> {
+            BedrockEntityDye dye = Config.bedrockDisplayDyeOverrides().get(binding.itemModel());
+            if (dye != null) {
+                itemDyes.put(binding.bedrockId(), dye);
+            }
+        });
         String name = "item_display";
         BedrockDisplayAssets assets = new BedrockDisplayAssets(resources, root, name);
-        Map<List<Part>, Integer> indices = new HashMap<>();
-        Map<List<Part>, Integer> meshes = new HashMap<>();
+        Map<BedrockEntityDye, DisplayCache> caches = new HashMap<>();
         JsonArray appearances = new JsonArray();
         appearances.add(new JsonArray());
         JsonObject items = new JsonObject();
-        for (List<GeneratedItemVariant> variants : generated.variants().values()) {
-            for (GeneratedItemVariant variant : variants) {
+        JsonObject entityItems = new JsonObject();
+        for (Map.Entry<Key, List<GeneratedItemVariant>> entry : generated.variants().entrySet()) {
+            BedrockEntityDye ordinary = itemDyes.getOrDefault(entry.getKey(), Config.bedrockDisplayDye());
+            for (GeneratedItemVariant variant : entry.getValue()) {
                 if (!variant.generated() || variant.worldView() != null) {
                     continue;
                 }
-                JsonArray contexts = new JsonArray();
-                boolean mapped = false;
-                Set<String> reported = new HashSet<>();
-                for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
-                    int shape = 0;
-                    ItemBindingRule rule = variant.displayModels().get(context);
-                    if (rule != null) {
-                        // 每种展示上下文先选 Java 分支，再应用该模型的 display；NONE 使用恒等变换。
-                        try {
-                            List<Part> parts = parts(resources, rule, context);
-                            if (!parts.isEmpty() || rule.target() == ItemRenderTarget.Builtin.EMPTY || (rule.target() instanceof ItemRenderTarget.Composite composite && composite.parts().isEmpty())) {
-                                Integer existing = indices.get(parts);
-                                if (existing == null) {
-                                    existing = appearance(assets, parts, meshes, appearances);
-                                    indices.put(parts, existing);
-                                }
-                                shape = existing;
-                            }
-                        } catch (BedrockResourceException e) {
-                            String reason = e.getLocalizedMessage();
-                            if (reported.add(reason)) {
-                                TranslationManager.warn("resource_pack.bedrock.item.display_skipped", variant.id().asString(), context.serializedName(), reason);
-                            }
+                JsonArray contexts = itemContexts(resources, assets, variant, appearances, caches, ordinary);
+                if (contexts == null) {
+                    continue;
+                }
+                JsonObject byModel = new JsonObject();
+                for (Key owner : plan.entityModels().getOrDefault(entry.getKey(), Set.of())) {
+                    BedrockEntityDye dye = Config.bedrockEntities().dye(owner);
+                    if (!dye.equals(ordinary)) {
+                        JsonArray alternate = itemContexts(resources, assets, variant, appearances, caches, dye);
+                        if (alternate != null && !contexts.equals(alternate)) {
+                            byModel.add(owner.asString(), alternate);
                         }
                     }
-                    contexts.add(shape);
-                    mapped |= shape != 0;
                 }
-                if (mapped) {
-                    items.add(variant.id().asString(), contexts);
+                items.add(variant.id().asString(), contexts);
+                if (!byModel.isEmpty()) {
+                    entityItems.add(variant.id().asString(), byModel);
                 }
             }
         }
+        DisplayCache defaults = caches.computeIfAbsent(Config.bedrockDisplayDye(), ignored -> new DisplayCache());
         JsonObject result = new JsonObject();
-        JsonObject vanillaItems = vanilla(resources, assets, indices, meshes, appearances);
+        JsonObject vanillaItems = vanilla(resources, assets, caches, appearances);
         if (!vanillaItems.isEmpty()) {
             result.add("vanilla", vanillaItems);
         }
-        JsonObject blocks = BedrockBlockDisplayGenerator.write(resources, assets, meshes, appearances, Config.bedrockVanillaDisplayBlocks());
+        JsonObject blocks = BedrockBlockDisplayGenerator.write(resources, assets, defaults.meshes, appearances, Config.bedrockVanillaDisplayBlocks());
         if (!blocks.isEmpty()) {
             result.add("blocks", blocks);
         }
@@ -118,16 +118,58 @@ public final class BedrockItemDisplayGenerator {
             result.add("items", items);
         }
         result.add("appearances", appearances);
+        if (!entityItems.isEmpty()) {
+            result.add("entity_items", entityItems);
+        }
         if (!assets.customModelDataColors().isEmpty()) {
             result.add("custom_model_data_colors", assets.customModelDataColors());
         }
         return result;
     }
 
+    private static final class DisplayCache {
+        private final Map<List<Part>, Integer> indices = new HashMap<>();
+        private final Map<List<Part>, Integer> meshes = new HashMap<>();
+    }
+
+    private static JsonArray itemContexts(JavaModelResources resources, BedrockDisplayAssets assets,
+                                          GeneratedItemVariant variant, JsonArray appearances,
+                                          Map<BedrockEntityDye, DisplayCache> caches, BedrockEntityDye dye) throws IOException {
+        DisplayCache cache = caches.computeIfAbsent(dye, ignored -> new DisplayCache());
+        JsonArray contexts = new JsonArray();
+        boolean mapped = false;
+        Set<String> reported = new HashSet<>();
+        for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
+            int shape = 0;
+            ItemBindingRule rule = variant.displayModels().get(context);
+            if (rule != null) {
+                // 每种展示上下文先选 Java 分支，再应用该模型的 display；NONE 使用恒等变换。
+                try {
+                    List<Part> parts = parts(resources, rule, context);
+                    if (!parts.isEmpty() || rule.target() == ItemRenderTarget.Builtin.EMPTY || (rule.target() instanceof ItemRenderTarget.Composite composite && composite.parts().isEmpty())) {
+                        Integer existing = cache.indices.get(parts);
+                        if (existing == null) {
+                            existing = appearance(assets, parts, cache.meshes, appearances, dye);
+                            cache.indices.put(parts, existing);
+                        }
+                        shape = existing;
+                    }
+                } catch (BedrockResourceException e) {
+                    String reason = e.getLocalizedMessage();
+                    if (reported.add(reason)) {
+                        TranslationManager.warn("resource_pack.bedrock.item.display_skipped", variant.id().asString(), context.serializedName(), reason);
+                    }
+                }
+            }
+            contexts.add(shape);
+            mapped |= shape != 0;
+        }
+        return mapped ? contexts : null;
+    }
+
     private static JsonObject vanilla(JavaModelResources resources,
                                       BedrockDisplayAssets assets,
-                                      Map<List<Part>, Integer> geometryIndices,
-                                      Map<List<Part>, Integer> meshes,
+                                      Map<BedrockEntityDye, DisplayCache> caches,
                                       JsonArray appearances) throws IOException {
         JsonObject items = new JsonObject();
         HeldAppearances held = new HeldAppearances();
@@ -135,9 +177,11 @@ public final class BedrockItemDisplayGenerator {
         for (Map.Entry<Key, JsonObject> entry : resources.pack().vanillaItemDefinitions().entrySet()) {
             JsonArray contexts = new JsonArray(DISPLAY_CONTEXTS.length);
             JsonObject model = entry.getValue().getAsJsonObject("model");
+            BedrockEntityDye dye = Config.bedrockDisplayDyeOverrides().getOrDefault(entry.getKey(), Config.bedrockDisplayDye());
+            DisplayCache cache = caches.computeIfAbsent(dye, ignored -> new DisplayCache());
             List<List<Part>> converted = List.of();
             try {
-                if (selected.contains(entry.getKey())) {
+                if (selected.contains(entry.getKey()) || Config.bedrockDisplayDyeOverrides().containsKey(entry.getKey())) {
                     converted = new ArrayList<>(DISPLAY_CONTEXTS.length);
                     for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                         converted.add(vanillaParts(resources, model, context, List.of()));
@@ -149,10 +193,10 @@ public final class BedrockItemDisplayGenerator {
             for (ItemDisplayContext context : DISPLAY_CONTEXTS) {
                 if (!converted.isEmpty()) {
                     List<Part> parts = converted.get(context.ordinal());
-                    Integer index = geometryIndices.get(parts);
+                    Integer index = cache.indices.get(parts);
                     if (index == null) {
-                        index = appearance(assets, parts, meshes, appearances);
-                        geometryIndices.put(parts, index);
+                        index = appearance(assets, parts, cache.meshes, appearances, dye);
+                        cache.indices.put(parts, index);
                     }
                     contexts.add(index);
                     continue;
@@ -351,10 +395,10 @@ public final class BedrockItemDisplayGenerator {
         }
     }
 
-    private static int appearance(BedrockDisplayAssets assets, List<Part> parts, Map<List<Part>, Integer> meshes, JsonArray appearances) throws IOException {
+    private static int appearance(BedrockDisplayAssets assets, List<Part> parts, Map<List<Part>, Integer> meshes, JsonArray appearances, BedrockEntityDye dye) throws IOException {
         if (parts.isEmpty()) {
             JsonArray pose = new JsonArray();
-            pose.add(assets.add(parts));
+            pose.add(assets.add(parts, TextureUsage.ITEM, dye));
             appearances.add(pose);
             return appearances.size() - 1;
         }
@@ -377,7 +421,7 @@ public final class BedrockItemDisplayGenerator {
         }
         Integer shape = meshes.get(geometry);
         if (shape == null) {
-            shape = assets.add(geometry);
+            shape = assets.add(geometry, TextureUsage.ITEM, dye);
             meshes.put(geometry, shape);
         }
         if (shape == 0) {

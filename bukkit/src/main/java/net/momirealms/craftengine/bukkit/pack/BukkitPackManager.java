@@ -68,7 +68,7 @@ public final class BukkitPackManager extends AbstractPackManager implements List
         List<ExternalItemModel> configuredModels = Config.bedrockExternalItemModels();
         if (!configuredModels.isEmpty()) {
             externalModels = new HashMap<>(externalModels);
-            externalModels.put("config.yml:bedrock.external-item-models", configuredModels);
+            externalModels.put("config.yml:bedrock.item.external", configuredModels);
         }
         return ItemRegistrationPlanGenerator.generate(
                 resources,

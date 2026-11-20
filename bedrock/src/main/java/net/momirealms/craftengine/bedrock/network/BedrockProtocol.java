@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bedrock.network;
 import java.nio.ByteBuffer;
 
 public final class BedrockProtocol {
-    public static final int VERSION = 3;
+    public static final int VERSION = 5;
     public static final String HANDSHAKE_CHANNEL = "craftengine:bedrock_handshake";
 
     private BedrockProtocol() {

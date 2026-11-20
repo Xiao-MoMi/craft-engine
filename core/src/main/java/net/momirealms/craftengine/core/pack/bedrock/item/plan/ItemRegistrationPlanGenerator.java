@@ -6,7 +6,6 @@ import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.pack.ExternalItemModel;
-import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
@@ -16,27 +15,12 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 public final class ItemRegistrationPlanGenerator {
 
     private ItemRegistrationPlanGenerator() {
-    }
-
-    public static ItemRegistrationPlan generate(JavaResourcePack pack,
-                                                Collection<ItemDefinition> items,
-                                                ItemBehaviorReader behaviorReader,
-                                                ItemRegistrationReader registrationReader) throws IOException {
-        return generate(pack, items, behaviorReader, registrationReader, Map.of(), ignored -> null);
-    }
-
-    public static ItemRegistrationPlan generate(JavaResourcePack pack,
-                                                Collection<ItemDefinition> items,
-                                                ItemBehaviorReader behaviorReader,
-                                                ItemRegistrationReader registrationReader,
-                                                Map<String, List<ExternalItemModel>> externalModels,
-                                                Function<Key, Item> itemFactory) throws IOException {
-        return generate(new JavaModelResources(pack), items, List.of(), behaviorReader, registrationReader, externalModels, itemFactory);
     }
 
     public static ItemRegistrationPlan generate(JavaModelResources resources,
@@ -71,7 +55,7 @@ public final class ItemRegistrationPlanGenerator {
             return new ItemRegistrationPlan(entries);
         }
         ItemRegistrationIndex index = new ItemRegistrationIndex(entries);
-        ExternalItemModelBindings.append(entries, index, definitions, externalModels, itemFactory, behaviorReader, registrationReader);
-        return new ItemRegistrationPlan(entries, VanillaItemOverrides.plan(vanillaItems, itemFactory, resolver, resources, index));
+        Map<Key, Set<Key>> entityModels = ExternalItemModelBindings.append(entries, index, definitions, externalModels, itemFactory, behaviorReader, registrationReader);
+        return new ItemRegistrationPlan(entries, VanillaItemOverrides.plan(vanillaItems, itemFactory, resolver, resources, index), entityModels);
     }
 }

@@ -12,7 +12,8 @@ import net.momirealms.craftengine.core.item.network.encrypt.ItemCrypto;
 import net.momirealms.craftengine.core.item.network.encrypt.Xor;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.ExternalItemModel;
-import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockEntitySettings;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarConfig;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.HttpClientManager;
@@ -305,16 +306,16 @@ public final class Config {
 
     private boolean bedrock$enable = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
-    private List<ExternalItemModel> bedrock$external_item_models = List.of();
-    private BedrockModelIntegration bedrock$integrations$bettermodel = BedrockModelIntegration.DISABLED;
-    private BedrockModelIntegration bedrock$integrations$modelengine = BedrockModelIntegration.DISABLED;
+    private List<ExternalItemModel> bedrock$item$external = List.of();
+    private BedrockEntitySettings bedrockEntities = new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of());
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
-    private List<Pattern> bedrock$resource_pack$exclude_fonts = List.of();
-    private int bedrock$resource_pack$item_icon_size;
-    private int bedrock$resource_pack$display_dye_max_layers;
+    private List<Pattern> bedrock$font$exlude = List.of();
+    private int bedrock$item$icon_size;
+    private BedrockEntityDye displayDye = new BedrockEntityDye(10, List.of());
+    private Map<Key, BedrockEntityDye> displayDyeOverrides = Map.of();
     private String bedrock$additional_identification$name_prefix;
     private boolean bedrock$additional_identification$floodgate_uuid;
     private boolean bedrock$additional_identification$geyser_brand;
@@ -799,19 +800,27 @@ public final class Config {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
-        this.bedrock$external_item_models = config.getList("bedrock.external-item-models", value -> {
+        this.bedrock$item$external = config.getList("bedrock.item.external", value -> {
             ConfigSection section = value.getAsSection();
             return new ExternalItemModel(section.getNonNullIdentifier("base-item"), section.getNonNullIdentifier("item-model"));
         });
-        this.bedrock$integrations$bettermodel = config.getEnum("bedrock.integrations.bettermodel", BedrockModelIntegration.class, BedrockModelIntegration.DISABLED);
-        this.bedrock$integrations$modelengine = config.getEnum("bedrock.integrations.modelengine", BedrockModelIntegration.class, BedrockModelIntegration.DISABLED);
+        this.bedrockEntities = config.read("bedrock.custom-entity", value -> BedrockEntitySettings.read(value.getAsSection()), new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of()));
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
-        this.bedrock$resource_pack$exclude_fonts = config.getPatterns("bedrock.resource-pack.exclude-fonts");
-        this.bedrock$resource_pack$item_icon_size = config.getInt("bedrock.resource-pack.item-icon-size", 64, 1, Integer.MAX_VALUE);
-        this.bedrock$resource_pack$display_dye_max_layers = config.getInt("bedrock.resource-pack.display-dye-max-layers", 16, 1, Integer.MAX_VALUE);
+        this.bedrock$font$exlude = config.getPatterns("bedrock.font.exlude");
+        this.bedrock$item$icon_size = config.getInt("bedrock.item.icon-size", 64, 1, Integer.MAX_VALUE);
+        this.displayDye = config.read("bedrock.display-entity",
+                value -> BedrockEntityDye.readDisplay(value.getAsSection(), false), new BedrockEntityDye(10, List.of()));
+        Map<Key, BedrockEntityDye> displayOverrides = new HashMap<>();
+        for (Map.Entry<Key, BedrockEntityDye> override : config.getList("bedrock.display-entity.overrides", value -> {
+            ConfigSection section = value.getAsSection();
+            return Map.entry(section.getNonNullIdentifier("item-model"), BedrockEntityDye.readDisplay(section, true));
+        })) {
+            displayOverrides.put(override.getKey(), override.getValue());
+        }
+        this.displayDyeOverrides = Map.copyOf(displayOverrides);
         this.bedrock$additional_identification$name_prefix = config.getString("bedrock.additional-identification.name-prefix", "");
         this.bedrock$additional_identification$floodgate_uuid = config.getBoolean("bedrock.additional-identification.floodgate-uuid", false);
         this.bedrock$additional_identification$geyser_brand = config.getBoolean("bedrock.additional-identification.geyser-brand", true);
@@ -1559,15 +1568,19 @@ public final class Config {
     }
 
     public static List<Pattern> bedrockExcludedFonts() {
-        return instance.bedrock$resource_pack$exclude_fonts;
+        return instance.bedrock$font$exlude;
     }
 
     public static int bedrockItemIconSize() {
-        return instance.bedrock$resource_pack$item_icon_size;
+        return instance.bedrock$item$icon_size;
     }
 
-    public static int bedrockDisplayDyeMaxLayers() {
-        return instance.bedrock$resource_pack$display_dye_max_layers;
+    public static BedrockEntityDye bedrockDisplayDye() {
+        return instance.displayDye;
+    }
+
+    public static Map<Key, BedrockEntityDye> bedrockDisplayDyeOverrides() {
+        return instance.displayDyeOverrides;
     }
 
     public static String sacrificedVanillaArmorType() {
@@ -1769,15 +1782,11 @@ public final class Config {
     }
 
     public static List<ExternalItemModel> bedrockExternalItemModels() {
-        return instance.bedrock$external_item_models;
+        return instance.bedrock$item$external;
     }
 
-    public static BedrockModelIntegration bedrockBetterModelIntegration() {
-        return instance.bedrock$integrations$bettermodel;
-    }
-
-    public static BedrockModelIntegration bedrockModelEngineIntegration() {
-        return instance.bedrock$integrations$modelengine;
+    public static BedrockEntitySettings bedrockEntities() {
+        return instance.bedrockEntities;
     }
 
     public static List<String> bedrockVanillaDisplayBlocks() {

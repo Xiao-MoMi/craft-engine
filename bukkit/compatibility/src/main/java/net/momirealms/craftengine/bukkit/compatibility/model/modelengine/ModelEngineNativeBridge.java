@@ -11,8 +11,10 @@ import com.ticxo.modelengine.api.model.render.DisplayRenderer;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
 import net.momirealms.craftengine.bukkit.compatibility.model.NativeModelBridge;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -27,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 public final class ModelEngineNativeBridge extends NativeModelBridge {
     private final Map<ActiveModel, UUID> models = new ConcurrentHashMap<>();
@@ -52,7 +55,7 @@ public final class ModelEngineNativeBridge extends NativeModelBridge {
 
     @Override
     protected boolean enabled() {
-        return Config.bedrockModelEngineIntegration() == BedrockModelIntegration.CUSTOM_ENTITY;
+        return Config.bedrockEntities().uses("modelengine", BedrockModelIntegration.CUSTOM_ENTITY) || Config.bedrockEntities().uses("modelengine", BedrockModelIntegration.DISPLAY_ENTITY);
     }
 
     @Override
@@ -61,12 +64,19 @@ public final class ModelEngineNativeBridge extends NativeModelBridge {
         this.models.entrySet().removeIf(entry -> entry.getKey().isDestroyed() || entry.getKey().isRemoved());
         for (Map.Entry<ActiveModel, UUID> entry : this.models.entrySet()) {
             ActiveModel model = entry.getKey();
+            Key id = Key.of("modelengine", model.getBlueprint().getName());
+            BedrockModelIntegration integration = Config.bedrockEntities().mode(id);
+            if (integration == BedrockModelIntegration.DISABLED) {
+                continue;
+            }
             ModeledEntity modeled = model.getModeledEntity();
             if (modeled == null || modeled.isDestroyed()) {
                 continue;
             }
-            Location location = modeled.getBase().getLocation();
-            Vector3fc scale = model.getScale();
+            Predicate<Player> visible = viewer -> {
+                CullType cull = modeled.getBase().getData().getTracking().get(viewer.uuid());
+                return cull != null && cull != CullType.CULLED;
+            };
             List<Integer> displays = new ArrayList<>();
             List<String> hidden = new ArrayList<>();
             if (model.getModelRenderer() instanceof DisplayRenderer renderer) {
@@ -74,12 +84,18 @@ public final class ModelEngineNativeBridge extends NativeModelBridge {
                     for (DisplayBone.BoneData data : bone.getModel().values()) {
                         displays.add(data.getId());
                     }
-                    if (!bone.getVisibility().get()) {
+                    if (integration == BedrockModelIntegration.CUSTOM_ENTITY && !bone.getVisibility().get()) {
                         hidden.add(bone.getBoneId());
                     }
                 }
             }
-            int color = (model.isMarkedHurt() ? model.getDamageTint() : model.getDefaultTint()).asRGB();
+            if (integration == BedrockModelIntegration.DISPLAY_ENTITY) {
+                result.add(new ModelState(new NativeModelPayload.DisplayBones(entry.getValue(), id.asString(), displays.stream().sorted().toList()), visible));
+                continue;
+            }
+            Location location = modeled.getBase().getLocation();
+            Vector3fc scale = model.getScale();
+            int color = model.getDefaultTint().asRGB();
             List<NativeModelPayload.Animation> animations = new ArrayList<>();
             for (String name : model.getBlueprint().getAnimations().keySet().stream().sorted().toList()) {
                 IAnimationProperty property = model.getAnimationHandler().getAnimation(name);
@@ -92,13 +108,11 @@ public final class ModelEngineNativeBridge extends NativeModelBridge {
                     animations.add(new NativeModelPayload.Animation(name, mode));
                 }
             }
-            NativeModelPayload state = new NativeModelPayload(entry.getValue(), "modelengine:" + model.getBlueprint().getName(), modeled.getBase().getEntityId(), false,
-                    location.getX(), location.getY(), location.getZ(), model.getYBodyRot(), model.getXHeadRot(), scale.x(), scale.y(), scale.z(), color,
+            NativeModelPayload.NativeState state = new NativeModelPayload.NativeState(entry.getValue(), id.asString(), modeled.getBase().getEntityId(), model.isMarkedHurt(),
+                    new NativeModelPayload.Pose(location.getX(), location.getY(), location.getZ(), model.getYBodyRot(), model.getXHeadRot()),
+                    new NativeModelPayload.Scale(scale.x(), scale.y(), scale.z()), color,
                     animations, hidden.stream().sorted().toList(), displays.stream().sorted().toList());
-            result.add(new ModelState(state, viewer -> {
-                CullType cull = modeled.getBase().getData().getTracking().get(viewer.uuid());
-                return cull != null && cull != CullType.CULLED;
-            }));
+            result.add(new ModelState(state, visible));
         }
         return result;
     }

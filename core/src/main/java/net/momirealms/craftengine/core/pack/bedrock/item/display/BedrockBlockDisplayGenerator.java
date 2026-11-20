@@ -16,6 +16,7 @@ import net.momirealms.craftengine.core.pack.model.definition.Transformation;
 import net.momirealms.craftengine.core.pack.model.definition.tint.ConstantTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.GrassTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VectorUtils;
@@ -51,7 +52,7 @@ final class BedrockBlockDisplayGenerator {
                 List<BedrockItemDisplayGenerator.Part> parts = parts(state, resolved, shared);
                 Integer shape = meshes.get(parts);
                 if (shape == null) {
-                    shape = assets.add(parts, TextureUsage.BLOCK);
+                    shape = assets.add(parts, TextureUsage.BLOCK, Config.bedrockDisplayDye());
                     if (shape == 0) {
                         throw new IllegalArgumentException("The block model has no renderable materials");
                     }

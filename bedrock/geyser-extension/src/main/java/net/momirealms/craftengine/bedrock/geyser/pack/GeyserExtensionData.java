@@ -58,18 +58,14 @@ public final class GeyserExtensionData {
         this.languages = languages;
     }
 
-    public static GeyserExtensionData read(Path path) throws IOException {
-        return read(path, null);
-    }
-
-    public static GeyserExtensionData read(Path path, @Nullable Path cacheDirectory) throws IOException {
+    public static GeyserExtensionData read(Path path, Path cacheDirectory) throws IOException {
         if (Files.notExists(path)) {
             return EMPTY;
         }
         try (ZipFile archive = new ZipFile(path.toFile())) {
-            JsonObject items = readPlan(archive, RegistrationPlanKind.ITEM, "craftengine/item_registration_plan.json");
-            JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK, "craftengine/block_registration_plan.json");
-            JsonObject sounds = readJson(archive, findEntry(archive, BedrockPackLayout.SOUND_MAPPINGS, "craftengine/sound_mappings.json"));
+            JsonObject items = readPlan(archive, RegistrationPlanKind.ITEM);
+            JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK);
+            JsonObject sounds = readJson(archive, BedrockPackLayout.SOUND_MAPPINGS);
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
@@ -77,7 +73,7 @@ public final class GeyserExtensionData {
                     glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
                     readJson(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     readJson(archive, BedrockPackLayout.BOSS_BARS),
-                    cacheDirectory == null ? null : extractClientPack(archive, cacheDirectory));
+                    extractClientPack(archive, cacheDirectory));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
         }
@@ -113,31 +109,20 @@ public final class GeyserExtensionData {
     }
 
     @Nullable
-    private static JsonObject readPlan(ZipFile archive, RegistrationPlanKind kind, String legacyName) throws IOException {
-        ZipEntry entry = findEntry(archive, kind.file(), legacyName);
-        if (entry == null) {
+    private static JsonObject readPlan(ZipFile archive, RegistrationPlanKind kind) throws IOException {
+        JsonObject plan = readJson(archive, kind.file());
+        if (plan == null) {
             return null;
         }
-        JsonObject plan = readJson(archive, entry);
         if (!plan.get(KIND).getAsString().equals(kind.id()) || plan.get(FORMAT_VERSION).getAsInt() != kind.formatVersion()) {
-            throw new IOException("Unsupported registration plan format: " + entry.getName());
+            throw new IOException("Unsupported registration plan format: " + kind.file());
         }
         return plan;
     }
 
     @Nullable
-    private static ZipEntry findEntry(ZipFile archive, String name, String legacyName) {
-        ZipEntry entry = archive.getEntry(name);
-        return entry != null ? entry : archive.getEntry(legacyName);
-    }
-
-    @Nullable
     private static JsonObject readJson(ZipFile archive, String name) throws IOException {
-        return readJson(archive, archive.getEntry(name));
-    }
-
-    @Nullable
-    private static JsonObject readJson(ZipFile archive, @Nullable ZipEntry entry) throws IOException {
+        ZipEntry entry = archive.getEntry(name);
         if (entry == null) {
             return null;
         }

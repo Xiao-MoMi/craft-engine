@@ -14,8 +14,12 @@ public final class NativeModelSources {
     }
 
     public static List<NativeModelSource> collect(String namespace, Path directory, Collection<String> loaded) throws IOException {
-        if (!Files.isDirectory(directory)) {
+        if (loaded.isEmpty() || !Files.isDirectory(directory)) {
             return List.of();
+        }
+        Set<String> selected = new HashSet<>();
+        for (String model : loaded) {
+            selected.add(model.toLowerCase(Locale.ROOT));
         }
         Map<String, Path> files = new HashMap<>();
         try (Stream<Path> paths = Files.walk(directory)) {
@@ -25,7 +29,7 @@ public final class NativeModelSources {
                     continue;
                 }
                 String stem = name.substring(0, name.length() - 8).toLowerCase(Locale.ROOT);
-                if (files.putIfAbsent(stem, path) != null) {
+                if (selected.contains(stem) && files.putIfAbsent(stem, path) != null) {
                     throw new IOException("Ambiguous native model blueprint: " + stem + " in " + directory);
                 }
             }

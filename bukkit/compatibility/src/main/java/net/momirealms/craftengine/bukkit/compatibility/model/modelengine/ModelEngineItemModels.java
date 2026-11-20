@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Key;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
@@ -25,11 +26,15 @@ public final class ModelEngineItemModels implements Listener {
 
     @EventHandler
     public void collect(AsyncExternalItemModelsCollectEvent event) {
-        if (Config.bedrockModelEngineIntegration() != BedrockModelIntegration.DISPLAY_ENTITY || !this.owner.isEnabled()) {
+        if (!Config.bedrockEntities().uses("modelengine", BedrockModelIntegration.DISPLAY_ENTITY) || !this.owner.isEnabled()) {
             return;
         }
         Set<ExternalItemModel> models = new HashSet<>();
         for (ModelBlueprint blueprint : ModelEngineAPI.getAPI().getModelRegistry().getValues()) {
+            Key id = Key.of("modelengine", blueprint.getName());
+            if (Config.bedrockEntities().mode(id) != BedrockModelIntegration.DISPLAY_ENTITY) {
+                continue;
+            }
             for (BlueprintBone bone : blueprint.getFlatMap().values()) {
                 if (!bone.isRenderer()) {
                     continue;
@@ -37,7 +42,7 @@ public final class ModelEngineItemModels implements Listener {
                 for (ItemStack stack : bone.getModelData().createItemStack()) {
                     ExternalItemModel model = ItemStackUtils.externalItemModel(stack);
                     if (model != null) {
-                        models.add(model);
+                        models.add(new ExternalItemModel(model.baseItem(), model.itemModel(), id));
                     }
                 }
             }

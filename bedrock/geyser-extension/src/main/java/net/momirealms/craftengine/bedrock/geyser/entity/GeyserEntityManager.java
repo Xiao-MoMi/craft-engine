@@ -42,11 +42,16 @@ public final class GeyserEntityManager {
     }
 
     public void acceptNativeModel(GeyserPlayer player, NativeModelPayload state) {
-        this.nativeModels.accept(player, state);
+        switch (state) {
+            case NativeModelPayload.DisplayBones bones -> this.modelDisplays.updateOwner(player, bones);
+            case NativeModelPayload.RemoveDisplay remove -> this.modelDisplays.removeOwner(player, remove.instance());
+            case NativeModelPayload.NativeMessage message -> this.nativeModels.accept(player, message);
+        }
     }
 
     public void disconnect(GeyserSession session) {
         this.nativeModels.disconnect(session);
+        this.modelDisplays.disconnect(session);
     }
 
     public void disable() {

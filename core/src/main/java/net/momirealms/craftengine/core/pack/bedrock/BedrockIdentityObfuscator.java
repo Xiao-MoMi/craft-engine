@@ -30,8 +30,8 @@ final class BedrockIdentityObfuscator {
         Map<String, String> blockNames = rewriteBlockPlan(data.resolve(RegistrationPlanKind.BLOCK.file()), random);
         Map<String, String> clientIds = rewriteItemPlan(data.resolve(RegistrationPlanKind.ITEM.file()), blockNames, random);
         if (!clientIds.isEmpty()) {
-            rewriteItemLookup(data.resolve(MODEL_DISPLAYS), clientIds, "items");
-            rewriteItemLookup(data.resolve(ELYTRA_VARIANTS), clientIds, null);
+            rewriteItemLookup(data.resolve(MODEL_DISPLAYS), clientIds, "items", "entity_items");
+            rewriteItemLookup(data.resolve(ELYTRA_VARIANTS), clientIds);
         }
         blockNames.forEach((original, alias) -> clientIds.put(GEYSER_CUSTOM_BLOCK_PREFIX + original, GEYSER_CUSTOM_BLOCK_PREFIX + alias));
         return clientIds;
@@ -96,13 +96,19 @@ final class BedrockIdentityObfuscator {
         return aliases;
     }
 
-    private static void rewriteItemLookup(Path file, Map<String, String> itemAliases, @Nullable String section) throws IOException {
+    private static void rewriteItemLookup(Path file, Map<String, String> itemAliases, String... sections) throws IOException {
         if (Files.notExists(file)) {
             return;
         }
         JsonObject document = GsonHelper.readJsonFromFile(file).getAsJsonObject();
-        JsonObject lookup = section == null ? document : document.getAsJsonObject(section);
-        if (lookup != null && GsonHelper.replaceStringKeys(lookup, itemAliases)) {
+        boolean changed = sections.length == 0 && GsonHelper.replaceStringKeys(document, itemAliases);
+        for (String section : sections) {
+            JsonObject lookup = document.getAsJsonObject(section);
+            if (lookup != null) {
+                changed |= GsonHelper.replaceStringKeys(lookup, itemAliases);
+            }
+        }
+        if (changed) {
             GsonHelper.writeJsonFile(document, file);
         }
     }

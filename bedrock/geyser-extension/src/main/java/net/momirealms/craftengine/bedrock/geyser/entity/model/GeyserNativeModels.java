@@ -6,7 +6,9 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
 import org.cloudburstmc.math.vector.Vector3f;
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityEventType;
 import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
+import org.cloudburstmc.protocol.bedrock.packet.EntityEventPacket;
 import org.cloudburstmc.protocol.bedrock.packet.ChangeDimensionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket;
@@ -52,11 +54,11 @@ public final class GeyserNativeModels {
         this.models.values().forEach(model -> model.register(event));
     }
 
-    public void accept(GeyserPlayer player, NativeModelPayload state) {
+    public void accept(GeyserPlayer player, NativeModelPayload.NativeMessage message) {
         GeyserSession session = player.session();
         session.ensureInEventLoop(() -> {
             if (!session.isClosed()) {
-                this.connections.computeIfAbsent(session, ignored -> new Connection(player)).accept(state);
+                this.connections.computeIfAbsent(session, ignored -> new Connection(player)).accept(message);
             }
         });
     }
@@ -99,31 +101,53 @@ public final class GeyserNativeModels {
             });
         }
 
-        private void accept(NativeModelPayload state) {
+        private void accept(NativeModelPayload.NativeMessage message) {
+            switch (message) {
+                case NativeModelPayload.RemoveNative remove -> this.remove(remove.instance());
+                case NativeModelPayload.NativeState state -> {
+                    Instance instance = this.instances.get(state.instance());
+                    if (instance != null && !instance.state.model().equals(state.model())) {
+                        this.remove(state.instance());
+                        instance = null;
+                    }
+                    this.update(instance, state, null);
+                }
+                case NativeModelPayload.Delta delta -> {
+                    Instance instance = this.instances.get(delta.instance());
+                    // 切换维度会清空本地实例，收到下一份完整状态后才能恢复增量同步。
+                    if (instance != null) {
+                        this.update(instance, delta.applyTo(instance.state), delta);
+                    }
+                }
+            }
+        }
+
+        private void remove(UUID id) {
+            Instance instance = this.instances.remove(id);
+            if (instance != null) {
+                this.targets.remove(instance.entity.geyserId());
+                this.session.getEntityCache().removeEntity(instance.entity);
+                this.refreshHidden();
+            }
+        }
+
+        private void update(Instance instance, NativeModelPayload.NativeState state, NativeModelPayload.Delta delta) {
             Model model = GeyserNativeModels.this.models.get(state.model());
             if (model == null) {
                 return;
             }
-            if (state.removed()) {
-                Instance instance = this.instances.remove(state.instance());
-                if (instance != null) {
-                    this.targets.remove(instance.entity.geyserId());
-                    this.session.getEntityCache().removeEntity(instance.entity);
-                    this.refreshHidden();
-                }
-                return;
-            }
-            Instance instance = this.instances.get(state.instance());
+            NativeModelPayload.Pose pose = state.pose();
+            boolean startedHurt = state.hurt() && (instance == null || !instance.state.hurt());
             if (instance == null) {
                 EntitySpawnContext context = new EntitySpawnContext(this.session, VanillaEntities.ARMOR_STAND,
                         GeyserNativeModels.this.nextId.decrementAndGet(), state.instance())
                         .bedrockEntityDefinition((BedrockEntityDefinition) model.definition)
-                        .position(Vector3f.from(state.x(), state.y(), state.z()))
-                        .yaw(state.yaw())
-                        .headYaw(state.yaw())
-                        .pitch(state.pitch());
+                        .position(Vector3f.from(pose.x(), pose.y(), pose.z()))
+                        .yaw(pose.yaw())
+                        .headYaw(pose.yaw())
+                        .pitch(pose.pitch());
                 Entity entity = new Entity(context);
-                entity.updatePropertiesBatched(batch -> model.apply(batch, state), false);
+                entity.updatePropertiesBatched(batch -> model.apply(batch, state, null), false);
                 instance = new Instance(entity, state);
                 this.instances.put(state.instance(), instance);
                 this.refreshHidden();
@@ -134,10 +158,22 @@ public final class GeyserNativeModels {
                 if (displaysChanged) {
                     this.refreshHidden();
                 }
-                instance.entity.moveAbsolute(Vector3f.from(state.x(), state.y(), state.z()), state.yaw(), state.pitch(), state.yaw(), true, false);
-                instance.entity.updatePropertiesBatched(batch -> model.apply(batch, state), true);
+                if (delta == null || delta.pose() != null) {
+                    instance.entity.moveAbsolute(Vector3f.from(pose.x(), pose.y(), pose.z()), pose.yaw(), pose.pitch(), pose.yaw(), true, false);
+                }
+                if (delta == null || delta.scale() != null || delta.color() != null || delta.animations() != null || delta.hiddenBones() != null) {
+                    instance.entity.updatePropertiesBatched(batch -> model.apply(batch, state, delta), true);
+                }
             }
-            this.targets.put(instance.entity.geyserId(), state.target());
+            if (startedHurt) {
+                EntityEventPacket hurt = new EntityEventPacket();
+                hurt.setRuntimeEntityId(instance.entity.geyserId());
+                hurt.setType(EntityEventType.HURT);
+                this.session.sendUpstreamPacket(hurt);
+            }
+            if (delta == null || delta.target() != null) {
+                this.targets.put(instance.entity.geyserId(), state.target());
+            }
         }
 
         private void refreshHidden() {
@@ -171,9 +207,9 @@ public final class GeyserNativeModels {
 
     private static final class Instance {
         private final Entity entity;
-        private NativeModelPayload state;
+        private NativeModelPayload.NativeState state;
 
-        private Instance(Entity entity, NativeModelPayload state) {
+        private Instance(Entity entity, NativeModelPayload.NativeState state) {
             this.entity = entity;
             this.state = state;
         }
@@ -181,6 +217,7 @@ public final class GeyserNativeModels {
 
     private static final class Model {
         private final Identifier id;
+        private final boolean supportsDye;
         private final List<String> animations = new ArrayList<>();
         private final Map<String, Integer> boneIndices = new HashMap<>();
         private final List<GeyserIntEntityProperty> animationProperties = new ArrayList<>();
@@ -193,6 +230,7 @@ public final class GeyserNativeModels {
 
         private Model(JsonObject data) {
             this.id = Identifier.of(data.get("identifier").getAsString());
+            this.supportsDye = data.get("dye").getAsBoolean();
             data.getAsJsonArray("animations").forEach(name -> this.animations.add(name.getAsString()));
             JsonObject bones = data.getAsJsonObject("bones");
             for (Map.Entry<String, JsonElement> entry : bones.entrySet()) {
@@ -206,7 +244,9 @@ public final class GeyserNativeModels {
         }
 
         private void register(GeyserDefineEntityPropertiesEvent event) {
-            this.dye = GeyserDyeProperties.register(event, this.id, "ce:model_dye");
+            if (this.supportsDye) {
+                this.dye = GeyserDyeProperties.register(event, this.id, "ce:model_dye");
+            }
             this.sx = event.registerFloatProperty(this.id, Identifier.of("ce:model_sx"), -1000, 1000, 1f);
             this.sy = event.registerFloatProperty(this.id, Identifier.of("ce:model_sy"), -1000, 1000, 1f);
             this.sz = event.registerFloatProperty(this.id, Identifier.of("ce:model_sz"), -1000, 1000, 1f);
@@ -218,13 +258,26 @@ public final class GeyserNativeModels {
             }
         }
 
-        private void apply(BatchPropertyUpdater batch, NativeModelPayload state) {
-            this.dye.write(batch, state.color());
-            batch.update(this.sx, state.scaleX());
-            batch.update(this.sy, state.scaleY());
-            batch.update(this.sz, state.scaleZ());
+        private void apply(BatchPropertyUpdater batch, NativeModelPayload.NativeState state, NativeModelPayload.Delta delta) {
+            if (this.dye != null && (delta == null || delta.color() != null)) {
+                this.dye.write(batch, state.color());
+            }
+            if (delta == null || delta.scale() != null) {
+                batch.update(this.sx, state.scale().x());
+                batch.update(this.sy, state.scale().y());
+                batch.update(this.sz, state.scale().z());
+            }
+            if (delta == null || delta.animations() != null) {
+                this.applyAnimations(batch, state.animations());
+            }
+            if (delta == null || delta.hiddenBones() != null) {
+                this.applyHiddenBones(batch, state.hiddenBones());
+            }
+        }
+
+        private void applyAnimations(BatchPropertyUpdater batch, List<NativeModelPayload.Animation> animations) {
             int[] modes = new int[this.animationProperties.size()];
-            for (NativeModelPayload.Animation animation : state.animations()) {
+            for (NativeModelPayload.Animation animation : animations) {
                 int index = this.animations.indexOf(animation.name());
                 if (index >= 0) {
                     modes[index / 9] |= animation.mode() << (index % 9 * 2);
@@ -233,8 +286,11 @@ public final class GeyserNativeModels {
             for (int i = 0; i < modes.length; i++) {
                 batch.update(this.animationProperties.get(i), modes[i]);
             }
+        }
+
+        private void applyHiddenBones(BatchPropertyUpdater batch, List<String> bones) {
             int[] hidden = new int[this.boneProperties.size()];
-            for (String name : state.hiddenBones()) {
+            for (String name : bones) {
                 Integer index = this.boneIndices.get(name);
                 if (index != null) {
                     hidden[index / 19] |= 1 << (index % 19);
