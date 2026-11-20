@@ -908,7 +908,7 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
             List<Overlay> equipmentOverlays = new ArrayList<>();
-            this.generateEquipments(generatedPackPath, equipmentOverlays::add);
+            this.generateEquipments(generatedPackPath, equipmentOverlays::add, this.plugin.itemManager().equipments().values());
             this.generateParticle(generatedPackPath);
             this.generateAtlases(generatedPackPath);
 
@@ -1748,7 +1748,8 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void generateEquipments(Path generatedPackPath, Consumer<Overlay> callback) {
+    void generateEquipments(Path generatedPackPath, Consumer<Overlay> callback, Collection<Equipment> equipments) {
+        EquipmentTextures textures = new EquipmentTextures();
         // asset id + 是否有上身 + 是否有腿
         List<Tuple<Key, Boolean, Boolean>> collectedTrims = new ArrayList<>();
 
@@ -1757,15 +1758,32 @@ public abstract class AbstractPackManager implements PackManager {
         boolean needModernCompatibility = Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2);
         boolean needModernTrimAtlas = needModernCompatibility && Config.packMinVersion().packFormat().isBelow(PackVersion.PALETTE_TEXTURES_VERSION);
 
-        for (Equipment equipment : this.plugin.itemManager().equipments().values()) {
+        for (Equipment equipment : equipments) {
             if (equipment instanceof ComponentBasedEquipment componentBasedEquipment) {
                 // 现代的盔甲生成
-                processComponentBasedEquipment(componentBasedEquipment, generatedPackPath);
+                this.processComponentBasedEquipment(componentBasedEquipment, generatedPackPath, textures);
             } else if (equipment instanceof TrimBasedEquipment trimBasedEquipment) {
                 Key assetId = trimBasedEquipment.assetId();
-                Pair<Boolean, Boolean> result = processTrimBasedEquipment(trimBasedEquipment, generatedPackPath);
+                Pair<Boolean, Boolean> result = this.processTrimBasedEquipment(trimBasedEquipment, generatedPackPath, textures);
                 if (result != null) {
                     collectedTrims.add(Tuple.of(assetId, result.left(), result.right()));
+                }
+            }
+        }
+
+        if (!collectedTrims.isEmpty()) {
+            // 修复被干碎的原版盔甲
+            Key vanillaFixTrimType = Key.of("minecraft", Config.sacrificedVanillaArmorType());
+            collectedTrims.add(Tuple.of(vanillaFixTrimType, true, true));
+            this.processTrimBasedEquipment(new TrimBasedEquipment(vanillaFixTrimType, Config.sacrificedHumanoid(), Config.sacrificedHumanoidLeggings()), generatedPackPath, textures);
+        }
+        // 所有装备（含原版盔甲兼容层）处理完后，才清理独占且已复制的输入贴图。
+        for (Path source : textures.copiedSources) {
+            if (!textures.retained.contains(source)) {
+                try {
+                    Files.delete(source);
+                } catch (IOException e) {
+                    this.plugin.logger().error("Error deleting armor texture file from " + source, e);
                 }
             }
         }
@@ -1785,11 +1803,6 @@ public abstract class AbstractPackManager implements PackManager {
                 } catch (ClassCastException | IllegalStateException | IOException | JsonParseException ignored) {
                 }
             }
-
-            // 修复被干碎的原版盔甲
-            Key vanillaFixTrimType = Key.of("minecraft", Config.sacrificedVanillaArmorType());
-            collectedTrims.add(Tuple.of(vanillaFixTrimType, true, true));
-            processTrimBasedEquipment(new TrimBasedEquipment(vanillaFixTrimType, Config.sacrificedHumanoid(), Config.sacrificedHumanoidLeggings()), generatedPackPath);
 
             // 准备新版本atlas和覆盖纹理
             JsonObject modernTrimAtlasJson = null;
@@ -1907,7 +1920,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void processComponentBasedEquipment(ComponentBasedEquipment componentBasedEquipment, Path generatedPackPath) {
+    private void processComponentBasedEquipment(ComponentBasedEquipment componentBasedEquipment, Path generatedPackPath, EquipmentTextures textures) {
         Key assetId = componentBasedEquipment.assetId();
         if (assetId == null) {
             this.plugin.logger().error("Asset id is null for equipment " + componentBasedEquipment);
@@ -1931,10 +1944,12 @@ public abstract class AbstractPackManager implements PackManager {
                         .resolve("equipment")
                         .resolve(entry.getKey().id())
                         .resolve(texture.value() + ".png");
+                textures.retained.add(correctPath);
                 if (Files.exists(badPath) && !Files.exists(correctPath)) {
                     try {
                         Files.createDirectories(correctPath.getParent());
-                        Files.move(badPath, correctPath);
+                        Files.copy(badPath, correctPath);
+                        textures.copied(badPath);
                     } catch (IOException e) {
                         this.plugin.logger().error("Error creating " + correctPath.toAbsolutePath());
                         return;
@@ -2013,18 +2028,16 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Nullable
-    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment equipment, Path generatedPackPath) {
+    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment equipment, Path generatedPackPath, EquipmentTextures textures) {
         Map<Path, List<Path>> copies = new LinkedHashMap<>();
         if (!collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoid(), false, copies) || !collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoidLeggings(), true, copies)) {
             return null;
         }
 
-        Set<Path> targets = new HashSet<>();
-        // 先复制所有版本、所有层的纹理，再清理源文件；源文件也可能是 26.3 的目标。
         for (Map.Entry<Path, List<Path>> entry : copies.entrySet()) {
             Path source = entry.getKey();
             for (Path target : entry.getValue()) {
-                targets.add(target);
+                textures.retained.add(target);
                 if (!source.equals(target)) {
                     try {
                         Files.createDirectories(target.getParent());
@@ -2035,17 +2048,20 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                 }
             }
-        }
-        for (Path source : copies.keySet()) {
-            if (!targets.contains(source)) {
-                try {
-                    Files.delete(source);
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error deleting armor texture file from " + source, e);
-                }
-            }
+            textures.copied(source);
         }
         return Pair.of(equipment.humanoid() != null, equipment.humanoidLeggings() != null);
+    }
+
+    private static final class EquipmentTextures {
+        private final Set<Path> copiedSources = new HashSet<>();
+        private final Set<Path> retained = new HashSet<>();
+
+        private void copied(Path source) {
+            if (!this.copiedSources.add(source)) {
+                this.retained.add(source);
+            }
+        }
     }
 
     private boolean collectTrimTextureCopies(Path root,
