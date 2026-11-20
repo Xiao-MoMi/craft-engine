@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserActiveItemUse;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserElytraEquipment;
@@ -67,8 +68,10 @@ public final class GeyserPlayer {
         this.activeUse.listen(this.network);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
         this.network.onReceive(PlayerAuthInputPacket.class, event -> this.cameraDirection = event.packet().getCameraOrientation());
-        this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
-        this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
+        if (GeyserConfig.containerCloseHandlerEnabled()) {
+            this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
+            this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
+        }
         this.packetHandler = new GeyserPacketHandler(this);
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
     }

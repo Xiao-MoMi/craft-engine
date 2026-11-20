@@ -458,13 +458,6 @@ debug_image:
     - /craftengine debug image
     - /ce debug image
 
-debug_generate_internal_assets:
-  enable: false
-  permission: ce.command.debug.generate_internal_assets
-  usage:
-    - /craftengine debug generate-internal-assets
-    - /ce debug generate-internal-assets
-
 debug_furniture:
   enable: true
   permission: ce.command.debug.furniture

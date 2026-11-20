@@ -3,3 +3,4 @@ ___version___: '${config_version}'
 forced-locale: ''
 debug: false
 data-file: 'craftengine.cedata'
+container-close-handler: true
