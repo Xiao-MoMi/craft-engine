@@ -39,7 +39,7 @@ final class GeyserBlockBreakEffects extends PacketTranslator<ClientboundLevelEve
             int state = switch (packet.getData()) {
                 case UnknownLevelEventData data -> data.getData();
                 case BreakBlockEventData data -> data.getBlockState();
-                case null, default -> -1;
+                default -> -1;
             };
             if (state >= 0 && this.blocks.contains(state)) {
                 // CraftEngine 已单独发送破坏音效，这里只补 Geyser 未翻译的方块粒子

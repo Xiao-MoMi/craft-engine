@@ -98,7 +98,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.blockManager.init();
         this.customPayloads.install();
         this.guiMenus = GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
-        this.blockManager.initPlacementHandler();
+        this.blockManager.initPlacementHandler(this.playerManager);
     }
 
     @Subscribe

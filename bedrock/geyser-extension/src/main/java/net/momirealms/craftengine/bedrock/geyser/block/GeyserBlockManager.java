@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 
 import java.util.HashMap;
@@ -77,8 +78,11 @@ public final class GeyserBlockManager {
         }
     }
 
-    public void initPlacementHandler() {
-        this.placementHandler = GeyserBlockPlacementHandler.install(this.blockItems);
+    public void initPlacementHandler(GeyserPlayerManager players) {
+        if (this.blockItems.isEmpty()) {
+            return;
+        }
+        this.placementHandler = GeyserBlockPlacementHandler.install(players, this.blockItems);
         GeyserTranslationManager.info("block.placement_enabled", this.blockItems.size());
     }
 
