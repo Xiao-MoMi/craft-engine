@@ -20,6 +20,7 @@ import org.joml.Matrix4fc;
 import org.joml.Vector3f;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -35,6 +36,7 @@ public final class BedrockItem3DAttachables {
     private final JsonArray poseBones;
     private final JsonObject textureNames = new JsonObject();
     private final JsonObject geometryNames = new JsonObject();
+    private final JsonObject renderMaterials = new JsonObject();
     private final JsonObject animationNames = new JsonObject();
     private final JsonArray geometries = new JsonArray();
     private final JsonObject renderControllers = new JsonObject();
@@ -170,7 +172,7 @@ public final class BedrockItem3DAttachables {
                 this.registerGeometry(alias, cubes, stage.geometry(), layerGeometries);
             }
             String controllerId = "controller.render." + this.prefix + '.' + alias;
-            this.renderControllers.add(controllerId, renderController(alias, material.data().animation(), frames, defaultFrames));
+            this.renderControllers.add(controllerId, this.renderController(alias, material.data().animation(), frames, defaultFrames, stage.view()));
             JsonObject active = new JsonObject();
             active.addProperty(controllerId, this.contextPose != null ? stage.condition() : "(context.item_slot == 'main_hand' || context.item_slot == 'off_hand') && variable.ce_stage == " + index);
             this.activeControllers.add(active);
@@ -225,7 +227,7 @@ public final class BedrockItem3DAttachables {
         this.geometryNames.addProperty(alias, geometry.getAsJsonObject("description").get("identifier").getAsString());
     }
 
-    private static JsonObject renderController(String alias, TextureAnimation animation, JsonArray frames, JsonArray defaultFrames) {
+    private JsonObject renderController(String alias, TextureAnimation animation, JsonArray frames, JsonArray defaultFrames, @Nullable BedrockItemAttachables.View view) {
         JsonObject controller = new JsonObject();
         controller.addProperty("geometry", "Geometry." + alias);
 
@@ -248,7 +250,13 @@ public final class BedrockItem3DAttachables {
         if (defaultFrames == null) {
             material.addProperty("*", "variable.is_enchanted ? Material.enchanted : Material.default");
         } else {
-            material.addProperty("*", "variable.ce_hand_dye < 0 ? (variable.is_enchanted ? Material.enchanted : Material.default)" + " : (variable.is_enchanted ? Material.dyed_enchanted : Material.dyed)");
+            boolean hand = view != BedrockItemAttachables.View.HEAD;
+            String dyed = hand ? "hand_dyed" : "dyed";
+            String glint = dyed + "_enchanted";
+            this.renderMaterials.addProperty(dyed, hand ? "ce_hand_dyed" : "entity_alphatest_change_color");
+            this.renderMaterials.addProperty(glint, hand ? "ce_hand_dyed_glint" : "entity_alphatest_change_color_glint");
+            material.addProperty("*", "variable.ce_hand_dye < 0 ? (variable.is_enchanted ? Material.enchanted : Material.default)"
+                    + " : (variable.is_enchanted ? Material." + glint + " : Material." + dyed + ")");
             controller.add("color", handColor());
         }
         JsonArray materials = new JsonArray();
@@ -311,24 +319,22 @@ public final class BedrockItem3DAttachables {
     private JsonObject writeAttachable(JsonArray preAnimation) throws IOException {
         JsonObject description = new JsonObject();
         description.addProperty("identifier", this.id.asString());
-        JsonObject renderMaterials = new JsonObject();
-        renderMaterials.addProperty("default", "entity_alphatest_one_sided");
-        renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
-        for (Material material : this.materials) {
-            if (material.dyeColor() != null) {
-                renderMaterials.addProperty("dyed", "entity_alphatest_change_color");
-                renderMaterials.addProperty("dyed_enchanted", "entity_alphatest_change_color_glint");
-                break;
+        this.renderMaterials.addProperty("default", "entity_alphatest_one_sided");
+        this.renderMaterials.addProperty("enchanted", "entity_alphatest_glint");
+        if (this.renderMaterials.has("hand_dyed")) {
+            Path file = this.root.resolve("materials/entity.material");
+            if (Files.notExists(file)) {
+                ResourcePackUtils.writeJson(GsonHelper.readJsonFromResource("/bedrock/item/hand_dye.material"), file);
             }
         }
-        description.add("materials", renderMaterials);
+        description.add("materials", this.renderMaterials);
         description.add("textures", this.textureNames);
         description.add("geometry", this.geometryNames);
         description.add("animations", this.animationNames);
         // pre_animation 先计算 ce_stage 等变量，动画和渲染控制器再用这些值选择当前姿态与几何。
         JsonObject scripts = GsonHelper.createObject("animate", this.animate);
         scripts.add("pre_animation", preAnimation);
-        this.equipmentAppearance.addMaterialsAndScripts(renderMaterials, scripts, this.animationNames);
+        this.equipmentAppearance.addMaterialsAndScripts(this.renderMaterials, scripts, this.animationNames);
         description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         JsonObject attachable = GsonHelper.createObject("description", description);
