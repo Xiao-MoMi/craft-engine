@@ -20,7 +20,6 @@ import org.geysermc.geyser.scoreboard.display.slot.DisplaySlot;
 import org.geysermc.geyser.scoreboard.display.slot.SidebarDisplaySlot;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.text.ChatColor;
-import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.BlankFormat;
 import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.FixedFormat;
 import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.NumberFormat;
@@ -28,6 +27,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.StyledFormat;
 import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.ObjectiveAction;
 import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.TeamAction;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundResetScorePacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetDisplayObjectivePacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetObjectivePacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetPlayerTeamPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetScorePacket;
@@ -53,54 +53,64 @@ public final class SidebarSession {
         this.profiles = profiles;
     }
 
-    public void capture(Packet packet) {
-        // Retain components before Geyser serializes away fonts; identities and membership stay in Geyser.
+    void capture(ClientboundSetObjectivePacket objective) {
         this.checkScoreboard();
-        if (packet instanceof ClientboundSetObjectivePacket objective) {
-            Objective current = this.scoreboard.getObjective(objective.getName());
-            if (objective.getAction() == ObjectiveAction.REMOVE) {
-                this.objectives.remove(objective.getName());
-            } else if ((objective.getAction() == ObjectiveAction.ADD) == (current == null)) {
-                ObjectiveText text = this.objectives.computeIfAbsent(objective.getName(), key -> new ObjectiveText());
-                text.title = ObjectivePacketProxy.INSTANCE.displayName(objective);
-                if (current != null) {
-                    for (DisplaySlot slot : current.getActiveSlots()) {
-                        slot.markNeedsUpdate();
-                    }
-                }
-            }
-        } else if (packet instanceof ClientboundSetScorePacket score) {
-            ObjectiveText objective = this.objectives.get(score.getObjective());
-            if (objective != null) {
-                objective.entries.put(score.getOwner(), ScorePacketProxy.INSTANCE.display(score));
-                Objective current = this.scoreboard.getObjective(score.getObjective());
-                ScoreReference reference = current == null ? null : current.getScores().get(score.getOwner());
-                if (reference != null) {
-                    reference.markChanged();
-                }
-            }
-        } else if (packet instanceof ClientboundResetScorePacket reset) {
-            if (reset.getObjective() == null) {
-                for (ObjectiveText objective : this.objectives.values()) {
-                    objective.entries.remove(reset.getOwner());
-                }
-            } else {
-                ObjectiveText objective = this.objectives.get(reset.getObjective());
-                if (objective != null) {
-                    objective.entries.remove(reset.getOwner());
-                }
-            }
-        } else if (packet instanceof ClientboundSetPlayerTeamPacket team) {
-            Team current = this.scoreboard.getTeam(team.getTeamName());
-            if (team.getAction() == TeamAction.REMOVE) {
-                this.teams.remove(team.getTeamName());
-            } else if ((team.getAction() == TeamAction.CREATE && current == null) || (team.getAction() == TeamAction.UPDATE && current != null)) {
-                this.teams.put(team.getTeamName(), new TeamText(TeamPacketProxy.INSTANCE.prefix(team), TeamPacketProxy.INSTANCE.suffix(team)));
-                if (current != null) {
-                    current.markChanged();
+        Objective current = this.scoreboard.getObjective(objective.getName());
+        if (objective.getAction() == ObjectiveAction.REMOVE) {
+            this.objectives.remove(objective.getName());
+        } else if ((objective.getAction() == ObjectiveAction.ADD) == (current == null)) {
+            ObjectiveText text = this.objectives.computeIfAbsent(objective.getName(), key -> new ObjectiveText());
+            text.title = ObjectivePacketProxy.INSTANCE.displayName(objective);
+            if (current != null) {
+                for (DisplaySlot slot : current.getActiveSlots()) {
+                    slot.markNeedsUpdate();
                 }
             }
         }
+    }
+
+    void capture(ClientboundSetScorePacket score) {
+        this.checkScoreboard();
+        ObjectiveText objective = this.objectives.get(score.getObjective());
+        if (objective != null) {
+            objective.entries.put(score.getOwner(), ScorePacketProxy.INSTANCE.display(score));
+            Objective current = this.scoreboard.getObjective(score.getObjective());
+            ScoreReference reference = current == null ? null : current.getScores().get(score.getOwner());
+            if (reference != null) {
+                reference.markChanged();
+            }
+        }
+    }
+
+    void capture(ClientboundResetScorePacket reset) {
+        this.checkScoreboard();
+        if (reset.getObjective() == null) {
+            for (ObjectiveText objective : this.objectives.values()) {
+                objective.entries.remove(reset.getOwner());
+            }
+        } else {
+            ObjectiveText objective = this.objectives.get(reset.getObjective());
+            if (objective != null) {
+                objective.entries.remove(reset.getOwner());
+            }
+        }
+    }
+
+    void capture(ClientboundSetPlayerTeamPacket team) {
+        this.checkScoreboard();
+        Team current = this.scoreboard.getTeam(team.getTeamName());
+        if (team.getAction() == TeamAction.REMOVE) {
+            this.teams.remove(team.getTeamName());
+        } else if ((team.getAction() == TeamAction.CREATE && current == null) || (team.getAction() == TeamAction.UPDATE && current != null)) {
+            this.teams.put(team.getTeamName(), new TeamText(TeamPacketProxy.INSTANCE.prefix(team), TeamPacketProxy.INSTANCE.suffix(team)));
+            if (current != null) {
+                current.markChanged();
+            }
+        }
+    }
+
+    void capture(ClientboundSetDisplayObjectivePacket display) {
+        this.checkScoreboard();
     }
 
     private void checkScoreboard() {

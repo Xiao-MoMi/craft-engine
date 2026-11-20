@@ -11,7 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserActiveItemUse;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserElytraEquipment;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
-import net.momirealms.craftengine.bedrock.geyser.network.GeyserNetworkManager;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.ServerCustomPacket;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarConnection;
@@ -34,7 +34,7 @@ public final class GeyserPlayer {
     private final CraftEngineGeyserExtension extension;
     private final GeyserSession session;
     private final GeyserActiveItemUse activeUse;
-    private final GeyserNetworkManager network = new GeyserNetworkManager();
+    private final GeyserBedrockPackets network = new GeyserBedrockPackets();
     private GeyserPacketHandler packetHandler;
     private GeyserContainerCloseHandler containerCloseHandler;
     private Int2ObjectMap<HardHitboxPayload> pendingHitboxes;
@@ -189,7 +189,7 @@ public final class GeyserPlayer {
         }
     }
 
-    public GeyserNetworkManager network() {
+    public GeyserBedrockPackets network() {
         return this.network;
     }
 

@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import net.momirealms.craftengine.bedrock.geyser.network.GeyserNetworkManager;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
 import org.cloudburstmc.protocol.bedrock.data.inventory.HandSlot;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType;
@@ -28,7 +28,7 @@ public final class GeyserActiveItemUse {
         this.registeredItem = registeredItem;
     }
 
-    public void listen(GeyserNetworkManager network) {
+    public void listen(GeyserBedrockPackets network) {
         network.onSend(ChangeDimensionPacket.class, event -> this.hand = null);
         network.onSend(RespawnPacket.class, event -> this.hand = null);
         network.onReceive(InventoryTransactionPacket.class, event -> {

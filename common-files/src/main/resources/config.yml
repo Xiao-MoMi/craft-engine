@@ -828,7 +828,6 @@ bedrock:
   # custom_entity supports: play/stop/loop/hold, bone visibility, scale, whole-model tint/hurt.
   # Not faithfully synced: speed changes, seeking, blending, procedural bones (tracking/aiming/IK).
   # Use display_entity for these effects. Pack size varies; tint uses color-layer approximation.
-  # After switching: reload CE config -> rebuild pack/data -> restart Geyser -> reconnect.
   integrations:
     bettermodel: disabled
     modelengine: disabled

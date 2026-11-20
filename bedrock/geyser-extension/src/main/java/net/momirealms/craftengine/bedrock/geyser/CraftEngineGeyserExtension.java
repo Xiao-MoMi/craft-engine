@@ -10,6 +10,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManagerImpl;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarManager;
@@ -33,6 +34,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private static CraftEngineGeyserExtension instance;
 
     private GeyserPlayerManager playerManager;
+    private GeyserJavaPackets javaPackets;
     private GeyserSidebarManager sidebarManager;
     private GeyserBossBars bossBars;
     private GeyserConfig config;
@@ -52,6 +54,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         instance = this;
         this.sounds = new GeyserSoundMappings();
         this.playerManager = new GeyserPlayerManager(this);
+        this.javaPackets = new GeyserJavaPackets(this.playerManager);
         this.config = new GeyserConfig(this.dataFolder(), this.logger());
         this.config.load();
         try {
@@ -92,7 +95,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.entityManager.initialize(this.glyphManager.glyphs());
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
             this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
-            this.sidebarManager.install();
+            this.sidebarManager.install(this.javaPackets);
         }
         this.itemManager.init();
         this.blockManager.init();
@@ -124,8 +127,8 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (this.playerManager != null) {
             this.playerManager.disable();
         }
-        if (this.sidebarManager != null) {
-            this.sidebarManager.uninstall();
+        if (this.javaPackets != null) {
+            this.javaPackets.uninstall();
         }
         if (this.customPayloads != null) {
             this.customPayloads.uninstall();
