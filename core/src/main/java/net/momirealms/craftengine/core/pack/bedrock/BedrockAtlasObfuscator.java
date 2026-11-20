@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
-import com.google.gson.JsonElement;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -9,8 +9,8 @@ import net.momirealms.craftengine.core.util.GsonHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 

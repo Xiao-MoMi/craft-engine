@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.text;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 
 import java.util.ArrayList;
@@ -14,9 +15,9 @@ public final class ContainerTitleLayout {
     public static final int MAX_SPACER = 33;
     private static final int SPACER_BYTES = 3;
     private static final int RESET_PREFIX_BYTES = 3;
-    private final Map<String, Map<Integer, FontGlyph>> fonts;
+    private final Map<String, Int2ObjectMap<FontGlyph>> fonts;
 
-    public ContainerTitleLayout(Map<String, Map<Integer, FontGlyph>> fonts) {
+    public ContainerTitleLayout(Map<String, Int2ObjectMap<FontGlyph>> fonts) {
         this.fonts = fonts;
     }
 
@@ -35,7 +36,7 @@ public final class ContainerTitleLayout {
         double javaCursor = ORIGIN;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
-            Map<Integer, FontGlyph> font = this.fonts.get(part.font());
+            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
             int boldAdvance = (part.decorations() & 2) != 0 ? 1 : 0;
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
@@ -101,7 +102,7 @@ public final class ContainerTitleLayout {
     public int width(List<GuiTitlePart> parts) {
         double width = 0;
         for (GuiTitlePart part : parts) {
-            Map<Integer, FontGlyph> font = this.fonts.get(part.font());
+            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
@@ -140,7 +141,7 @@ public final class ContainerTitleLayout {
 
     private boolean hasCustomGlyph(List<GuiTitlePart> parts) {
         for (GuiTitlePart part : parts) {
-            Map<Integer, FontGlyph> font = this.fonts.get(part.font());
+            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
             if (font == null) {
                 continue;
             }

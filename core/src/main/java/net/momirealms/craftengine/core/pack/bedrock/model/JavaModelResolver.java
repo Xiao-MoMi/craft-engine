@@ -15,9 +15,7 @@ import org.joml.Vector3f;
 import java.io.IOException;
 import java.util.*;
 
-import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_ENTITY;
-import static net.momirealms.craftengine.core.pack.AbstractPackManager.BUILTIN_GENERATED;
-import static net.momirealms.craftengine.core.pack.AbstractPackManager.MISSING_NO;
+import static net.momirealms.craftengine.core.pack.AbstractPackManager.*;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.*;
 import static net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Rotation;
 import static net.momirealms.craftengine.core.pack.model.ModelJsonKeys.*;

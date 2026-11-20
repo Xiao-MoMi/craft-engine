@@ -24,12 +24,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionCon
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class BukkitWorldBlockSources {
 

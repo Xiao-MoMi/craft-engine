@@ -2,9 +2,7 @@ package net.momirealms.craftengine.bedrock.geyser.glyph;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.ints.Int2IntMap;
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 
 import java.util.HashMap;
@@ -16,16 +14,16 @@ public final class GeyserGlyphs {
     }
 
     public static GeyserGlyphData parse(JsonObject glyphs) {
-        Map<String, Map<Integer, FontGlyph>> metrics = new HashMap<>();
+        Map<String, Int2ObjectMap<FontGlyph>> metrics = new HashMap<>();
         if (glyphs != null) {
             readMetrics(glyphs, metrics);
         }
         return new GeyserGlyphData(replacements(metrics), metrics);
     }
 
-    private static void readMetrics(JsonObject layouts, Map<String, Map<Integer, FontGlyph>> metrics) {
+    private static void readMetrics(JsonObject layouts, Map<String, Int2ObjectMap<FontGlyph>> metrics) {
         for (Map.Entry<String, JsonElement> font : layouts.entrySet()) {
-            Map<Integer, FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new Int2ObjectOpenHashMap<>());
+            Int2ObjectMap<FontGlyph> glyphs = metrics.computeIfAbsent(font.getKey(), key -> new Int2ObjectOpenHashMap<>());
             for (Map.Entry<String, JsonElement> value : font.getValue().getAsJsonObject().entrySet()) {
                 int codepoint = Integer.parseInt(value.getKey(), 16);
                 JsonObject data = value.getValue().getAsJsonObject();
@@ -43,13 +41,17 @@ public final class GeyserGlyphs {
         }
     }
 
-    private static Map<String, Int2IntMap> replacements(Map<String, Map<Integer, FontGlyph>> metrics) {
+    private static Map<String, Int2IntMap> replacements(Map<String, Int2ObjectMap<FontGlyph>> metrics) {
         Map<String, Int2IntMap> fonts = new HashMap<>();
-        metrics.forEach((font, glyphs) -> glyphs.forEach((codepoint, glyph) -> {
-            if (glyph.character() != codepoint && (glyph.visible() || glyph.advance() < 0)) {
-                fonts.computeIfAbsent(font, key -> new Int2IntOpenHashMap()).put(codepoint.intValue(), glyph.character());
+        for (Map.Entry<String, Int2ObjectMap<FontGlyph>> font : metrics.entrySet()) {
+            for (Int2ObjectMap.Entry<FontGlyph> entry : Int2ObjectMaps.fastIterable(font.getValue())) {
+                int codepoint = entry.getIntKey();
+                FontGlyph glyph = entry.getValue();
+                if (glyph.character() != codepoint && (glyph.visible() || glyph.advance() < 0)) {
+                    fonts.computeIfAbsent(font.getKey(), key -> new Int2IntOpenHashMap()).put(codepoint, glyph.character());
+                }
             }
-        }));
+        }
         return fonts;
     }
 }

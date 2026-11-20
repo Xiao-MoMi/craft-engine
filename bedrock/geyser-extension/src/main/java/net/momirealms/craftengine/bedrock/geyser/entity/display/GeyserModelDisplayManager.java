@@ -37,6 +37,42 @@ public final class GeyserModelDisplayManager {
     private VanillaEntityType<GeyserModelDisplayEntity> itemDefinition;
     private VanillaEntityType<GeyserModelDisplayEntity> blockDefinition;
 
+    private static Appearance[] readAppearances(JsonObject displays) {
+        JsonArray values = displays.getAsJsonArray("appearances");
+        JsonObject colors = displays.getAsJsonObject("custom_model_data_colors");
+        Appearance[] appearances = new Appearance[values.size()];
+        appearances[0] = Appearance.EMPTY;
+        for (int i = 1; i < appearances.length; i++) {
+            JsonArray pose = values.get(i).getAsJsonArray();
+            int shape = pose.get(0).getAsInt();
+            JsonElement color = colors == null ? null : colors.get(Integer.toString(shape));
+            appearances[i] = new Appearance(
+                    shape,
+                    readVector(pose, 1, Vector3f.ZERO),
+                    readVector(pose, 2, Vector3f.ZERO),
+                    readVector(pose, 3, Vector3f.ONE),
+                    color == null ? -1 : color.getAsInt()
+            );
+        }
+        return appearances;
+    }
+
+    private static Appearance[] readContextAppearances(JsonArray indices, Appearance[] appearances) {
+        Appearance[] contexts = new Appearance[indices.size()];
+        for (int i = 0; i < contexts.length; i++) {
+            contexts[i] = appearances[indices.get(i).getAsInt()];
+        }
+        return contexts;
+    }
+
+    private static Vector3f readVector(JsonArray pose, int index, Vector3f fallback) {
+        if (pose.size() <= index) {
+            return fallback;
+        }
+        JsonArray xyz = pose.get(index).getAsJsonArray();
+        return Vector3f.from(xyz.get(0).getAsFloat(), xyz.get(1).getAsFloat(), xyz.get(2).getAsFloat());
+    }
+
     public void registerEntities(@Nullable JsonObject displays, GeyserDefineEntitiesEvent event) {
         if (displays == null) {
             return;
@@ -99,42 +135,6 @@ public final class GeyserModelDisplayManager {
         }
     }
 
-    private static Appearance[] readAppearances(JsonObject displays) {
-        JsonArray values = displays.getAsJsonArray("appearances");
-        JsonObject colors = displays.getAsJsonObject("custom_model_data_colors");
-        Appearance[] appearances = new Appearance[values.size()];
-        appearances[0] = Appearance.EMPTY;
-        for (int i = 1; i < appearances.length; i++) {
-            JsonArray pose = values.get(i).getAsJsonArray();
-            int shape = pose.get(0).getAsInt();
-            JsonElement color = colors == null ? null : colors.get(Integer.toString(shape));
-            appearances[i] = new Appearance(
-                    shape,
-                    readVector(pose, 1, Vector3f.ZERO),
-                    readVector(pose, 2, Vector3f.ZERO),
-                    readVector(pose, 3, Vector3f.ONE),
-                    color == null ? -1 : color.getAsInt()
-            );
-        }
-        return appearances;
-    }
-
-    private static Appearance[] readContextAppearances(JsonArray indices, Appearance[] appearances) {
-        Appearance[] contexts = new Appearance[indices.size()];
-        for (int i = 0; i < contexts.length; i++) {
-            contexts[i] = appearances[indices.get(i).getAsInt()];
-        }
-        return contexts;
-    }
-
-    private static Vector3f readVector(JsonArray pose, int index, Vector3f fallback) {
-        if (pose.size() <= index) {
-            return fallback;
-        }
-        JsonArray xyz = pose.get(index).getAsJsonArray();
-        return Vector3f.from(xyz.get(0).getAsFloat(), xyz.get(1).getAsFloat(), xyz.get(2).getAsFloat());
-    }
-
     public BedrockEntityDefinition emptyCarrier() {
         return this.itemDefinition == null ? null : this.itemDefinition.defaultBedrockDefinition();
     }
@@ -177,15 +177,14 @@ public final class GeyserModelDisplayManager {
                                                                                      ModelDisplayProperties initialCarrier,
                                                                                      EntityType type) {
         EntityTypeBase.Builder<GeyserModelDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserModelDisplayEntity.class);
-        // MCProtocolLib 的公共实体字段占 0..7。第 8 个字段起是 Display，物品栈和上下文在 23、24。
         for (int i = 0; i < 8; i++) {
             base.addTranslator(null);
         }
         return VanillaEntityType.inherited(context -> new GeyserModelDisplayEntity(context, this, initialCarrier), base.build())
                 .type(type).bedrockDefinition(bedrock).heightAndWidth(0)
-                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.startInterpolation((int) meta.getValue()))
-                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.duration((int) meta.getValue()))
-                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.teleportDuration((int) meta.getValue()))
+                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.startInterpolation(meta.getValue()))
+                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.duration(meta.getValue()))
+                .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.teleportDuration(meta.getValue()))
                 .addTranslator(MetadataTypes.VECTOR3, (entity, meta) -> entity.translation(meta.getValue()))
                 .addTranslator(MetadataTypes.VECTOR3, (entity, meta) -> entity.scale(meta.getValue()))
                 .addTranslator(MetadataTypes.QUATERNION, (entity, meta) -> entity.left(meta.getValue()))
@@ -231,9 +230,12 @@ public final class GeyserModelDisplayManager {
         return this.vanillaItems.get(mapping.getJavaItem().javaIdentifier().toString());
     }
 
-    record Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale, int customModelDataColorIndex) {
+    record Appearance(int shape,
+                      Vector3f translation,
+                      Vector3f rotation,
+                      Vector3f scale,
+                      int customModelDataColorIndex) {
         static final Appearance EMPTY = new Appearance(0, Vector3f.ZERO, Vector3f.ZERO, Vector3f.ONE);
-
 
         Appearance(int shape, Vector3f translation, Vector3f rotation, Vector3f scale) {
             this(shape, translation, rotation, scale, -1);

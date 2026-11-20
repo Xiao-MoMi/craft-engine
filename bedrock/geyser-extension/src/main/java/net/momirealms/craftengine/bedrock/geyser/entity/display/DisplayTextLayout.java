@@ -14,7 +14,7 @@ record DisplayTextLayout(List<Line> lines, int width) {
 
     private static final String DEFAULT_FONT = "minecraft:default";
 
-    static DisplayTextLayout wrap(List<GuiTitlePart> parts, Map<String, Map<Integer, FontGlyph>> metrics, int maxWidth, String locale) {
+    static DisplayTextLayout wrap(List<GuiTitlePart> parts, Map<String, Int2ObjectMap<FontGlyph>> metrics, int maxWidth, String locale) {
         StringBuilder text = new StringBuilder();
         int[] partStarts = new int[parts.size() + 1];
         for (int index = 0; index < parts.size(); index++) {
@@ -25,13 +25,13 @@ record DisplayTextLayout(List<Line> lines, int width) {
         boolean plain = true;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
-            Map<Integer, FontGlyph> font = metrics.get(part.font());
+            Int2ObjectMap<FontGlyph> font = metrics.get(part.font());
             boolean bold = (part.decorations() & 2) != 0;
             plain &= part.font().equals(DEFAULT_FONT) && part.color() == 0xFFFFFF && part.decorations() == 0;
             for (int index = partStarts[partIndex]; index < partStarts[partIndex + 1];) {
                 int codepoint = text.codePointAt(index);
                 if (codepoint != '\n') {
-                    FontGlyph glyph = font instanceof Int2ObjectMap<FontGlyph> fast ? fast.get(codepoint) : (font == null ? null : font.get(codepoint));
+                    FontGlyph glyph = font == null ? null : font.get(codepoint);
                     advances[index] = (glyph == null ? nativeWidth(codepoint) : glyph.advance()) + (bold && (glyph == null || glyph.visible()) ? 1 : 0);
                     plain &= codepoint >= ' ' && codepoint <= '~' && (glyph == null || glyph.character() == codepoint);
                 }

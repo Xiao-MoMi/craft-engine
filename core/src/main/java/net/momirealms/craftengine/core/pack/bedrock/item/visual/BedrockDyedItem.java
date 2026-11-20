@@ -8,7 +8,6 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
-import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
@@ -16,7 +15,6 @@ import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.List;
