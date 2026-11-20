@@ -19,7 +19,6 @@ import org.geysermc.event.PostOrder;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
-import org.geysermc.geyser.api.event.java.ServerSpawnEntityEvent;
 import org.geysermc.geyser.api.event.lifecycle.*;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.pack.PackCodec;
@@ -100,11 +99,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.customPayloads.install();
         this.guiMenus = GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
         this.blockManager.initPlacementHandler();
-    }
-
-    @Subscribe
-    public void onEntitySpawn(ServerSpawnEntityEvent event) {
-        this.entityManager.onSpawn(event);
     }
 
     @Subscribe

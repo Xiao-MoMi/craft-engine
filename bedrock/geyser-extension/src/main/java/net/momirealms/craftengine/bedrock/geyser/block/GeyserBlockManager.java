@@ -19,6 +19,7 @@ public final class GeyserBlockManager {
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Set<String> blockItems = new HashSet<>();
     private GeyserBlockPlacementHandler placementHandler;
+    private GeyserBlockBreakEffects breakEffects;
 
     public Map<String, String> displayBlocks() {
         return this.displayBlocks;
@@ -71,6 +72,9 @@ public final class GeyserBlockManager {
 
     public void init() {
         this.worldBlocks.install();
+        if (!this.worldBlocks.isEmpty()) {
+            this.breakEffects = GeyserBlockBreakEffects.install(this.worldBlocks);
+        }
     }
 
     public void initPlacementHandler() {
@@ -85,6 +89,9 @@ public final class GeyserBlockManager {
     }
 
     public void unload() {
+        if (this.breakEffects != null) {
+            this.breakEffects.uninstall();
+        }
         this.worldBlocks.uninstall();
     }
 

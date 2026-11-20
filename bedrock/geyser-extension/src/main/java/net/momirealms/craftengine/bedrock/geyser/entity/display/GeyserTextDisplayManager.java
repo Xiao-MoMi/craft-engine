@@ -58,18 +58,18 @@ public final class GeyserTextDisplayManager {
     }
 
     @Nullable
-    GeyserPlayer spawnPlayer(GeyserSession session) {
+    public GeyserPlayer spawnPlayer(GeyserSession session) {
         if (!conversionEnabled || session.getUpstream().getProtocolVersion() < MIN_PROTOCOL) {
             return null;
         }
         return this.players.get(session);
     }
 
-    VanillaEntityType<GeyserTextDisplayEntity> definition() {
+    public VanillaEntityType<?> definition() {
         return this.definition;
     }
 
-    GeyserTextDisplayEntity create(EntitySpawnContext context, GeyserPlayer player) {
+    public GeyserTextDisplayEntity create(EntitySpawnContext context, GeyserPlayer player) {
         return new GeyserTextDisplayEntity(context, player, this.glyphs);
     }
 }

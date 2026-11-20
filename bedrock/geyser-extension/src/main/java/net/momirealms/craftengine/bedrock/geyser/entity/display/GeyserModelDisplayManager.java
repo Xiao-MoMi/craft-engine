@@ -164,12 +164,12 @@ public final class GeyserModelDisplayManager {
     }
 
     @Nullable
-    VanillaEntityType<GeyserModelDisplayEntity> itemDefinition() {
+    public VanillaEntityType<?> itemDefinition() {
         return this.itemDefinition;
     }
 
     @Nullable
-    VanillaEntityType<GeyserModelDisplayEntity> blockDefinition() {
+    public VanillaEntityType<?> blockDefinition() {
         return this.blockDefinition;
     }
 

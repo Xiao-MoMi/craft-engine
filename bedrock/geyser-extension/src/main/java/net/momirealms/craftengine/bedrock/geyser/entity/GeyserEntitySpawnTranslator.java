@@ -1,10 +1,19 @@
-package net.momirealms.craftengine.bedrock.geyser.entity.display;
+package net.momirealms.craftengine.bedrock.geyser.entity;
 
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
+import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
+import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.geysermc.geyser.api.entity.type.GeyserEntity;
+import org.geysermc.geyser.entity.BedrockEntityDefinition;
+import org.geysermc.geyser.entity.VanillaEntities;
 import org.geysermc.geyser.entity.VanillaEntityType;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.type.Entity;
+import org.geysermc.geyser.entity.type.living.monster.ShulkerEntity;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
@@ -16,31 +25,31 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public final class GeyserDisplayEntityTranslator extends PacketTranslator<ClientboundAddEntityPacket> {
+public final class GeyserEntitySpawnTranslator extends PacketTranslator<ClientboundAddEntityPacket> {
     private static final int ENTITY_TYPE_COUNT = EntityType.values().length;
 
     private final PacketTranslator<ClientboundAddEntityPacket> delegate;
     private final SpawnHandler[] handlers = new SpawnHandler[ENTITY_TYPE_COUNT];
 
-    private GeyserDisplayEntityTranslator(PacketTranslator<ClientboundAddEntityPacket> delegate,
-                                          @Nullable VanillaEntityType<?> itemDefinition,
-                                          @Nullable VanillaEntityType<?> blockDefinition,
-                                          GeyserTextDisplayManager textDisplays) {
+    private GeyserEntitySpawnTranslator(PacketTranslator<ClientboundAddEntityPacket> delegate,
+                                        GeyserModelDisplayManager modelDisplays,
+                                        GeyserTextDisplayManager textDisplays,
+                                        GeyserPlayerManager players) {
         this.delegate = delegate;
-        this.registerModel(EntityType.ITEM_DISPLAY, itemDefinition);
-        this.registerModel(EntityType.BLOCK_DISPLAY, blockDefinition);
+        this.registerModel(EntityType.ITEM_DISPLAY, modelDisplays.itemDefinition());
+        this.registerModel(EntityType.BLOCK_DISPLAY, modelDisplays.blockDefinition());
         this.handlers[EntityType.TEXT_DISPLAY.ordinal()] = (session, packet) -> spawnText(session, packet, textDisplays);
+        BedrockEntityDefinition carrier = modelDisplays.emptyCarrier();
+        this.handlers[EntityType.SHULKER.ordinal()] = (session, packet) -> spawnHardHitbox(session, packet, players, carrier);
     }
 
     @SuppressWarnings("unchecked")
-    public static GeyserDisplayEntityTranslator install(GeyserModelDisplayManager itemDisplays, GeyserTextDisplayManager textDisplays) {
-        VanillaEntityType<?> itemDefinition = itemDisplays.itemDefinition();
-        VanillaEntityType<?> blockDefinition = itemDisplays.blockDefinition();
+    public static GeyserEntitySpawnTranslator install(GeyserModelDisplayManager modelDisplays, GeyserTextDisplayManager textDisplays, GeyserPlayerManager players) {
         PacketTranslator<ClientboundAddEntityPacket> delegate = (PacketTranslator<ClientboundAddEntityPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundAddEntityPacket.class);
-        if (delegate instanceof GeyserDisplayEntityTranslator translator) {
+        if (delegate instanceof GeyserEntitySpawnTranslator translator) {
             delegate = translator.delegate;
         }
-        GeyserDisplayEntityTranslator translator = new GeyserDisplayEntityTranslator(delegate, itemDefinition, blockDefinition, textDisplays);
+        GeyserEntitySpawnTranslator translator = new GeyserEntitySpawnTranslator(delegate, modelDisplays, textDisplays, players);
         Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundAddEntityPacket.class, translator);
         return translator;
     }
@@ -81,6 +90,32 @@ public final class GeyserDisplayEntityTranslator extends PacketTranslator<Client
         if (context != null) {
             spawn(context, textDisplays.create(context, player));
         }
+        return true;
+    }
+
+    private static boolean spawnHardHitbox(GeyserSession session, ClientboundAddEntityPacket packet, GeyserPlayerManager players, @Nullable BedrockEntityDefinition carrier) {
+        GeyserPlayer player = players.get(session);
+        HardHitboxPayload hitbox = player == null ? null : player.takeHitbox(packet.getEntityId());
+        if (hitbox == null) {
+            return false;
+        }
+
+        VanillaEntityType<ShulkerEntity> definition = VanillaEntities.SHULKER;
+        EntitySpawnContext context = EntitySpawnContext.fromPacket(session, definition, packet);
+        if (carrier != null) {
+            context.bedrockEntityDefinition(carrier);
+        }
+        if (!context.callServerSpawnEvent()) {
+            return true;
+        }
+
+        ShulkerEntity shulker = definition.factory().create(context);
+        shulker.setFlag(EntityFlag.INVISIBLE, true);
+        shulker.setFlag(EntityFlag.RENDER_WHEN_INVISIBLE, false);
+        shulker.setFlag(EntityFlag.HAS_GRAVITY, false);
+        shulker.getMetadata().updateOverride(EntityDataTypes.WIDTH, (float) (hitbox.width() + 0.0001));
+        shulker.getMetadata().updateOverride(EntityDataTypes.HEIGHT, (float) hitbox.height());
+        spawn(context, shulker);
         return true;
     }
 
