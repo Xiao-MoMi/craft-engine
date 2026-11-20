@@ -10,15 +10,21 @@ import org.geysermc.mcprotocollib.protocol.data.game.setting.Difficulty;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntUnaryOperator;
 
 public final class GeyserWorldManager extends WorldManager {
     private final WorldManager delegate;
     private final IntUnaryOperator visualState;
+    private final Function<Integer, Integer> asyncVisualState;
 
     public GeyserWorldManager(WorldManager delegate, IntUnaryOperator visualState) {
         this.delegate = delegate;
         this.visualState = visualState;
+        this.asyncVisualState = state -> {
+            int mapped = this.visualState.applyAsInt(state);
+            return mapped == state ? state : Integer.valueOf(mapped);
+        };
     }
 
     @Override
@@ -28,7 +34,7 @@ public final class GeyserWorldManager extends WorldManager {
 
     @Override
     public CompletableFuture<Integer> getBlockAtAsync(GeyserSession session, int x, int y, int z) {
-        return this.delegate.getBlockAtAsync(session, x, y, z).thenApply(this.visualState::applyAsInt);
+        return this.delegate.getBlockAtAsync(session, x, y, z).thenApply(this.asyncVisualState);
     }
 
     @Override

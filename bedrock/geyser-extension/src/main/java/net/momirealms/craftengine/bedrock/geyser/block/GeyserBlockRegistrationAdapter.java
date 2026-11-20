@@ -17,30 +17,34 @@ public final class GeyserBlockRegistrationAdapter {
     }
 
     public static String registerBlock(JsonObject display, GeyserDefineCustomBlocksEvent event, boolean vanillaOverride) {
-        boolean world = display.has("java_state");
+        boolean hasJavaBlockState = display.has("java_state");
         CustomBlockComponents.Builder components = CustomBlockComponents.builder()
                 .geometry(GeometryComponent.builder().identifier(display.get(GEOMETRY).getAsString()).build());
-        if (world) {
+        if (hasJavaBlockState) {
             // CraftEngine 自定义方块由扩展接管挖掘，原版覆盖沿用方块原本的硬度
             float hardness = vanillaOverride ? display.get("hardness").getAsFloat() : -1;
-            components.selectionBox(BoxComponent.fullBox()).collisionBoxes(BoxComponent.fullBox())
+            components.selectionBox(BoxComponent.fullBox())
+                    .collisionBoxes(BoxComponent.fullBox())
                     .destructibleByMining(hardness < 0 ? Float.MAX_VALUE : hardness)
                     .placeAir(false)
                     .lightEmission(display.get("light_emission").getAsInt());
             if (display.has("collision_boxes")) {
-                List<BoxComponent> boxes = new ArrayList<>();
+                List<BoxComponent> boxes = new ArrayList<>(4);
                 for (JsonElement box : display.getAsJsonArray("collision_boxes")) {
                     boxes.add(box(box, true));
                 }
                 if (boxes.isEmpty()) {
                     boxes.add(BoxComponent.emptyBox());
                 }
-                components.collisionBoxes(boxes).selectionBox(box(display.get("selection_box"), false))
+                components.collisionBoxes(boxes)
+                        .selectionBox(box(display.get("selection_box"), false))
                         .lightDampening(display.get("light_dampening").getAsInt())
                         .friction(display.get("friction").getAsFloat());
             }
         } else {
-            components.selectionBox(null).collisionBoxes()
+            // 这个定义只用来渲染物品模型
+            components.selectionBox(null)
+                    .collisionBoxes()
                     .placementFilter(List.of(new PlacementConditions(Set.of(), new LinkedHashMap<>())))
                     .placeAir(true);
         }
@@ -50,13 +54,14 @@ public final class GeyserBlockRegistrationAdapter {
             MaterialInstance.Builder builder = MaterialInstance.builder()
                     .texture(entry.getValue().getAsString())
                     .renderMethod("alpha_test_single_sided")
-                    .faceDimming(world)
-                    .ambientOcclusionExponent(world ? 1 : 0);
+                    .faceDimming(hasJavaBlockState)
+                    .ambientOcclusionExponent(hasJavaBlockState ? 1 : 0);
             if (tintMethods != null && tintMethods.has(entry.getKey())) {
                 builder.tintMethod(tintMethods.get(entry.getKey()).getAsString());
             }
             MaterialInstance material = builder.build();
             components.materialInstance(entry.getKey(), material);
+            // 没有指定材质槽的面就会用 layer0 的贴图
             if (entry.getKey().equals("layer0")) {
                 components.materialInstance("*", material);
             }
@@ -67,7 +72,7 @@ public final class GeyserBlockRegistrationAdapter {
                 .components(components.build())
                 .build();
         event.register(block);
-        if (world) {
+        if (hasJavaBlockState) {
             event.registerOverride(display.get("java_state").getAsString(), block.defaultBlockState());
         }
         return block.identifier();

@@ -73,23 +73,16 @@ public final class GeyserBlockManager {
 
     public void init() {
         this.worldBlocks.install();
-        if (!this.worldBlocks.isEmpty()) {
-            this.breakEffects = GeyserBlockBreakEffects.install(this.worldBlocks);
-        }
+        this.breakEffects = GeyserBlockBreakEffects.install(this.worldBlocks);
     }
 
     public void initPlacementHandler(GeyserPlayerManager players) {
-        if (this.blockItems.isEmpty()) {
-            return;
-        }
         this.placementHandler = GeyserBlockPlacementHandler.install(players, this.blockItems);
         GeyserTranslationManager.info("block.placement_enabled", this.blockItems.size());
     }
 
     public void initPlayer(GeyserPlayer player) {
-        if (!this.worldBlocks.isEmpty()) {
-            player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
-        }
+        player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
     }
 
     public void unload() {
