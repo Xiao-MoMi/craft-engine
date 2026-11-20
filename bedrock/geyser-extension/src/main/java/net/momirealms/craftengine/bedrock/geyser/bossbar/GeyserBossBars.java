@@ -24,6 +24,7 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
 
     GeyserBossBars(JsonObject styles, PacketTranslator<ClientboundBossEventPacket> delegate) {
         this.delegate = delegate;
+        // 将封包里的颜色和分段枚举转换成资源包生成的键，例如 blue/notched_6
         for (BossBarColor color : BossBarColor.values()) {
             String name = switch (color) {
                 case CYAN -> "blue";
@@ -58,6 +59,7 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
         switch (packet.getAction()) {
             case ADD -> {
                 Title title = new Title(BossEventPacketProxy.INSTANCE.title(packet), this.marker(packet));
+                // 原翻译器处理 ADD 时会创建 BossBar，随后才能从会话缓存中取到它。
                 this.delegate.translate(session, title.apply(packet));
                 BossBar bar = session.getEntityCache().getBossBar(packet.getUuid());
                 if (bar != null) {
@@ -72,6 +74,7 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
                     return;
                 }
                 if (packet.getAction() == BossBarAction.UPDATE_TITLE) {
+                    // 这次只改标题，沿用当前的样式标记
                     Title title = new Title(BossEventPacketProxy.INSTANCE.title(packet), previous.marker());
                     this.titles.put(bar, title);
                     this.delegate.translate(session, title.apply(packet));
@@ -79,7 +82,8 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
                     this.delegate.translate(session, packet);
                     String marker = this.marker(packet);
                     if (!Objects.equals(marker, previous.marker())) {
-                        // Style updates do not carry a name. Resend the original component with its new marker.
+                        // 样式更新包没有标题。用缓存的原始标题补发一次标题更新，让 HUD 切换样式
+                        // 新样式没有自定义贴图时，补发的标题会去掉旧标记，HUD 就会恢复原版进度条
                         Title title = new Title(previous.component(), marker);
                         this.titles.put(bar, title);
                         ClientboundBossEventPacket name = BossEventPacketProxy.INSTANCE.withTitle(packet.withAction(BossBarAction.UPDATE_TITLE), title.component());
@@ -105,6 +109,7 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
             if (this.marker == null) {
                 return packet;
             }
+            // 标记只由格式码组成。末尾重置格式，避免影响后面的原始标题
             AdventureComponentProxy components = AdventureComponentProxy.INSTANCE;
             Object title = components.children(components.text(this.marker + "§r"), List.of(this.component));
             return BossEventPacketProxy.INSTANCE.withTitle(packet, title);

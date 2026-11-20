@@ -9,6 +9,7 @@ import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BlockBreakHandler;
 import org.geysermc.geyser.util.BlockUtils;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundPunchPacket;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -23,7 +24,8 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
     @Override
     public void handlePlayerAuthInputPacket(PlayerAuthInputPacket packet) {
         super.handlePlayerAuthInputPacket(packet);
-        if (super.currentBlockState != null && this.blocks.contains(super.currentBlockState.javaId())) {
+        BlockState state = super.currentBlockState;
+        if (state != null && this.blocks.contains(state.javaId())) {
             // Java sends a swing every mining tick. Bedrock's animation packets arrive less often,
             // but CE uses swings to distinguish continued mining from a stopped/idle player.
             super.session.sendDownstreamGamePacket(ServerboundPunchPacket.INSTANCE);
@@ -37,15 +39,13 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
     }
 
     @Override
-    protected void handleContinueDestroy(Vector3i position,
+    protected void handleContinueDestroy(@NotNull Vector3i position,
                                          BlockState state,
-                                         Direction face,
+                                         @NotNull Direction face,
                                          boolean bedrockDestroyed,
                                          boolean sendParticles,
                                          long tick) {
-        GeyserItemStack item = super.session.getPlayerInventory().getItemInHand();
-        boolean sameItem = super.currentItemStack != null && super.currentItemStack.getJavaId() == item.getJavaId() && Objects.equals(super.currentItemStack.getComponents(), item.getComponents());
-        if (!this.blocks.contains(state.javaId()) || !position.equals(super.currentBlockPos) || !sameItem) {
+        if (!this.blocks.contains(state.javaId()) || !position.equals(super.currentBlockPos) || !this.isHoldingSameItem()) {
             super.handleContinueDestroy(position, state, face, bedrockDestroyed, sendParticles, tick);
             return;
         }
@@ -56,5 +56,14 @@ public final class GeyserBlockBreakHandler extends BlockBreakHandler {
         if (sendParticles) {
             BlockUtils.spawnBlockBreakParticles(super.session, face, position, state);
         }
+    }
+
+    private boolean isHoldingSameItem() {
+        GeyserItemStack previous = super.currentItemStack;
+        if (previous == null) {
+            return false;
+        }
+        GeyserItemStack held = super.session.getPlayerInventory().getItemInHand();
+        return previous == held || (previous.getJavaId() == held.getJavaId() && Objects.equals(previous.getComponents(), held.getComponents()));
     }
 }

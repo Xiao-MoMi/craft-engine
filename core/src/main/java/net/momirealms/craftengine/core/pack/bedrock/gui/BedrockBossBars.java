@@ -34,6 +34,7 @@ public final class BedrockBossBars {
             boolean customColor = overridden(resources, color);
             for (String division : DIVISIONS) {
                 boolean notched = !division.equals("none");
+                // 颜色贴图或对应的分段贴图被覆盖时，才为这个组合生成自定义样式
                 if (!customColor && !(notched && overridden(resources, division))) {
                     continue;
                 }
@@ -42,7 +43,7 @@ public final class BedrockBossBars {
                 JsonArray layers = new JsonArray();
                 boolean background = writeSprite(resources, pack, sprites, color + "_background");
                 boolean progress = writeSprite(resources, pack, sprites, color + "_progress");
-                // A transparent colour is used as a title-only HUD, even for notched bars.
+                // 背景和进度贴图都透明时，保留样式编号来隐藏原版条。即使有分段，也只显示标题
                 if (!background && !progress) {
                     continue;
                 }
@@ -64,6 +65,7 @@ public final class BedrockBossBars {
                 panel.addProperty("anchor_to", "top_middle");
                 panel.add("size", GsonHelper.createArray(182, 5));
                 panel.add("offset", GsonHelper.createArray(0, 10));
+                // HUD 通过 #bossName 判断标题是否带有当前样式的完整标记
                 panel.add("bindings", visibility(BossBarStyle.titleMatches(BossBarStyle.marker(id))));
                 panel.add("controls", layers);
                 panels.add(GsonHelper.createObject("ce_boss_bar_" + id, panel));
@@ -79,6 +81,7 @@ public final class BedrockBossBars {
         hud.addProperty("namespace", "hud");
         JsonObject nativeBar = new JsonObject();
         nativeBar.add("offset", GsonHelper.createArray(0, 10));
+        // 只要标题带有自定义标记的公共前缀，就隐藏原版进度条
         nativeBar.add("bindings", visibility("(not " + BossBarStyle.titleMatches(BossBarStyle.PREFIX) + ")"));
         JsonArray modifications = new JsonArray();
         JsonObject replace = new JsonObject();
@@ -103,6 +106,7 @@ public final class BedrockBossBars {
     }
 
     private static boolean writeSprite(JavaResourcePack resources, Path pack, Map<String, Boolean> sprites, String name) throws IOException {
+        // 同一张贴图可供多个样式共用，缓存它是否含有可见像素并已写入资源包。
         Boolean previous = sprites.get(name);
         if (previous != null) {
             return previous;
@@ -136,6 +140,7 @@ public final class BedrockBossBars {
         image.addProperty("layer", layers.size() + 1);
         image.add("size", GsonHelper.createArray(182, 5));
         if (progress) {
+            // 用 BossBar 当前进度裁剪前景贴图，背景层始终绘制完整宽度
             image.addProperty("clip_direction", "left");
             image.addProperty("clip_pixelperfect", false);
             JsonObject clip = collection("#progress_percentage");

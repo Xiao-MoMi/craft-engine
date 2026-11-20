@@ -127,9 +127,12 @@ public final class GeyserWorldBlocks {
             double y = size.get(1).getAsDouble() / 16;
             double z = size.get(2).getAsDouble() / 16;
             // Component X is mirrored; Geyser's movement checks use Java world coordinates.
-            bounds[i] = new BoundingBox((8 - origin.get(0).getAsDouble()) / 16 - x / 2,
+            bounds[i] = new BoundingBox(
+                    (8 - origin.get(0).getAsDouble()) / 16 - x / 2,
                     origin.get(1).getAsDouble() / 16 + y / 2,
-                    (origin.get(2).getAsDouble() + 8) / 16 + z / 2, x, y, z);
+                    (origin.get(2).getAsDouble() + 8) / 16 + z / 2,
+                    x, y, z
+            );
         }
         return new OtherCollision(bounds);
     }
@@ -140,7 +143,7 @@ public final class GeyserWorldBlocks {
             GeyserBootstrapProxy.INSTANCE.bootstrap(geyser, this.originalBootstrap);
         }
         Map<String, Integer> identifiers = BlockRegistries.JAVA_BLOCK_STATE_IDENTIFIER_TO_ID.get();
-        this.aliases.forEach((key, value) -> identifiers.remove(key, value));
+        this.aliases.forEach(identifiers::remove);
         for (Int2ObjectMap.Entry<BlockCollision> entry : this.originalCollisions.int2ObjectEntrySet()) {
             BlockRegistries.COLLISIONS.get().set(entry.getIntKey(), entry.getValue());
         }
