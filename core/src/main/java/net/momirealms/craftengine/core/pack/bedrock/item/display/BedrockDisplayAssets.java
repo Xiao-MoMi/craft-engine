@@ -35,6 +35,7 @@ import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 final class BedrockDisplayAssets {
     private static final double DYE_BRIGHTNESS = 0.72;
+    private static final String SHAPE_VARIABLE = "v.ce_shape";
     private static final String[] AXES = { "x", "y", "z" };
     private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y" };
     private static final JsonArray RIG = createRig();
@@ -103,7 +104,7 @@ final class BedrockDisplayAssets {
         if (mesh.customModelDataColorIndex() >= 0) {
             this.customModelDataColors.addProperty(Integer.toString(shape), mesh.customModelDataColorIndex());
         }
-        String condition = "query.property('ce:shape') == " + shape;
+        String condition = SHAPE_VARIABLE + " == " + shape;
         JsonObject channels = new JsonObject();
         JsonArray geometries = new JsonArray(materials.size());
         for (int layer = 0; layer < materials.size(); layer++) {
@@ -280,7 +281,7 @@ final class BedrockDisplayAssets {
                     }
                 }
             }
-            String index = "(query.property('ce:shape') - " + first + ")";
+            String index = "(" + SHAPE_VARIABLE + " - " + first + ")";
             String sample = page.interval() == 0 ? index : index + " * " + page.frames()
                     + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
             JsonObject controller = new JsonObject();
@@ -309,7 +310,6 @@ final class BedrockDisplayAssets {
 
     private static String shapeCondition(int first, int last, Map<Integer, Draw> draws) {
         // 不启用当前形状缺少的蒙版，否则其他物品的底色也会占用绘制次数。
-        String property = "query.property('ce:shape')";
         StringJoiner ranges = new StringJoiner(" || ", "(", ")");
         for (int shape = first; shape <= last; shape++) {
             if (draws.containsKey(shape)) {
@@ -317,7 +317,7 @@ final class BedrockDisplayAssets {
                 while (shape < last && draws.containsKey(shape + 1)) {
                     shape++;
                 }
-                ranges.add(start == shape ? property + " == " + start : property + " >= " + start + " && " + property + " <= " + shape);
+                ranges.add(start == shape ? SHAPE_VARIABLE + " == " + start : SHAPE_VARIABLE + " >= " + start + " && " + SHAPE_VARIABLE + " <= " + shape);
             }
         }
         return ranges.toString();
@@ -352,7 +352,7 @@ final class BedrockDisplayAssets {
         this.textures.addProperty("default", "textures/items/apple");
         String heldController = "controller.render." + this.name + ".held";
         this.controllers.add(heldController, held);
-        this.activeControllers.add(createObject(heldController, new JsonPrimitive("query.property('ce:shape') == 0")));
+        this.activeControllers.add(createObject(heldController, new JsonPrimitive(SHAPE_VARIABLE + " == 0")));
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
@@ -394,7 +394,9 @@ final class BedrockDisplayAssets {
         description.add("textures", this.textures);
         description.add("geometry", this.geometryNames);
         description.add("animations", this.animationNames);
-        description.add("scripts", BedrockDisplayInterpolation.scripts(this.animate));
+        JsonObject scripts = BedrockDisplayInterpolation.scripts(this.animate);
+        scripts.getAsJsonArray("pre_animation").add(SHAPE_VARIABLE + " = q.property('ce:shape');");
+        description.add("scripts", scripts);
         description.add("render_controllers", this.activeControllers);
         ResourcePackUtils.writeBedrockJson(CLIENT_ENTITY, "minecraft:client_entity", createObject("description", description), this.root.resolve("entity/" + this.name + ".entity.json"));
         JsonObject heldDescription = new JsonObject();
