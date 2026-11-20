@@ -36,6 +36,7 @@ import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 final class BedrockDisplayAssets {
     private static final double DYE_BRIGHTNESS = 0.72;
     private static final String SHAPE_VARIABLE = "v.ce_shape";
+    private static final String VISIBLE = "!v.ce_hidden";
     private static final String[] AXES = { "x", "y", "z" };
     private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y" };
     private static final JsonArray RIG = createRig();
@@ -300,7 +301,7 @@ final class BedrockDisplayAssets {
             controller.add("textures", selected);
             String id = "controller.render." + this.name + ".p" + this.controllers.size();
             this.controllers.add(id, controller);
-            String condition = shapeCondition(first, last, draws);
+            String condition = VISIBLE + " && " + shapeCondition(first, last, draws);
             if (page.pass() != DyePass.NONE) {
                 condition += " && query.property('" + DISPLAY_DYE + "_r') " + (page.pass() == DyePass.DYED ? ">= 0" : "< 0");
             }
@@ -352,7 +353,7 @@ final class BedrockDisplayAssets {
         this.textures.addProperty("default", "textures/items/apple");
         String heldController = "controller.render." + this.name + ".held";
         this.controllers.add(heldController, held);
-        this.activeControllers.add(createObject(heldController, new JsonPrimitive(SHAPE_VARIABLE + " == 0")));
+        this.activeControllers.add(createObject(heldController, new JsonPrimitive(VISIBLE + " && " + SHAPE_VARIABLE + " == 0")));
         JsonObject rig = new JsonObject();
         JsonArray yaw = new JsonArray();
         yaw.add(0);
@@ -427,7 +428,7 @@ final class BedrockDisplayAssets {
         }
         heldDescription.add("scripts", BedrockDisplayInterpolation.scripts(heldAnimate));
         JsonArray heldControllers = new JsonArray();
-        heldControllers.add("controller.render.default");
+        heldControllers.add(createObject("controller.render.default", new JsonPrimitive(VISIBLE)));
         heldDescription.add("render_controllers", heldControllers);
         ResourcePackUtils.writeBedrockJson(CLIENT_ENTITY, "minecraft:client_entity", createObject("description", heldDescription), this.root.resolve("entity/" + this.name + "_held.entity.json"));
         ResourcePackUtils.writeBedrockJson(ANIMATION, "animations", this.animations, this.root.resolve("animations/" + this.name + ".animation.json"));
