@@ -36,7 +36,7 @@ import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 final class BedrockDisplayAssets {
     private static final double DYE_BRIGHTNESS = 0.72;
     private static final String[] AXES = { "x", "y", "z" };
-    private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y", "model_z" };
+    private static final String[] RIG_BONES = { "yaw", "pitch", "translation", "left", "size", "right", "model_x", "model_y" };
     private static final JsonArray RIG = createRig();
     private static final String[] CUBE_POINTS = { "origin", "pivot" };
     private final JavaModelResources resources;
@@ -110,12 +110,13 @@ final class BedrockDisplayAssets {
             String alias = "s" + shape + "l" + layer;
             String geometry = "geometry." + this.name + "." + alias;
             String materialId = "layer" + layer;
-            JsonArray bones = rig();
+            JsonObject modelRoot = bone("model_z", "model_y");
+            JsonArray bones = rig(modelRoot);
             for (int i = 0; i < parts.size(); i++) {
                 BedrockItemGeometry partGeometry = partsCubes.get(i);
                 JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partGeometry.cubes(), materialId);
                 if (!cubes.isEmpty()) {
-                    addPart(bones, channels, i, parts.get(i), cubes, partGeometry.transformation());
+                    addPart(bones, modelRoot, channels, i, parts.get(i), cubes, partGeometry.transformation());
                 }
             }
             JsonObject description = new JsonObject();
@@ -143,10 +144,10 @@ final class BedrockDisplayAssets {
         return shape;
     }
 
-    private static JsonArray rig() {
-        // 展示部件只追加自己的骨骼，基础骨骼留作只读模板
+    private static JsonArray rig(JsonObject modelRoot) {
         JsonArray bones = new JsonArray(RIG.size() + 4);
         bones.addAll(RIG);
+        bones.add(modelRoot);
         return bones;
     }
 
@@ -170,7 +171,7 @@ final class BedrockDisplayAssets {
         return bone;
     }
 
-    private static void addPart(JsonArray bones, JsonObject channels, int index, BedrockItemDisplayGenerator.Part part, JsonArray cubes, Matrix4fc transformation) {
+    private static void addPart(JsonArray bones, JsonObject modelRoot, JsonObject channels, int index, BedrockItemDisplayGenerator.Part part, JsonArray cubes, Matrix4fc transformation) {
         // 物品几何的中心在 (0,8,0)，展示实体的原点在 (0,0,0)。
         for (JsonElement value : cubes) {
             JsonObject cube = value.getAsJsonObject();
@@ -181,6 +182,24 @@ final class BedrockDisplayAssets {
                 }
             }
         }
+        boolean identityMatrix = BedrockModelTransform.isIdentity(transformation);
+        JavaModel.Transform pose = part.display();
+        boolean identityPose = pose.equals(JavaModel.Transform.IDENTITY);
+        if (identityMatrix && identityPose) {
+            JsonObject parent = modelRoot;
+            // 已有带变换的子骨骼时，保留一个同级节点，让重叠面仍按原部件顺序绘制。
+            if (bones.get(bones.size() - 1) != modelRoot) {
+                parent = bone("p" + index + "z", "model_z");
+                bones.add(parent);
+            }
+            JsonArray existing = parent.getAsJsonArray("cubes");
+            if (existing == null) {
+                parent.add("cubes", cubes);
+            } else {
+                existing.addAll(cubes);
+            }
+            return;
+        }
         String prefix = "p" + index;
         JsonObject x = bone(prefix + "x", "model_z");
         JsonObject y = bone(prefix + "y", prefix + "x");
@@ -188,7 +207,7 @@ final class BedrockDisplayAssets {
         bones.add(x);
         bones.add(y);
         bones.add(z);
-        if (BedrockModelTransform.isIdentity(transformation)) {
+        if (identityMatrix) {
             z.add("cubes", cubes);
         } else {
             // cubes 已向下移 8，局部矩阵也必须换到展示实体的坐标原点。
@@ -196,8 +215,7 @@ final class BedrockDisplayAssets {
                     .mul(BedrockModelTransform.bedrockMatrix(transformation, 1)).translate(0, 8, 0);
             BedrockModelTransform.addBones(bones, channels, prefix + "z", prefix, cubes, local);
         }
-        JavaModel.Transform pose = part.display();
-        if (!pose.equals(JavaModel.Transform.IDENTITY)) {
+        if (!identityPose) {
             int side = part.mirrored() ? -1 : 1;
             JsonObject first = new JsonObject();
             first.add("position", VectorUtils.toJson(-side * pose.translation().x, pose.translation().y, pose.translation().z));
@@ -313,7 +331,7 @@ final class BedrockDisplayAssets {
         emptyDescription.addProperty("visible_bounds_width", 4);
         emptyDescription.addProperty("visible_bounds_height", 4);
         emptyDescription.add("visible_bounds_offset", VectorUtils.toJson(0, 0, 0));
-        JsonArray emptyBones = rig();
+        JsonArray emptyBones = rig(bone("model_z", "model_y"));
         emptyBones.add(bone("held_z", "model_z"));
         emptyBones.add(bone("held_y", "held_z"));
         emptyBones.add(bone("held_x", "held_y"));
