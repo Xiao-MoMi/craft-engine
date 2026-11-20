@@ -433,7 +433,7 @@ public final class BedrockItemAttachables {
         FIRST_LEFT(DisplayPosition.FIRSTPERSON_LEFTHAND, true, SlotPose.firstPerson(true), "firstperson_lefthand", "context.is_first_person && context.item_slot == 'off_hand'"),
         THIRD_RIGHT(DisplayPosition.THIRDPERSON_RIGHTHAND, false, SlotPose.THIRD_PERSON, "thirdperson_righthand", "!context.is_first_person && context.item_slot == 'main_hand'"),
         THIRD_LEFT(DisplayPosition.THIRDPERSON_LEFTHAND, true, SlotPose.THIRD_PERSON, "thirdperson_lefthand", "!context.is_first_person && context.item_slot == 'off_hand'"),
-        HEAD(DisplayPosition.HEAD, false, new SlotPose(new Vector3f(0, 180, 0), new Vector3f(0, 16, 0), 0.625f), "head", "context.item_slot == 'head'");
+        HEAD(DisplayPosition.HEAD, false, new SlotPose(new Vector3f(0, 0, 0), new Vector3f(0, 16, 0), 0.625f), "head", "context.item_slot == 'head'");
 
         private final DisplayPosition position;
         private final boolean leftHand;
