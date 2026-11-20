@@ -1,57 +1,61 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import org.cloudburstmc.nbt.NbtMap;
 import org.cloudburstmc.nbt.NbtMapBuilder;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.CustomModelData;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentType;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
-import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
 
 import java.util.Map;
 
-public final class GeyserItemTints {
-    private final Map<String, Map<String, Integer>> bindings;
+public record GeyserItemTints(int gui, int head, int firstRight, int thirdRight, int firstLeft, int thirdLeft) {
+    static final GeyserItemTints DEFAULT = new GeyserItemTints(BedrockTintSource.NONE, BedrockTintSource.DYED_COLOR,
+            BedrockTintSource.DYED_COLOR, BedrockTintSource.DYED_COLOR, BedrockTintSource.DYED_COLOR, BedrockTintSource.DYED_COLOR);
 
-    public GeyserItemTints(Map<String, Map<String, Integer>> bindings) {
-        this.bindings = Map.copyOf(bindings);
+    static GeyserItemTints from(Map<String, Integer> sources) {
+        return new GeyserItemTints(
+                sources.getOrDefault("gui", BedrockTintSource.NONE),
+                sources.getOrDefault("head", BedrockTintSource.NONE),
+                sources.getOrDefault("firstperson_righthand", BedrockTintSource.NONE),
+                sources.getOrDefault("thirdperson_righthand", BedrockTintSource.NONE),
+                sources.getOrDefault("firstperson_lefthand", BedrockTintSource.NONE),
+                sources.getOrDefault("thirdperson_lefthand", BedrockTintSource.NONE)
+        );
     }
 
-    public boolean contains(ItemData item) {
-        return item != null && this.bindings.containsKey(item.getDefinition().getIdentifier());
-    }
-
-    public boolean isEmpty() {
-        return this.bindings.isEmpty();
-    }
-
-    public int color(GeyserItemStack stack, ItemData item, String view) {
-        return this.color(stack == null || stack.isEmpty() ? null : stack.getAllComponents(), item, view);
-    }
-
-    int color(DataComponents components, ItemData item, String view) {
-        Map<String, Integer> sources = this.bindings.get(item.getDefinition().getIdentifier());
-        int source = sources == null ? -1 : sources.getOrDefault(view, -2);
-        if (components == null || source < -1) {
+    public static int color(GeyserItemStack stack, int source) {
+        if (source == BedrockTintSource.NONE || stack == null || stack.isEmpty()) {
             return -1;
         }
-        if (source == -1) {
+        return color(stack::getComponent, source);
+    }
+
+    static int color(ComponentGetter components, int source) {
+        if (source == BedrockTintSource.FIREWORK) {
+            return GeyserComponentColors.firework(components.get(DataComponentTypes.FIREWORK_EXPLOSION));
+        }
+        if (source == BedrockTintSource.POTION) {
+            return GeyserComponentColors.potion(components.get(DataComponentTypes.POTION_CONTENTS));
+        }
+        if (source == BedrockTintSource.DYED_COLOR) {
             Integer color = components.get(DataComponentTypes.DYED_COLOR);
             return color == null ? -1 : color & 0xffffff;
+        }
+        if (source < 0) {
+            return -1;
         }
         CustomModelData data = components.get(DataComponentTypes.CUSTOM_MODEL_DATA);
         return data == null || source >= data.colors().size() ? -1 : data.colors().get(source) & 0xffffff;
     }
 
-    public ItemData render(GeyserItemStack stack, ItemData item) {
-        return this.contains(item) ? this.render(stack.getAllComponents(), item) : item;
-    }
-
-    ItemData render(DataComponents components, ItemData item) {
-        if (!this.contains(item)) {
+    ItemData render(ComponentGetter components, ItemData item) {
+        if (this == DEFAULT) {
             return item;
         }
-        int color = this.color(components, item, "gui");
+        int color = color(components, this.gui);
         NbtMap tag = item.getTag();
         int previous = tag != null && tag.containsKey("customColor") ? tag.getInt("customColor") : -1;
         if (previous == color) {
@@ -64,5 +68,10 @@ public final class GeyserItemTints {
             builder.putInt("customColor", color);
         }
         return item.toBuilder().tag(builder.build()).build();
+    }
+
+    @FunctionalInterface
+    interface ComponentGetter {
+        <T> T get(DataComponentType<T> type);
     }
 }

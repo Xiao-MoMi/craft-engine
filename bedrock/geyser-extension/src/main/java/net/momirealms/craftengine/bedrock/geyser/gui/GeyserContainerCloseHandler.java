@@ -1,16 +1,15 @@
 package net.momirealms.craftengine.bedrock.geyser.gui;
 
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.ContainerClosePacket;
 import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
 import org.geysermc.geyser.inventory.InventoryHolder;
 import org.geysermc.geyser.session.GeyserSession;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Obsolete
-public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdapter {
+public final class GeyserContainerCloseHandler {
     private final GeyserSession session;
     private long clientTick = -1;
     private long resumeTick;
@@ -20,32 +19,29 @@ public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdap
         this.session = session;
     }
 
-    @Override
-    public void channelRead(ChannelHandlerContext context, Object message) throws Exception {
-        if (message instanceof BedrockPacketWrapper wrapper && wrapper.getSenderSubClientId() == 0) {
-            if (wrapper.getPacket() instanceof PlayerAuthInputPacket input) {
-                this.clientTick = Math.max(this.clientTick, input.getTick());
-                super.channelRead(context, message);
-                if (this.pendingClose != null && this.clientTick >= this.resumeTick) {
-                    BedrockPacketWrapper close = this.pendingClose;
-                    this.pendingClose = null;
-                    context.fireChannelRead(close);
-                }
-                return;
-            }
-            if (wrapper.getPacket() instanceof ContainerClosePacket close && this.shouldWait(close)) {
-                if (this.pendingClose == null) {
-                    // Bedrock confirms screen destruction before its next player tick clears the
-                    // type-based server-close flag. Wait past that tick before Geyser opens a successor.
-                    this.resumeTick = this.clientTick + 2;
-                    this.pendingClose = wrapper;
-                } else {
-                    wrapper.release();
-                }
-                return;
-            }
+    public boolean defer(BedrockPacketWrapper wrapper) {
+        if (!(wrapper.getPacket() instanceof ContainerClosePacket close) || !this.shouldWait(close)) {
+            return false;
         }
-        super.channelRead(context, message);
+        if (this.pendingClose == null) {
+            // Bedrock clears the type-based server-close flag after its next input tick.
+            this.resumeTick = this.clientTick + 2;
+            this.pendingClose = wrapper;
+        } else {
+            wrapper.release();
+        }
+        return true;
+    }
+
+    @Nullable
+    public BedrockPacketWrapper afterInput(PlayerAuthInputPacket input) {
+        this.clientTick = Math.max(this.clientTick, input.getTick());
+        if (this.clientTick < this.resumeTick) {
+            return null;
+        }
+        BedrockPacketWrapper close = this.pendingClose;
+        this.pendingClose = null;
+        return close;
     }
 
     private boolean shouldWait(ContainerClosePacket packet) {
@@ -56,19 +52,7 @@ public final class GeyserContainerCloseHandler extends ChannelInboundHandlerAdap
         return holder != null && holder.pending() && holder.bedrockId() != packet.getId();
     }
 
-    @Override
-    public void channelInactive(ChannelHandlerContext context) throws Exception {
-        this.discardPending();
-        super.channelInactive(context);
-    }
-
-    @Override
-    public void handlerRemoved(ChannelHandlerContext context) throws Exception {
-        this.discardPending();
-        super.handlerRemoved(context);
-    }
-
-    private void discardPending() {
+    public void discardPending() {
         if (this.pendingClose != null) {
             this.pendingClose.release();
             this.pendingClose = null;

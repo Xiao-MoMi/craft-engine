@@ -1,13 +1,10 @@
 package net.momirealms.craftengine.bedrock.geyser.item;
 
-import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
 import org.cloudburstmc.protocol.bedrock.data.inventory.HandSlot;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.InventoryTransactionType;
 import org.cloudburstmc.protocol.bedrock.data.inventory.transaction.ItemUseTransaction.TriggerType;
-import org.cloudburstmc.protocol.bedrock.packet.ChangeDimensionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
-import org.cloudburstmc.protocol.bedrock.packet.RespawnPacket;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
@@ -28,14 +25,8 @@ public final class GeyserActiveItemUse {
         this.registeredItem = registeredItem;
     }
 
-    public void listen(GeyserBedrockPackets network) {
-        network.onSend(ChangeDimensionPacket.class, event -> this.hand = null);
-        network.onSend(RespawnPacket.class, event -> this.hand = null);
-        network.onReceive(InventoryTransactionPacket.class, event -> {
-            if (this.suppress(event.packet())) {
-                event.setCancelled(true);
-            }
-        });
+    public void reset() {
+        this.hand = null;
     }
 
     void update(byte flags) {
@@ -58,9 +49,8 @@ public final class GeyserActiveItemUse {
         }
     }
 
-    boolean suppress(InventoryTransactionPacket packet) {
-        if (this.hand == null || packet.getTransactionType() != InventoryTransactionType.ITEM_USE
-                || packet.getActionType() != 0 || packet.getTriggerType() != TriggerType.SIMULATION_TICK) {
+    public boolean suppress(InventoryTransactionPacket packet) {
+        if (this.hand == null || packet.getTransactionType() != InventoryTransactionType.ITEM_USE || packet.getActionType() != 0 || packet.getTriggerType() != TriggerType.SIMULATION_TICK) {
             return false;
         }
         Hand transactionHand = packet.getHand() == HandSlot.OFFHAND ? Hand.OFF_HAND : Hand.MAIN_HAND;
@@ -74,7 +64,8 @@ public final class GeyserActiveItemUse {
         }
         ItemData item = packet.getItemInHand();
         return (this.hand == Hand.OFF_HAND || packet.getHotbarSlot() == this.slot)
-                && item != null && item.getDefinition() != null && this.identifier.equals(item.getDefinition().getIdentifier())
+                && item != null
+                && this.identifier.equals(item.getDefinition().getIdentifier())
                 && (!item.isUsingNetId() || item.getNetId() == this.netId);
     }
 }

@@ -121,8 +121,8 @@ public final class BedrockItemDisplayGenerator {
         if (!entityItems.isEmpty()) {
             result.add("entity_items", entityItems);
         }
-        if (!assets.customModelDataColors().isEmpty()) {
-            result.add("custom_model_data_colors", assets.customModelDataColors());
+        if (!assets.tintSources().isEmpty()) {
+            result.add("custom_model_data_colors", assets.tintSources());
         }
         return result;
     }

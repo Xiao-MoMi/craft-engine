@@ -4,9 +4,6 @@ import org.geysermc.geyser.api.entity.property.BatchPropertyUpdater;
 import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.util.Identifier;
-import org.geysermc.geyser.inventory.GeyserItemStack;
-import org.geysermc.mcprotocollib.protocol.data.game.item.component.CustomModelData;
-import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponentTypes;
 
 public record GeyserDyeProperties(GeyserIntEntityProperty red, GeyserIntEntityProperty greenBlue) {
 
@@ -16,19 +13,6 @@ public record GeyserDyeProperties(GeyserIntEntityProperty red, GeyserIntEntityPr
                 event.registerIntegerProperty(entity, Identifier.of(name + "_r"), -1, 255, -1),
                 event.registerIntegerProperty(entity, Identifier.of(name + "_gb"), 0, 65535, 0)
         );
-    }
-
-    public static int color(GeyserItemStack item) {
-        Integer color = item == null || item.isEmpty() ? null : item.getComponent(DataComponentTypes.DYED_COLOR);
-        return color == null ? -1 : color & 0xffffff;
-    }
-
-    public static int color(GeyserItemStack item, int customModelDataIndex) {
-        if (customModelDataIndex < 0) {
-            return color(item);
-        }
-        CustomModelData data = item == null || item.isEmpty() ? null : item.getComponent(DataComponentTypes.CUSTOM_MODEL_DATA);
-        return data == null || customModelDataIndex >= data.colors().size() ? -1 : data.colors().get(customModelDataIndex) & 0xffffff;
     }
 
     public void write(BatchPropertyUpdater batch, int rgb) {

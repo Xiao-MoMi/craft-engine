@@ -1,9 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
-import org.cloudburstmc.protocol.bedrock.packet.ChangeDimensionPacket;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.session.GeyserSession;
 
@@ -12,17 +10,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-final class GeyserDisplayModelOwners {
+public final class GeyserDisplayModelOwners {
     private final GeyserSession session;
     private final Map<UUID, Bones> instances = new HashMap<>();
     private final Int2ObjectOpenHashMap<Bones> displays = new Int2ObjectOpenHashMap<>();
 
-    GeyserDisplayModelOwners(GeyserPlayer player) {
-        this.session = player.session();
-        player.network().onSend(ChangeDimensionPacket.class, event -> {
-            this.instances.clear();
-            this.displays.clear();
-        });
+    GeyserDisplayModelOwners(GeyserSession session) {
+        this.session = session;
+    }
+
+    public void clear() {
+        this.instances.clear();
+        this.displays.clear();
     }
 
     String model(int display) {

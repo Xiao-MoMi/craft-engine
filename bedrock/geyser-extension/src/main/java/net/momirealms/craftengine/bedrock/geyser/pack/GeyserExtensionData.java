@@ -27,8 +27,11 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSIO
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 
 public final class GeyserExtensionData {
-    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(null, null, null, null,
-            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, null, null, null, null);
+    public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
+            null, null, null, null,
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY,
+            null, null, null, null
+    );
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final JsonObject items;

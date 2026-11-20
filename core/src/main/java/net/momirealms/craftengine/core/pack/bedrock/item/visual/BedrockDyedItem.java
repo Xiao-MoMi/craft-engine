@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
 import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
@@ -8,9 +9,8 @@ import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemGeometryBuilder;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockItemGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
-import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
-import net.momirealms.craftengine.core.pack.model.definition.tint.SimpleDefaultTint;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -24,8 +24,6 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.MAIN_HAND_DYE
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.OFF_HAND_DYE;
 
 public final class BedrockDyedItem {
-    private static final Key DYE = Key.minecraft("dye");
-
     private BedrockDyedItem() {
     }
 
@@ -34,7 +32,7 @@ public final class BedrockDyedItem {
         for (ItemBindingRule rule : rules) {
             if (rule.target() instanceof ItemRenderTarget.Model model) {
                 for (Tint tint : model.tints()) {
-                    if (tint instanceof CustomModelDataTint || (tint instanceof SimpleDefaultTint source && source.type().equals(DYE))) {
+                    if (JavaPackTextureSource.tintSource(tint) != BedrockTintSource.NONE) {
                         return true;
                     }
                 }

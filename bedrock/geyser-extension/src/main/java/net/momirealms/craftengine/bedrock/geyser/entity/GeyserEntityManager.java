@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.entity;
 
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserDisplayModelOwners;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
@@ -15,12 +16,13 @@ import org.jetbrains.annotations.Nullable;
 
 public final class GeyserEntityManager {
     private final GeyserPlayerManager players;
-    private final GeyserModelDisplayManager modelDisplays = new GeyserModelDisplayManager();
+    private final GeyserModelDisplayManager modelDisplays;
     private final GeyserNativeModels nativeModels;
     private GeyserEntitySpawnTranslator spawnTranslator;
 
     public GeyserEntityManager(GeyserPlayerManager players, JsonObject nativeModels) {
         this.players = players;
+        this.modelDisplays = new GeyserModelDisplayManager(players);
         this.nativeModels = new GeyserNativeModels(nativeModels);
     }
 
@@ -45,13 +47,20 @@ public final class GeyserEntityManager {
         switch (state) {
             case NativeModelPayload.DisplayBones bones -> this.modelDisplays.updateOwner(player, bones);
             case NativeModelPayload.RemoveDisplay remove -> this.modelDisplays.removeOwner(player, remove.instance());
-            case NativeModelPayload.NativeMessage message -> this.nativeModels.accept(player, message);
+            case NativeModelPayload.NativeMessage message -> player.session().ensureInEventLoop(() -> {
+                if (!player.isClosed() && player.nativeModels() != null) {
+                    player.nativeModels().accept(message);
+                }
+            });
         }
     }
 
-    public void disconnect(GeyserSession session) {
-        this.nativeModels.disconnect(session);
-        this.modelDisplays.disconnect(session);
+    public GeyserNativeModels.Connection createNativeConnection(GeyserSession session) {
+        return this.nativeModels.createConnection(session);
+    }
+
+    public GeyserDisplayModelOwners createDisplayOwners(GeyserSession session) {
+        return this.modelDisplays.createOwners(session);
     }
 
     public void disable() {

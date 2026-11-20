@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
 
 import java.util.HashMap;
@@ -19,7 +18,7 @@ public final class GeyserBlockManager {
     private final GeyserWorldBlocks worldBlocks = new GeyserWorldBlocks();
     private final Map<String, String> displayBlocks = new HashMap<>();
     private final Set<String> blockItems = new HashSet<>();
-    private GeyserBlockPlacementHandler placementHandler;
+    private Set<String> placementItems = Set.of();
     private GeyserBlockBreakEffects breakEffects;
 
     public Map<String, String> displayBlocks() {
@@ -74,15 +73,13 @@ public final class GeyserBlockManager {
     public void init() {
         this.worldBlocks.install();
         this.breakEffects = GeyserBlockBreakEffects.install(this.worldBlocks);
-    }
-
-    public void initPlacementHandler(GeyserPlayerManager players) {
-        this.placementHandler = GeyserBlockPlacementHandler.install(players, this.blockItems);
+        this.placementItems = Set.copyOf(this.blockItems);
         GeyserTranslationManager.info("block.placement_enabled", this.blockItems.size());
     }
 
-    public void initPlayer(GeyserPlayer player) {
+    public GeyserBlockPlacementHandler initPlayer(GeyserPlayer player) {
         player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
+        return this.placementItems.isEmpty() ? null : new GeyserBlockPlacementHandler(player.session(), this.placementItems);
     }
 
     public void unload() {
@@ -90,11 +87,5 @@ public final class GeyserBlockManager {
             this.breakEffects.uninstall();
         }
         this.worldBlocks.uninstall();
-    }
-
-    public void disable() {
-        if (this.placementHandler != null) {
-            this.placementHandler.uninstall();
-        }
     }
 }

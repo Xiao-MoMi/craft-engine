@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedItem;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedVariant;
@@ -39,7 +40,7 @@ public final class GeyserItemManager {
     private GeyserDyeProperties offHandThirdDye;
     private GeyserDyeProperties headDye;
     private boolean hasDyedItems;
-    private final Map<String, Map<String, Integer>> tintSources = new HashMap<>();
+    private Map<String, GeyserItemTints> tintSources = Map.of();
     private Map<String, Integer> elytraVariants = Map.of();
     private GeyserIntEntityProperty elytraProperty;
 
@@ -53,7 +54,7 @@ public final class GeyserItemManager {
         this.headIdentifiers.clear();
         this.extension.blockManager().clearBlockItems();
         this.hasDyedItems = false;
-        this.tintSources.clear();
+        this.tintSources = Map.of();
         this.elytraVariants = Map.of();
         this.elytraProperty = null;
         this.componentPatches = Map.of();
@@ -95,6 +96,7 @@ public final class GeyserItemManager {
         }
         registration.patches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
         this.componentPatches = Map.copyOf(registration.patches);
+        this.tintSources = Map.copyOf(registration.tintSources);
         this.elytraVariants = Map.copyOf(registration.elytraVariants);
         GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
     }
@@ -105,8 +107,8 @@ public final class GeyserItemManager {
         try {
             this.registerDefinition(item, definition, registration);
             if (!variant.tintSources().isEmpty()) {
-                this.tintSources.put(primaryId, variant.tintSources());
-                this.hasDyedItems |= variant.tintSources().values().stream().anyMatch(source -> source >= -1);
+                registration.tintSources.put(primaryId, GeyserItemTints.from(variant.tintSources()));
+                this.hasDyedItems |= variant.tintSources().values().stream().anyMatch(BedrockTintSource::isDynamic);
             }
             if (variant.head() != null) {
                 definition = variant.head();
@@ -170,13 +172,14 @@ public final class GeyserItemManager {
     }
 
     public GeyserElytraEquipment initPlayerElytra(GeyserPlayer player) {
-        return this.elytraProperty == null ? null : GeyserElytraEquipment.install(player, this.elytraProperty, this.elytraVariants);
+        return this.elytraProperty == null ? null : new GeyserElytraEquipment(player, this.elytraProperty, this.elytraVariants);
+    }
+
+    public GeyserItemComponentPatcher createComponentPatcher(GeyserPlayer player) {
+        return this.componentPatches.isEmpty() ? null : new GeyserItemComponentPatcher(player, this.componentPatches);
     }
 
     public GeyserItemRuntime initPlayer(GeyserPlayer player) {
-        if (!this.componentPatches.isEmpty()) {
-            GeyserItemComponentPatcher.install(player, this.componentPatches);
-        }
         if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty() || !this.tintSources.isEmpty()) {
             return GeyserItemRuntime.install(player, this.contextualItems, this.headIdentifiers, this.tintSources);
         }
@@ -199,6 +202,7 @@ public final class GeyserItemManager {
         private final JsonObject elytraPlan;
         private final Map<String, Integer> elytraVariants = new HashMap<>();
         private final Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
+        private final Map<String, GeyserItemTints> tintSources = new HashMap<>();
         private int registered;
         private int skipped;
         private int failed;

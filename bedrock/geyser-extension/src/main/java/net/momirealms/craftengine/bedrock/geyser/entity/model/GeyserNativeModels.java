@@ -3,13 +3,12 @@ package net.momirealms.craftengine.bedrock.geyser.entity.model;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityEventType;
 import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.EntityEventPacket;
-import org.cloudburstmc.protocol.bedrock.packet.ChangeDimensionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
@@ -31,7 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GeyserNativeModels {
     private final Map<String, Model> models = new LinkedHashMap<>();
-    private final Map<GeyserSession, Connection> connections = new ConcurrentHashMap<>();
     private final AtomicInteger nextId = new AtomicInteger(-2000000000);
 
     public GeyserNativeModels(JsonObject manifest) {
@@ -54,54 +52,50 @@ public final class GeyserNativeModels {
         this.models.values().forEach(model -> model.register(event));
     }
 
-    public void accept(GeyserPlayer player, NativeModelPayload.NativeMessage message) {
-        GeyserSession session = player.session();
-        session.ensureInEventLoop(() -> {
-            if (!session.isClosed()) {
-                this.connections.computeIfAbsent(session, ignored -> new Connection(player)).accept(message);
-            }
-        });
+    public Connection createConnection(GeyserSession session) {
+        return this.models.isEmpty() ? null : new Connection(session);
     }
 
-    public void disconnect(GeyserSession session) {
-        this.connections.remove(session);
-    }
-
-    private final class Connection {
+    public final class Connection {
         private final GeyserSession session;
         private final Map<UUID, Instance> instances = new HashMap<>();
         private final Set<Integer> hidden = ConcurrentHashMap.newKeySet();
         private final Map<Long, Integer> targets = new ConcurrentHashMap<>();
 
-        private Connection(GeyserPlayer player) {
-            this.session = player.session();
-            player.network().onSend(AddEntityPacket.class, event -> {
+        private Connection(GeyserSession session) {
+            this.session = session;
+        }
+
+        public void onAddEntity(GeyserPacketEvent<AddEntityPacket> event) {
+            if (!this.hidden.isEmpty()) {
                 Entity entity = this.session.getEntityCache().getEntityByGeyserId(event.packet().getRuntimeEntityId());
                 if (entity != null && this.hidden.contains(entity.getEntityId())) {
                     event.setCancelled(true);
                 }
-            });
-            player.network().onReceive(InventoryTransactionPacket.class, event -> {
-                Integer target = this.targets.get(event.packet().getRuntimeEntityId());
-                if (target != null) {
-                    Entity entity = target == 0 ? null : this.session.getEntityCache().getEntityByJavaId(target);
-                    if (entity != null) {
-                        InventoryTransactionPacket packet = event.packet().clone();
-                        packet.setRuntimeEntityId(entity.geyserId());
-                        event.setPacket(packet);
-                    } else {
-                        event.setCancelled(true);
-                    }
-                }
-            });
-            player.network().onSend(ChangeDimensionPacket.class, event -> {
-                this.instances.clear();
-                this.hidden.clear();
-                this.targets.clear();
-            });
+            }
         }
 
-        private void accept(NativeModelPayload.NativeMessage message) {
+        public void onTransaction(GeyserPacketEvent<InventoryTransactionPacket> event) {
+            Integer target = this.targets.get(event.packet().getRuntimeEntityId());
+            if (target != null) {
+                Entity entity = target == 0 ? null : this.session.getEntityCache().getEntityByJavaId(target);
+                if (entity != null) {
+                    InventoryTransactionPacket packet = event.packet().clone();
+                    packet.setRuntimeEntityId(entity.geyserId());
+                    event.setPacket(packet);
+                } else {
+                    event.setCancelled(true);
+                }
+            }
+        }
+
+        public void clear() {
+            this.instances.clear();
+            this.hidden.clear();
+            this.targets.clear();
+        }
+
+        public void accept(NativeModelPayload.NativeMessage message) {
             switch (message) {
                 case NativeModelPayload.RemoveNative remove -> this.remove(remove.instance());
                 case NativeModelPayload.NativeState state -> {

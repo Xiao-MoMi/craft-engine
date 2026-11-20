@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Either;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.core.pack.atlas.Atlas;
 import net.momirealms.craftengine.core.pack.atlas.UnstitchSource;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
@@ -30,7 +31,6 @@ public final class JavaPackTextureSource {
     public static final Integer WHITE = 0xffffff;
     private static final Key ITEMS = Key.minecraft("items");
     private static final Key BLOCKS = Key.minecraft("blocks");
-    private static final Key DYE = Key.minecraft("dye");
     private static final TextureData MISSING_TEXTURE = missingTexture();
     private final JavaResourcePack pack;
     private final Map<Key, Atlas> atlases = new HashMap<>();
@@ -54,9 +54,8 @@ public final class JavaPackTextureSource {
         if (tint instanceof CustomModelDataTint custom) {
             return custom.value() == null ? WHITE : rgb(custom.value());
         }
-        Integer dye = this.dyeColor(tint);
-        if (dye != null) {
-            return dye;
+        if (tint instanceof SimpleDefaultTint component && tintSource(component) != BedrockTintSource.NONE) {
+            return component.defaultValue() == null ? WHITE : rgb(component.defaultValue());
         }
         if (tint instanceof GrassTint grass) {
             double temperature = grass.temperature();
@@ -81,12 +80,19 @@ public final class JavaPackTextureSource {
         throw new BedrockResourceException("resource_pack.bedrock.reason.tint_source", tint.get().get("type").getAsString());
     }
 
-    @Nullable
-    public Integer dyeColor(Tint tint) {
-        if (tint instanceof SimpleDefaultTint dye && DYE.equals(dye.type())) {
-            return dye.defaultValue() == null ? WHITE : rgb(dye.defaultValue());
+    public static int tintSource(@Nullable Tint tint) {
+        if (tint instanceof CustomModelDataTint custom && custom.index() >= 0) {
+            return custom.index();
         }
-        return null;
+        if (tint instanceof SimpleDefaultTint component && component.type().isMinecraftNamespace()) {
+            return switch (component.type().value()) {
+                case "dye" -> BedrockTintSource.DYED_COLOR;
+                case "firework" -> BedrockTintSource.FIREWORK;
+                case "potion" -> BedrockTintSource.POTION;
+                default -> BedrockTintSource.NONE;
+            };
+        }
+        return BedrockTintSource.NONE;
     }
 
     private static int rgb(Either<Integer, List<Float>> color) {

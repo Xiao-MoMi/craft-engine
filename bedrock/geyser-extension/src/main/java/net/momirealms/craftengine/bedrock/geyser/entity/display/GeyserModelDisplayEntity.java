@@ -4,7 +4,7 @@ import net.momirealms.craftengine.bedrock.BedrockDisplayStyle;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.Appearance;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.Model;
-import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemTints;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector2f;
@@ -215,7 +215,7 @@ final class GeyserModelDisplayEntity extends Entity implements Tickable {
             dyeColor = -1;
         } else {
             appearance = this.model.appearance(this.displayContext);
-            dyeColor = GeyserDyeProperties.color(this.displayItem, appearance.customModelDataColorIndex());
+            dyeColor = GeyserItemTints.color(this.displayItem, appearance.tintSource());
         }
 
         DisplayPose pose = this.interpolation.target();

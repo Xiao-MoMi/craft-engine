@@ -26,38 +26,33 @@ public final class GeyserElytraEquipment {
         this.variants = variants;
     }
 
-    public static GeyserElytraEquipment install(GeyserPlayer player, GeyserIntEntityProperty property, Map<String, Integer> variants) {
-        GeyserElytraEquipment equipment = new GeyserElytraEquipment(player, property, variants);
-        long self = player.session().getPlayerEntity().geyserId();
-        player.network().onSend(InventoryContentPacket.class, event -> {
-            if (event.packet().getContainerId() == ContainerId.ARMOR) {
-                equipment.queue(self, false);
-            }
-        });
-        player.network().onSend(InventorySlotPacket.class, event -> {
-            if (event.packet().getContainerId() == ContainerId.ARMOR && event.packet().getSlot() == 1) {
-                equipment.queue(self, false);
-            }
-        });
-        player.network().onSend(MobArmorEquipmentPacket.class, event -> equipment.queue(event.packet().getRuntimeEntityId(), false));
-        player.network().onSend(AddPlayerPacket.class, event -> equipment.queue(event.packet().getRuntimeEntityId(), true));
-        player.network().onSend(RespawnPacket.class, event -> {
-            if (event.packet().getState() == RespawnPacket.State.SERVER_READY) {
-                equipment.queue(self, true);
-            }
-        });
-        player.network().onSend(RemoveEntityPacket.class, event -> {
-            long id = event.packet().getUniqueEntityId();
-            equipment.session.executeInEventLoop(() -> equipment.sent.remove(id));
-        });
-        return equipment;
+    public void onInventoryContent(InventoryContentPacket packet) {
+        if (packet.getContainerId() == ContainerId.ARMOR) {
+            this.queue(this.session.getPlayerEntity().geyserId(), false);
+        }
+    }
+
+    public void onInventorySlot(InventorySlotPacket packet) {
+        if (packet.getContainerId() == ContainerId.ARMOR && packet.getSlot() == 1) {
+            this.queue(this.session.getPlayerEntity().geyserId(), false);
+        }
+    }
+
+    public void onRespawn(RespawnPacket packet) {
+        if (packet.getState() == RespawnPacket.State.SERVER_READY) {
+            this.queue(this.session.getPlayerEntity().geyserId(), true);
+        }
+    }
+
+    public void remove(long id) {
+        this.session.executeInEventLoop(() -> this.sent.remove(id));
     }
 
     public void close() {
         this.session.ensureInEventLoop(this.sent::clear);
     }
 
-    private void queue(long id, boolean spawned) {
+    public void queue(long id, boolean spawned) {
         this.session.executeInEventLoop(() -> {
             if (this.player.isClosed() || !this.session.isSpawned()) {
                 return;

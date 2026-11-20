@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
@@ -47,7 +48,7 @@ final class BedrockDisplayAssets {
     private final String name;
     private final String texturePrefix;
     private final JsonObject textures = new JsonObject();
-    private final JsonObject customModelDataColors = new JsonObject();
+    private final JsonObject tintSources = new JsonObject();
     private final JsonObject geometryNames = new JsonObject();
     private final JsonObject animations = new JsonObject();
     private final JsonObject animationNames = new JsonObject();
@@ -66,8 +67,8 @@ final class BedrockDisplayAssets {
         this.texturePrefix = CRAFTENGINE_TEXTURES + '/' + name + '/';
     }
 
-    JsonObject customModelDataColors() {
-        return this.customModelDataColors;
+    JsonObject tintSources() {
+        return this.tintSources;
     }
 
     int add(List<BedrockItemDisplayGenerator.Part> parts, TextureUsage textureUsage, BedrockEntityDye dye) throws IOException {
@@ -99,8 +100,8 @@ final class BedrockDisplayAssets {
             return 0;
         }
         int shape = ++this.shapes;
-        if (mesh.customModelDataColorIndex() >= 0) {
-            this.customModelDataColors.addProperty(Integer.toString(shape), mesh.customModelDataColorIndex());
+        if (BedrockTintSource.isDynamic(mesh.tintSource()) && mesh.tintSource() != BedrockTintSource.DYED_COLOR) {
+            this.tintSources.addProperty(Integer.toString(shape), mesh.tintSource());
         }
         String condition = SHAPE_VARIABLE + " == " + shape;
         JsonObject channels = new JsonObject();

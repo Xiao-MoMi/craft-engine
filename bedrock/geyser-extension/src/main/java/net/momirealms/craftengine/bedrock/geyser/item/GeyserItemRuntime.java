@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredic
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
+import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
@@ -19,6 +20,7 @@ import org.geysermc.geyser.item.GeyserCustomMappingData;
 import org.geysermc.geyser.registry.type.ItemMapping;
 import org.geysermc.geyser.registry.type.ItemMappings;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.translator.item.CustomItemTranslator;
 
 import java.util.*;
 
@@ -29,15 +31,16 @@ public final class GeyserItemRuntime {
     private final ItemMappings originalMappings;
     private ItemMappings boundMappings;
     private GeyserSelectedItemHandler selectedHandler;
-    private GeyserItemTints tints = new GeyserItemTints(Map.of());
+    private final Map<String, GeyserItemTints> tintSources;
 
-    GeyserItemRuntime(GeyserSession session, Set<String> selectedItems) {
+    private GeyserItemRuntime(GeyserSession session, Set<String> selectedItems, Map<String, GeyserItemTints> tintSources) {
         this.session = session;
         this.originalMappings = session.getItemMappings();
         this.selectedItems = selectedItems;
+        this.tintSources = tintSources;
     }
 
-    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers, Map<String, Map<String, Integer>> tintSources) {
+    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers, Map<String, GeyserItemTints> tintSources) {
         GeyserSession session = player.session();
         Set<String> selectedModels = new HashSet<>();
         for (CustomItemDefinition definition : definitions.values()) {
@@ -51,8 +54,7 @@ public final class GeyserItemRuntime {
                 selectedItems.add(definition.bedrockIdentifier().toString());
             }
         }
-        GeyserItemRuntime runtime = new GeyserItemRuntime(session, selectedItems);
-        runtime.tints = new GeyserItemTints(tintSources);
+        GeyserItemRuntime runtime = new GeyserItemRuntime(session, selectedItems, tintSources);
         if (!definitions.isEmpty()) {
             session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
         }
@@ -60,6 +62,10 @@ public final class GeyserItemRuntime {
         runtime.boundMappings = session.getItemMappings();
         runtime.selectedHandler = GeyserSelectedItemHandler.install(player, runtime, heads, !definitions.isEmpty());
         return runtime;
+    }
+
+    public GeyserSelectedItemHandler selectedHandler() {
+        return this.selectedHandler;
     }
 
     public void close() {
@@ -123,24 +129,29 @@ public final class GeyserItemRuntime {
         return world == null ? null : world.toString();
     }
 
-    GeyserItemTints tints() {
-        return this.tints;
+    boolean hasTints() {
+        return !this.tintSources.isEmpty();
     }
 
-    public int handColor(GeyserItemStack stack, boolean offhand, boolean firstPerson, boolean selected) {
-        if (stack == null || stack.isEmpty()) {
-            return -1;
+    GeyserItemTints tints(ItemData item) {
+        return this.tintSources.getOrDefault(item.getDefinition().getIdentifier(), GeyserItemTints.DEFAULT);
+    }
+
+    GeyserItemTints tints(GeyserItemStack stack, boolean selected) {
+        if (this.tintSources.isEmpty() || stack.isEmpty()) {
+            return GeyserItemTints.DEFAULT;
         }
-        return this.handColor(stack, this.handItem(stack, selected), offhand, firstPerson);
-    }
-
-    ItemData handItem(GeyserItemStack stack, boolean selected) {
-        return selected ? this.selected(stack) : stack.getItemData(this.session);
-    }
-
-    int handColor(GeyserItemStack stack, ItemData item, boolean offhand, boolean firstPerson) {
-        String view = (firstPerson ? "firstperson_" : "thirdperson_") + (offhand ? "lefthand" : "righthand");
-        return this.tints.color(stack, item, view);
+        ItemMapping mapping = stack.getMapping(this.session);
+        if (mapping.getCustomItemDefinitions() == null) {
+            return GeyserItemTints.DEFAULT;
+        }
+        this.selected = selected;
+        try {
+            ItemDefinition definition = CustomItemTranslator.getCustomItem(this.session, stack.getAmount(), stack.getAllComponents(), mapping);
+            return definition == null ? GeyserItemTints.DEFAULT : this.tintSources.getOrDefault(definition.getIdentifier(), GeyserItemTints.DEFAULT);
+        } finally {
+            this.selected = false;
+        }
     }
 
     boolean hasSelected(ItemData item) {

@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.render;
 
 import com.google.gson.JsonArray;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
@@ -104,7 +105,7 @@ final class BedrockItemContextWriter {
         Map<ItemDisplayContext, Integer> sources = new EnumMap<>(ItemDisplayContext.class);
         for (Map.Entry<ItemDisplayContext, BedrockItemTint> entry : tints.entrySet()) {
             BedrockItemTint tint = entry.getValue();
-            sources.put(entry.getKey(), tint.dynamic() ? tint.source() : BedrockItemTint.NONE);
+            sources.put(entry.getKey(), tint.dynamic() ? tint.source() : BedrockTintSource.NONE);
         }
         return sources;
     }

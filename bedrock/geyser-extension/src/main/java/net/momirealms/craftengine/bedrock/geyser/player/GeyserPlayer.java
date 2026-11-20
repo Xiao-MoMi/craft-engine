@@ -5,13 +5,17 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockPlacementHandler;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
-import net.momirealms.craftengine.bedrock.geyser.gui.GeyserContainerCloseHandler;
+import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserDisplayModelOwners;
+import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserActiveItemUse;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserElytraEquipment;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRuntime;
-import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.ServerCustomPacket;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarConnection;
@@ -22,7 +26,6 @@ import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.data.debugshape.DebugShape;
 import org.cloudburstmc.protocol.bedrock.packet.DebugDrawerPacket;
-import org.cloudburstmc.protocol.bedrock.packet.PlayerAuthInputPacket;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BlockBreakHandler;
@@ -34,9 +37,12 @@ public final class GeyserPlayer {
     private final CraftEngineGeyserExtension extension;
     private final GeyserSession session;
     private final GeyserActiveItemUse activeUse;
-    private final GeyserBedrockPackets network = new GeyserBedrockPackets();
+    private final GeyserNativeModels.Connection nativeModels;
+    private final GeyserDisplayModelOwners displayOwners;
+    private GeyserBlockPlacementHandler placement;
+    private GeyserItemComponentPatcher componentPatcher;
+    private final GeyserJavaPacketHandler javaConnection;
     private GeyserPacketHandler packetHandler;
-    private GeyserContainerCloseHandler containerCloseHandler;
     private Int2ObjectMap<HardHitboxPayload> pendingHitboxes;
     private Long2ObjectLinkedOpenHashMap<DebugShape> pendingShapes;
     private Vector3f cameraDirection;
@@ -48,13 +54,14 @@ public final class GeyserPlayer {
     private GeyserElytraEquipment elytra;
     private BlockBreakHandler originalBlockBreakHandler;
     private BlockBreakHandler blockBreakHandler;
-    private boolean placed;
-    private long lastPlacement;
     private volatile boolean closed;
 
     GeyserPlayer(CraftEngineGeyserExtension extension, GeyserSession session) {
         this.extension = extension;
+        this.nativeModels = extension.entityManager().createNativeConnection(session);
+        this.displayOwners = extension.entityManager().createDisplayOwners(session);
         this.session = session;
+        this.javaConnection = new GeyserJavaPacketHandler(this, extension.javaPackets());
         this.activeUse = new GeyserActiveItemUse(session, extension.itemManager()::isRegisteredItem);
     }
 
@@ -62,18 +69,17 @@ public final class GeyserPlayer {
         if (this.isClosed()) {
             return;
         }
-        this.extension.blockManager().initPlayer(this);
         this.heldDye = this.extension.itemManager().initPlayerDye(this);
+        this.componentPatcher = this.extension.itemManager().createComponentPatcher(this);
         this.items = this.extension.itemManager().initPlayer(this);
-        this.activeUse.listen(this.network);
+        this.placement = this.extension.blockManager().initPlayer(this);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
-        this.network.onReceive(PlayerAuthInputPacket.class, event -> this.cameraDirection = event.packet().getCameraOrientation());
-        if (GeyserConfig.containerCloseHandlerEnabled()) {
-            this.containerCloseHandler = new GeyserContainerCloseHandler(this.session);
-            this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-container-close", this.containerCloseHandler);
-        }
-        this.packetHandler = new GeyserPacketHandler(this);
-        this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(this.session.getTickEventLoop(), BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
+        this.packetHandler = new GeyserPacketHandler(this, GeyserConfig.containerCloseHandlerEnabled());
+        this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
+    }
+
+    public GeyserJavaPacketHandler javaConnection() {
+        return this.javaConnection;
     }
 
     public GeyserActiveItemUse activeUse() {
@@ -131,15 +137,6 @@ public final class GeyserPlayer {
         return this.sidebar.sidebar();
     }
 
-    public boolean placementWithin(long now, long interval) {
-        return this.placed && now - this.lastPlacement < interval;
-    }
-
-    public void placed(long now) {
-        this.placed = true;
-        this.lastPlacement = now;
-    }
-
     public void queueHitbox(HardHitboxPayload hitbox) {
         if (!this.isClosed()) {
             if (this.pendingHitboxes == null) {
@@ -189,8 +186,43 @@ public final class GeyserPlayer {
         }
     }
 
-    public GeyserBedrockPackets network() {
-        return this.network;
+    @Nullable
+    public GeyserNativeModels.Connection nativeModels() {
+        return this.nativeModels;
+    }
+
+    @Nullable
+    public GeyserDisplayModelOwners displayOwners() {
+        return this.displayOwners;
+    }
+
+    @Nullable
+    public GeyserSelectedItemHandler selectedItems() {
+        return this.items == null ? null : this.items.selectedHandler();
+    }
+
+    @Nullable
+    public GeyserHeldDye heldDye() {
+        return this.heldDye;
+    }
+
+    @Nullable
+    public GeyserElytraEquipment elytra() {
+        return this.elytra;
+    }
+
+    @Nullable
+    public GeyserBlockPlacementHandler placement() {
+        return this.placement;
+    }
+
+    @Nullable
+    public GeyserItemComponentPatcher componentPatcher() {
+        return this.componentPatcher;
+    }
+
+    public void cameraDirection(Vector3f direction) {
+        this.cameraDirection = direction;
     }
 
     public void blockBreakHandler(BlockBreakHandler handler) {
@@ -209,13 +241,11 @@ public final class GeyserPlayer {
             connection = this.sidebar;
             this.sidebar = null;
         }
+        this.javaConnection.close();
         if (connection != null) {
             connection.close();
         }
         this.session.executeInEventLoop(() -> {
-            if (this.heldDye != null) {
-                this.heldDye.close();
-            }
             if (this.elytra != null) {
                 this.elytra.close();
             }
@@ -226,9 +256,6 @@ public final class GeyserPlayer {
                 this.session.setBlockBreakHandler(this.originalBlockBreakHandler);
             }
             Channel channel = this.session.getUpstream().getSession().getPeer().getChannel();
-            if (this.containerCloseHandler != null && channel.pipeline().context(this.containerCloseHandler) != null) {
-                channel.pipeline().remove(this.containerCloseHandler);
-            }
             if (this.packetHandler != null && channel.pipeline().context(this.packetHandler) != null) {
                 channel.pipeline().remove(this.packetHandler);
             }

@@ -24,6 +24,7 @@ import org.geysermc.geyser.api.event.lifecycle.*;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
+import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 
 import java.io.IOException;
@@ -54,7 +55,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         instance = this;
         this.sounds = new GeyserSoundMappings();
         this.playerManager = new GeyserPlayerManager(this);
-        this.javaPackets = new GeyserJavaPackets(this.playerManager);
         this.config = new GeyserConfig(this.dataFolder(), this.logger());
         this.config.load();
         try {
@@ -95,18 +95,17 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.entityManager.initialize(this.glyphManager.glyphs());
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
             this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
-            this.sidebarManager.install(this.javaPackets);
         }
+        this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
+        this.javaPackets.install(this.sidebarManager != null);
         this.itemManager.init();
         this.blockManager.init();
         this.customPayloads.install();
         this.guiMenus = GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
-        this.blockManager.initPlacementHandler(this.playerManager);
     }
 
     @Subscribe
     public void onDisconnect(SessionDisconnectEvent event) {
-        this.entityManager.disconnect((GeyserSession) event.connection());
         this.playerManager.remove(event.connection());
     }
 
@@ -138,9 +137,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
         if (this.itemManager != null) {
             this.itemManager.disable();
-        }
-        if (this.blockManager != null) {
-            this.blockManager.disable();
         }
         this.glyphManager.disable();
         if (this.languageManager != null) {
@@ -182,6 +178,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserConfig config() {
         return this.config;
+    }
+
+    public GeyserJavaPackets javaPackets() {
+        return this.javaPackets;
     }
 
     public GeyserPlayerManager playerManager() {

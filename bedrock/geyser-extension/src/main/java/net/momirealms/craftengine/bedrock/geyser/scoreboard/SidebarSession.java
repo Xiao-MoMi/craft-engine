@@ -53,7 +53,7 @@ public final class SidebarSession {
         this.profiles = profiles;
     }
 
-    void capture(ClientboundSetObjectivePacket objective) {
+    public void capture(ClientboundSetObjectivePacket objective) {
         this.checkScoreboard();
         Objective current = this.scoreboard.getObjective(objective.getName());
         if (objective.getAction() == ObjectiveAction.REMOVE) {
@@ -69,7 +69,7 @@ public final class SidebarSession {
         }
     }
 
-    void capture(ClientboundSetScorePacket score) {
+    public void capture(ClientboundSetScorePacket score) {
         this.checkScoreboard();
         ObjectiveText objective = this.objectives.get(score.getObjective());
         if (objective != null) {
@@ -82,7 +82,7 @@ public final class SidebarSession {
         }
     }
 
-    void capture(ClientboundResetScorePacket reset) {
+    public void capture(ClientboundResetScorePacket reset) {
         this.checkScoreboard();
         if (reset.getObjective() == null) {
             for (ObjectiveText objective : this.objectives.values()) {
@@ -96,7 +96,7 @@ public final class SidebarSession {
         }
     }
 
-    void capture(ClientboundSetPlayerTeamPacket team) {
+    public void capture(ClientboundSetPlayerTeamPacket team) {
         this.checkScoreboard();
         Team current = this.scoreboard.getTeam(team.getTeamName());
         if (team.getAction() == TeamAction.REMOVE) {
@@ -109,7 +109,7 @@ public final class SidebarSession {
         }
     }
 
-    void capture(ClientboundSetDisplayObjectivePacket display) {
+    public void capture(ClientboundSetDisplayObjectivePacket display) {
         this.checkScoreboard();
     }
 

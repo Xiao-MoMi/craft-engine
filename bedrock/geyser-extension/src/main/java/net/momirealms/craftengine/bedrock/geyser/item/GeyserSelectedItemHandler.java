@@ -17,6 +17,7 @@ import org.geysermc.geyser.inventory.Inventory;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.util.InventoryUtils;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -44,15 +45,6 @@ public final class GeyserSelectedItemHandler {
     static GeyserSelectedItemHandler install(GeyserPlayer player, GeyserItemRuntime runtime, GeyserHeadItemViews heads, boolean pollSelection) {
         GeyserSelectedItemHandler handler = new GeyserSelectedItemHandler(player, runtime, heads);
         // 匹配与槽位读取均在 Geyser 事件循环执行，不能在网络线程临时修改匹配上下文。
-        player.network().onReceive(MobEquipmentPacket.class, handler::restoreEquipment);
-        player.network().onReceive(InventoryTransactionPacket.class, handler::restoreTransaction);
-        player.network().onReceive(PlayerAuthInputPacket.class, handler::restorePlayerInput);
-        player.network().onSend(InventoryContentPacket.class, handler::onInventoryContent);
-        player.network().onSend(InventorySlotPacket.class, handler::onInventorySlot);
-        player.network().onSend(MobArmorEquipmentPacket.class, handler::onArmorEquipment);
-        player.network().onSend(MobEquipmentPacket.class, handler::onEquipment);
-        player.network().onSend(AddPlayerPacket.class, handler::onAddPlayer);
-        player.network().onSend(ItemStackResponsePacket.class, handler::onStackResponse);
         if (pollSelection) {
             player.session().executeInEventLoop(handler::poll);
         }
@@ -90,7 +82,7 @@ public final class GeyserSelectedItemHandler {
         this.task = this.session.scheduleInEventLoop(this::poll, 50, TimeUnit.MILLISECONDS);
     }
 
-    private void restoreEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
+    public void restoreEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
         MobEquipmentPacket equipment = event.packet();
         int slot = equipment.getHotbarSlot();
         int netId = 0;
@@ -100,13 +92,13 @@ public final class GeyserSelectedItemHandler {
         equipment.setItem(this.restore(equipment.getItem(), netId));
     }
 
-    private void restoreTransaction(GeyserPacketEvent<InventoryTransactionPacket> event) {
+    public void restoreTransaction(GeyserPacketEvent<InventoryTransactionPacket> event) {
         InventoryTransactionPacket transaction = event.packet();
         transaction.setItemInHand(this.restore(transaction.getItemInHand(), this.session.getPlayerInventory().getItemInHand().getNetId()));
         this.restoreActions(transaction.getActions());
     }
 
-    private void restorePlayerInput(GeyserPacketEvent<PlayerAuthInputPacket> event) {
+    public void restorePlayerInput(GeyserPacketEvent<PlayerAuthInputPacket> event) {
         PlayerAuthInputPacket input = event.packet();
         ItemUseTransaction transaction = input.getItemUseTransaction();
         if (transaction != null) {
@@ -126,32 +118,34 @@ public final class GeyserSelectedItemHandler {
         }
     }
 
-    private void onInventoryContent(GeyserPacketEvent<InventoryContentPacket> event) {
+    public void onInventoryContent(GeyserPacketEvent<InventoryContentPacket> event) {
         InventoryContentPacket inventory = event.packet();
         this.renderInventory(inventory);
     }
 
-    private void onInventorySlot(GeyserPacketEvent<InventorySlotPacket> event) {
+    public void onInventorySlot(GeyserPacketEvent<InventorySlotPacket> event) {
         InventorySlotPacket inventory = event.packet();
         inventory.setItem(this.renderSlot(inventory.getItem(), inventory.getContainerId(), inventory.getSlot()));
     }
 
-    private void onArmorEquipment(GeyserPacketEvent<MobArmorEquipmentPacket> event) {
+    public void onArmorEquipment(GeyserPacketEvent<MobArmorEquipmentPacket> event) {
         MobArmorEquipmentPacket armor = event.packet();
         armor.setHelmet(this.heads.equipped(armor.getHelmet()));
     }
 
-    private void onEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
+    public void onEquipment(GeyserPacketEvent<MobEquipmentPacket> event) {
         MobEquipmentPacket equipment = event.packet();
         boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
         boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
         Entity entity = this.session.getEntityCache().getEntityByGeyserId(equipment.getRuntimeEntityId());
         GeyserItemStack stack = own ? (mainHand ? this.session.getPlayerInventory().getItemInHand() : this.session.getPlayerInventory().getOffhand())
                 : (entity instanceof LivingEntity living ? (mainHand ? living.getMainHandItem() : living.getOffHandItem()) : null);
-        equipment.setItem(this.render(equipment.getItem(), own && mainHand, stack));
+        if (stack != null) {
+            equipment.setItem(this.render(equipment.getItem(), own && mainHand, stack));
+        }
     }
 
-    private void onAddPlayer(GeyserPacketEvent<AddPlayerPacket> event) {
+    public void onAddPlayer(GeyserPacketEvent<AddPlayerPacket> event) {
         AddPlayerPacket packet = event.packet();
         Entity entity = this.session.getEntityCache().getEntityByGeyserId(packet.getRuntimeEntityId());
         if (entity instanceof LivingEntity living) {
@@ -159,7 +153,7 @@ public final class GeyserSelectedItemHandler {
         }
     }
 
-    private void onStackResponse(GeyserPacketEvent<ItemStackResponsePacket> event) {
+    public void onStackResponse(GeyserPacketEvent<ItemStackResponsePacket> event) {
         this.refresh(-1);
     }
 
@@ -184,7 +178,7 @@ public final class GeyserSelectedItemHandler {
         if (container == ContainerId.ARMOR && slot == 0) {
             return this.heads.equipped(item);
         }
-        return this.render(item, container == ContainerId.INVENTORY && slot == this.session.getPlayerInventory().getHeldItemSlot());
+        return this.render(item, container == ContainerId.INVENTORY && slot == this.session.getPlayerInventory().getHeldItemSlot(), null);
     }
 
     private void refresh(int previous) {
@@ -193,18 +187,20 @@ public final class GeyserSelectedItemHandler {
                 return;
             }
             PlayerInventory inventory = this.session.getPlayerInventory();
-            Set<Integer> active = new HashSet<>();
-            for (int slot = 0; slot < inventory.getSize(); slot++) {
-                active.add(inventory.getItem(slot).getNetId());
-            }
-            if (this.session.getOpenInventory() != null) {
-                for (int slot = 0; slot < this.session.getOpenInventory().getSize(); slot++) {
-                    active.add(this.session.getOpenInventory().getItem(slot).getNetId());
+            if (!this.originals.isEmpty()) {
+                Set<Integer> active = new HashSet<>();
+                for (int slot = 0; slot < inventory.getSize(); slot++) {
+                    active.add(inventory.getItem(slot).getNetId());
                 }
+                if (this.session.getOpenInventory() != null) {
+                    for (int slot = 0; slot < this.session.getOpenInventory().getSize(); slot++) {
+                        active.add(this.session.getOpenInventory().getItem(slot).getNetId());
+                    }
+                }
+                active.add(inventory.getCursor().getNetId());
+                this.originals.keySet().retainAll(active);
             }
-            active.add(inventory.getCursor().getNetId());
-            this.originals.keySet().retainAll(active);
-            if (previous < 0 && !this.runtime.tints().isEmpty()) {
+            if (previous < 0 && this.runtime.hasTints()) {
                 this.session.getPlayerInventoryHolder().updateInventory();
                 InventoryUtils.updateCursor(this.session);
                 if (this.session.getInventoryHolder() != null) {
@@ -228,14 +224,6 @@ public final class GeyserSelectedItemHandler {
                 }
             }
         });
-    }
-
-    @Nullable
-    ItemData render(@Nullable ItemData item, boolean selected) {
-        if (item == null || (!this.runtime.tints().contains(item) && (!selected || !this.runtime.hasSelected(item)))) {
-            return item;
-        }
-        return this.render(item, selected, this.findStack(item.getNetId()));
     }
 
     private GeyserItemStack findStack(int netId) {
@@ -262,22 +250,39 @@ public final class GeyserSelectedItemHandler {
         return null;
     }
 
-    private ItemData render(ItemData item, boolean selected, GeyserItemStack stack) {
-        if (item == null || stack == null || stack.isEmpty()
-                || (!this.runtime.tints().contains(item) && (!selected || !this.runtime.hasSelected(item)))) {
+    private ItemData render(ItemData item, boolean selected, @Nullable GeyserItemStack stack) {
+        if (item == null) {
+            return null;
+        }
+        boolean useSelected = selected && this.runtime.hasSelected(item);
+        GeyserItemTints tints = this.runtime.tints(item);
+        if (!useSelected && tints == GeyserItemTints.DEFAULT) {
+            return item;
+        }
+        if (stack == null) {
+            stack = this.findStack(item.getNetId());
+        }
+        if (stack == null || stack.isEmpty()) {
             return item;
         }
         // 队列中的旧物品包不能读取新物品的颜色。保留 Geyser 原有的组件校验标记。
         NbtMap tag = item.getTag();
-        if (tag != null && tag.containsKey("GeyserHash") && tag.getInt("GeyserHash") != stack.getAllComponents().hashCode()) {
-            return item;
+        DataComponents components = null;
+        if (tag != null && tag.containsKey("GeyserHash")) {
+            components = stack.getAllComponents();
+            if (tag.getInt("GeyserHash") != components.hashCode()) {
+                return item;
+            }
         }
         ItemData target = item;
-        if (selected && this.runtime.hasSelected(item)) {
+        if (useSelected) {
             ItemData selectedItem = this.runtime.selected(stack);
+            if (selectedItem.getDefinition() != item.getDefinition()) {
+                tints = this.runtime.tints(selectedItem);
+            }
             target = item.toBuilder().definition(selectedItem.getDefinition()).blockDefinition(selectedItem.getBlockDefinition()).build();
         }
-        target = this.runtime.tints().render(stack, target);
+        target = tints.render(components == null ? stack::getComponent : components::get, target);
         if (target != item && item.getNetId() > 0) {
             this.originals.put(item.getNetId(), new Replacement(Render.of(item), Render.of(target)));
         }
@@ -292,7 +297,7 @@ public final class GeyserSelectedItemHandler {
     @Nullable
     ItemData restore(@Nullable ItemData item, int slotNetId) {
         item = this.heads.unequipped(item);
-        if (item == null || (!this.runtime.hasSelected(item) && !this.runtime.tints().contains(item))) {
+        if (item == null || (!this.runtime.hasSelected(item) && this.runtime.tints(item) == GeyserItemTints.DEFAULT)) {
             return item;
         }
         Replacement replacement = this.originals.get(item.getNetId() > 0 ? item.getNetId() : slotNetId);

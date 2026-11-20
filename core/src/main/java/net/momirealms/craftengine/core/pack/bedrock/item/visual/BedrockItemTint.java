@@ -1,20 +1,19 @@
 package net.momirealms.craftengine.core.pack.bedrock.item.visual;
 
+import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
-import net.momirealms.craftengine.core.pack.model.definition.tint.CustomModelDataTint;
+import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.model.definition.tint.Tint;
 
 import java.io.IOException;
 import java.util.List;
 
 public final class BedrockItemTint {
-    public static final int DYED_COLOR = -1;
-    public static final int NONE = -2;
-    public static final int MULTIPLE = -3;
-    private int source = NONE;
+    public static final int MULTIPLE = -5;
+    private int source = BedrockTintSource.NONE;
     private Integer defaultColor;
 
     public static BedrockItemTint analyze(List<ItemBindingRule> rules, JavaModelResources resources) throws IOException {
@@ -32,7 +31,7 @@ public final class BedrockItemTint {
     }
 
     public boolean dynamic() {
-        return this.source >= DYED_COLOR;
+        return BedrockTintSource.isDynamic(this.source);
     }
 
     private void collect(List<ItemBindingRule> rules, JavaModelResources resources) throws IOException {
@@ -62,22 +61,13 @@ public final class BedrockItemTint {
             return;
         }
         Tint tint = model.tints().get(index);
-        Integer dye = resources.textures().dyeColor(tint);
-        int source;
-        if (tint instanceof CustomModelDataTint custom) {
-            if (custom.index() < 0) {
-                return;
-            }
-            source = custom.index();
-            dye = resources.textures().resolveTint(tint);
-        } else if (dye != null) {
-            source = DYED_COLOR;
-        } else {
+        int source = JavaPackTextureSource.tintSource(tint);
+        if (source == BedrockTintSource.NONE) {
             return;
         }
-        if (this.source == NONE) {
+        if (this.source == BedrockTintSource.NONE) {
             this.source = source;
-            this.defaultColor = dye;
+            this.defaultColor = resources.textures().resolveTint(tint);
         } else if (this.source != source) {
             this.source = MULTIPLE;
         }
