@@ -313,7 +313,7 @@ public final class Config {
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
-    private List<Pattern> bedrock$font$exlude = List.of();
+    private List<Pattern> bedrock$font$exclude = List.of();
     private int bedrock$item$icon_size;
     private BedrockEntityDye displayDye = new BedrockEntityDye(10, List.of());
     private Map<Key, BedrockEntityDye> displayDyeOverrides = Map.of();
@@ -810,7 +810,7 @@ public final class Config {
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
-        this.bedrock$font$exlude = config.getPatterns("bedrock.font.exlude");
+        this.bedrock$font$exclude = config.getPatterns("bedrock.font.exclude");
         this.bedrock$item$icon_size = config.getInt("bedrock.item.icon-size", 64, 1, Integer.MAX_VALUE);
         this.displayDye = config.read("bedrock.display-entity",
                 value -> BedrockEntityDye.readDisplay(value.getAsSection(), false), new BedrockEntityDye(10, List.of()));
@@ -1569,7 +1569,7 @@ public final class Config {
     }
 
     public static List<Pattern> bedrockExcludedFonts() {
-        return instance.bedrock$font$exlude;
+        return instance.bedrock$font$exclude;
     }
 
     public static int bedrockItemIconSize() {

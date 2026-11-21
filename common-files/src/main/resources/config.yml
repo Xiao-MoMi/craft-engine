@@ -827,8 +827,7 @@ bedrock:
     external: []
   font:
     # Full font ID regexes excluded from Bedrock glyph conversion, including references.
-    exlude:
-      - 'nameplates:.*'
+    exclude: []
   custom-entity:
     # Available values:
     #  - disabled
