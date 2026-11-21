@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bedrock.BedrockHeldItemType;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.Appearance;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.Model;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemTints;
+import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector2f;
@@ -15,15 +16,18 @@ import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityLinkData;
 import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
 import org.cloudburstmc.protocol.bedrock.packet.*;
+import org.geysermc.geyser.api.block.custom.CustomBlockState;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.entity.type.Entity;
 import org.geysermc.geyser.entity.type.Tickable;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.level.block.type.BlockState;
+import org.geysermc.geyser.registry.BlockRegistries;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.registry.type.ItemMapping;
 import org.geysermc.geyser.translator.item.ItemTranslator;
 import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
+import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.DEFAULT_DISPLAY_CONTEXT;
 
@@ -124,6 +128,17 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         if (this.model != null) {
             return;
         }
+        CustomBlockState custom = BlockRegistries.CUSTOM_BLOCK_STATE_OVERRIDES.get(stateId);
+        if (custom != null) {
+            Map<?, ?> items = (Map<?, ?>) ItemMappingsProxy.INSTANCE.customBlockItemDefinitions(this.session.getItemMappings());
+            ItemDefinition definition = (ItemDefinition) items.get(custom.block());
+            if (definition != null) {
+                this.equipment = ItemData.builder().definition(definition).blockDefinition(this.session.getBlockMappings().getBedrockBlock(stateId)).count(1).build();
+                this.heldItemType = BedrockHeldItemType.BLOCK;
+                this.model = this.displays.heldBlock();
+                return;
+            }
+        }
         int itemId = state.block().asItem().javaId();
         if (itemId == 0) {
             return;
@@ -202,9 +217,6 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         this.appearanceDirty = false;
         this.orientationDirty = false;
         boolean carrierChanged = this.updateCarrierDefinition();
-        if (!spawning && appearanceDirty && !carrierChanged) {
-            this.updateEquipment();
-        }
         Appearance appearance;
         int dyeColor;
         if (!appearanceDirty) {
@@ -226,6 +238,9 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         boolean orientationChanged = fullUpdate || this.renderYaw != this.sentYaw || this.renderPitch != this.sentPitch;
         int style = BedrockDisplayStyle.pack(this.billboard, this.hidden, this.heldItemType);
         boolean styleChanged = fullUpdate || style != this.sentStyle;
+        if (!spawning && !carrierChanged && (appearanceDirty || styleChanged)) {
+            this.updateEquipment();
+        }
         if (!appearanceChanged && !dyeChanged && !interpolationChanged && !orientationChanged && !styleChanged) {
             return;
         }
@@ -289,13 +304,14 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
     }
 
     private void updateEquipment() {
-        if (!this.valid || this.equipment == this.sentEquipment || this.equipment.equals(this.sentEquipment)) {
+        ItemData visibleEquipment = this.hidden ? ItemData.AIR : this.equipment;
+        if (!this.valid || visibleEquipment == this.sentEquipment || visibleEquipment.equals(this.sentEquipment)) {
             return;
         }
-        this.sentEquipment = this.equipment;
+        this.sentEquipment = visibleEquipment;
         MobEquipmentPacket packet = new MobEquipmentPacket();
         packet.setRuntimeEntityId(this.geyserId);
-        packet.setItem(this.equipment);
+        packet.setItem(visibleEquipment);
         packet.setInventorySlot(0);
         packet.setHotbarSlot(-1);
         packet.setContainerId(0);

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.compatibility.model;
 
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
+import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockEntitySettings;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.util.Key;
@@ -30,6 +31,8 @@ public abstract class NativeModelInstance<T, V> {
     }
 
     protected abstract boolean visible(V viewer);
+
+    protected abstract void nativeDisplays(Player player, V viewer, List<Integer> previous, List<Integer> current);
 
     protected abstract NativeModelPayload.Snapshot sample(BedrockModelIntegration mode, NativeModelParts parts, boolean checkVisibility);
 
@@ -80,10 +83,11 @@ public abstract class NativeModelInstance<T, V> {
                                                                NativeModelPayload.Pose pose,
                                                                NativeModelPayload.Scale scale,
                                                                List<String> hiddenBones,
-                                                               List<Integer> displays) {
+                                                               List<Integer> displays,
+                                                               List<UUID> anchors) {
         NativeModelPayload.NativeState old = this.snapshot instanceof NativeModelPayload.NativeState state ? state : null;
         List<NativeModelPayload.Animation> playing = parts.animations(old == null ? List.of() : old.animations());
-        return this.nativeState(target, hurt, color, pose, scale, playing, hiddenBones, displays);
+        return this.nativeState(target, hurt, color, pose, scale, playing, hiddenBones, displays, anchors);
     }
 
     protected final NativeModelPayload.NativeState nativeState(int target,
@@ -93,7 +97,8 @@ public abstract class NativeModelInstance<T, V> {
                                                                NativeModelPayload.Scale scale,
                                                                List<NativeModelPayload.Animation> playing,
                                                                List<String> hiddenBones,
-                                                               List<Integer> displays) {
+                                                               List<Integer> displays,
+                                                               List<UUID> anchors) {
         NativeModelPayload.NativeState old = this.snapshot instanceof NativeModelPayload.NativeState state ? state : null;
         if (old != null
                 && old.model().equals(this.identifier)
@@ -104,9 +109,10 @@ public abstract class NativeModelInstance<T, V> {
                 && old.scale() == scale
                 && old.animations() == playing
                 && old.hiddenBones() == hiddenBones
-                && old.displays() == displays) {
+                && old.displays() == displays
+                && old.anchors() == anchors) {
             return old;
         }
-        return new NativeModelPayload.NativeState(this.id, this.identifier, target, hurt, pose, scale, color, playing, hiddenBones, displays);
+        return new NativeModelPayload.NativeState(this.id, this.identifier, target, hurt, pose, scale, color, playing, hiddenBones, displays, anchors);
     }
 }

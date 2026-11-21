@@ -46,7 +46,7 @@ public sealed interface NativeModelPayload {
     }
 
     record NativeState(UUID instance, String model, int target, boolean hurt, Pose pose, Scale scale,
-                       int color, List<Animation> animations, List<String> hiddenBones, List<Integer> displays) implements Snapshot, NativeMessage {
+                       int color, List<Animation> animations, List<String> hiddenBones, List<Integer> displays, List<UUID> anchors) implements Snapshot, NativeMessage {
         @Override
         public RemoveNative remove() {
             return new RemoveNative(this.instance);
@@ -61,13 +61,14 @@ public sealed interface NativeModelPayload {
                     this.color == previous.color ? null : this.color,
                     this.animations.equals(previous.animations) ? null : this.animations,
                     this.hiddenBones.equals(previous.hiddenBones) ? null : this.hiddenBones,
-                    this.displays.equals(previous.displays) ? null : this.displays);
+                    this.displays.equals(previous.displays) ? null : this.displays,
+                    this.anchors.equals(previous.anchors) ? null : this.anchors);
         }
     }
 
     // null 表示沿用上一次的值；空列表表示清除该组的全部条目。
     record Delta(UUID instance, Integer target, Boolean hurt, Pose pose, Scale scale, Integer color,
-                 List<Animation> animations, List<String> hiddenBones, List<Integer> displays) implements NativeMessage {
+                 List<Animation> animations, List<String> hiddenBones, List<Integer> displays, List<UUID> anchors) implements NativeMessage {
         public NativeState applyTo(NativeState previous) {
             return new NativeState(
                     this.instance,
@@ -79,7 +80,8 @@ public sealed interface NativeModelPayload {
                     this.color == null ? previous.color : this.color,
                     this.animations == null ? previous.animations : this.animations,
                     this.hiddenBones == null ? previous.hiddenBones : this.hiddenBones,
-                    this.displays == null ? previous.displays : this.displays
+                    this.displays == null ? previous.displays : this.displays,
+                    this.anchors == null ? previous.anchors : this.anchors
             );
         }
     }

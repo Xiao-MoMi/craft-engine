@@ -364,7 +364,8 @@ public final class NativeModelAssets {
 
     private JsonObject animation(JsonObject source) {
         JsonObject animation = new JsonObject();
-        animation.add("animation_length", source.get("length"));
+        JsonElement length = source.get("length");
+        animation.add("animation_length", length);
         JsonObject channels = new JsonObject();
         animation.add("bones", channels);
         if (!source.has("animators")) {
@@ -403,9 +404,22 @@ public final class NativeModelAssets {
                 }
                 timeline.add(frame.get("time").getAsString(), keyframe);
             }
+            if (length != null && !length.isJsonNull()) {
+                for (JsonElement timeline : output.asMap().values()) {
+                    holdUntilEnd(timeline.getAsJsonObject(), length);
+                }
+            }
             channels.add(bone, output);
         }
         return animation;
+    }
+
+    private static void holdUntilEnd(JsonObject timeline, JsonElement length) {
+        // Blockbench 不保证关键帧按时间排列。用最后一帧的离开值补到片尾，避免基岩提前恢复默认姿态。
+        String last = Collections.max(timeline.keySet(), Comparator.comparingDouble(Double::parseDouble));
+        if (Double.parseDouble(last) < length.getAsDouble()) {
+            timeline.add(length.getAsString(), timeline.getAsJsonObject(last).get("post"));
+        }
     }
 
     private static JsonArray animationPoint(JsonObject point, String channel) {

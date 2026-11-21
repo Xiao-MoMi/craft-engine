@@ -93,7 +93,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.itemManager.init();
         this.blockManager.init();
         this.javaPackets.install(this);
-        this.customPayloads.install();
     }
 
     @Subscribe
@@ -112,9 +111,6 @@ public final class CraftEngineGeyserExtension implements Extension {
         }
         if (this.javaPackets != null) {
             this.javaPackets.uninstall();
-        }
-        if (this.customPayloads != null) {
-            this.customPayloads.uninstall();
         }
         if (this.blockManager != null) {
             this.blockManager.unload();

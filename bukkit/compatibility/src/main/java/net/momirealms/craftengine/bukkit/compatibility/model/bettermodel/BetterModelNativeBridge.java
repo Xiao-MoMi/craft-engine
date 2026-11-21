@@ -28,6 +28,8 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class BetterModelNativeBridge extends NativeModelBridge<Tracker, PlatformPlayer> {
@@ -69,6 +71,7 @@ public final class BetterModelNativeBridge extends NativeModelBridge<Tracker, Pl
         private RenderedBone[] bones;
         private List<Integer> displays;
         private BoneState state;
+        private Set<UUID> hiddenByBridge;
         private int normalTint = -1;
 
         private TrackedModel(Tracker tracker) {
@@ -87,7 +90,29 @@ public final class BetterModelNativeBridge extends NativeModelBridge<Tracker, Pl
 
         @Override
         protected boolean visible(PlatformPlayer viewer) {
-            return viewer != null && this.source.isSpawned(viewer.uuid()) && !this.source.isHide(viewer);
+            if (viewer == null || !this.source.isSpawned(viewer.uuid())) {
+                return false;
+            }
+            return (this.hiddenByBridge != null && this.hiddenByBridge.contains(viewer.uuid())) || !this.source.isHide(viewer);
+        }
+
+        @Override
+        protected void nativeDisplays(Player player, PlatformPlayer viewer, List<Integer> previous, List<Integer> current) {
+            if (!current.isEmpty()) {
+                if (this.source.hide(viewer)) {
+                    if (this.hiddenByBridge == null) {
+                        this.hiddenByBridge = ConcurrentHashMap.newKeySet();
+                    }
+                    this.hiddenByBridge.add(viewer.uuid());
+                    viewer.task(() -> {
+                        if (this.hiddenByBridge.contains(viewer.uuid()) && !this.source.isClosed() && this.source.isSpawned(viewer.uuid()) && this.source.isHide(viewer)) {
+                            this.source.getPipeline().hitboxes().forEach(box -> box.show(viewer));
+                        }
+                    });
+                }
+            } else if (this.hiddenByBridge != null && this.hiddenByBridge.remove(player.uuid()) && !this.source.isClosed()) {
+                this.source.show(viewer);
+            }
         }
 
         @Override
@@ -124,8 +149,10 @@ public final class BetterModelNativeBridge extends NativeModelBridge<Tracker, Pl
             float scale = this.source.scaler().scale(this.source);
             int target = entity == null ? 0 : entity.sourceEntity().id();
             NativeModelPayload.Pose pose = this.pose(location.x(), location.y(), location.z(), rotation.y(), rotation.x());
-            return this.nativeState(target, hurt, color, pose, this.scale(scale, scale, scale),
-                    this.state.animations, this.state.hiddenBones, this.displays);
+            return this.nativeState(
+                    target, hurt, color, pose, this.scale(scale, scale, scale),
+                    this.state.animations, this.state.hiddenBones, this.displays, List.of()
+            );
         }
     }
 

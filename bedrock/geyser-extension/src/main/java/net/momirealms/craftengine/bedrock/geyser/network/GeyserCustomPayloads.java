@@ -1,48 +1,25 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
-import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.network.ClientboundCustomPayloadPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureKeyProxy;
-import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.packet.common.clientbound.ClientboundCustomPayloadPacket;
 
 import java.nio.ByteBuffer;
 
-public final class GeyserCustomPayloads extends PacketTranslator<ClientboundCustomPayloadPacket> {
-    private PacketTranslator<ClientboundCustomPayloadPacket> original;
-
-    @SuppressWarnings("unchecked")
-    public void install() {
-        if (this.original != null) {
-            return;
-        }
-        this.original = (PacketTranslator<ClientboundCustomPayloadPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundCustomPayloadPacket.class);
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundCustomPayloadPacket.class, this);
-    }
-
-    public void uninstall() {
-        if (this.original != null) {
-            Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundCustomPayloadPacket.class, this, this.original);
-            this.original = null;
-        }
-    }
-
+public final class GeyserCustomPayloads implements GeyserJavaPackets.Interceptor<ClientboundCustomPayloadPacket> {
     @Override
-    public void translate(GeyserSession session, ClientboundCustomPayloadPacket packet) {
+    public void translate(GeyserPlayer player, ClientboundCustomPayloadPacket packet, PacketTranslator<ClientboundCustomPayloadPacket> original) {
         Object channelKey = ClientboundCustomPayloadPacketProxy.INSTANCE.channel(packet);
         String channel = AdventureKeyProxy.INSTANCE.asString(channelKey);
         ClientCustomPacketType<?> type = GeyserCustomPackets.clientbound(channel);
         if (type != null) {
-            GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
-            if (player != null) {
-                type.codec().decode(ByteBuffer.wrap(packet.getData())).handle(player);
-            }
+            type.codec().decode(ByteBuffer.wrap(packet.getData())).handle(player);
             return;
         }
-        this.original.translate(session, packet);
+        original.translate(player.session(), packet);
     }
 
     public void send(GeyserSession session, ServerCustomPacket packet) {

@@ -71,7 +71,10 @@ public final class GeyserBedrockPackets {
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.onRespawn(event.packet())),
                 bind(GeyserPlayer::activeUse, (use, event) -> use.reset()),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.onRespawn(event.packet())));
+        OUTGOING.on(SetEntityDataPacket.class,
+                bind(GeyserBedrockPackets::withModelAnchors, GeyserNativeModels.Connection::onEntityData));
         OUTGOING.on(RemoveEntityPacket.class,
+                bind(GeyserBedrockPackets::withModelAnchors, GeyserNativeModels.Connection::onRemoveEntity),
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.remove(event.packet().getUniqueEntityId())));
         OUTGOING.on(ItemComponentPacket.class,
                 bind(GeyserPlayer::componentPatcher, GeyserItemComponentPatcher::patch));
@@ -94,6 +97,11 @@ public final class GeyserBedrockPackets {
 
     public static boolean send(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context) {
         return OUTGOING.dispatch(player, wrapper, context);
+    }
+
+    private static GeyserNativeModels.Connection withModelAnchors(GeyserPlayer player) {
+        GeyserNativeModels.Connection models = player.nativeModels();
+        return models != null && models.hasModelAnchors() ? models : null;
     }
 
     private static <S, T extends BedrockPacket> Binding<S, T> bind(Function<GeyserPlayer, S> state, BiConsumer<S, GeyserPacketEvent<T>> handler) {

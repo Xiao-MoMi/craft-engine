@@ -141,14 +141,27 @@ public abstract class NativeModelBridge<T, V> implements Listener {
             UUID id = player.uuid();
             Viewer viewer = this.viewers.get(id);
             if (viewer == null || viewer.player != player) {
+                if (viewer != null) {
+                    viewer.releaseViews();
+                }
                 viewer = new Viewer(player);
                 this.viewers.put(id, viewer);
             }
-            viewer.visibility = this.adaptViewer(player);
+            V visibility = this.adaptViewer(player);
+            if (visibility == null) {
+                continue;
+            }
+            viewer.visibility = visibility;
             viewer.seen = tick;
             this.online.add(viewer);
         }
-        this.viewers.values().removeIf(viewer -> viewer.seen != tick);
+        this.viewers.values().removeIf(viewer -> {
+            if (viewer.seen == tick) {
+                return false;
+            }
+            viewer.releaseViews();
+            return true;
+        });
     }
 
     private void removeAll(Player[] players) {
@@ -161,6 +174,7 @@ public abstract class NativeModelBridge<T, V> implements Listener {
                 viewer.removeUnseen(this.tickNumber);
             }
         }
+        this.viewers.values().forEach(Viewer::releaseViews);
         this.viewers.clear();
     }
 
@@ -199,7 +213,10 @@ public abstract class NativeModelBridge<T, V> implements Listener {
             viewer.prior = null;
             if (sent == null) {
                 viewer.send(current);
-                viewer.models.put(model.id, new Sent(current, tick));
+                viewer.models.put(model.id, new Sent(model, current, tick));
+                if (current instanceof NativeModelPayload.NativeState nativeState) {
+                    model.nativeDisplays(viewer.player, viewer.visibility, List.of(), nativeState.displays());
+                }
                 continue;
             }
             NativeModelPayload.Snapshot old = sent.snapshot;
@@ -209,6 +226,7 @@ public abstract class NativeModelBridge<T, V> implements Listener {
             }
             NativeModelPayload update = current;
             if (old.getClass() != current.getClass() || !old.model().equals(current.model())) {
+                sent.release(viewer);
                 viewer.send(old.remove());
             } else if (!refresh && current instanceof NativeModelPayload.NativeState state && old instanceof NativeModelPayload.NativeState last) {
                 // 观察到同一上次快照的玩家共用增量，其余玩家从自己最后成功接收的状态追上。
@@ -222,6 +240,12 @@ public abstract class NativeModelBridge<T, V> implements Listener {
                 }
             }
             viewer.send(update);
+            if (current instanceof NativeModelPayload.NativeState nativeState) {
+                List<Integer> before = old instanceof NativeModelPayload.NativeState last && old.model().equals(current.model()) ? last.displays() : List.of();
+                if (before != nativeState.displays()) {
+                    model.nativeDisplays(viewer.player, viewer.visibility, before, nativeState.displays());
+                }
+            }
             sent.snapshot = current;
             sent.seen = tick;
         }
@@ -262,11 +286,19 @@ public abstract class NativeModelBridge<T, V> implements Listener {
             this.player.sendCustomPacket(new ClientboundNativeModelPacket(payload));
         }
 
+        private void releaseViews() {
+            for (Sent sent : this.models.values()) {
+                sent.release(this);
+            }
+            this.models.clear();
+        }
+
         private void removeUnseen(long tick) {
             Iterator<Sent> iterator = this.models.values().iterator();
             while (iterator.hasNext()) {
                 Sent sent = iterator.next();
                 if (sent.seen != tick) {
+                    sent.release(this);
                     this.send(sent.snapshot.remove());
                     iterator.remove();
                 }
@@ -274,13 +306,21 @@ public abstract class NativeModelBridge<T, V> implements Listener {
         }
     }
 
-    private static final class Sent {
+    private final class Sent {
+        private final NativeModelInstance<T, V> model;
         private NativeModelPayload.Snapshot snapshot;
         private long seen;
 
-        private Sent(NativeModelPayload.Snapshot snapshot, long seen) {
+        private Sent(NativeModelInstance<T, V> model, NativeModelPayload.Snapshot snapshot, long seen) {
+            this.model = model;
             this.snapshot = snapshot;
             this.seen = seen;
+        }
+
+        private void release(Viewer viewer) {
+            if (this.snapshot instanceof NativeModelPayload.NativeState state) {
+                this.model.nativeDisplays(viewer.player, viewer.visibility, state.displays(), List.of());
+            }
         }
     }
 }

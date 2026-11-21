@@ -28,6 +28,7 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
     private static final int ANIMATIONS = 1 << 5;
     private static final int HIDDEN_BONES = 1 << 6;
     private static final int DISPLAYS = 1 << 7;
+    private static final int ANCHORS = 1 << 8;
 
     @Override
     public byte[] encode(NativeModelPayload payload) {
@@ -46,6 +47,7 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
                     writeAnimations(out, state.animations());
                     writeBones(out, state.hiddenBones());
                     writeDisplays(out, state.displays());
+                    writeAnchors(out, state.anchors());
                 }
                 case Delta delta -> {
                     writeHeader(out, NATIVE_DELTA, delta.instance());
@@ -70,8 +72,7 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
         int type = Byte.toUnsignedInt(buffer.get());
         UUID instance = new UUID(buffer.getLong(), buffer.getLong());
         return switch (type) {
-            case NATIVE_STATE -> new NativeState(instance, readString(buffer), buffer.getInt(), buffer.get() != 0,
-                    readPose(buffer), readScale(buffer), buffer.getInt(), readAnimations(buffer), readBones(buffer), readDisplays(buffer));
+            case NATIVE_STATE -> new NativeState(instance, readString(buffer), buffer.getInt(), buffer.get() != 0, readPose(buffer), readScale(buffer), buffer.getInt(), readAnimations(buffer), readBones(buffer), readDisplays(buffer), readAnchors(buffer));
             case NATIVE_DELTA -> readDelta(buffer, instance);
             case DISPLAY_BONES -> new DisplayBones(instance, readString(buffer), readDisplays(buffer));
             case REMOVE_NATIVE -> new RemoveNative(instance);
@@ -90,8 +91,9 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
         int mask = (delta.target() == null ? 0 : TARGET) | (delta.hurt() == null ? 0 : HURT)
                 | (delta.pose() == null ? 0 : POSE) | (delta.scale() == null ? 0 : SCALE)
                 | (delta.color() == null ? 0 : COLOR) | (delta.animations() == null ? 0 : ANIMATIONS)
-                | (delta.hiddenBones() == null ? 0 : HIDDEN_BONES) | (delta.displays() == null ? 0 : DISPLAYS);
-        out.writeByte(mask);
+                | (delta.hiddenBones() == null ? 0 : HIDDEN_BONES) | (delta.displays() == null ? 0 : DISPLAYS)
+                | (delta.anchors() == null ? 0 : ANCHORS);
+        out.writeShort(mask);
         if ((mask & TARGET) != 0) {
             out.writeInt(delta.target());
         }
@@ -116,10 +118,13 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
         if ((mask & DISPLAYS) != 0) {
             writeDisplays(out, delta.displays());
         }
+        if ((mask & ANCHORS) != 0) {
+            writeAnchors(out, delta.anchors());
+        }
     }
 
     private static Delta readDelta(ByteBuffer buffer, UUID instance) {
-        int mask = Byte.toUnsignedInt(buffer.get());
+        int mask = Short.toUnsignedInt(buffer.getShort());
         return new Delta(instance,
                 (mask & TARGET) == 0 ? null : buffer.getInt(),
                 (mask & HURT) == 0 ? null : buffer.get() != 0,
@@ -128,7 +133,28 @@ final class NativeModelCodec implements PacketCodec<NativeModelPayload> {
                 (mask & COLOR) == 0 ? null : buffer.getInt(),
                 (mask & ANIMATIONS) == 0 ? null : readAnimations(buffer),
                 (mask & HIDDEN_BONES) == 0 ? null : readBones(buffer),
-                (mask & DISPLAYS) == 0 ? null : readDisplays(buffer));
+                (mask & DISPLAYS) == 0 ? null : readDisplays(buffer),
+                (mask & ANCHORS) == 0 ? null : readAnchors(buffer));
+    }
+
+    private static void writeAnchors(DataOutputStream out, List<UUID> anchors) throws IOException {
+        out.writeByte(anchors.size());
+        for (UUID anchor : anchors) {
+            out.writeLong(anchor.getMostSignificantBits());
+            out.writeLong(anchor.getLeastSignificantBits());
+        }
+    }
+
+    private static List<UUID> readAnchors(ByteBuffer buffer) {
+        int count = Byte.toUnsignedInt(buffer.get());
+        if (count == 0) {
+            return List.of();
+        }
+        List<UUID> anchors = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            anchors.add(new UUID(buffer.getLong(), buffer.getLong()));
+        }
+        return anchors;
     }
 
     private static void writePose(DataOutputStream out, Pose pose) throws IOException {

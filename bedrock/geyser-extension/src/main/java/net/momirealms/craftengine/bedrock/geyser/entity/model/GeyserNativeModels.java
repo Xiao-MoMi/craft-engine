@@ -11,6 +11,7 @@ import org.cloudburstmc.protocol.bedrock.packet.AddEntityPacket;
 import org.cloudburstmc.protocol.bedrock.packet.EntityEventPacket;
 import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveEntityPacket;
+import org.cloudburstmc.protocol.bedrock.packet.SetEntityDataPacket;
 import org.geysermc.geyser.api.entity.custom.CustomEntityDefinition;
 import org.geysermc.geyser.api.entity.property.BatchPropertyUpdater;
 import org.geysermc.geyser.api.entity.property.type.GeyserFloatEntityProperty;
@@ -61,9 +62,11 @@ public final class GeyserNativeModels {
         private final Map<UUID, Instance> instances = new HashMap<>();
         private final Set<Integer> hidden = ConcurrentHashMap.newKeySet();
         private final Map<Long, Integer> targets = new ConcurrentHashMap<>();
+        private final ModelEngineAnchors anchors;
 
         private Connection(GeyserSession session) {
             this.session = session;
+            this.anchors = new ModelEngineAnchors(session, this.hidden);
         }
 
         public void onAddEntity(GeyserPacketEvent<AddEntityPacket> event) {
@@ -71,8 +74,22 @@ public final class GeyserNativeModels {
                 Entity entity = this.session.getEntityCache().getEntityByGeyserId(event.packet().getRuntimeEntityId());
                 if (entity != null && this.hidden.contains(entity.getEntityId())) {
                     event.setCancelled(true);
+                    return;
                 }
             }
+            this.anchors.onSpawn(event);
+        }
+
+        public boolean hasModelAnchors() {
+            return this.anchors.hasCarriers();
+        }
+
+        public void onEntityData(GeyserPacketEvent<SetEntityDataPacket> event) {
+            this.anchors.onEntityData(event);
+        }
+
+        public void onRemoveEntity(GeyserPacketEvent<RemoveEntityPacket> event) {
+            this.anchors.forget(event.packet().getUniqueEntityId());
         }
 
         public void onTransaction(GeyserPacketEvent<InventoryTransactionPacket> event) {
@@ -93,6 +110,7 @@ public final class GeyserNativeModels {
             this.instances.clear();
             this.hidden.clear();
             this.targets.clear();
+            this.anchors.clear();
         }
 
         public void accept(NativeModelPayload.NativeMessage message) {
@@ -125,6 +143,7 @@ public final class GeyserNativeModels {
                 this.targets.remove(instance.entity.geyserId());
                 this.session.getEntityCache().removeEntity(instance.entity);
                 this.refreshHidden();
+                this.anchors.replace(instance.state.anchors(), List.of());
             }
         }
 
@@ -148,12 +167,17 @@ public final class GeyserNativeModels {
                 instance = new Instance(entity, state);
                 this.instances.put(state.instance(), instance);
                 this.refreshHidden();
+                this.anchors.replace(List.of(), state.anchors());
                 this.session.getEntityCache().spawnEntity(entity);
             } else {
                 boolean displaysChanged = !instance.state.displays().equals(state.displays());
+                List<UUID> previousAnchors = instance.state.anchors();
                 instance.state = state;
                 if (displaysChanged) {
                     this.refreshHidden();
+                }
+                if (delta.anchors() != null) {
+                    this.anchors.replace(previousAnchors, state.anchors());
                 }
                 if (delta.pose() != null) {
                     instance.entity.moveAbsolute(Vector3f.from(pose.x(), pose.y(), pose.z()), pose.yaw(), pose.pitch(), pose.yaw(), true, false);

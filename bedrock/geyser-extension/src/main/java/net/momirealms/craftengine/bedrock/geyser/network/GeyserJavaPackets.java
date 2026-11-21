@@ -18,6 +18,7 @@ import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.network.event.session.PacketSendingEvent;
 import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerAction;
+import org.geysermc.mcprotocollib.protocol.packet.common.clientbound.ClientboundCustomPayloadPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundBossEventPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundSetEntityDataPacket;
@@ -61,6 +62,7 @@ public final class GeyserJavaPackets {
             }
         });
         this.intercept(ClientboundAddEntityPacket.class, extension.entityManager().spawnTranslator());
+        this.intercept(ClientboundCustomPayloadPacket.class, extension.customPayloads());
         ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
         if (layout != null) {
             this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout));
