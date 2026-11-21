@@ -12,7 +12,7 @@ import org.geysermc.geyser.api.util.Identifier;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.DISPLAY_DYE;
 
-final class ModelDisplayProperties {
+public final class ModelDisplayProperties {
     private final Identifier id;
     private GeyserIntEntityProperty style;
     private GeyserIntEntityProperty shape;

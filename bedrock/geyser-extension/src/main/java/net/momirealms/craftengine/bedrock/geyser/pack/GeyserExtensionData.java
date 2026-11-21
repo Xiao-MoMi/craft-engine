@@ -44,10 +44,17 @@ public final class GeyserExtensionData {
     private final JsonObject soundMappings;
     private final Path clientPack;
 
-    private GeyserExtensionData(@Nullable JsonObject items, @Nullable JsonObject blocks, @Nullable JsonObject modelDisplays,
-                               @Nullable JsonObject elytraVariants,
-                               GeyserGlyphData glyphs, GeyserLanguageData languages, SidebarProfiles scoreboard,
-                               @Nullable JsonObject nativeModels, @Nullable JsonObject soundMappings, @Nullable JsonObject bossBars, @Nullable Path clientPack) {
+    private GeyserExtensionData(@Nullable JsonObject items,
+                                @Nullable JsonObject blocks,
+                                @Nullable JsonObject modelDisplays,
+                                @Nullable JsonObject elytraVariants,
+                                GeyserGlyphData glyphs,
+                                GeyserLanguageData languages,
+                                SidebarProfiles scoreboard,
+                                @Nullable JsonObject nativeModels,
+                                @Nullable JsonObject soundMappings,
+                                @Nullable JsonObject bossBars,
+                                @Nullable Path clientPack) {
         this.bossBars = bossBars;
         this.soundMappings = soundMappings;
         this.clientPack = clientPack;

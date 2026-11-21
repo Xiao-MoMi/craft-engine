@@ -5,7 +5,7 @@ import net.momirealms.craftengine.bedrock.GuiTitlePart;
 import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
-import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.inventory.OpenScreenPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
@@ -14,51 +14,30 @@ import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.floodgate.util.UiProfile;
-import org.geysermc.geyser.registry.Registries;
-import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class GeyserGuiMenus extends PacketTranslator<ClientboundOpenScreenPacket> {
+public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<ClientboundOpenScreenPacket> {
     private static final String DEFAULT_FONT = "minecraft:default";
     private static final int DEFAULT_TITLE_COLOR = 0x404040;
     // 标记字形已完成映射，避免后续序列化再次转换
     private static final Object RESOLVED_FONT = AdventureKeyProxy.INSTANCE.key(GeyserGlyphSerializer.RESOLVED_FONT);
-    private final PacketTranslator<ClientboundOpenScreenPacket> delegate;
     private final ContainerTitleLayout layout;
 
-    public GeyserGuiMenus(PacketTranslator<ClientboundOpenScreenPacket> delegate, ContainerTitleLayout layout) {
-        this.delegate = delegate;
+    public GeyserGuiMenus(ContainerTitleLayout layout) {
         this.layout = layout;
     }
 
-    @SuppressWarnings("unchecked")
-    public static GeyserGuiMenus install(ContainerTitleLayout layout) {
-        PacketTranslator<ClientboundOpenScreenPacket> original = (PacketTranslator<ClientboundOpenScreenPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundOpenScreenPacket.class);
-        if (original instanceof GeyserGuiMenus menus) {
-            original = menus.delegate;
-        }
-        GeyserGuiMenus installed = new GeyserGuiMenus(original, layout);
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundOpenScreenPacket.class, installed);
-        GeyserTranslationManager.info("gui.layout_enabled");
-        return installed;
-    }
-
-    public void uninstall() {
-        Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundOpenScreenPacket.class, this, this.delegate);
-    }
-
     @Override
-    public void translate(GeyserSession session, ClientboundOpenScreenPacket packet) {
+    public void translate(GeyserPlayer player, ClientboundOpenScreenPacket packet, PacketTranslator<ClientboundOpenScreenPacket> original) {
         // 资源包的容器布局仅适配经典 UI，Pocket 布局沿用原生处理。
-        GeyserPlayer player = CraftEngineGeyserExtension.instance().playerManager().get(session);
-        if (player != null && player.uiProfile() == UiProfile.CLASSIC && this.layout != null) {
+        if (player.uiProfile() == UiProfile.CLASSIC) {
             packet = this.rewrite(packet, player.locale());
         }
-        this.delegate.translate(session, packet);
+        original.translate(player.session(), packet);
     }
 
     public ClientboundOpenScreenPacket rewrite(ClientboundOpenScreenPacket packet, String locale) {

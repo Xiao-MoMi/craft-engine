@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 
-final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickable {
+public final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickable {
     private static final AtomicLong IDS = new AtomicLong(Long.MIN_VALUE);
     private static final Color TRANSPARENT = new Color(0, true);
     private static final Color INVISIBLE_TEXT = new Color(0x00FFFFFF, true);

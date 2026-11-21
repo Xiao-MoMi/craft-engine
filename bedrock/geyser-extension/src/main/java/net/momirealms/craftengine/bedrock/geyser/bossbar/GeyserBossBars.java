@@ -2,10 +2,11 @@ package net.momirealms.craftengine.bedrock.geyser.bossbar;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.network.BossEventPacketProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureComponentProxy;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
-import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BossBar;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
@@ -17,13 +18,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventPacket> {
-    private final PacketTranslator<ClientboundBossEventPacket> delegate;
+public final class GeyserBossBars implements GeyserJavaPackets.Interceptor<ClientboundBossEventPacket> {
     private final String[][] markers = new String[BossBarColor.values().length][BossBarDivision.values().length];
     private final Map<BossBar, Title> titles = Collections.synchronizedMap(new WeakHashMap<>());
 
-    GeyserBossBars(JsonObject styles, PacketTranslator<ClientboundBossEventPacket> delegate) {
-        this.delegate = delegate;
+    public GeyserBossBars(JsonObject styles) {
         // 将封包里的颜色和分段枚举转换成资源包生成的键，例如 blue/notched_6
         for (BossBarColor color : BossBarColor.values()) {
             String name = switch (color) {
@@ -41,26 +40,14 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static GeyserBossBars install(JsonObject styles) {
-        PacketTranslator<ClientboundBossEventPacket> delegate = (PacketTranslator<ClientboundBossEventPacket>) Registries.JAVA_PACKET_TRANSLATORS.get(ClientboundBossEventPacket.class);
-        GeyserBossBars translator = new GeyserBossBars(styles, delegate);
-        Registries.JAVA_PACKET_TRANSLATORS.register(ClientboundBossEventPacket.class, translator);
-        return translator;
-    }
-
-    public void uninstall() {
-        Registries.JAVA_PACKET_TRANSLATORS.get().replace(ClientboundBossEventPacket.class, this, this.delegate);
-        this.titles.clear();
-    }
-
     @Override
-    public void translate(GeyserSession session, ClientboundBossEventPacket packet) {
+    public void translate(GeyserPlayer player, ClientboundBossEventPacket packet, PacketTranslator<ClientboundBossEventPacket> original) {
+        GeyserSession session = player.session();
         switch (packet.getAction()) {
             case ADD -> {
                 Title title = new Title(BossEventPacketProxy.INSTANCE.title(packet), this.marker(packet));
                 // 原翻译器处理 ADD 时会创建 BossBar，随后才能从会话缓存中取到它。
-                this.delegate.translate(session, title.apply(packet));
+                original.translate(session, title.apply(packet));
                 BossBar bar = session.getEntityCache().getBossBar(packet.getUuid());
                 if (bar != null) {
                     this.titles.put(bar, title);
@@ -70,16 +57,16 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
                 BossBar bar = session.getEntityCache().getBossBar(packet.getUuid());
                 Title previous = this.titles.get(bar);
                 if (previous == null) {
-                    this.delegate.translate(session, packet);
+                    original.translate(session, packet);
                     return;
                 }
                 if (packet.getAction() == BossBarAction.UPDATE_TITLE) {
                     // 这次只改标题，沿用当前的样式标记
                     Title title = new Title(BossEventPacketProxy.INSTANCE.title(packet), previous.marker());
                     this.titles.put(bar, title);
-                    this.delegate.translate(session, title.apply(packet));
+                    original.translate(session, title.apply(packet));
                 } else {
-                    this.delegate.translate(session, packet);
+                    original.translate(session, packet);
                     String marker = this.marker(packet);
                     if (!Objects.equals(marker, previous.marker())) {
                         // 样式更新包没有标题。用缓存的原始标题补发一次标题更新，让 HUD 切换样式
@@ -87,15 +74,15 @@ public final class GeyserBossBars extends PacketTranslator<ClientboundBossEventP
                         Title title = new Title(previous.component(), marker);
                         this.titles.put(bar, title);
                         ClientboundBossEventPacket name = BossEventPacketProxy.INSTANCE.withTitle(packet.withAction(BossBarAction.UPDATE_TITLE), title.component());
-                        this.delegate.translate(session, title.apply(name));
+                        original.translate(session, title.apply(name));
                     }
                 }
             }
             case REMOVE -> {
                 this.titles.remove(session.getEntityCache().getBossBar(packet.getUuid()));
-                this.delegate.translate(session, packet);
+                original.translate(session, packet);
             }
-            default -> this.delegate.translate(session, packet);
+            default -> original.translate(session, packet);
         }
     }
 

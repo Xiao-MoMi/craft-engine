@@ -4,7 +4,7 @@ import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector3f;
 
-record DisplayPose(Vector3f translation, Quaternionf left, Vector3f scale, Quaternionf right) {
+public record DisplayPose(Vector3f translation, Quaternionf left, Vector3f scale, Quaternionf right) {
     static final DisplayPose IDENTITY = new DisplayPose(Vector3f.ZERO, Quaternionf.IDENTITY, Vector3f.ONE, Quaternionf.IDENTITY);
 
     private static Quaternionf rotation(Quaternionf first, Quaternionf second, float fraction) {

@@ -27,7 +27,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.ItemStack;
 
 import static net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager.DEFAULT_DISPLAY_CONTEXT;
 
-final class GeyserModelDisplayEntity extends Entity implements Tickable {
+public final class GeyserModelDisplayEntity extends Entity implements Tickable {
     private final GeyserModelDisplayManager displays;
     private final GeyserHeldItemTypes heldItemTypes;
     private final ModelDisplayInterpolation interpolation = new ModelDisplayInterpolation();

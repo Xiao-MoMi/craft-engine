@@ -6,7 +6,7 @@ import org.cloudburstmc.math.vector.Vector3f;
 
 import java.util.Arrays;
 
-final class DisplayTextPlane {
+public final class DisplayTextPlane {
     static final float PIXEL = 0.025f;
     static final float LINE_CENTER = 4.5f;
     private static final int LINE_HEIGHT = 10;
@@ -51,8 +51,7 @@ final class DisplayTextPlane {
         if (orientationChanged) {
             this.yaw = yaw;
             this.pitch = pitch;
-            this.orientation = Quaternionf.fromAngleDegAxis(-yaw, Vector3f.UNIT_Y)
-                    .mul(Quaternionf.fromAngleDegAxis(pitch, Vector3f.UNIT_X));
+            this.orientation = Quaternionf.fromAngleDegAxis(-yaw, Vector3f.UNIT_Y).mul(Quaternionf.fromAngleDegAxis(pitch, Vector3f.UNIT_X));
         }
         if (planeChanged) {
             this.pose = pose;

@@ -28,6 +28,7 @@ public final class GeyserSelectedItemHandler {
     private final GeyserPlayer player;
     private final GeyserSession session;
     private ScheduledFuture<?> task;
+    private boolean fullRefreshQueued;
     private final GeyserItemRuntime runtime;
     private final GeyserHeadItemViews heads;
     private final Map<Integer, Replacement> originals = new HashMap<>();
@@ -137,11 +138,27 @@ public final class GeyserSelectedItemHandler {
         MobEquipmentPacket equipment = event.packet();
         boolean own = equipment.getRuntimeEntityId() == this.session.getPlayerEntity().geyserId();
         boolean mainHand = equipment.getContainerId() == ContainerId.INVENTORY;
-        Entity entity = this.session.getEntityCache().getEntityByGeyserId(equipment.getRuntimeEntityId());
-        GeyserItemStack stack = own ? (mainHand ? this.session.getPlayerInventory().getItemInHand() : this.session.getPlayerInventory().getOffhand())
-                : (entity instanceof LivingEntity living ? (mainHand ? living.getMainHandItem() : living.getOffHandItem()) : null);
+        GeyserItemStack stack;
+        if (own) {
+            PlayerInventory inventory = this.session.getPlayerInventory();
+            if (mainHand) {
+                stack = inventory.getItemInHand();
+            } else {
+                stack = inventory.getOffhand();
+            }
+        } else {
+            Entity entity = this.session.getEntityCache().getEntityByGeyserId(equipment.getRuntimeEntityId());
+            if (!(entity instanceof LivingEntity living)) {
+                return;
+            }
+            if (mainHand) {
+                stack = living.getMainHandItem();
+            } else {
+                stack = living.getOffHandItem();
+            }
+        }
         if (stack != null) {
-            equipment.setItem(this.render(equipment.getItem(), own && mainHand, stack));
+            equipment.setItem(this.render(equipment.getItem(), own && mainHand, stack, -1));
         }
     }
 
@@ -149,7 +166,7 @@ public final class GeyserSelectedItemHandler {
         AddPlayerPacket packet = event.packet();
         Entity entity = this.session.getEntityCache().getEntityByGeyserId(packet.getRuntimeEntityId());
         if (entity instanceof LivingEntity living) {
-            packet.setHand(this.render(packet.getHand(), false, living.getMainHandItem()));
+            packet.setHand(this.render(packet.getHand(), false, living.getMainHandItem(), -1));
         }
     }
 
@@ -178,11 +195,27 @@ public final class GeyserSelectedItemHandler {
         if (container == ContainerId.ARMOR && slot == 0) {
             return this.heads.equipped(item);
         }
-        return this.render(item, container == ContainerId.INVENTORY && slot == this.session.getPlayerInventory().getHeldItemSlot(), null);
+        PlayerInventory inventory = this.session.getPlayerInventory();
+        int playerSlot = -1;
+        if (container == ContainerId.INVENTORY && slot >= 0 && slot < 36) {
+            playerSlot = slot < 9 ? inventory.getOffsetForHotbar(slot) : slot;
+        } else if (container == ContainerId.OFFHAND && slot == 0) {
+            playerSlot = 45;
+        }
+        return this.render(item, container == ContainerId.INVENTORY && slot == inventory.getHeldItemSlot(), null, playerSlot);
     }
 
     private void refresh(int previous) {
+        if (previous < 0) {
+            if (this.fullRefreshQueued) {
+                return;
+            }
+            this.fullRefreshQueued = true;
+        }
         this.session.executeInEventLoop(() -> {
+            if (previous < 0) {
+                this.fullRefreshQueued = false;
+            }
             if (this.player.isClosed()) {
                 return;
             }
@@ -226,11 +259,17 @@ public final class GeyserSelectedItemHandler {
         });
     }
 
-    private GeyserItemStack findStack(int netId) {
+    private GeyserItemStack findStack(int netId, int playerSlot) {
         if (netId <= 0) {
             return null;
         }
         PlayerInventory inventory = this.session.getPlayerInventory();
+        if (playerSlot >= 0) {
+            GeyserItemStack candidate = inventory.getItem(playerSlot);
+            if (!candidate.isEmpty() && candidate.getNetId() == netId) {
+                return candidate;
+            }
+        }
         if (inventory.getCursor().getNetId() == netId) {
             return inventory.getCursor();
         }
@@ -250,7 +289,7 @@ public final class GeyserSelectedItemHandler {
         return null;
     }
 
-    private ItemData render(ItemData item, boolean selected, @Nullable GeyserItemStack stack) {
+    private ItemData render(ItemData item, boolean selected, @Nullable GeyserItemStack stack, int playerSlot) {
         if (item == null) {
             return null;
         }
@@ -260,7 +299,7 @@ public final class GeyserSelectedItemHandler {
             return item;
         }
         if (stack == null) {
-            stack = this.findStack(item.getNetId());
+            stack = this.findStack(item.getNetId(), playerSlot);
         }
         if (stack == null || stack.isEmpty()) {
             return item;
@@ -280,11 +319,15 @@ public final class GeyserSelectedItemHandler {
             if (selectedItem.getDefinition() != item.getDefinition()) {
                 tints = this.runtime.tints(selectedItem);
             }
-            target = item.toBuilder().definition(selectedItem.getDefinition()).blockDefinition(selectedItem.getBlockDefinition()).build();
+            if (selectedItem.getDefinition() != item.getDefinition() || selectedItem.getBlockDefinition() != item.getBlockDefinition()) {
+                target = item.toBuilder().definition(selectedItem.getDefinition()).blockDefinition(selectedItem.getBlockDefinition()).build();
+            }
         }
         target = tints.render(components == null ? stack::getComponent : components::get, target);
         if (target != item && item.getNetId() > 0) {
             this.originals.put(item.getNetId(), new Replacement(Render.of(item), Render.of(target)));
+        } else if (useSelected && item.getNetId() > 0) {
+            this.originals.remove(item.getNetId());
         }
         return target;
     }

@@ -1,42 +1,27 @@
 package net.momirealms.craftengine.bedrock.geyser.scoreboard;
 
+import com.google.common.collect.MapMaker;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.*;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
 import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.SidebarCodec;
 import org.cloudburstmc.protocol.bedrock.data.ScoreInfo;
-import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
-import org.cloudburstmc.protocol.bedrock.packet.RemoveObjectivePacket;
-import org.cloudburstmc.protocol.bedrock.packet.SetDisplayObjectivePacket;
-import org.cloudburstmc.protocol.bedrock.packet.SetScorePacket;
-import org.geysermc.geyser.scoreboard.Objective;
-import org.geysermc.geyser.scoreboard.ScoreReference;
-import org.geysermc.geyser.scoreboard.Scoreboard;
-import org.geysermc.geyser.scoreboard.Team;
-import org.geysermc.geyser.scoreboard.display.score.SidebarDisplayScore;
+import org.cloudburstmc.protocol.bedrock.packet.*;
+import org.geysermc.geyser.scoreboard.*;
 import org.geysermc.geyser.scoreboard.display.slot.DisplaySlot;
 import org.geysermc.geyser.scoreboard.display.slot.SidebarDisplaySlot;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.text.ChatColor;
-import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.BlankFormat;
-import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.FixedFormat;
-import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.NumberFormat;
-import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.StyledFormat;
-import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.ObjectiveAction;
-import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.TeamAction;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundResetScorePacket;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetDisplayObjectivePacket;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetObjectivePacket;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetPlayerTeamPacket;
-import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.ClientboundSetScorePacket;
+import org.geysermc.geyser.translator.protocol.PacketTranslator;
+import org.geysermc.mcprotocollib.protocol.data.game.chat.numbers.*;
+import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.*;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 
 public final class SidebarSession {
     private final GeyserSession session;
@@ -44,7 +29,10 @@ public final class SidebarSession {
     private final SidebarProfiles profiles;
     private final Map<String, ObjectiveText> objectives = new HashMap<>();
     private final Map<String, TeamText> teams = new HashMap<>();
+    private final Map<String, Map<String, String>> titles = new MapMaker().weakKeys().makeMap();
+    private String displayed;
     private final Map<Long, ScoreInfo> sent = new HashMap<>();
+    private final SidebarRowSnapshot rows = new SidebarRowSnapshot();
     private Scoreboard scoreboard;
 
     public SidebarSession(GeyserSession session, ContainerTitleLayout layout, SidebarProfiles profiles) {
@@ -53,175 +41,336 @@ public final class SidebarSession {
         this.profiles = profiles;
     }
 
-    public void capture(ClientboundSetObjectivePacket objective) {
+    public void translate(ClientboundSetObjectivePacket packet, PacketTranslator<ClientboundSetObjectivePacket> original) {
         this.checkScoreboard();
-        Objective current = this.scoreboard.getObjective(objective.getName());
-        if (objective.getAction() == ObjectiveAction.REMOVE) {
-            this.objectives.remove(objective.getName());
-        } else if ((objective.getAction() == ObjectiveAction.ADD) == (current == null)) {
-            ObjectiveText text = this.objectives.computeIfAbsent(objective.getName(), key -> new ObjectiveText());
-            text.title = ObjectivePacketProxy.INSTANCE.displayName(objective);
+        String name = packet.getName();
+        Objective current = this.scoreboard.getObjective(name);
+        boolean accepted = packet.getAction() == ObjectiveAction.ADD ? current == null : current != null;
+        if (accepted && packet.getAction() != ObjectiveAction.REMOVE) {
+            ObjectiveText text = this.objectives.computeIfAbsent(name, key -> new ObjectiveText());
+            text.title = ObjectivePacketProxy.INSTANCE.displayName(packet);
             if (current != null) {
-                for (DisplaySlot slot : current.getActiveSlots()) {
-                    slot.markNeedsUpdate();
+                for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
+                    if (slot instanceof SidebarDisplaySlot && slot.objective() == current) {
+                        slot.markNeedsUpdate();
+                    }
+                }
+                if (text.active && !Objects.equals(current.getNumberFormat(), packet.getNumberFormat())) {
+                    this.refreshObjective(current, text, packet.getNumberFormat(), true);
+                }
+            }
+        }
+        original.translate(this.session, packet);
+        if (accepted && packet.getAction() == ObjectiveAction.REMOVE) {
+            this.objectives.remove(name);
+        } else if (accepted) {
+            this.bindTitle(this.scoreboard.getObjective(name), this.objectives.get(name));
+        }
+    }
+
+    public void translate(ClientboundSetDisplayObjectivePacket packet, PacketTranslator<ClientboundSetDisplayObjectivePacket> original) {
+        this.checkScoreboard();
+        boolean sidebar = DisplaySlot.slotCategory(packet.getPosition()) == ScoreboardPosition.SIDEBAR;
+        DisplaySlot previous = this.scoreboard.getObjectiveSlots().get(packet.getPosition());
+        Objective next = this.scoreboard.getObjective(packet.getName());
+        ObjectiveText text = this.objectives.get(packet.getName());
+        if (sidebar && next != null && text != null && !text.active) {
+            text.active = true;
+            this.refreshObjective(next, text, next.getNumberFormat(), false);
+        }
+        original.translate(this.session, packet);
+        if (sidebar && next != null && text != null) {
+            this.bindTitle(next, text);
+        }
+        if (previous instanceof SidebarDisplaySlot && previous.objective() != next) {
+            Objective removed = previous.objective();
+            ObjectiveText old = this.objectives.get(removed.getObjectiveName());
+            if (old != null && this.scoreboard.getObjectiveSlots().values().stream().noneMatch(slot -> slot instanceof SidebarDisplaySlot && slot.objective() == removed)) {
+                old.active = false;
+                this.refreshObjective(removed, old, removed.getNumberFormat(), false);
+            }
+        }
+    }
+
+    private void bindTitle(Objective objective, ObjectiveText text) {
+        if (!text.active) {
+            return;
+        }
+        List<GuiTitlePart> parts = new ArrayList<>();
+        if (!this.collect(text.title, 0xffffff, parts)) {
+            return;
+        }
+        int profile = this.profiles.match(objective.getObjectiveName(), plain(parts));
+        String title = this.encode(parts, profile, null, "");
+        if (title != null) {
+            // Geyser 将槽位 ID 和标题字符串原样交给出站包。弱身份键随槽位和最后一个排队的包一起释放。
+            for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
+                if (slot instanceof SidebarDisplaySlot && slot.objective() == objective) {
+                    this.titles.computeIfAbsent(slot.objectiveId(), id -> new MapMaker().weakKeys().makeMap())
+                            .put(objective.getDisplayName(), title);
                 }
             }
         }
     }
 
-    public void capture(ClientboundSetScorePacket score) {
+    public void translate(ClientboundSetScorePacket packet, PacketTranslator<ClientboundSetScorePacket> original) {
         this.checkScoreboard();
-        ObjectiveText objective = this.objectives.get(score.getObjective());
-        if (objective != null) {
-            objective.entries.put(score.getOwner(), ScorePacketProxy.INSTANCE.display(score));
-            Objective current = this.scoreboard.getObjective(score.getObjective());
-            ScoreReference reference = current == null ? null : current.getScores().get(score.getOwner());
-            if (reference != null) {
-                reference.markChanged();
+        ObjectiveText text = this.objectives.get(packet.getObjective());
+        if (text != null && !packet.getOwner().startsWith("#")) {
+            Object display = ScorePacketProxy.INSTANCE.display(packet);
+            text.entries.put(packet.getOwner(), display);
+            if (text.active) {
+                Objective objective = this.scoreboard.getObjective(packet.getObjective());
+                NumberFormat format = packet.getNumberFormat() == null ? objective.getNumberFormat() : packet.getNumberFormat();
+                String row = this.row(packet.getOwner(), display, this.team(packet.getOwner()), format, packet.getValue());
+                if (row != null) {
+                    Object component = AdventureComponentProxy.INSTANCE.font(AdventureComponentProxy.INSTANCE.text(row), AdventureKeyProxy.INSTANCE.key(GeyserGlyphSerializer.RESOLVED_FONT));
+                    packet = ScorePacketProxy.INSTANCE.withDisplay(packet, component);
+                } else if (display == null) {
+                    ScoreReference reference = objective.getScores().get(packet.getOwner());
+                    if (reference != null && this.rows.isWrapped(reference.displayName())) {
+                        ScoreReferenceProxy.INSTANCE.displayName(reference, null);
+                        reference.markChanged();
+                    }
+                }
             }
         }
+        original.translate(this.session, packet);
     }
 
-    public void capture(ClientboundResetScorePacket reset) {
+    public void translate(ClientboundResetScorePacket packet, PacketTranslator<ClientboundResetScorePacket> original) {
         this.checkScoreboard();
-        if (reset.getObjective() == null) {
-            for (ObjectiveText objective : this.objectives.values()) {
-                objective.entries.remove(reset.getOwner());
+        if (packet.getObjective() == null) {
+            for (ObjectiveText text : this.objectives.values()) {
+                text.entries.remove(packet.getOwner());
             }
         } else {
-            ObjectiveText objective = this.objectives.get(reset.getObjective());
-            if (objective != null) {
-                objective.entries.remove(reset.getOwner());
+            ObjectiveText text = this.objectives.get(packet.getObjective());
+            if (text != null) {
+                text.entries.remove(packet.getOwner());
+            }
+        }
+        original.translate(this.session, packet);
+    }
+
+    public void translate(ClientboundSetPlayerTeamPacket packet, PacketTranslator<ClientboundSetPlayerTeamPacket> original) {
+        this.checkScoreboard();
+        String name = packet.getTeamName();
+        Team current = this.scoreboard.getTeam(name);
+        boolean create = packet.getAction() == TeamAction.CREATE;
+        if ((create && current == null) || (!create && current != null)) {
+            switch (packet.getAction()) {
+                case CREATE, UPDATE -> {
+                    TeamText text = this.teamText(packet);
+                    this.teams.put(name, text);
+                    Iterable<String> members = current == null ? Arrays.asList(packet.getPlayers()) : current.entities();
+                    this.refreshMembers(members, text);
+                }
+                case ADD_PLAYER -> this.refreshMembers(Arrays.asList(packet.getPlayers()), this.teams.get(name));
+                case REMOVE_PLAYER -> {
+                    for (String owner : packet.getPlayers()) {
+                        if (this.scoreboard.getTeamFor(owner) == current) {
+                            this.refreshMember(owner, null);
+                        }
+                    }
+                }
+                case REMOVE -> {
+                    this.teams.remove(name);
+                    this.refreshMembers(current.entities(), null);
+                }
+            }
+        }
+        original.translate(this.session, packet);
+    }
+
+    private TeamText teamText(ClientboundSetPlayerTeamPacket packet) {
+        Object prefix = TeamPacketProxy.INSTANCE.prefix(packet);
+        int color = 0xffffff;
+        String legacyColor = "";
+        if (packet.getColor() != null) {
+            legacyColor = ChatColor.chatColorFor(packet.getColor());
+            Object colored = LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), legacyColor + "x");
+            Object own = AdventureStyleProxy.INSTANCE.color(AdventureComponentProxy.INSTANCE.style(colored));
+            if (own != null) {
+                color = AdventureTextColorProxy.INSTANCE.value(own);
+            }
+        }
+        int prefixLength = legacyColor.length() * 2 + MessageTranslatorProxy.INSTANCE.convertMessageRaw(prefix, this.session.locale()).length() + ChatColor.RESET.length();
+        return new TeamText(prefix, TeamPacketProxy.INSTANCE.suffix(packet), color, prefixLength);
+    }
+
+    private TeamText team(String owner) {
+        Team team = this.scoreboard.getTeamFor(owner);
+        return team == null ? null : this.teams.get(team.id());
+    }
+
+    private void refreshMembers(Iterable<String> members, TeamText team) {
+        for (String owner : members) {
+            this.refreshMember(owner, team);
+        }
+    }
+
+    private void refreshMember(String owner, TeamText team) {
+        for (Map.Entry<String, ObjectiveText> entry : this.objectives.entrySet()) {
+            ObjectiveText text = entry.getValue();
+            if (text.active && text.entries.containsKey(owner)) {
+                Objective objective = this.scoreboard.getObjective(entry.getKey());
+                this.refresh(objective.getScores().get(owner), text.entries.get(owner), team, objective.getNumberFormat(), true);
             }
         }
     }
 
-    public void capture(ClientboundSetPlayerTeamPacket team) {
-        this.checkScoreboard();
-        Team current = this.scoreboard.getTeam(team.getTeamName());
-        if (team.getAction() == TeamAction.REMOVE) {
-            this.teams.remove(team.getTeamName());
-        } else if ((team.getAction() == TeamAction.CREATE && current == null) || (team.getAction() == TeamAction.UPDATE && current != null)) {
-            this.teams.put(team.getTeamName(), new TeamText(TeamPacketProxy.INSTANCE.prefix(team), TeamPacketProxy.INSTANCE.suffix(team)));
-            if (current != null) {
-                current.markChanged();
+    private void refreshObjective(Objective objective, ObjectiveText text, NumberFormat format, boolean inheritedOnly) {
+        for (Map.Entry<String, Object> entry : text.entries.entrySet()) {
+            ScoreReference score = objective.getScores().get(entry.getKey());
+            if (score != null && (!inheritedOnly || score.numberFormat() == null)) {
+                this.refresh(score, entry.getValue(), this.team(entry.getKey()), format, text.active);
             }
         }
     }
 
-    public void capture(ClientboundSetDisplayObjectivePacket display) {
-        this.checkScoreboard();
+    private void refresh(ScoreReference score, Object original, TeamText team, NumberFormat inherited, boolean active) {
+        if (score == null) {
+            return;
+        }
+        String name = null;
+        if (active) {
+            NumberFormat format = score.numberFormat() == null ? inherited : score.numberFormat();
+            name = this.row(score.name(), original, team, format, score.score());
+        }
+        if (name == null && original != null) {
+            name = MessageTranslatorProxy.INSTANCE.convertMessageRaw(original, this.session.locale());
+        }
+        if (!Objects.equals(name, score.displayName())) {
+            ScoreReferenceProxy.INSTANCE.displayName(score, name);
+            score.markChanged();
+        }
+    }
+
+    private String row(String owner, Object display, TeamText team, NumberFormat format, int value) {
+        if (display == null) {
+            display = LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), owner);
+        }
+        List<GuiTitlePart> parts = new ArrayList<>();
+        int color = team == null ? 0xffffff : team.color;
+        if ((team != null && !this.collect(team.prefix, color, parts)) || !this.collect(display, color, parts) || (team != null && !this.collect(team.suffix, color, parts))) {
+            return null;
+        }
+        String encoded = this.encode(parts, 0, null, this.number(format, value));
+        if (encoded == null) {
+            return null;
+        }
+        return this.rows.wrap(encoded, team == null ? 0 : team.prefixLength);
+    }
+
+    public synchronized void onDisplay(GeyserPacketEvent<SetDisplayObjectivePacket> event) {
+        SetDisplayObjectivePacket packet = event.packet();
+        if (!"sidebar".equals(packet.getDisplaySlot())) {
+            return;
+        }
+        if (!packet.getObjectiveId().equals(this.displayed)) {
+            this.sent.clear();
+            this.displayed = packet.getObjectiveId();
+        }
+        Map<String, String> versions = this.titles.get(packet.getObjectiveId());
+        String nativeName = packet.getDisplayName();
+        String name = versions == null ? nativeName : versions.getOrDefault(nativeName, nativeName);
+        name = name.replace("%", "%%");
+        if (!name.equals(nativeName)) {
+            SetDisplayObjectivePacket replacement = packet.clone();
+            replacement.setDisplayName(name);
+            event.setPacket(replacement);
+        }
+    }
+
+    public synchronized void onRemove(GeyserPacketEvent<RemoveObjectivePacket> event) {
+        String id = event.packet().getObjectiveId();
+        if (id.equals(this.displayed)) {
+            this.displayed = null;
+            this.sent.clear();
+        }
+    }
+
+    public synchronized void onScores(GeyserPacketEvent<SetScorePacket> event) {
+        SetScorePacket packet = event.packet();
+        if (packet.getAction() == SetScorePacket.Action.REMOVE) {
+            for (ScoreInfo score : packet.getInfos()) {
+                this.sent.remove(score.getScoreboardId());
+            }
+            return;
+        }
+        List<ScoreInfo> rows = packet.getInfos();
+        List<ScoreInfo> rewritten = null;
+        SetScorePacket removed = null;
+        for (int index = 0; index < rows.size(); index++) {
+            ScoreInfo row = rows.get(index);
+            String nativeName = row.getName();
+            if (nativeName == null) {
+                continue;
+            }
+            boolean visible = row.getObjectiveId().equals(this.displayed);
+            String name = this.rows.wireName(nativeName, visible);
+            if (!visible && name == nativeName) {
+                continue;
+            }
+            if (!name.equals(nativeName)) {
+                if (rewritten == null) {
+                    rewritten = new ArrayList<>(rows);
+                }
+                row = new ScoreInfo(row.getScoreboardId(), row.getObjectiveId(), row.getScore(), name);
+                rewritten.set(index, row);
+            }
+            if (!visible) {
+                continue;
+            }
+            ScoreInfo previous = this.sent.put(row.getScoreboardId(), row);
+            if (previous != null && !name.equals(previous.getName())) {
+                if (removed == null) {
+                    removed = new SetScorePacket();
+                    removed.setAction(SetScorePacket.Action.REMOVE);
+                }
+                removed.getInfos().add(new ScoreInfo(row.getScoreboardId(), row.getObjectiveId(), 0));
+            }
+        }
+        if (removed != null) {
+            event.writeBefore(removed);
+        }
+        if (rewritten != null) {
+            SetScorePacket replacement = packet.clone();
+            replacement.setInfos(rewritten);
+            event.setPacket(replacement);
+        }
     }
 
     private void checkScoreboard() {
         Scoreboard current = this.session.getWorldCache().getScoreboard();
-        if (this.scoreboard != current) {
+        if (current != this.scoreboard) {
             this.objectives.clear();
             this.teams.clear();
-            this.sent.clear();
             this.scoreboard = current;
         }
     }
 
-    public synchronized void send(BedrockPacket packet, Consumer<BedrockPacket> output) {
+    public synchronized void close() {
         this.checkScoreboard();
-        if (packet instanceof SetDisplayObjectivePacket objective && "sidebar".equals(objective.getDisplaySlot())) {
-            SidebarDisplaySlot slot = this.slot(objective.getObjectiveId());
-            if (slot != null) {
-                ObjectiveText text = this.objectives.get(slot.objective().getObjectiveName());
-                if (text != null && text.title != null) {
-                    List<GuiTitlePart> parts = new ArrayList<>();
-                    if (this.collect(text.title, 0xffffff, parts)) {
-                        int profile = this.profiles.match(slot.objective().getObjectiveName(), plain(parts));
-                        String encoded = this.encode(parts, profile, null, "");
-                        if (encoded != null) {
-                            objective = objective.clone();
-                            objective.setDisplayName(encoded);
-                            packet = objective;
-                        }
-                    }
-                }
-            }
-            if (objective.getDisplayName().indexOf('%') >= 0) {
-                objective = objective.clone();
-                objective.setDisplayName(objective.getDisplayName().replace("%", "%%"));
-                packet = objective;
-            }
-        } else if (packet instanceof SetScorePacket scores) {
-            if (scores.getAction() == SetScorePacket.Action.REMOVE) {
-                for (ScoreInfo score : scores.getInfos()) {
-                    this.sent.remove(score.getScoreboardId());
-                }
-            } else {
-                SetScorePacket rewritten = new SetScorePacket();
-                rewritten.setAction(SetScorePacket.Action.SET);
-                SetScorePacket removed = new SetScorePacket();
-                removed.setAction(SetScorePacket.Action.REMOVE);
-                // A font-only change can leave Geyser's legacy name unchanged, so compare the actual wire name too.
-                for (ScoreInfo score : scores.getInfos()) {
-                    ScoreInfo transformed = this.score(score);
-                    // The Bedrock scoreboard controller formats percent signs before exposing UI bindings.
-                    if (this.slot(score.getObjectiveId()) != null && transformed.getName() != null && transformed.getName().indexOf('%') >= 0) {
-                        transformed = new ScoreInfo(transformed.getScoreboardId(), transformed.getObjectiveId(), transformed.getScore(), transformed.getName().replace("%", "%%"));
-                    }
-                    ScoreInfo previous = this.sent.put(score.getScoreboardId(), transformed);
-                    if (previous != null && !java.util.Objects.equals(previous.getName(), transformed.getName())) {
-                        removed.getInfos().add(new ScoreInfo(score.getScoreboardId(), score.getObjectiveId(), 0));
-                    }
-                    rewritten.getInfos().add(transformed);
-                }
-                if (!removed.getInfos().isEmpty()) {
-                    output.accept(removed);
-                }
-                packet = rewritten;
-            }
-        } else if (packet instanceof RemoveObjectivePacket removed) {
-            this.sent.values().removeIf(score -> score.getObjectiveId().equals(removed.getObjectiveId()));
+        if (!this.session.isClosed()) {
+            this.restoreActiveRows();
         }
-        output.accept(packet);
+        this.titles.clear();
+        this.displayed = null;
+        this.sent.clear();
+        this.objectives.clear();
+        this.teams.clear();
     }
 
-    private ScoreInfo score(ScoreInfo info) {
-        SidebarDisplaySlot slot = this.slot(info.getObjectiveId());
-        if (slot == null) {
-            return info;
+    private void restoreActiveRows() {
+        for (Map.Entry<String, ObjectiveText> entry : this.objectives.entrySet()) {
+            Objective objective = this.scoreboard.getObjective(entry.getKey());
+            if (entry.getValue().active && objective != null) {
+                entry.getValue().active = false;
+                this.refreshObjective(objective, entry.getValue(), objective.getNumberFormat(), false);
+            }
         }
-        ObjectiveText objective = this.objectives.get(slot.objective().getObjectiveName());
-        if (objective == null) {
-            return info;
-        }
-        for (SidebarDisplayScore score : SidebarSlotProxy.INSTANCE.scores(slot)) {
-            if (score.cachedInfo() == null || score.cachedInfo().getScoreboardId() != info.getScoreboardId()) {
-                continue;
-            }
-            Object display = objective.entries.get(score.name());
-            if (display == null) {
-                display = LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), score.name());
-            }
-            List<GuiTitlePart> parts = new ArrayList<>();
-            Team team = this.scoreboard.getTeamFor(score.name());
-            TeamText teamText = team == null ? null : this.teams.get(team.id());
-            int color = 0xffffff;
-            if (team != null && team.color() != null) {
-                Object colored = LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), ChatColor.chatColorFor(team.color()) + "x");
-                Object ownColor = AdventureStyleProxy.INSTANCE.color(AdventureComponentProxy.INSTANCE.style(colored));
-                if (ownColor != null) {
-                    color = AdventureTextColorProxy.INSTANCE.value(ownColor);
-                }
-            }
-            if (teamText != null && !this.collect(teamText.prefix(), color, parts)) {
-                return info;
-            }
-            if (!this.collect(display, color, parts) || (teamText != null && !this.collect(teamText.suffix(), color, parts))) {
-                return info;
-            }
-            ScoreReference reference = slot.objective().getScores().get(score.name());
-            NumberFormat format = reference.numberFormat() == null ? slot.objective().getNumberFormat() : reference.numberFormat();
-            String number = this.number(format, reference.score());
-            String encoded = this.encode(parts, 0, score.order(), number);
-            return encoded == null ? info : new ScoreInfo(info.getScoreboardId(), info.getObjectiveId(), info.getScore(), encoded);
-        }
-        return info;
     }
 
     private String number(NumberFormat format, int value) {
@@ -241,12 +390,9 @@ public final class SidebarSession {
 
     private String encode(List<GuiTitlePart> parts, int profile, String order, String number) {
         try {
-            List<List<ContainerTitleLayout.Run>> layers = this.layout.layout(parts, true);
-            List<String> text = new ArrayList<>(layers.size());
-            for (List<ContainerTitleLayout.Run> layer : layers) {
-                text.add(GeyserTextParts.serializeLayer(layer, parts, this.session.locale()));
-            }
-            return SidebarCodec.encode(profile, order, this.layout.width(parts), number, text);
+            ContainerTitleLayout.MeasuredLayout measured = this.layout.layoutWithWidth(parts);
+            return SidebarCodec.encode(profile, order, measured.width(), number, measured.layers(),
+                    layer -> GeyserTextParts.serializeLayer(layer, parts, this.session.locale()));
         } catch (UnsupportedOperationException exception) {
             return null;
         }
@@ -254,15 +400,6 @@ public final class SidebarSession {
 
     private boolean collect(Object component, int color, List<GuiTitlePart> parts) {
         return component != null && GeyserTextParts.collectParts(component, "minecraft:default", color, 0, parts, this.session.locale());
-    }
-
-    private SidebarDisplaySlot slot(String id) {
-        for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
-            if (slot instanceof SidebarDisplaySlot sidebar && slot.objectiveId().equals(id)) {
-                return sidebar;
-            }
-        }
-        return null;
     }
 
     private static String plain(List<GuiTitlePart> parts) {
@@ -284,9 +421,10 @@ public final class SidebarSession {
 
     private static final class ObjectiveText {
         private Object title;
+        private boolean active;
         private final Map<String, Object> entries = new HashMap<>();
     }
 
-    private record TeamText(Object prefix, Object suffix) {
+    private record TeamText(Object prefix, Object suffix, int color, int prefixLength) {
     }
 }

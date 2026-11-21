@@ -40,7 +40,10 @@ public final class GeyserItemRuntime {
         this.tintSources = tintSources;
     }
 
-    public static GeyserItemRuntime install(GeyserPlayer player, Map<String, CustomItemDefinition> definitions, Map<String, String> headIdentifiers, Map<String, GeyserItemTints> tintSources) {
+    public static GeyserItemRuntime install(GeyserPlayer player,
+                                            Map<String, CustomItemDefinition> definitions,
+                                            Map<String, String> headIdentifiers,
+                                            Map<String, GeyserItemTints> tintSources) {
         GeyserSession session = player.session();
         Set<String> selectedModels = new HashSet<>();
         for (CustomItemDefinition definition : definitions.values()) {

@@ -3,13 +3,10 @@ package net.momirealms.craftengine.bedrock.geyser.item.component;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import org.cloudburstmc.nbt.NbtMap;
-import org.geysermc.geyser.registry.type.ItemMappings;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
@@ -86,16 +83,5 @@ public final class GeyserItemComponentPatches {
 
     public static GeyserItemComponentPatch withoutWearable(@Nullable GeyserItemComponentPatch patch) {
         return combine(patch, GeyserItemComponents.equippable(JsonNull.INSTANCE));
-    }
-
-    @Nullable
-    public static GeyserItemComponentPatch cached(@Nullable GeyserItemComponentPatch patch) {
-        if (patch == null) {
-            return null;
-        }
-        // ItemMappings 属于协议注册表；缓存随本次计划持有，不保存玩家或会话。
-        Map<ItemMappings, Map<NbtMap, NbtMap>> cache = new ConcurrentHashMap<>();
-        return (data, mappings) -> cache.computeIfAbsent(mappings, ignored -> new ConcurrentHashMap<>())
-                        .computeIfAbsent(data, original -> patch.apply(original, mappings));
     }
 }

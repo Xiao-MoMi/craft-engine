@@ -31,7 +31,7 @@ final class GeyserHeadItemViews {
     }
 
     private static ItemData replace(ItemData item, Map<String, ItemDefinition> definitions) {
-        if (item == null || item.getDefinition() == null || definitions.isEmpty()) {
+        if (item == null || definitions.isEmpty()) {
             return item;
         }
         ItemDefinition replacement = definitions.get(item.getDefinition().getIdentifier());

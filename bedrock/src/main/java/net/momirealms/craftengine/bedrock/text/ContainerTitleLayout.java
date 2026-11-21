@@ -30,10 +30,15 @@ public final class ContainerTitleLayout {
         if (!force && !this.hasCustomGlyph(parts)) {
             return List.of();
         }
+        return this.layoutWithWidth(parts).layers();
+    }
+
+    public MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts) {
         List<Layer> layers = new ArrayList<>();
         int remainingBytes = ContainerTitleCodec.MAX_BYTES;
         // Java 光标允许负间距回退；每个基岩图层的光标只能通过间距字符向右移动。
         double javaCursor = ORIGIN;
+        double width = 0;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
             Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
@@ -46,6 +51,7 @@ public final class ContainerTitleLayout {
                     throw new UnsupportedOperationException("Unknown title glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
                 }
                 if (!glyph.visible()) {
+                    width += glyph.advance();
                     javaCursor += glyph.advance();
                     continue;
                 }
@@ -84,19 +90,22 @@ public final class ContainerTitleLayout {
                 selected.appendGlyph(partIndex, glyph.character());
                 selected.addSpan(inkStart, inkEnd);
                 selected.cursor = position + advance;
-                javaCursor += glyph.advance() + boldAdvance;
+                float javaAdvance = glyph.advance() + boldAdvance;
+                javaCursor += javaAdvance;
+                width += javaAdvance;
             }
         }
         // 有自定义字形但没有可见内容时，保留一个空图层，区别于无需转换的空结果。
+        int pixelWidth = Math.max(0, (int) Math.ceil(width));
         if (layers.isEmpty()) {
-            return List.of(List.of());
+            return new MeasuredLayout(List.of(List.of()), pixelWidth);
         }
         List<List<Run>> result = new ArrayList<>(layers.size());
         for (Layer layer : layers) {
             layer.flushRun();
             result.add(layer.runs);
         }
-        return result;
+        return new MeasuredLayout(result, pixelWidth);
     }
 
     public int width(List<GuiTitlePart> parts) {
@@ -155,6 +164,9 @@ public final class ContainerTitleLayout {
             }
         }
         return false;
+    }
+
+    public record MeasuredLayout(List<List<Run>> layers, int width) {
     }
 
     // part 是原始标题片段的索引，-1 表示不继承片段样式的间距文本。

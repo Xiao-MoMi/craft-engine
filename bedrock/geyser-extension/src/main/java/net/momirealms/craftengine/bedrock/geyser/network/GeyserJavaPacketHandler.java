@@ -37,22 +37,16 @@ public final class GeyserJavaPacketHandler extends SessionAdapter {
 
     @Override
     public void packetReceived(@NotNull Session session, @NotNull Packet packet) {
-        if (session == this.connection && !this.player.isClosed()) {
-            this.packets.receive(this.player, packet);
-        }
+        this.packets.receive(this.player, packet);
     }
 
     @Override
-    public void packetSending(PacketSendingEvent event) {
-        if (event.getSession() == this.connection && !this.player.isClosed()) {
-            this.packets.sending(this.player, event);
-        }
+    public void packetSending(@NotNull PacketSendingEvent event) {
+        this.packets.sending(this.player, event);
     }
 
     @Override
     public void packetSent(@NotNull Session session, @NotNull Packet packet) {
-        if (session == this.connection && !this.player.isClosed()) {
-            this.packets.sent(this.player, packet);
-        }
+        this.packets.sent(this.player, packet);
     }
 }

@@ -64,7 +64,7 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
     private void send(ChannelHandlerContext context, Object message, ChannelPromise promise) {
         if (message instanceof BedrockPacketWrapper wrapper && wrapper.getTargetSubClientId() == 0 && !this.player.isClosed()) {
             try {
-                if (GeyserBedrockPackets.send(this.player, wrapper)) {
+                if (GeyserBedrockPackets.send(this.player, wrapper, context)) {
                     wrapper.release();
                     promise.trySuccess();
                     return;

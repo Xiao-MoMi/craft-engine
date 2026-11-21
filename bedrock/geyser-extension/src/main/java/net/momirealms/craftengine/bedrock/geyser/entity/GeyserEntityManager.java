@@ -40,7 +40,11 @@ public final class GeyserEntityManager {
     public void initialize(GeyserGlyphData glyphs) {
         this.modelDisplays.initialize();
         GeyserTextDisplayManager textDisplays = new GeyserTextDisplayManager(this.players, glyphs);
-        this.spawnTranslator = GeyserEntitySpawnTranslator.install(this.modelDisplays, textDisplays, this.players);
+        this.spawnTranslator = new GeyserEntitySpawnTranslator(this.modelDisplays, textDisplays);
+    }
+
+    public GeyserEntitySpawnTranslator spawnTranslator() {
+        return this.spawnTranslator;
     }
 
     public void acceptNativeModel(GeyserPlayer player, NativeModelPayload state) {
@@ -64,10 +68,7 @@ public final class GeyserEntityManager {
     }
 
     public void disable() {
-        if (this.spawnTranslator != null) {
-            this.spawnTranslator.uninstall();
-            this.spawnTranslator = null;
-        }
+        this.spawnTranslator = null;
         this.modelDisplays.disable();
     }
 }

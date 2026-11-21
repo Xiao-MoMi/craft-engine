@@ -18,7 +18,6 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.ServerCustomPacket;
-import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarConnection;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
 import org.cloudburstmc.math.vector.Vector2f;
@@ -48,7 +47,7 @@ public final class GeyserPlayer {
     private Vector3f cameraDirection;
     private Vector3f sampledCameraDirection;
     private Vector2f cameraAngles;
-    private GeyserSidebarConnection sidebar;
+    private SidebarSession sidebar;
     private GeyserItemRuntime items;
     private GeyserHeldDye heldDye;
     private GeyserElytraEquipment elytra;
@@ -66,14 +65,12 @@ public final class GeyserPlayer {
     }
 
     synchronized void initialize() {
-        if (this.isClosed()) {
-            return;
-        }
         this.heldDye = this.extension.itemManager().initPlayerDye(this);
         this.componentPatcher = this.extension.itemManager().createComponentPatcher(this);
         this.items = this.extension.itemManager().initPlayer(this);
         this.placement = this.extension.blockManager().initPlayer(this);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
+
         this.packetHandler = new GeyserPacketHandler(this, GeyserConfig.containerCloseHandlerEnabled());
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
     }
@@ -98,8 +95,7 @@ public final class GeyserPlayer {
             float lengthSquared = direction == null ? 0 : direction.lengthSquared();
             if (lengthSquared >= 0.8f && lengthSquared <= 1.2f) {
                 double horizontal = Math.hypot(direction.getX(), direction.getZ());
-                float yaw = horizontal < 1e-5 ? this.session.getPlayerEntity().getYaw()
-                        : (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
+                float yaw = horizontal < 1e-5 ? this.session.getPlayerEntity().getYaw() : (float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ()));
                 float pitch = (float) Math.toDegrees(Math.atan2(-direction.getY(), horizontal));
                 this.cameraAngles = Vector2f.from(yaw, pitch);
             } else {
@@ -128,33 +124,28 @@ public final class GeyserPlayer {
 
     @Nullable
     public synchronized SidebarSession sidebar() {
-        if (this.isClosed() || this.extension.sidebarManager() == null) {
+        if (this.closed || this.extension.sidebarManager() == null) {
             return null;
         }
         if (this.sidebar == null) {
-            this.sidebar = this.extension.sidebarManager().createConnection(this.session);
+            this.sidebar = this.extension.sidebarManager().createSession(this.session);
         }
-        return this.sidebar.sidebar();
+        return this.sidebar;
     }
 
     public void queueHitbox(HardHitboxPayload hitbox) {
-        if (!this.isClosed()) {
-            if (this.pendingHitboxes == null) {
-                this.pendingHitboxes = new Int2ObjectOpenHashMap<>();
-            }
-            this.pendingHitboxes.put(hitbox.entityId(), hitbox);
+        if (this.pendingHitboxes == null) {
+            this.pendingHitboxes = new Int2ObjectOpenHashMap<>();
         }
+        this.pendingHitboxes.put(hitbox.entityId(), hitbox);
     }
 
     @Nullable
     public HardHitboxPayload takeHitbox(int entityId) {
-        return this.isClosed() || this.pendingHitboxes == null ? null : this.pendingHitboxes.remove(entityId);
+        return this.pendingHitboxes == null ? null : this.pendingHitboxes.remove(entityId);
     }
 
     public void queueShape(DebugShape shape) {
-        if (this.isClosed()) {
-            return;
-        }
         if (this.pendingShapes == null) {
             this.pendingShapes = new Long2ObjectLinkedOpenHashMap<>();
         }
@@ -170,10 +161,6 @@ public final class GeyserPlayer {
         if (shapes == null || shapes.isEmpty()) {
             return;
         }
-        if (this.isClosed()) {
-            shapes.clear();
-            return;
-        }
         DebugDrawerPacket packet = new DebugDrawerPacket();
         packet.getShapes().addAll(shapes.values());
         shapes.clear();
@@ -181,9 +168,7 @@ public final class GeyserPlayer {
     }
 
     public void send(ServerCustomPacket packet) {
-        if (!this.isClosed()) {
-            this.extension.customPayloads().send(this.session, packet);
-        }
+        this.extension.customPayloads().send(this.session, packet);
     }
 
     @Nullable
@@ -232,7 +217,7 @@ public final class GeyserPlayer {
     }
 
     void close() {
-        GeyserSidebarConnection connection;
+        SidebarSession connection;
         synchronized (this) {
             if (this.closed) {
                 return;

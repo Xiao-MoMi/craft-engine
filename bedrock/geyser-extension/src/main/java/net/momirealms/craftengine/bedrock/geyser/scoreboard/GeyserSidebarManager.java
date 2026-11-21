@@ -12,7 +12,7 @@ public final class GeyserSidebarManager {
         this.profiles = profiles;
     }
 
-    public GeyserSidebarConnection createConnection(GeyserSession session) {
-        return new GeyserSidebarConnection(session, this.layout, this.profiles);
+    public SidebarSession createSession(GeyserSession session) {
+        return new SidebarSession(session, this.layout, this.profiles);
     }
 }

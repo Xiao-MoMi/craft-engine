@@ -16,6 +16,9 @@ public interface MessageTranslatorProxy {
     @MethodInvoker(name = "convertMessage", isStatic = true)
     String convertMessage(@Type(clazz = AdventureComponentProxy.class) Object component, String locale);
 
+    @MethodInvoker(name = "convertMessageRaw", isStatic = true)
+    String convertMessageRaw(@Type(clazz = AdventureComponentProxy.class) Object component, String locale);
+
     @FieldGetter(name = "RENDERER", isStatic = true)
     Object renderer();
 

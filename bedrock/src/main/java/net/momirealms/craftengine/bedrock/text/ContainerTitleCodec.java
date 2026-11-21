@@ -24,9 +24,10 @@ public final class ContainerTitleCodec {
         String count = countBuilder.append(':').toString();
         int headerBytes = ENTRY_BYTES * layers.size();
         // 索引表是 ASCII，每层两个 %.0000s 分别记录正文的 UTF-8 字节偏移和长度。
-        StringBuilder payload = new StringBuilder(headerBytes);
+        int payloadStart = marker.length() + count.length();
+        StringBuilder payload = new StringBuilder(payloadStart + headerBytes).append(marker).append(count);
         int byteOffset = headerBytes;
-        int characterCount = headerBytes;
+        int characterCount = payloadStart + headerBytes;
         for (String layer : layers) {
             // 重置前缀让纯数字文本在客户端表达式中仍按字符串处理。
             if (!layer.isEmpty() && !layer.startsWith("§r")) {
@@ -50,8 +51,8 @@ public final class ContainerTitleCodec {
             payload.append(layer);
         }
         String encoded = payload.toString();
-        verifySlices(encoded, layers);
-        return marker + count + encoded;
+        verifySlices(encoded, payloadStart, layers);
+        return encoded;
     }
 
     private static int layerByteLength(String layer) {
@@ -84,24 +85,25 @@ public final class ContainerTitleCodec {
         output.append('s');
     }
 
-    private static void appendNumber(StringBuilder output, int value) {
+    static void appendNumber(StringBuilder output, int value) {
         for (int divisor = 1000; divisor > 0; divisor /= 10) {
             output.append((char) ('0' + value / divisor % 10));
         }
     }
 
-    private static void verifySlices(String payload, List<String> layers) {
+    private static void verifySlices(String payload, int payloadStart, List<String> layers) {
         // 这里模拟 Java 字符串操作，位置使用 UTF-16 下标，不是索引表中的 UTF-8 字节偏移。
-        int characterOffset = ENTRY_BYTES * layers.size();
+        int characterOffset = payloadStart + ENTRY_BYTES * layers.size();
         for (int i = 0; i < layers.size(); i++) {
             // UI 字符串减法会删除所有匹配项；模拟删除后的前缀，不创建完整的替换结果。
-            int entry = i * ENTRY_BYTES;
+            int entry = payloadStart + i * ENTRY_BYTES;
             int lengthEntry = entry + FORMAT_BYTES;
-            if (!startsWithAfterRemovingPrefix(payload, entry, payload, entry, FORMAT_BYTES) || !startsWithAfterRemovingPrefix(payload, lengthEntry, payload, lengthEntry, FORMAT_BYTES)) {
+            if (!startsWithAfterRemovingPrefix(payload, payloadStart, entry, payload, entry, FORMAT_BYTES)
+                    || !startsWithAfterRemovingPrefix(payload, payloadStart, lengthEntry, payload, lengthEntry, FORMAT_BYTES)) {
                 throw new UnsupportedOperationException("Title layout table conflicts with its contents");
             }
             String expected = layers.get(i);
-            if (!startsWithAfterRemovingPrefix(payload, characterOffset, expected, 0, expected.length())) {
+            if (!startsWithAfterRemovingPrefix(payload, payloadStart, characterOffset, expected, 0, expected.length())) {
                 throw new UnsupportedOperationException("Title layer conflicts with its prefix");
             }
             characterOffset += expected.length();
@@ -109,15 +111,15 @@ public final class ContainerTitleCodec {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private static boolean startsWithAfterRemovingPrefix(String source, int prefixLength, String expected, int expectedOffset, int expectedLength) {
+    private static boolean startsWithAfterRemovingPrefix(String source, int payloadStart, int position, String expected, int expectedOffset, int expectedLength) {
         // 首次匹配必定在开头；后续按非重叠匹配跳过，与 String.replace 的语义一致。
-        int position = prefixLength;
+        int prefixLength = position - payloadStart;
         int matched = 0;
         while (matched < expectedLength) {
             if (position >= source.length()) {
                 return false;
             }
-            if (prefixLength > 0 && source.regionMatches(position, source, 0, prefixLength)) {
+            if (prefixLength > 0 && source.regionMatches(position, source, payloadStart, prefixLength)) {
                 position += prefixLength;
                 continue;
             }

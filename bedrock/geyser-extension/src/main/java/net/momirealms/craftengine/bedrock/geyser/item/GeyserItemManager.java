@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedItem;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemRegistrationAdapter.ConvertedVariant;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatchCache;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
@@ -29,11 +30,10 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 public final class GeyserItemManager {
     private final CraftEngineGeyserExtension extension;
     private final Set<String> registeredItems = new HashSet<>();
-    private GeyserActiveItemMetadata activeItemMetadata;
     private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private final Map<String, String> headIdentifiers = new HashMap<>();
-    private Map<String, GeyserItemComponentPatch> componentPatches = Map.of();
+    private GeyserItemComponentPatchCache componentPatches;
     private GeyserDyeProperties mainHandDye;
     private GeyserDyeProperties offHandDye;
     private GeyserDyeProperties mainHandThirdDye;
@@ -57,7 +57,7 @@ public final class GeyserItemManager {
         this.tintSources = Map.of();
         this.elytraVariants = Map.of();
         this.elytraProperty = null;
-        this.componentPatches = Map.of();
+        this.componentPatches = null;
         if (plan == null) {
             return;
         }
@@ -94,8 +94,9 @@ public final class GeyserItemManager {
                 GeyserTranslationManager.error("item.register_failed", exception, entry.get(BEDROCK_IDENTIFIER), entry.get(ITEM_TYPE), entry.get(MODEL));
             }
         }
-        registration.patches.replaceAll((identifier, patch) -> GeyserItemComponentPatches.cached(patch));
-        this.componentPatches = Map.copyOf(registration.patches);
+        if (!registration.patches.isEmpty()) {
+            this.componentPatches = new GeyserItemComponentPatchCache(registration.patches);
+        }
         this.tintSources = Map.copyOf(registration.tintSources);
         this.elytraVariants = Map.copyOf(registration.elytraVariants);
         GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
@@ -160,8 +161,11 @@ public final class GeyserItemManager {
     }
 
     public void init() {
-        this.worldItemViews.install();
-        this.activeItemMetadata = GeyserActiveItemMetadata.install();
+        this.worldItemViews.installShelf();
+    }
+
+    public boolean hasDyedItems() {
+        return this.hasDyedItems;
     }
 
     public GeyserHeldDye initPlayerDye(GeyserPlayer player) {
@@ -176,7 +180,7 @@ public final class GeyserItemManager {
     }
 
     public GeyserItemComponentPatcher createComponentPatcher(GeyserPlayer player) {
-        return this.componentPatches.isEmpty() ? null : new GeyserItemComponentPatcher(player, this.componentPatches);
+        return this.componentPatches == null ? null : new GeyserItemComponentPatcher(player, this.componentPatches);
     }
 
     public GeyserItemRuntime initPlayer(GeyserPlayer player) {
@@ -186,15 +190,16 @@ public final class GeyserItemManager {
         return null;
     }
 
+    public boolean hasRegisteredItems() {
+        return !this.registeredItems.isEmpty();
+    }
+
     public boolean isRegisteredItem(String identifier) {
         return this.registeredItems.contains(identifier);
     }
 
     public void disable() {
-        if (this.activeItemMetadata != null) {
-            this.activeItemMetadata.uninstall();
-        }
-        this.worldItemViews.uninstall();
+        this.worldItemViews.uninstallShelf();
     }
 
     private static final class Registration {

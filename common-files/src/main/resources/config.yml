@@ -830,20 +830,22 @@ bedrock:
     exlude:
       - 'nameplates:.*'
   custom-entity:
-    # Per-plugin defaults. disabled, display_entity (server-driven bones), or custom_entity
-    # (embedded PNG .bbmodel and Bedrock animations; procedural poses may differ).
+    # Available values:
+    #  - disabled
+    #  - display_entity: full Java Edition movement recreation, with variable-speed playback and pause support but at higher performance cost
+    #  - custom_entity: embedded PNG .bbmodel and Bedrock animations; procedural poses may differ
     integrations:
       bettermodel: disabled
       modelengine: disabled
-    # -1 disables dynamic tinting. Positive values limit mask layers per dyeable material.
+    # -1 disables dynamic tinting. Positive values limit mask layers per dyeable material
     dye-max-layers: -1
-    # Exact RGB matches use baked textures, including when dynamic tinting is disabled.
-    # display_entity can prebake the plugin's hurt tint. custom_entity uses the native hurt event.
+    # Exact RGB matches use baked textures, including when dynamic tinting is disabled
+    # display_entity can prebake the plugin's hurt tint. custom_entity always uses the native hurt event.
     prebaked-colors: ["#FF8080"]
     # A matching entry replaces BOTH dye settings. Omitted settings mean -1 and [].
     # Omit mode to inherit the plugin's mode.
     # overrides:
-    #   - model: "bettermodel:demon_knight"
+    #   - model: ["bettermodel:demon_knight", "bettermodel:blue_wizard"]
     #     mode: display_entity
     #     dye-max-layers: 8
     #     prebaked-colors: []

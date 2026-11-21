@@ -11,22 +11,20 @@ import org.cloudburstmc.protocol.bedrock.data.definitions.SimpleItemDefinition;
 import org.cloudburstmc.protocol.bedrock.data.inventory.crafting.recipe.SmithingTrimRecipeData;
 import org.cloudburstmc.protocol.bedrock.packet.CraftingDataPacket;
 import org.cloudburstmc.protocol.bedrock.packet.ItemComponentPacket;
-import org.geysermc.geyser.registry.type.ItemMappings;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.UnaryOperator;
 
 public final class GeyserItemComponentPatcher {
-    private final Map<String, GeyserItemComponentPatch> patches;
-    private final ItemMappings mappings;
+    private final Map<String, UnaryOperator<NbtMap>> patches;
     private final GeyserPlayer player;
     private final Map<String, Int2ObjectMap<ItemDefinition>> trimItems = new HashMap<>();
 
-    public GeyserItemComponentPatcher(GeyserPlayer player, Map<String, GeyserItemComponentPatch> patches) {
-        this.patches = patches;
-        this.mappings = player.session().getItemMappings();
+    public GeyserItemComponentPatcher(GeyserPlayer player, GeyserItemComponentPatchCache patchCache) {
+        this.patches = patchCache.forMappings(player.session().getItemMappings());
         this.player = player;
     }
 
@@ -49,10 +47,10 @@ public final class GeyserItemComponentPatcher {
         List<ItemDefinition> definitions = packet.getItems();
         for (int i = 0; i < definitions.size(); i++) {
             ItemDefinition definition = definitions.get(i);
-            GeyserItemComponentPatch patch = this.patches.get(definition.getIdentifier());
+            UnaryOperator<NbtMap> patch = this.patches.get(definition.getIdentifier());
             if (patch != null) {
                 NbtMap original = definition.getComponentData();
-                NbtMap data = patch.apply(original, this.mappings);
+                NbtMap data = patch.apply(original);
                 for (String tag : data.getCompound("components").getList("item_tags", NbtType.STRING)) {
                     if (tag.startsWith(GeyserArmorTrimRecipes.BASE_TAG_PREFIX)) {
                         this.trimItems.computeIfAbsent(tag, key -> new Int2ObjectOpenHashMap<>()).putIfAbsent(definition.getRuntimeId(), definition);

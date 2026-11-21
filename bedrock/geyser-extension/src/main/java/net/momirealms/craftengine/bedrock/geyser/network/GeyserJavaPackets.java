@@ -1,15 +1,28 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.CraftEngineGeyserExtension;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockBreakEffects;
+import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
+import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
+import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserWorldItemViews;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.geyser.registry.PacketTranslatorRegistry;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.network.event.session.PacketSendingEvent;
 import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerAction;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundBossEventPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundSetEntityDataPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundLevelEventPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.inventory.ServerboundContainerClickPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundPlayerActionPacket;
@@ -37,7 +50,7 @@ public final class GeyserJavaPackets {
         this.players = players;
     }
 
-    public void install(boolean sidebarEnabled) {
+    public void install(CraftEngineGeyserExtension extension) {
         this.intercept(ClientboundLoginFinishedPacket.class, (player, packet, original) -> {
             GeyserSession session = player.session();
             boolean attached = player.javaConnection().attach(session.getDownstream().getSession());
@@ -47,20 +60,41 @@ public final class GeyserJavaPackets {
                 this.receive(player, packet);
             }
         });
-        if (sidebarEnabled) {
-            this.interceptSidebar(ClientboundSetObjectivePacket.class, SidebarSession::capture);
-            this.interceptSidebar(ClientboundSetScorePacket.class, SidebarSession::capture);
-            this.interceptSidebar(ClientboundResetScorePacket.class, SidebarSession::capture);
-            this.interceptSidebar(ClientboundSetPlayerTeamPacket.class, SidebarSession::capture);
-            this.interceptSidebar(ClientboundSetDisplayObjectivePacket.class, SidebarSession::capture);
+        this.intercept(ClientboundAddEntityPacket.class, extension.entityManager().spawnTranslator());
+        ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
+        if (layout != null) {
+            this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout));
         }
-        this.onSent(ServerboundSetCarriedItemPacket.class, (player, packet) -> refreshHands(player));
-        this.onSent(ServerboundContainerClickPacket.class, (player, packet) -> refreshHands(player));
-        this.onSent(ServerboundPlayerActionPacket.class, (player, packet) -> {
-            if (packet.getAction() == PlayerAction.DROP_ITEM || packet.getAction() == PlayerAction.DROP_ITEM_STACK) {
-                refreshHands(player);
-            }
-        });
+        GeyserWorldBlocks blocks = extension.blockManager().worldBlocks();
+        if (!blocks.isEmpty()) {
+            this.intercept(ClientboundLevelEventPacket.class, new GeyserBlockBreakEffects(blocks));
+        }
+        JsonObject styles = extension.extensionData().bossBars();
+        if (styles != null && !styles.isEmpty()) {
+            this.intercept(ClientboundBossEventPacket.class, new GeyserBossBars(styles));
+        }
+        if (extension.sidebarManager() != null) {
+            this.interceptSidebar(ClientboundSetObjectivePacket.class, SidebarSession::translate);
+            this.interceptSidebar(ClientboundSetScorePacket.class, SidebarSession::translate);
+            this.interceptSidebar(ClientboundResetScorePacket.class, SidebarSession::translate);
+            this.interceptSidebar(ClientboundSetPlayerTeamPacket.class, SidebarSession::translate);
+            this.interceptSidebar(ClientboundSetDisplayObjectivePacket.class, SidebarSession::translate);
+        }
+        if (extension.itemManager().hasRegisteredItems()) {
+            this.intercept(ClientboundSetEntityDataPacket.class, (player, packet, original) -> {
+                player.activeUse().onEntityData(packet);
+                GeyserWorldItemViews.translateMetadata(player.session(), packet, original);
+            });
+        }
+        if (extension.itemManager().hasDyedItems()) {
+            this.onSent(ServerboundSetCarriedItemPacket.class, (player, packet) -> refreshHands(player));
+            this.onSent(ServerboundContainerClickPacket.class, (player, packet) -> refreshHands(player));
+            this.onSent(ServerboundPlayerActionPacket.class, (player, packet) -> {
+                if (packet.getAction() == PlayerAction.DROP_ITEM || packet.getAction() == PlayerAction.DROP_ITEM_STACK) {
+                    refreshHands(player);
+                }
+            });
+        }
     }
 
     private static void refreshHands(GeyserPlayer player) {
@@ -70,19 +104,23 @@ public final class GeyserJavaPackets {
         }
     }
 
-    private <T extends Packet> void interceptSidebar(Class<T> type, BiConsumer<SidebarSession, T> capture) {
+    private <T extends Packet> void interceptSidebar(Class<T> type, SidebarTranslator<T> translator) {
         this.intercept(type, (player, packet, original) -> {
             SidebarSession sidebar = player.sidebar();
             if (sidebar == null) {
                 original.translate(player.session(), packet);
                 return;
             }
-            // 计分板更新线程也会读取状态，原始文本与翻译引起的状态变化必须一起提交。
+            // 在出站监听读取前，一起提交原始组件、Geyser 槽位和对应的标题快照。
             synchronized (sidebar) {
-                capture.accept(sidebar, packet);
-                original.translate(player.session(), packet);
+                translator.translate(sidebar, packet, original);
             }
         });
+    }
+
+    @FunctionalInterface
+    private interface SidebarTranslator<T extends Packet> {
+        void translate(SidebarSession sidebar, T packet, PacketTranslator<T> original);
     }
 
     public <T extends Packet> void onReceive(Class<T> type, BiConsumer<GeyserPlayer, T> listener) {

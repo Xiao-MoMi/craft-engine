@@ -8,11 +8,15 @@ import org.cloudburstmc.protocol.bedrock.packet.InventoryTransactionPacket;
 import org.geysermc.geyser.inventory.GeyserItemStack;
 import org.geysermc.geyser.inventory.PlayerInventory;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.EntityMetadata;
+import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.type.ByteEntityMetadata;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.Hand;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundSetEntityDataPacket;
 
 import java.util.function.Predicate;
 
 public final class GeyserActiveItemUse {
+    private static final int LIVING_ENTITY_FLAGS = 8;
     private final GeyserSession session;
     private final Predicate<String> registeredItem;
     private Hand hand;
@@ -29,7 +33,19 @@ public final class GeyserActiveItemUse {
         this.hand = null;
     }
 
-    void update(byte flags) {
+    public void onEntityData(ClientboundSetEntityDataPacket packet) {
+        if (packet.getEntityId() != this.session.getPlayerEntity().getEntityId()) {
+            return;
+        }
+        for (EntityMetadata<?, ?> value : packet.getMetadata()) {
+            if (value.getId() == LIVING_ENTITY_FLAGS && value instanceof ByteEntityMetadata flags) {
+                this.update(flags.getPrimitiveValue());
+                return;
+            }
+        }
+    }
+
+    private void update(byte flags) {
         this.hand = null;
         if ((flags & 1) == 0) {
             return;

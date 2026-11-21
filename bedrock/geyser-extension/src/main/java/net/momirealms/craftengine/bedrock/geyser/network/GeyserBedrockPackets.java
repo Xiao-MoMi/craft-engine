@@ -1,10 +1,12 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
+import io.netty.channel.ChannelHandlerContext;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockPlacementHandler;
 import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
 import net.momirealms.craftengine.bedrock.geyser.item.*;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 
@@ -34,6 +36,12 @@ public final class GeyserBedrockPackets {
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::restorePlayerInput),
                 bind(Function.identity(), (player, event) -> player.cameraDirection(event.packet().getCameraOrientation())));
 
+        OUTGOING.on(SetDisplayObjectivePacket.class,
+                bind(GeyserPlayer::sidebar, SidebarSession::onDisplay));
+        OUTGOING.on(SetScorePacket.class,
+                bind(GeyserPlayer::sidebar, SidebarSession::onScores));
+        OUTGOING.on(RemoveObjectivePacket.class,
+                bind(GeyserPlayer::sidebar, SidebarSession::onRemove));
         OUTGOING.on(InventoryContentPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.onInventoryContent(event.packet())),
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onInventoryContent),
@@ -80,11 +88,11 @@ public final class GeyserBedrockPackets {
     }
 
     public static boolean receive(GeyserPlayer player, BedrockPacketWrapper wrapper) {
-        return INCOMING.dispatch(player, wrapper);
+        return INCOMING.dispatch(player, wrapper, null);
     }
 
-    public static boolean send(GeyserPlayer player, BedrockPacketWrapper wrapper) {
-        return OUTGOING.dispatch(player, wrapper);
+    public static boolean send(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context) {
+        return OUTGOING.dispatch(player, wrapper, context);
     }
 
     private static <S, T extends BedrockPacket> Binding<S, T> bind(Function<GeyserPlayer, S> state, BiConsumer<S, GeyserPacketEvent<T>> handler) {
@@ -92,11 +100,11 @@ public final class GeyserBedrockPackets {
     }
 
     private record Binding<S, T extends BedrockPacket>(Function<GeyserPlayer, S> state, BiConsumer<S, GeyserPacketEvent<T>> handler) {
-        GeyserPacketEvent<T> dispatch(GeyserPlayer player, Class<T> type, BedrockPacketWrapper wrapper, GeyserPacketEvent<T> event) {
+        GeyserPacketEvent<T> dispatch(GeyserPlayer player, Class<T> type, BedrockPacketWrapper wrapper, ChannelHandlerContext context, GeyserPacketEvent<T> event) {
             S target = this.state.apply(player);
             if (target != null) {
                 if (event == null) {
-                    event = new GeyserPacketEvent<>(wrapper, type);
+                    event = new GeyserPacketEvent<>(wrapper, type, context);
                 }
                 this.handler.accept(target, event);
             }
@@ -109,11 +117,11 @@ public final class GeyserBedrockPackets {
 
         @SafeVarargs
         private <T extends BedrockPacket> void on(Class<T> type, Binding<?, T>... bindings) {
-            this.handlers.put(type, (player, wrapper) -> {
+            this.handlers.put(type, (player, wrapper, context) -> {
                 // 同一包只创建一个事件，前序替换对后续处理可见，取消后立即停止分发。
                 GeyserPacketEvent<T> event = null;
                 for (Binding<?, T> binding : bindings) {
-                    event = binding.dispatch(player, type, wrapper, event);
+                    event = binding.dispatch(player, type, wrapper, context, event);
                     if (event != null && event.isCancelled()) {
                         return true;
                     }
@@ -122,14 +130,14 @@ public final class GeyserBedrockPackets {
             });
         }
 
-        private boolean dispatch(GeyserPlayer player, BedrockPacketWrapper wrapper) {
+        private boolean dispatch(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context) {
             Handler handler = this.handlers.get(wrapper.getPacket().getClass());
-            return handler != null && handler.dispatch(player, wrapper);
+            return handler != null && handler.dispatch(player, wrapper, context);
         }
     }
 
     @FunctionalInterface
     private interface Handler {
-        boolean dispatch(GeyserPlayer player, BedrockPacketWrapper wrapper);
+        boolean dispatch(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context);
     }
 }

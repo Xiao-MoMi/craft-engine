@@ -10,7 +10,6 @@ import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.metadata.MetadataTypes;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.type.EntityType;
-import org.jetbrains.annotations.Nullable;
 
 public final class GeyserTextDisplayManager {
     private static final int MIN_PROTOCOL = 975;
@@ -57,12 +56,8 @@ public final class GeyserTextDisplayManager {
                 .build(false);
     }
 
-    @Nullable
-    public GeyserPlayer spawnPlayer(GeyserSession session) {
-        if (!conversionEnabled || session.getUpstream().getProtocolVersion() < MIN_PROTOCOL) {
-            return null;
-        }
-        return this.players.get(session);
+    public boolean supports(GeyserSession session) {
+        return conversionEnabled && session.getUpstream().getProtocolVersion() >= MIN_PROTOCOL;
     }
 
     public VanillaEntityType<?> definition() {

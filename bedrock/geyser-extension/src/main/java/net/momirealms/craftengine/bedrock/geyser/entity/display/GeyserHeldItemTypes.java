@@ -13,7 +13,7 @@ import org.geysermc.geyser.registry.type.ItemMappings;
 import java.util.Collection;
 import java.util.Map;
 
-final class GeyserHeldItemTypes {
+public final class GeyserHeldItemTypes {
     static final GeyserHeldItemTypes EMPTY = new GeyserHeldItemTypes(0, 0);
 
     private final int firstId;

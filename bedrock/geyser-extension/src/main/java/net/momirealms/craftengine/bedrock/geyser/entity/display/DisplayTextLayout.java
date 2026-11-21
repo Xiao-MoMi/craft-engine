@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-record DisplayTextLayout(List<Line> lines, int width) {
+public record DisplayTextLayout(List<Line> lines, int width) {
 
     private static final String DEFAULT_FONT = "minecraft:default";
 

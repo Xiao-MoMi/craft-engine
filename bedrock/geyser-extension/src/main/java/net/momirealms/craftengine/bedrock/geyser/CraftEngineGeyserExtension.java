@@ -1,11 +1,9 @@
 package net.momirealms.craftengine.bedrock.geyser;
 
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockManager;
-import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.config.GeyserConfig;
 import net.momirealms.craftengine.bedrock.geyser.entity.GeyserEntityManager;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
-import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManagerImpl;
@@ -37,11 +35,9 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserPlayerManager playerManager;
     private GeyserJavaPackets javaPackets;
     private GeyserSidebarManager sidebarManager;
-    private GeyserBossBars bossBars;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
     private GeyserEntityManager entityManager;
-    private GeyserGuiMenus guiMenus;
     private GeyserGlyphManager glyphManager;
     private GeyserLanguageManager languageManager;
     private GeyserBlockManager blockManager;
@@ -88,20 +84,16 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
-        if (this.extensionData.bossBars() != null && !this.extensionData.bossBars().isEmpty()) {
-            this.bossBars = GeyserBossBars.install(this.extensionData.bossBars());
-        }
         this.sounds.install(this.extensionData.soundMappings());
         this.entityManager.initialize(this.glyphManager.glyphs());
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
             this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
         }
         this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
-        this.javaPackets.install(this.sidebarManager != null);
         this.itemManager.init();
         this.blockManager.init();
+        this.javaPackets.install(this);
         this.customPayloads.install();
-        this.guiMenus = GeyserGuiMenus.install(this.glyphManager.glyphs().layout());
     }
 
     @Subscribe
@@ -111,15 +103,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
-        if (this.bossBars != null) {
-            this.bossBars.uninstall();
-            this.bossBars = null;
-        }
         this.sounds.uninstall();
-        if (this.guiMenus != null) {
-            this.guiMenus.uninstall();
-            this.guiMenus = null;
-        }
         if (this.entityManager != null) {
             this.entityManager.disable();
         }

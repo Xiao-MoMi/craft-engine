@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
+import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.HashMap;
@@ -23,10 +25,14 @@ public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integra
         }
         Map<Key, Model> overrides = new HashMap<>();
         for (ConfigSection entry : entity.getSectionList("overrides", section -> section)) {
-            Key id = entry.getNonNullIdentifier("model");
-            BedrockModelIntegration mode = entry.getEnum("mode", BedrockModelIntegration.class, integrations.getOrDefault(id.namespace(), BedrockModelIntegration.DISABLED));
-            if (overrides.put(id, new Model(mode, BedrockEntityDye.read(entry, List.of()))) != null) {
-                throw new IllegalArgumentException("Duplicate Bedrock model override: " + id);
+            List<Key> models = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_IDENTIFIER, value -> value.getAsNonEmptyList(ConfigValue::getAsIdentifier));
+            BedrockModelIntegration mode = entry.getEnum("mode", BedrockModelIntegration.class);
+            BedrockEntityDye dye = BedrockEntityDye.read(entry, List.of());
+            for (Key id : models) {
+                BedrockModelIntegration resolvedMode = mode == null ? integrations.getOrDefault(id.namespace(), BedrockModelIntegration.DISABLED) : mode;
+                if (overrides.putIfAbsent(id, new Model(resolvedMode, dye)) != null) {
+                    throw new IllegalArgumentException("Duplicate Bedrock model override: " + id);
+                }
             }
         }
         return new BedrockEntitySettings(integrations, BedrockEntityDye.read(entity, List.of("#FF8080")), overrides);
