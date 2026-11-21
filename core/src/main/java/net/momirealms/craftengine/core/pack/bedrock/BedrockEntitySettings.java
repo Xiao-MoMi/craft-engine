@@ -9,7 +9,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integrations, BedrockEntityDye dye, Map<Key, Model> overrides) {
+public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integrations,
+                                    BedrockEntityDye dye,
+                                    Map<Key, Model> overrides,
+                                   int boneVisibilityIntervalTicks) {
+    public static final BedrockEntitySettings DEFAULT = new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of(), 2);
+
     public BedrockEntitySettings {
         integrations = Map.copyOf(integrations);
         overrides = Map.copyOf(overrides);
@@ -35,7 +40,9 @@ public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integra
                 }
             }
         }
-        return new BedrockEntitySettings(integrations, BedrockEntityDye.read(entity, List.of("#FF8080")), overrides);
+        int intervalMs = entity.getInt("bone-visibility-check-interval", 100);
+        int intervalTicks = 1 + (Math.max(1, intervalMs) - 1) / 50;
+        return new BedrockEntitySettings(integrations, BedrockEntityDye.read(entity, List.of("#FF8080")), overrides, intervalTicks);
     }
 
     public BedrockModelIntegration mode(Key model) {

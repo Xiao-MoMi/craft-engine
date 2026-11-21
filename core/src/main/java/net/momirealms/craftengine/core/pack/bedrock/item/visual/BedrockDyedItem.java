@@ -19,9 +19,7 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.util.List;
 
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.HEAD_DYE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.MAIN_HAND_DYE;
-import static net.momirealms.craftengine.bedrock.BedrockPackLayout.OFF_HAND_DYE;
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class BedrockDyedItem {
     private BedrockDyedItem() {

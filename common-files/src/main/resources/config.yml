@@ -837,6 +837,9 @@ bedrock:
     integrations:
       bettermodel: disabled
       modelengine: disabled
+    # Bone visibility check interval in milliseconds for BetterModel and ModelEngine custom_entity models.
+    # Rounded up to the next multiple of 50 ms, with a minimum of 50 ms.
+    bone-visibility-check-interval: 100
     # -1 disables dynamic tinting. Positive values limit mask layers per dyeable material
     dye-max-layers: -1
     # Exact RGB matches use baked textures, including when dynamic tinting is disabled

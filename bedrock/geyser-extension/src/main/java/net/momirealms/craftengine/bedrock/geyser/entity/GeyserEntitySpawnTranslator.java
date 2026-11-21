@@ -2,8 +2,8 @@ package net.momirealms.craftengine.bedrock.geyser.entity;
 
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserModelDisplayManager;
 import net.momirealms.craftengine.bedrock.geyser.entity.display.GeyserTextDisplayManager;
-import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;

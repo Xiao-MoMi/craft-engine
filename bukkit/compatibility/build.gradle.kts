@@ -82,6 +82,9 @@ dependencies {
     // CoreProtect
     compileOnly(libs.compat.coreprotect)
 
+    testImplementation(project(":bedrock"))
+    testImplementation(libs.paper.api)
+    netty(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     testImplementation(project(":core"))
     testImplementation(project(":bukkit"))
     testImplementation(libs.compat.bettermodel)

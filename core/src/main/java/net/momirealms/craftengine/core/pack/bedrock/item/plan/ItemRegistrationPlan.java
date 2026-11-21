@@ -2,13 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 
 import net.momirealms.craftengine.core.util.Key;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public record ItemRegistrationPlan(List<ResolvedItemBinding> explicitItems, List<ResolvedItemBinding> vanillaOverrides, Map<Key, Set<Key>> entityModels) {
     public ItemRegistrationPlan {

@@ -43,6 +43,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class Config {
+    private static final String[] ITEM_MODEL = ConfigKeys.of("item_model");
     private static Config instance;
     private final CraftEngine plugin;
     private final Path configFilePath;
@@ -307,7 +308,7 @@ public final class Config {
     private boolean bedrock$enable = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private List<ExternalItemModel> bedrock$item$external = List.of();
-    private BedrockEntitySettings bedrockEntities = new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of());
+    private BedrockEntitySettings bedrockEntities = BedrockEntitySettings.DEFAULT;
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private String bedrock$resource_pack$name;
@@ -804,7 +805,7 @@ public final class Config {
             ConfigSection section = value.getAsSection();
             return new ExternalItemModel(section.getNonNullIdentifier("base-item"), section.getNonNullIdentifier("item-model"));
         });
-        this.bedrockEntities = config.read("bedrock.custom-entity", value -> BedrockEntitySettings.read(value.getAsSection()), new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of()));
+        this.bedrockEntities = config.read("bedrock.custom-entity", value -> BedrockEntitySettings.read(value.getAsSection()), BedrockEntitySettings.DEFAULT);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
@@ -816,7 +817,7 @@ public final class Config {
         Map<Key, BedrockEntityDye> displayOverrides = new HashMap<>();
         for (Map.Entry<Key, BedrockEntityDye> override : config.getList("bedrock.display-entity.overrides", value -> {
             ConfigSection section = value.getAsSection();
-            return Map.entry(section.getNonNullIdentifier("item-model"), BedrockEntityDye.readDisplay(section, true));
+            return Map.entry(section.getNonNullIdentifier(ITEM_MODEL), BedrockEntityDye.readDisplay(section, true));
         })) {
             displayOverrides.put(override.getKey(), override.getValue());
         }

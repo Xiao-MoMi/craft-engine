@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.pack.bedrock;
 
+import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Color;
 
@@ -8,6 +9,7 @@ import java.util.StringJoiner;
 
 public record BedrockEntityDye(int maxLayers, List<Integer> prebakedColors) {
     public static final BedrockEntityDye DEFAULT = new BedrockEntityDye(-1, List.of(0xff8080));
+    private static final String[] DYE_MAX_LAYERS = ConfigKeys.of("dye_max_layers");
 
     public BedrockEntityDye {
         if (maxLayers != -1 && maxLayers < 1) {
@@ -17,7 +19,7 @@ public record BedrockEntityDye(int maxLayers, List<Integer> prebakedColors) {
     }
 
     public static BedrockEntityDye readDisplay(ConfigSection section, boolean override) {
-        int layers = override ? section.getNonNullInt("dye-max-layers") : section.getInt("dye-max-layers", 10);
+        int layers = override ? section.getNonNullInt(DYE_MAX_LAYERS) : section.getInt(DYE_MAX_LAYERS, 10);
         return new BedrockEntityDye(layers, List.of());
     }
 

@@ -2,11 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.item.plan;
 
 import net.momirealms.craftengine.core.util.Key;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 final class ItemRegistrationIndex {
     // 按 Java 客户端收到的物品类型和 item_model 查找该组合首次注册的基岩物品 ID，供后续绑定复用。

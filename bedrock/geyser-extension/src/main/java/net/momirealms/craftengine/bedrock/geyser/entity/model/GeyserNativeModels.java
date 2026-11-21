@@ -100,11 +100,14 @@ public final class GeyserNativeModels {
                 case NativeModelPayload.RemoveNative remove -> this.remove(remove.instance());
                 case NativeModelPayload.NativeState state -> {
                     Instance instance = this.instances.get(state.instance());
-                    if (instance != null && !instance.state.model().equals(state.model())) {
+                    if (instance == null) {
+                        this.update(null, state, null);
+                    } else if (!instance.state.model().equals(state.model())) {
                         this.remove(state.instance());
-                        instance = null;
+                        this.update(null, state, null);
+                    } else if (!state.equals(instance.state)) {
+                        this.update(instance, state, state.changesSince(instance.state));
                     }
-                    this.update(instance, state, null);
                 }
                 case NativeModelPayload.Delta delta -> {
                     Instance instance = this.instances.get(delta.instance());
@@ -152,10 +155,10 @@ public final class GeyserNativeModels {
                 if (displaysChanged) {
                     this.refreshHidden();
                 }
-                if (delta == null || delta.pose() != null) {
+                if (delta.pose() != null) {
                     instance.entity.moveAbsolute(Vector3f.from(pose.x(), pose.y(), pose.z()), pose.yaw(), pose.pitch(), pose.yaw(), true, false);
                 }
-                if (delta == null || delta.scale() != null || delta.color() != null || delta.animations() != null || delta.hiddenBones() != null) {
+                if (delta.scale() != null || delta.color() != null || delta.animations() != null || delta.hiddenBones() != null) {
                     instance.entity.updatePropertiesBatched(batch -> model.apply(batch, state, delta), true);
                 }
             }
