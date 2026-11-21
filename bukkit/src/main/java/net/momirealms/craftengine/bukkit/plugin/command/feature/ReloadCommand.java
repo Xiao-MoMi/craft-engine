@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.plugin.ResourceOperationCoordinator;
 import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.MessageConstants;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Timestamp;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -61,7 +62,7 @@ public final class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                             } catch (ResourceOperationCoordinator.BusyException e) {
                                 handleFeedback(context, MessageConstants.COMMAND_RESOURCE_BUSY);
                             } catch (Throwable e) {
-                                plugin().logger().warn("Failed to run reload_pack workflows", e);
+                                plugin().logger().warn(TranslationManager.message("resource_pack.workflow.trigger_failed", PackWorkflowSequence.RELOAD_PACK), e);
                                 handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                             }
                         });
@@ -98,7 +99,7 @@ public final class ReloadCommand extends BukkitCommandFeature<CommandSender> {
                                 } catch (ResourceOperationCoordinator.BusyException e) {
                                     handleFeedback(context, MessageConstants.COMMAND_RESOURCE_BUSY);
                                 } catch (Throwable e) {
-                                    plugin().logger().warn("Failed to run reload_pack workflows", e);
+                                    plugin().logger().warn(TranslationManager.message("resource_pack.workflow.trigger_failed", PackWorkflowSequence.RELOAD_PACK), e);
                                     handleFeedback(context, MessageConstants.COMMAND_RELOAD_PACK_FAILURE);
                                 }
                             } else {

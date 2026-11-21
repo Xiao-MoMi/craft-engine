@@ -310,6 +310,8 @@ resource_pack.bedrock.block.collision: "Bedrock supports at most 16 collision bo
 resource_pack.bedrock.block.conflict: "States sharing <arg:0> have conflicting collision, selection, light or friction properties"
 resource_pack.bedrock.block.sound_conflict: "States sharing <arg:0> have conflicting sounds: <arg:1> <arg:2>, <arg:3> <arg:4>"
 resource_pack.bedrock.sound.unresolved: "Could not resolve audio for Java sound event <arg:0>"
+resource_pack.bedrock.texture.fallback: "Could not load Bedrock texture <arg:0>. Using the missing texture: <arg:1>"
+resource_pack.bedrock.texture.no_sprite: "No usable sprite was found in the texture atlases"
 resource_pack.bedrock.block.sound_missing: "Cannot resolve sound <arg:0> used by <arg:1>; the affected actions will be silent"
 resource_pack.bedrock.block.definition: "Blockstates definition for <arg:0> contains neither variants nor multipart"
 resource_pack.bedrock.block.friction: "Friction is outside the range supported by Bedrock"
@@ -408,6 +410,7 @@ resource_pack.unknown_reference: Resource pack '<arg:0>' references unknown pack
 resource_pack.validation_finished: Validated resource pack in <arg:0>ms
 resource_pack.validation_started_interval: 'Validating resource pack... (Progress: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
 resource_pack.zip_loaded: 'Loaded resource pack ZIP <arg:0> in <arg:1>ms'
+resource_pack.workflow.trigger_failed: "Failed to run resource pack workflows for trigger <arg:0>"
 snbt.invalid_syntax.here: <--[HERE]
 snbt.invalid_syntax.parse_error: '<arg:0> at position <arg:1>: <arg:2>'
 snbt.parser.empty_key: Key cannot be empty

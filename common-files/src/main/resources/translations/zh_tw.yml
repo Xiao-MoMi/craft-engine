@@ -310,6 +310,8 @@ resource_pack.bedrock.block.collision: "基岩版每個狀態最多支援 16 個
 resource_pack.bedrock.block.conflict: "共用顯示狀態 <arg:0> 的方塊在碰撞、選取範圍、光照或摩擦屬性上存在衝突"
 resource_pack.bedrock.block.sound_conflict: "共用顯示狀態 <arg:0> 的方塊音效不同：<arg:1> <arg:2>，<arg:3> <arg:4>"
 resource_pack.bedrock.sound.unresolved: "無法解析 Java 聲音事件 <arg:0> 的音訊"
+resource_pack.bedrock.texture.fallback: "無法載入基岩版材質 <arg:0>，已使用紫黑佔位材質。原因：<arg:1>"
+resource_pack.bedrock.texture.no_sprite: "材質圖集中沒有可用的精靈圖"
 resource_pack.bedrock.block.sound_missing: "無法解析 <arg:1> 使用的音效 <arg:0>，對應動作將靜音"
 resource_pack.bedrock.block.definition: "<arg:0> 的方塊狀態定義缺少 variants 或 multipart 欄位"
 resource_pack.bedrock.block.friction: "摩擦值超出了基岩版支援的範圍"
@@ -405,6 +407,7 @@ resource_pack.unknown_reference: "資源包「<arg:0>」的「<arg:1>」參照�
 resource_pack.validation_finished: 資源包驗證完成，耗時 <arg:0> 毫秒
 resource_pack.validation_started_interval: 正在驗證資源包...（進度：<arg:0>/<arg:1> | 資源包格式：<arg:2> | 疊加資源包：<arg:3>）
 resource_pack.zip_loaded: '已載入資源包ZIP <arg:0>，耗時<arg:1>毫秒'
+resource_pack.workflow.trigger_failed: "資源包工作流程執行失敗（觸發器 <arg:0>）"
 snbt.invalid_syntax.here: <--［這裡］
 snbt.invalid_syntax.parse_error: <arg:0>，位於第 <arg:1> 個字元：<arg:2>
 snbt.parser.empty_key: 鍵值不能為空

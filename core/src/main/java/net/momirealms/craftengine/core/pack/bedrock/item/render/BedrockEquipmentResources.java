@@ -117,6 +117,10 @@ final class BedrockEquipmentResources {
             }
             BufferedImage image = data.image();
             boolean rectangular = !layerType.equals("horse_body");
+            if (data.isMissing()) {
+                images.add(rectangular ? ImageUtils.resize(image, image.getWidth() * 2, image.getHeight()) : image);
+                continue;
+            }
             if (image.getWidth() != image.getHeight() * (rectangular ? 2 : 1)) {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.armor_aspect_ratio", path.asString());
             }

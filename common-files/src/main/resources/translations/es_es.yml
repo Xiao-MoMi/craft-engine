@@ -310,6 +310,8 @@ resource_pack.bedrock.block.collision: "Bedrock admite un máximo de 16 cajas de
 resource_pack.bedrock.block.conflict: "Los estados que comparten <arg:0> difieren en colisión, selección, luz o fricción"
 resource_pack.bedrock.block.sound_conflict: "Los estados que comparten <arg:0> tienen sonidos distintos: <arg:1> <arg:2>, <arg:3> <arg:4>"
 resource_pack.bedrock.sound.unresolved: "No se pudo resolver el audio del evento de sonido de Java <arg:0>"
+resource_pack.bedrock.texture.fallback: "No se pudo cargar la textura de Bedrock <arg:0>. Se usará la textura de sustitución: <arg:1>"
+resource_pack.bedrock.texture.no_sprite: "No se encontró ningún sprite utilizable en los atlas de texturas"
 resource_pack.bedrock.block.sound_missing: "No se pudo resolver el sonido <arg:0> para <arg:1>. Las acciones afectadas serán silenciosas"
 resource_pack.bedrock.block.definition: "La definición de estados de <arg:0> no contiene variants ni multipart"
 resource_pack.bedrock.block.friction: "La fricción está fuera del intervalo admitido por Bedrock"
@@ -405,6 +407,7 @@ resource_pack.unknown_reference: "El paquete de recursos «<arg:0>» hace refere
 resource_pack.validation_finished: Paquete de recursos validado en <arg:0>ms
 resource_pack.validation_started_interval: 'Validando paquete de recursos... (Progreso: <arg:0>/<arg:1> | Formato de Pack: <arg:2> | Superposiciones: <arg:3>)'
 resource_pack.zip_loaded: 'ZIP del paquete de recursos <arg:0> cargado en <arg:1>ms'
+resource_pack.workflow.trigger_failed: "No se pudieron ejecutar los flujos de trabajo del paquete de recursos para el activador <arg:0>"
 snbt.invalid_syntax.here: <--[AQUÍ]
 snbt.invalid_syntax.parse_error: '<arg:0> en la posición <arg:1>: <arg:2>'
 snbt.parser.empty_key: La clave no puede estar vacía

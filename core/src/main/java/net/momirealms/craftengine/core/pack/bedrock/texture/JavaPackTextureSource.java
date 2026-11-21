@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.model.definition.tint.*;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
@@ -22,8 +23,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.MISSING_NO;
 
@@ -31,11 +34,11 @@ public final class JavaPackTextureSource {
     public static final Integer WHITE = 0xffffff;
     private static final Key ITEMS = Key.minecraft("items");
     private static final Key BLOCKS = Key.minecraft("blocks");
-    private static final TextureData MISSING_TEXTURE = missingTexture();
     private final JavaResourcePack pack;
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
-    private final Map<Key, Map<Texture, IOException>> textureFailures = new HashMap<>();
+    private final Map<Key, Map<Texture, String>> textureFailures = new HashMap<>();
+    private final Set<Key> warnedSprites = new HashSet<>();
     private final Map<Key, BufferedImage> spriteSheets = new HashMap<>();
     private final Map<Key, BufferedImage> paletteImages = new HashMap<>();
     private final Map<Key, TextureData> headSkins = new HashMap<>();
@@ -102,7 +105,7 @@ public final class JavaPackTextureSource {
 
     public TextureData read(Texture texture, TextureUsage usage) throws IOException {
         if (MISSING_NO.equals(texture.sprite())) {
-            return MISSING_TEXTURE;
+            return TextureData.MISSING;
         }
         if (texture.standalone()) {
             return this.readStandalone(texture.sprite());
@@ -118,62 +121,54 @@ public final class JavaPackTextureSource {
             }
         }
         TextureData data = this.readFromAtlas(texture, BLOCKS);
-        if (data == null) {
-            throw this.textureFailure(texture, usage, useItemAtlas);
+        if (data != null) {
+            return data;
         }
-        return data;
+        if (this.warnedSprites.add(texture.sprite())) {
+            this.warnSpriteFallback(texture, useItemAtlas);
+        }
+        return TextureData.MISSING;
     }
 
-    private static TextureData missingTexture() {
-        BufferedImage image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < 16; y++) {
-            for (int x = 0; x < 16; x++) {
-                image.setRGB(x, y, ((x < 8) == (y < 8)) ? 0xfff800f8 : 0xff000000);
-            }
+    private void warnSpriteFallback(Texture texture, boolean useItemAtlas) {
+        String itemFailure = useItemAtlas ? this.atlasFailure(texture, ITEMS) : null;
+        String blockFailure = this.atlasFailure(texture, BLOCKS);
+        String reason;
+        if (itemFailure == null && blockFailure == null) {
+            reason = TranslationManager.message("resource_pack.bedrock.texture.no_sprite");
+        } else if (itemFailure == null) {
+            reason = blockFailure;
+        } else {
+            reason = blockFailure == null ? itemFailure : itemFailure + "; " + blockFailure;
         }
-        return new TextureData(image, null);
-    }
-
-    private IOException textureFailure(Texture texture, TextureUsage usage, boolean useItemAtlas) {
-        IOException itemFailure = useItemAtlas ? this.atlasFailure(texture, ITEMS) : null;
-        IOException blockFailure = this.atlasFailure(texture, BLOCKS);
-        String message = "No successfully loaded sprite " + texture.sprite() + " for " + usage;
-        if (itemFailure != null) {
-            message += "; " + itemFailure.getMessage();
-        }
-        if (blockFailure != null) {
-            message += "; " + blockFailure.getMessage();
-        }
-        IOException failure = new IOException(message);
-        if (itemFailure != null) {
-            failure.addSuppressed(itemFailure);
-        }
-        if (blockFailure != null) {
-            failure.addSuppressed(blockFailure);
-        }
-        return failure;
+        TranslationManager.warn("resource_pack.bedrock.texture.fallback", texture.sprite().asString(), reason);
     }
 
     @Nullable
-    private IOException atlasFailure(Texture texture, Key atlas) {
-        Map<Texture, IOException> failures = this.textureFailures.get(atlas);
+    private String atlasFailure(Texture texture, Key atlas) {
+        Map<Texture, String> failures = this.textureFailures.get(atlas);
         return failures == null ? null : failures.get(texture);
     }
 
-    private TextureData readStandalone(Key texture) throws IOException {
+    private TextureData readStandalone(Key texture) {
         TextureData cached = this.standaloneTextures.get(texture);
         if (cached != null) {
             return cached;
         }
-        try (InputStream input = this.pack.openResource(ResourcePackUtils.texturePath(texture))) {
+        String path = ResourcePackUtils.texturePath(texture);
+        TextureData data;
+        try (InputStream input = this.pack.openResource(path)) {
             BufferedImage image = input == null ? null : ClientPngReader.read(input);
             if (image == null) {
-                throw new IOException("Missing standalone texture " + texture);
+                throw new IOException(input == null ? "Missing texture " + texture : "Invalid PNG texture " + texture);
             }
-            TextureData data = this.withVanillaReference(texture, this.pack.readResourceMetadata(ResourcePackUtils.texturePath(texture)), new TextureData(image, null));
-            this.standaloneTextures.put(texture, data);
-            return data;
+            data = this.withVanillaReference(texture, this.pack.readResourceMetadata(path), new TextureData(image, null));
+        } catch (IOException | RuntimeException e) {
+            TranslationManager.warn("resource_pack.bedrock.texture.fallback", path, e.getLocalizedMessage());
+            data = TextureData.MISSING;
         }
+        this.standaloneTextures.put(texture, data);
+        return data;
     }
 
     private TextureData withVanillaReference(Key resource, @Nullable JsonObject metadata, TextureData data) {
@@ -181,12 +176,14 @@ public final class JavaPackTextureSource {
         return reference == null ? data : new TextureData(data.image(), data.animation(), reference);
     }
 
-    private TextureData readHeadSkin(Key skin) throws IOException {
+    private TextureData readHeadSkin(Key skin) {
         TextureData cached = this.headSkins.get(skin);
         if (cached != null) {
             return cached;
         }
-        try (InputStream input = this.pack.openResource(ResourcePackUtils.texturePath(skin))) {
+        String path = ResourcePackUtils.texturePath(skin);
+        TextureData data;
+        try (InputStream input = this.pack.openResource(path)) {
             BufferedImage image = input == null ? null : ClientPngReader.read(input);
             if (image == null || (image.getWidth() != image.getHeight() && image.getWidth() != 2 * image.getHeight())) {
                 throw new BedrockResourceException("resource_pack.bedrock.reason.head_texture", skin.toString());
@@ -196,14 +193,17 @@ public final class JavaPackTextureSource {
                 square.setRGB(0, 0, image.getWidth(), image.getHeight(), image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth()), 0, image.getWidth());
                 image = square;
             }
-            TextureData data = new TextureData(image, null);
-            this.headSkins.put(skin, data);
-            return data;
+            data = new TextureData(image, null);
+        } catch (IOException | RuntimeException e) {
+            TranslationManager.warn("resource_pack.bedrock.texture.fallback", path, e.getLocalizedMessage());
+            data = TextureData.MISSING;
         }
+        this.headSkins.put(skin, data);
+        return data;
     }
 
     @Nullable
-    private TextureData readFromAtlas(Texture texture, Key atlasId) throws IOException {
+    private TextureData readFromAtlas(Texture texture, Key atlasId) {
         Map<Texture, TextureData> atlasTextures = this.textures.computeIfAbsent(atlasId, ignored -> new HashMap<>());
         if (atlasTextures.containsKey(texture)) {
             return atlasTextures.get(texture);
@@ -213,7 +213,7 @@ public final class JavaPackTextureSource {
             data = this.load(texture, atlasId, this.atlas(atlasId));
         } catch (IOException | RuntimeException e) {
             // 失败的 sprite 继续参与后续图集回退，所有候选失败时才汇总原因。
-            IOException failure = new IOException("Failed to load sprite " + texture.sprite() + " in atlas " + atlasId + ": " + e.getMessage(), e);
+            String failure = atlasId + ": " + e.getLocalizedMessage();
             this.textureFailures.computeIfAbsent(atlasId, ignored -> new HashMap<>()).put(texture, failure);
             data = null;
         }

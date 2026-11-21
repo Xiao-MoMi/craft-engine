@@ -310,6 +310,8 @@ resource_pack.bedrock.block.collision: "베드락은 상태당 충돌 상자를 
 resource_pack.bedrock.block.conflict: "표시 상태 <arg:0>을 공유하는 블록의 충돌, 선택, 조명 또는 마찰 속성이 다릅니다"
 resource_pack.bedrock.block.sound_conflict: "표시 상태 <arg:0>을 공유하는 블록의 소리가 다릅니다: <arg:1> <arg:2>, <arg:3> <arg:4>"
 resource_pack.bedrock.sound.unresolved: "Java 소리 이벤트 <arg:0>의 오디오를 찾을 수 없습니다"
+resource_pack.bedrock.texture.fallback: "베드락 텍스처 <arg:0>을(를) 불러올 수 없어 대체 텍스처를 사용합니다: <arg:1>"
+resource_pack.bedrock.texture.no_sprite: "텍스처 아틀라스에서 사용할 수 있는 스프라이트를 찾지 못했습니다"
 resource_pack.bedrock.block.sound_missing: "<arg:1>에서 사용하는 소리 <arg:0>을 찾을 수 없어 해당 동작을 무음으로 처리합니다"
 resource_pack.bedrock.block.definition: "<arg:0>의 블록 상태 정의에 variants와 multipart가 모두 없습니다"
 resource_pack.bedrock.block.friction: "마찰값이 베드락에서 지원하는 범위를 벗어났습니다"
@@ -405,6 +407,7 @@ resource_pack.unknown_reference: "리소스 팩 <arg:0>의 <arg:1>에서 알 수
 resource_pack.validation_finished: "리소스 팩 검증 완료 (<arg:0>ms)"
 resource_pack.validation_started_interval: "리소스 팩 검증 중... (진행: <arg:0>/<arg:1> | Pack Format: <arg:2> | 오버레이: <arg:3>)"
 resource_pack.zip_loaded: '리소스 팩 ZIP <arg:0> 로드 완료, 소요 시간: <arg:1>ms'
+resource_pack.workflow.trigger_failed: "트리거 <arg:0>에 대한 리소스 팩 워크플로를 실행하지 못했습니다"
 snbt.invalid_syntax.here: "<--[여기]"
 snbt.invalid_syntax.parse_error: '<arg:0> 위치 <arg:1>: <arg:2>'
 snbt.parser.empty_key: "키는 비어 있을 수 없습니다."

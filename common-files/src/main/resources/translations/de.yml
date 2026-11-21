@@ -310,6 +310,8 @@ resource_pack.bedrock.block.collision: "Bedrock unterstützt höchstens 16 Kolli
 resource_pack.bedrock.block.conflict: "Zustände mit derselben Darstellung <arg:0> unterscheiden sich bei Kollision, Auswahl, Licht oder Reibung"
 resource_pack.bedrock.block.sound_conflict: "Zustände mit der Darstellung <arg:0> haben unterschiedliche Geräusche: <arg:1> <arg:2>, <arg:3> <arg:4>"
 resource_pack.bedrock.sound.unresolved: "Audiodaten für das Java-Soundereignis <arg:0> konnten nicht aufgelöst werden"
+resource_pack.bedrock.texture.fallback: "Bedrock-Textur <arg:0> konnte nicht geladen werden. Die Ersatztextur wird verwendet: <arg:1>"
+resource_pack.bedrock.texture.no_sprite: "In den Texturatlanten wurde kein verwendbarer Sprite gefunden"
 resource_pack.bedrock.block.sound_missing: "Geräusch <arg:0> für <arg:1> fehlt. Die betroffenen Aktionen bleiben stumm"
 resource_pack.bedrock.block.definition: "Die Blockzustandsdefinition für <arg:0> enthält weder variants noch multipart"
 resource_pack.bedrock.block.friction: "Der Reibungswert liegt außerhalb des von Bedrock unterstützten Bereichs"
@@ -405,6 +407,7 @@ resource_pack.unknown_reference: "Das Ressourcenpaket „<arg:0>“ verweist in 
 resource_pack.validation_finished: Resource Pack in <arg:0>ms validiert
 resource_pack.validation_started_interval: 'Validiere Resource Pack... (Fortschritt: <arg:0>/<arg:1> | Pack Format: <arg:2> | Overlays: <arg:3>)'
 resource_pack.zip_loaded: 'Ressourcenpaket-ZIP <arg:0> in <arg:1>ms geladen'
+resource_pack.workflow.trigger_failed: "Die Ressourcenpaket-Workflows für den Auslöser <arg:0> konnten nicht ausgeführt werden"
 snbt.invalid_syntax.here: <--[HIER]
 snbt.invalid_syntax.parse_error: '<arg:0> an Position <arg:1>: <arg:2>'
 snbt.parser.empty_key: Key darf nicht leer sein
