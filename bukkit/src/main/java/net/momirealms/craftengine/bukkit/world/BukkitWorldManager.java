@@ -11,6 +11,8 @@ import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BiomeFilterGenerator;
+import net.momirealms.craftengine.bukkit.plugin.injector.LevelCallbackGenerator;
+import net.momirealms.craftengine.bukkit.plugin.injector.WorldBorderGenerator;
 import net.momirealms.craftengine.bukkit.plugin.injector.WorldStorageInjector;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
@@ -60,7 +62,6 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.feature.C
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacedFeatureProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.levelgen.placement.PlacementModifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.lighting.LightEventListenerProxy;
-import net.momirealms.craftengine.proxy.paper.chunk.system.entity.EntityLookupProxy;
 import net.momirealms.craftengine.proxy.universeprojects.util.palette.CompactHashPaletteProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Chunk;
@@ -390,7 +391,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         if (worldBorder instanceof BukkitWorld bukkitWorld) {
             return bukkitWorld;
         }
-        BukkitWorld injectedWorld = FastNMS.INSTANCE.createInjectedWorld(world);
+        BukkitWorld injectedWorld = WorldBorderGenerator.create(world);
         CraftWorldProxy.INSTANCE.setWorldBorder(world, injectedWorld);
         return injectedWorld;
     }
@@ -414,7 +415,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         if (previous == null && VersionHelper.hasPaperPatch) {
             injectWorldGeneration(injectedWorld);
             if (!VersionHelper.hasFoliaPatch) {
-                injectWorldCallback(injectedWorld.minecraftWorld());
+                LevelCallbackGenerator.install(injectedWorld.minecraftWorld());
             }
         }
     }
@@ -504,17 +505,6 @@ public final class BukkitWorldManager implements WorldManager, Listener {
                 InjectedChunkGenerator customGenerator = FastNMS.INSTANCE.createInjectedChunkGenerator(world, generator);
                 ChunkMapProxy.INSTANCE.setGenerator(chunkMap, customGenerator);
             }
-        }
-    }
-
-    // 非 Folia Paper 的运行时追踪/tick 优化，不是另一套家具加载事件入口。
-    // 注入实现仍转发 onTrackingStart/onTrackingEnd；家具恢复由两个家具监听器负责。
-    private void injectWorldCallback(Object serverLevel) {
-        Object entityLookup = LevelUtils.getEntityLookup(serverLevel);
-        Object worldCallback = EntityLookupProxy.INSTANCE.getWorldCallback(entityLookup);
-        if (!(worldCallback instanceof InjectedWorldCallback)) {
-            Object injectedWorldCallback = FastNMS.INSTANCE.createInjectedWorldCallbacks(worldCallback, entityLookup);
-            EntityLookupProxy.INSTANCE.setWorldCallback(entityLookup, injectedWorldCallback);
         }
     }
 
