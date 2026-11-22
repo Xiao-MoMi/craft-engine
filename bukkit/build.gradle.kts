@@ -35,7 +35,6 @@ dependencies {
     // Util
     compileOnly(libs.sparrow.util)
     // NMS
-    compileOnly(libs.nms.helper)
     // BStats
     compileOnly(libs.bstats.bukkit)
     testImplementation(platform(libs.junit.bom))

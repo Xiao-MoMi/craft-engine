@@ -34,7 +34,6 @@ dependencies {
     // Reflection
     compileOnly(libs.sparrow.reflection)
     // NMS
-    compileOnly(libs.nms.helper)
     // Placeholder
     compileOnly(libs.placeholder.api)
     // SlimeWorld

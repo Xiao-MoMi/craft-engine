@@ -31,7 +31,6 @@ dependencies {
 
     implementation(libs.sparrow.minimessage)
     implementation(libs.sparrow.util)
-    implementation(libs.nms.helper)
     implementation(libs.itembridge)
     implementation(libs.levelerbridge)
     implementation(files("${rootProject.rootDir}/libs/jni-internal-lookup-${versionOf("jni-internal-lookup")}.jar"))
