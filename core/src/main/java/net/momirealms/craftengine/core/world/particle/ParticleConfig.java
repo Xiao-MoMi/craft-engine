@@ -61,6 +61,7 @@ public final class ParticleConfig {
     private static final String[] OFFSET_Z = ConfigKeys.of("offset_z");
     private static final String[] STEP_OVERRIDES = ConfigKeys.of("x", "y", "z", "count", "speed", "offset_x", "offset_y", "offset_z");
     private static final NumberProvider BLOCK_CENTER = ConstantNumberProvider.constant(0.5);
+    private static final NumberProvider BLOCK_UPPER = ConstantNumberProvider.constant(0.7);
     private static final NumberProvider BREAK_COUNT = ConstantNumberProvider.constant(64);
     private static final NumberProvider BREAK_SPREAD = ConstantNumberProvider.constant(0.22);
     private static final NumberProvider BREAK_SPEED = ConstantNumberProvider.constant(0.35);
@@ -89,7 +90,7 @@ public final class ParticleConfig {
     public static ParticleConfig fromConfig$blockBreak(ConfigSection section) {
         Key type = section.getNonNullIdentifier("particle");
         NumberProvider speed = ParticleTypes.ITEM.equals(type) ? ITEM_BREAK_SPEED : BREAK_SPEED;
-        return fromConfig(section, type, BLOCK_CENTER, BLOCK_CENTER, BLOCK_CENTER,
+        return fromConfig(section, type, BLOCK_CENTER, BLOCK_UPPER, BLOCK_CENTER,
                 BREAK_COUNT, BREAK_SPREAD, BREAK_SPREAD, BREAK_SPREAD, speed, false, false);
     }
 

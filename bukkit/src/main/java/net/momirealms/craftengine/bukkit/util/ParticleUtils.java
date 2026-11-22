@@ -174,8 +174,7 @@ public final class ParticleUtils {
         }
         Context context = SimpleContext.EMPTY;
         double particleY = y + particle.y.getDouble(context);
-        Object options = createParticleOptions(particle.particleType.platformParticle(), particle.particleData, context,
-                particleX, particleY, particleZ);
+        Object options = createParticleOptions(particle.particleType.platformParticle(), particle.particleData, context, particleX, particleY, particleZ);
         if (options == null) {
             return;
         }

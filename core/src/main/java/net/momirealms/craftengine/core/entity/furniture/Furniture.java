@@ -620,6 +620,10 @@ public abstract class Furniture implements Cullable, ChainParameterSource {
         return this.placement.relativePosition(position);
     }
 
+    public Vec3d getRelativePosition(float x, float y, float z) {
+        return this.placement.relativePosition(x, y, z);
+    }
+
     /**
      * Called only after all hitboxes have supplied their data and optimization has finished.
      */

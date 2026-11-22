@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
@@ -54,6 +55,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     protected final TickersList<TickingFurniture> asyncTickingFurniture = new TickersList<>();
     protected final Queue<TickingFurniture> pendingAsyncTickingFurniture = new ConcurrentLinkedQueue<>();
     private boolean isTickingSyncFurniture = false;
+    private final AtomicBoolean asyncTickRunning = new AtomicBoolean();
 
     protected SchedulerTask syncTickTask;
     protected SchedulerTask asyncTickTask;
@@ -158,8 +160,18 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             if (this.syncTickTask == null || this.syncTickTask.cancelled())
                 this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
         }
-        if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runAsyncRepeating(this::asyncTick, 1, 1);
+        if (this.asyncTickTask == null || this.asyncTickTask.cancelled()) {
+            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runAsyncRepeating(() -> {
+                if (!this.asyncTickRunning.compareAndSet(false, true)) {
+                    return;
+                }
+                try {
+                    this.asyncTick();
+                } finally {
+                    this.asyncTickRunning.set(false);
+                }
+            }, 1, 1);
+        }
     }
 
     @Override

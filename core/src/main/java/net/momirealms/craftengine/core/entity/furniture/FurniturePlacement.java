@@ -20,8 +20,30 @@ public final class FurniturePlacement {
     }
 
     public Vec3d relativePosition(Vector3f offset) {
-        Vector3f rotated = rotateOffset(offset);
-        return new Vec3d(this.origin.x + rotated.x, this.origin.y + rotated.y, this.origin.z - rotated.z);
+        return this.relativePosition(offset.x, offset.y, offset.z);
+    }
+
+    public Vec3d relativePosition(float x, float y, float z) {
+        if (this.rotation == null) {
+            int yaw = (int) ((this.origin.yRot % 360 + 360) % 360);
+            double worldY = this.origin.y + y;
+            return switch (yaw) {
+                case 90 -> new Vec3d(this.origin.x - z, worldY, this.origin.z - x);
+                case 180 -> new Vec3d(this.origin.x + x, worldY, this.origin.z - z);
+                case 270 -> new Vec3d(this.origin.x + z, worldY, this.origin.z + x);
+                default -> new Vec3d(this.origin.x - x, worldY, this.origin.z + z);
+            };
+        }
+        // Use the normalized coefficients of the same Y-axis quaternion as rotateOffset.
+        float yy = this.rotation.y * this.rotation.y;
+        float ww = this.rotation.w * this.rotation.w;
+        float inverseNorm = 1f / (yy + ww);
+        float cos = (ww - yy) * inverseNorm;
+        float sin = (2f * this.rotation.y * this.rotation.w) * inverseNorm;
+        float rotatedX = org.joml.Math.fma(cos, x, sin * z);
+        float rotatedY = ((yy + ww) * inverseNorm) * y;
+        float rotatedZ = org.joml.Math.fma(-sin, x, cos * z);
+        return new Vec3d(this.origin.x + rotatedX, this.origin.y + rotatedY, this.origin.z - rotatedZ);
     }
 
     public WorldPosition position(Vector3f offset, float xRot, float yRot) {

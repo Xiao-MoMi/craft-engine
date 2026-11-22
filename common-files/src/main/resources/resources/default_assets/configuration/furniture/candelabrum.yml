@@ -43,17 +43,59 @@ items:
 furniture:
   default:candelabrum:
     behaviors:
-      type: glowing_furniture
-      variants:
-        ground_lit:
-          - position: 0,0,0
-            level: 15
-        wall_lit:
-          - position: 0,0,0.3
-            level: 15
-        ceiling_lit:
-          - position: 0,-1,0
-            level: 15
+      - type: glowing_furniture
+        variants:
+          ground_lit:
+            - position: 0,0,0
+              level: 15
+          wall_lit:
+            - position: 0,0,0.3
+              level: 15
+          ceiling_lit:
+            - position: 0,-1,0
+              level: 15
+      - type: simple_particle_furniture
+        tick_interval: 24
+        variants:
+          ground_lit:
+            - particle: minecraft:flame
+              x: -0.3125
+              y: 0.71875
+              tick_delay: 4
+            - particle: minecraft:flame
+              y: 0.90625
+              tick_delay: 12
+              tick_interval: 32
+            - particle: minecraft:flame
+              x: 0.3125
+              y: 0.71875
+              tick_delay: 20
+          wall_lit:
+            - particle: minecraft:flame
+              y: 0.46875
+              z: 0.5
+              tick_delay: 8
+          ceiling_lit:
+            - particle: minecraft:flame
+              x: -0.25
+              y: -0.28125
+              z: -0.25
+              tick_delay: 4
+            - particle: minecraft:flame
+              x: 0.25
+              y: -0.28125
+              z: -0.25
+              tick_delay: 10
+            - particle: minecraft:flame
+              x: 0.25
+              y: -0.28125
+              z: 0.25
+              tick_delay: 16
+            - particle: minecraft:flame
+              x: -0.25
+              y: -0.28125
+              z: 0.25
+              tick_delay: 22
     events:
       - on: right_click
         conditions:

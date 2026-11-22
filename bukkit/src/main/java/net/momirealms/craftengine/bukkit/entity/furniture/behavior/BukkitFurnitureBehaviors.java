@@ -10,6 +10,7 @@ public final class BukkitFurnitureBehaviors extends FurnitureBehaviors {
     public static final FurnitureBehaviorType<SimpleStorageFurnitureBehaviorTemplate> SIMPLE_STORAGE_FURNITURE = register(Key.ce("simple_storage_furniture"), SimpleStorageFurnitureBehaviorTemplate.FACTORY);
     public static final FurnitureBehaviorType<DisplayItemFurnitureBehaviorTemplate> DISPLAY_ITEM_FURNITURE = register(Key.ce("display_item_furniture"), DisplayItemFurnitureBehaviorTemplate.FACTORY);
     public static final FurnitureBehaviorType<GlowingFurnitureBehaviorTemplate> GLOWING_FURNITURE = register(Key.ce("glowing_furniture"), GlowingFurnitureBehaviorTemplate.FACTORY);
+    public static final FurnitureBehaviorType<SimpleParticleFurnitureBehaviorTemplate> SIMPLE_PARTICLE_FURNITURE = register(Key.ce("simple_particle_furniture"), SimpleParticleFurnitureBehaviorTemplate.FACTORY);
 
     public static void init() {
     }

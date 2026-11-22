@@ -16,7 +16,6 @@ import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 
 public final class SimpleParticleBlockEntityController extends BlockEntityController {
     private final SimpleParticleBlockBehavior behavior;
-    private final Context context = SimpleContext.of(ContextHolder.empty());
     private int tickCount;
 
     public SimpleParticleBlockEntityController(BlockEntity blockEntity, SimpleParticleBlockBehavior behavior) {
@@ -31,17 +30,16 @@ public final class SimpleParticleBlockEntityController extends BlockEntityContro
 
     public void animateTick(World level, BlockPos pos) {
         for (ParticleConfig particle : this.behavior.particles) {
-            Vec3d location = new Vec3d(pos.x() + particle.x.getDouble(this.context), pos.y() + particle.y.getDouble(this.context), pos.z() + particle.z.getDouble(this.context));
+            Vec3d location = new Vec3d(pos.x() + particle.x.getDouble(), pos.y() + particle.y.getDouble(), pos.z() + particle.z.getDouble());
             level.spawnParticle(
                     location,
                     particle.particleType,
-                    particle.count.getInt(context),
-                    particle.xOffset.getDouble(context),
-                    particle.yOffset.getDouble(context),
-                    particle.zOffset.getDouble(context),
-                    particle.speed.getDouble(context),
-                    particle.particleData,
-                    this.context
+                    particle.count.getInt(),
+                    particle.xOffset.getDouble(),
+                    particle.yOffset.getDouble(),
+                    particle.zOffset.getDouble(),
+                    particle.speed.getDouble(),
+                    particle.particleData
             );
         }
     }

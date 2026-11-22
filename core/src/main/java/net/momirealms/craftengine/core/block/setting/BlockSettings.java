@@ -41,7 +41,6 @@ public final class BlockSettings {
     String instrument = "harp";
     BlockSounds sounds = BlockSounds.EMPTY;
     BlockParticles particles = BlockParticles.EMPTY;
-    @Nullable
     Key itemId;
     Set<Key> tags = Set.of();
     float incorrectToolSpeed = 0.3f;
