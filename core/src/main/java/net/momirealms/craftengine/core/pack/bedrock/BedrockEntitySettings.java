@@ -12,7 +12,7 @@ import java.util.Map;
 public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integrations,
                                     BedrockEntityDye dye,
                                     Map<Key, Model> overrides,
-                                   int boneVisibilityIntervalTicks) {
+                                    int boneVisibilityIntervalTicks) {
     public static final BedrockEntitySettings DEFAULT = new BedrockEntitySettings(Map.of(), BedrockEntityDye.DEFAULT, Map.of(), 2);
 
     public BedrockEntitySettings {

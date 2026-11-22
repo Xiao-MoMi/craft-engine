@@ -20,7 +20,14 @@ final class BedrockTitleLayers {
         label.addProperty("text", "#ce_layer");
         JsonArray bindings = collectionBindings(collection);
         bindings.add(fromControl(sourceControl, "#ce_payload", "#ce_payload"));
-        decodeLayer(bindings);
+        bind(bindings, "(#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ")", "#ce_entry_start");
+        String beforeEntry = "(('%.' + #ce_entry_start + 's') * #ce_payload)";
+        String throughEntry = "(('%.' + (#ce_entry_start + " + ContainerTitleCodec.ENTRY_BYTES + ") + 's') * #ce_payload)";
+        // 索引表只含 ASCII 格式串。加上表中没有的 ^，让字符串减法只删除开头一次。
+        bind(bindings, "(('^' + " + throughEntry + ") - ('^' + " + beforeEntry + "))", "#ce_entry");
+        bind(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_entry)", "#ce_skip");
+        bind(bindings, "(('^' + #ce_entry) - ('^' + #ce_skip))", "#ce_take");
+        bind(bindings, "(#ce_take * (#ce_payload - (#ce_skip * #ce_payload)))", "#ce_layer");
         label.add("bindings", bindings);
     }
 
@@ -41,20 +48,5 @@ final class BedrockTitleLayers {
         details.addProperty("binding_collection_prefix", "ce");
         bindings.add(details);
         return bindings;
-    }
-
-    static void decodeLayer(JsonArray bindings) {
-        // 每层从索引表取出 UTF-8 偏移和长度，再从正文截取对应文本。
-        bind(bindings, "('%.' + (#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ") + 's')", "#ce_skip_format");
-        bind(bindings, "(#ce_skip_format * #ce_payload)", "#ce_skip_prefix");
-        bind(bindings, "(#ce_payload - #ce_skip_prefix)", "#ce_skip_tail");
-        bind(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_skip_tail)", "#ce_skip");
-        bind(bindings, "('%.' + ((#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ") + " + ContainerTitleCodec.FORMAT_BYTES + ") + 's')", "#ce_take_format");
-        bind(bindings, "(#ce_take_format * #ce_payload)", "#ce_take_prefix");
-        bind(bindings, "(#ce_payload - #ce_take_prefix)", "#ce_take_tail");
-        bind(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_take_tail)", "#ce_take");
-        bind(bindings, "(#ce_skip * #ce_payload)", "#ce_body_prefix");
-        bind(bindings, "(#ce_payload - #ce_body_prefix)", "#ce_body_tail");
-        bind(bindings, "(#ce_take * #ce_body_tail)", "#ce_layer");
     }
 }
