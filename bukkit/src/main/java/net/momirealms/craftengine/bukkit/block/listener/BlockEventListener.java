@@ -48,6 +48,8 @@ import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LivingEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.ai.attributes.AttributesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
@@ -57,6 +59,7 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockB
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -352,22 +355,52 @@ public final class BlockEventListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onStepParticles(GenericGameEvent event) {
-        if (event.getEvent() != GameEvent.STEP || !(event.getEntity() instanceof Player player)) {
-            return;
-        }
-        Object entity = CraftEntityProxy.INSTANCE.getEntity(player);
-        if (!EntityProxy.INSTANCE.canSpawnSprintParticle(entity)) {
-            return;
-        }
-        Object level = EntityProxy.INSTANCE.getLevel(entity);
-        Object pos = EntityProxy.INSTANCE.getOnPos(entity);
-        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, pos);
-        ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(blockState);
-        if (state != null) {
+    public void onBlockMovementParticles(GenericGameEvent event) {
+        GameEvent gameEvent = event.getEvent();
+        if (gameEvent == GameEvent.STEP) {
+            if (!(event.getEntity() instanceof Player player)) {
+                return;
+            }
+            Object entity = CraftEntityProxy.INSTANCE.getEntity(player);
+            if (!EntityProxy.INSTANCE.canSpawnSprintParticle(entity)) {
+                return;
+            }
+            Object level = EntityProxy.INSTANCE.getLevel(entity);
+            Object pos = EntityProxy.INSTANCE.getOnPos(entity);
+            ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(BlockGetterProxy.INSTANCE.getBlockState(level, pos));
+            if (state == null) {
+                return;
+            }
             ParticleConfig particle = state.settings().particles().stepParticle();
-            if (particle != null) {
-                ParticleUtils.sendStepParticles(level, entity, pos, particle);
+            if (particle == null) {
+                return;
+            }
+            ParticleUtils.sendStepParticles(level, entity, pos, particle);
+            return;
+        }
+        if (gameEvent == GameEvent.HIT_GROUND) {
+            if (!(event.getEntity() instanceof LivingEntity livingEntity)) {
+                return;
+            }
+            Object entity = CraftEntityProxy.INSTANCE.getEntity(livingEntity);
+            Object level = EntityProxy.INSTANCE.getLevel(entity);
+            Object pos = EntityProxy.INSTANCE.getOnPosLegacy(entity);
+            ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(BlockGetterProxy.INSTANCE.getBlockState(level, pos));
+            if (state == null) {
+                return;
+            }
+            ParticleConfig particle = state.settings().particles().fallParticle();
+            if (particle == null) {
+                return;
+            }
+            double safeDistance = VersionHelper.isOrAbove1_20_5
+                    ? LivingEntityProxy.INSTANCE.getAttributeValue(entity, AttributesProxy.SAFE_FALL_DISTANCE)
+                    : 3.0;
+            int fallPower = VersionHelper.isOrAbove1_21_5
+                    ? (int) Math.floor(EntityProxy.INSTANCE.getFallDistance(entity) + 1.0E-6 - safeDistance)
+                    : (int) Math.ceil(EntityProxy.INSTANCE.getFallDistance$legacy(entity) - safeDistance);
+            if (fallPower > 0) {
+                ParticleUtils.sendFallParticles(level, entity, pos, particle, fallPower);
             }
         }
     }

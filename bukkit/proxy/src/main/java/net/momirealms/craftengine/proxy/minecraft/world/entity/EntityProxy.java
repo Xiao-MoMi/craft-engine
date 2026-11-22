@@ -87,6 +87,15 @@ public interface EntityProxy {
     @MethodInvoker(name = "getOnPos")
     Object getOnPos(Object target);
 
+    @MethodInvoker(name = "getOnPosLegacy")
+    Object getOnPosLegacy(Object target);
+
+    @FieldGetter(name = "fallDistance", activeIf = "max_version=1.21.4")
+    float getFallDistance$legacy(Object target);
+
+    @FieldGetter(name = "fallDistance", activeIf = "min_version=1.21.5")
+    double getFallDistance(Object target);
+
     @MethodInvoker(name = "getPassengerRidingPosition", activeIf = "min_version=1.20.2")
     Object getPassengerRidingPosition(Object target, @Type(clazz = EntityProxy.class) Object passenger);
 

@@ -137,7 +137,7 @@ public final class BlockSettingsModifiers {
         }
     });
     public static final BlockSettingsModifierType<BlockSettingsModifier> PARTICLE = register(Key.ce("particle"), value -> {
-        BlockParticles particles = BlockParticles.fromConfig(value.getAsSection());
+        BlockParticles particles = BlockParticles.fromConfig(value);
         return settings -> settings.particles(particles);
     });
     public static final BlockSettingsModifierType<BlockSettingsModifier> FLUID_STATE = register(Key.ce("fluid_state"), value -> {

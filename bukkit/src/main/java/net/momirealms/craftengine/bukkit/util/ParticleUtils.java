@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.SimpleContext;
 import net.momirealms.craftengine.core.util.Color;
+import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -16,12 +17,19 @@ import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.Clientbo
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackTemplateProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.gameevent.BlockPositionSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.BlockHitResultProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionContextProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 public final class ParticleUtils {
+    private static final double HIT_FACE_MARGIN = 0.1F;
+
     private ParticleUtils() {}
 
     @Nullable
@@ -70,6 +78,10 @@ public final class ParticleUtils {
     }
 
     public static void sendParticles(Object level, ParticleConfig particle, double x, double y, double z) {
+        sendParticles(level, particle, x, y, z, 0);
+    }
+
+    private static void sendParticles(Object level, ParticleConfig particle, double x, double y, double z, int fallPower) {
         Context context = SimpleContext.EMPTY;
         x += particle.x.getDouble(context);
         y += particle.y.getDouble(context);
@@ -82,13 +94,54 @@ public final class ParticleUtils {
                     x,
                     y,
                     z,
-                    particle.count.getInt(context),
+                    fallPower > 0 ? particle.fallCount(fallPower, context) : particle.count.getInt(context),
                     particle.xOffset.getDouble(context),
                     particle.yOffset.getDouble(context),
                     particle.zOffset.getDouble(context),
                     particle.speed.getDouble(context)
             );
         }
+    }
+
+    @Nullable
+    public static Object createHitParticlePacket(ParticleConfig particle, Object level, Object blockState, Object hitResult) {
+        Object pos = BlockHitResultProxy.INSTANCE.getBlockPos(hitResult);
+        Object outline = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getShape(blockState, level, pos, CollisionContextProxy.INSTANCE.empty());
+        if (VoxelShapeProxy.INSTANCE.isEmpty(outline)) {
+            return null;
+        }
+        Object bounds = VoxelShapeProxy.INSTANCE.bounds(outline);
+        Direction face = DirectionUtils.fromNMSDirection(BlockHitResultProxy.INSTANCE.getDirection(hitResult));
+        return createParticlePacket(particle,
+                Vec3iProxy.INSTANCE.getX(pos) + hitCoordinate(face.stepX(), AABBProxy.INSTANCE.getMinX(bounds), AABBProxy.INSTANCE.getMaxX(bounds)),
+                Vec3iProxy.INSTANCE.getY(pos) + hitCoordinate(face.stepY(), AABBProxy.INSTANCE.getMinY(bounds), AABBProxy.INSTANCE.getMaxY(bounds)),
+                Vec3iProxy.INSTANCE.getZ(pos) + hitCoordinate(face.stepZ(), AABBProxy.INSTANCE.getMinZ(bounds), AABBProxy.INSTANCE.getMaxZ(bounds)));
+    }
+
+    private static double hitCoordinate(int faceStep, double min, double max) {
+        if (faceStep < 0) {
+            return min - HIT_FACE_MARGIN;
+        }
+        if (faceStep > 0) {
+            return max + HIT_FACE_MARGIN;
+        }
+        return RandomUtils.generateRandomDouble(min + HIT_FACE_MARGIN, max - HIT_FACE_MARGIN);
+    }
+
+    public static void sendFallParticles(Object level, Object entity, Object blockPos, ParticleConfig particle, int fallPower) {
+        double x = EntityProxy.INSTANCE.getX(entity);
+        double z = EntityProxy.INSTANCE.getZ(entity);
+        int blockX = Vec3iProxy.INSTANCE.getX(blockPos);
+        int blockZ = Vec3iProxy.INSTANCE.getZ(blockPos);
+        Object entityPos = EntityProxy.INSTANCE.getBlockPosition(entity);
+        if (Vec3iProxy.INSTANCE.getX(entityPos) != blockX || Vec3iProxy.INSTANCE.getZ(entityPos) != blockZ) {
+            double dx = x - blockX - 0.5;
+            double dz = z - blockZ - 0.5;
+            double distance = Math.max(Math.abs(dx), Math.abs(dz));
+            x = blockX + 0.5 + dx / distance * 0.5;
+            z = blockZ + 0.5 + dz / distance * 0.5;
+        }
+        sendParticles(level, particle, x, EntityProxy.INSTANCE.getY(entity), z, fallPower);
     }
 
     public static void sendStepParticles(Object level, Object entity, Object blockPos, ParticleConfig particle) {

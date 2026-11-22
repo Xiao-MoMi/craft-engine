@@ -75,6 +75,7 @@ import net.momirealms.craftengine.core.sound.SoundSource;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.*;
+import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
 import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
@@ -150,6 +151,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     public static final Key ENABLE_ENTITY_CULLING = Key.ce("enable_entity_culling");
     public static final Key ENABLE_FURNITURE_DEBUG = Key.ce("enable_furniture_debug");
     public static final Key DAMAGE_VISIBILITY = Key.ce("damage_visibility");
+    private static final int HIT_BLOCK_INTERVAL = 4;
     private final BukkitCraftEngine plugin;
 
     // connection state
@@ -216,7 +218,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     private int capturedAttackStrengthTick = Integer.MIN_VALUE;
     private float capturedAttackStrength;
     // cache interaction range here
-    private int lastUpdateInteractionRangeTick;
+    private int lastUpdateInteractionRangeTick = -20;
     private double cachedInteractionRange;
     // cooldown data
     private CooldownData cooldownData;
@@ -1001,6 +1003,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     public void startMiningBlock(BlockPos pos, @NotNull Object state, @Nullable ImmutableBlockState customState) {
         boolean custom = customState != null;
         boolean canInstantBreak = this.getDestroyProgress(state, pos) >= 1f;
+        BlockPos previousPos = this.destroyPos;
 
         this.awaitingVanillaMiningStart = false;
         this.miningProgress = 0;
@@ -1012,7 +1015,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             this.isDestroyingBlock = false;
             this.serverControlledMining = false;
         } else {
-            BlockPos previousPos = this.destroyPos;
             if (previousPos != null && !pos.equals(previousPos)) {
                 this.broadcastDestroyProgress(previousPos, -1f);
             }
@@ -1023,6 +1025,20 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         }
 
         if (custom) {
+            ParticleConfig hitParticle = customState.settings().particles().hitParticle();
+            if (hitParticle != null
+                    && !canInstantBreak
+                    && !this.canInstabuild()
+                    && (!pos.equals(previousPos) || this.gameTicks - this.lastHitBlockTime >= HIT_BLOCK_INTERVAL)
+                    && !BukkitItemUtils.isDebugStick(this.getItemInHand(InteractionHand.MAIN_HAND))) {
+                Object player = this.minecraftPlayer();
+                Object hitResult = this.rayTrace(player, this.getCachedInteractionRange());
+                if (!BlockHitResultProxy.INSTANCE.isMiss(hitResult)
+                        && LocationUtils.toBlockPos(pos).equals(BlockHitResultProxy.INSTANCE.getBlockPos(hitResult))
+                        && this.sendMiningHitParticle(hitParticle, player, state, hitResult)) {
+                    this.lastHitBlockTime = this.gameTicks;
+                }
+            }
             // 如果是自定义方块且秒破
             if (canInstantBreak && customState.settings().particles().breakParticle() == null) {
                 BlockStateWrapper vanillaBlockState = customState.visualBlockState();
@@ -1140,6 +1156,18 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         sendPacket(packet, true);
     }
 
+    private boolean sendMiningHitParticle(ParticleConfig particle, Object player, Object blockState, Object hitResult) {
+        if (EntityProxy.INSTANCE.isSpectator(player)) {
+            return false;
+        }
+        Object packet = ParticleUtils.createHitParticlePacket(particle, EntityProxy.INSTANCE.getLevel(player), blockState, hitResult);
+        if (packet == null) {
+            return false;
+        }
+        this.sendPacket(packet, false);
+        return true;
+    }
+
     private void tickBlockDestroy(Object serverPlayer) {
         int currentTick = gameTicks();
         Object destroyedState = this.destroyedState;
@@ -1173,9 +1201,10 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
         // check item in hand
         BukkitItem item = this.getItemInHand(InteractionHand.MAIN_HAND);
+        ImmutableBlockState customState = BlockStateUtils.getNullableCustomBlockState(destroyedState);
 
         // 发送破坏中音效
-        if (currentTick - this.lastHitBlockTime > 3) {
+        if (currentTick - this.lastHitBlockTime >= HIT_BLOCK_INTERVAL) {
             // 手上物品不是debug棒
             if (!BukkitItemUtils.isDebugStick(item) && !canInstabuild()) {
                 Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(destroyedState);
@@ -1188,6 +1217,12 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                         RandomUtils.generateRandomLong()
                 );
                 sendPacket(soundPacket, true);
+                if (this.serverControlledMining && customState != null) {
+                    ParticleConfig hitParticle = customState.settings().particles().hitParticle();
+                    if (hitParticle != null) {
+                        this.sendMiningHitParticle(hitParticle, serverPlayer, destroyedState, hitResult);
+                    }
+                }
             }
             this.lastHitBlockTime = currentTick;
         }
@@ -1195,7 +1230,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         if (!this.serverControlledMining) {
             return;
         }
-        ImmutableBlockState customState = BlockStateUtils.getNullableCustomBlockState(destroyedState);
         if (customState == null && (BlockStateUtils.isCustomBlock(destroyedState) || BlockGetterProxy.INSTANCE.getBlockState(EntityProxy.INSTANCE.getLevel(serverPlayer), blockPos) != destroyedState)) {
             this.finishMiningBlock();
             return;
