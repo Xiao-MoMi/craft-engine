@@ -15,12 +15,15 @@ import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPacketHandler
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketHandler;
 import net.momirealms.craftengine.bedrock.geyser.network.ServerCustomPacket;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
+import net.momirealms.craftengine.bedrock.geyser.title.TitleSession;
 import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
 import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.protocol.bedrock.BedrockPeer;
 import org.cloudburstmc.protocol.bedrock.data.debugshape.DebugShape;
 import org.cloudburstmc.protocol.bedrock.packet.DebugDrawerPacket;
+import org.cloudburstmc.protocol.bedrock.packet.ResourcePackClientResponsePacket;
+import org.cloudburstmc.protocol.bedrock.packet.ResourcePackStackPacket;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.BlockBreakHandler;
@@ -49,6 +52,9 @@ public final class GeyserPlayer {
     private GeyserElytraEquipment elytra;
     private BlockBreakHandler originalBlockBreakHandler;
     private BlockBreakHandler blockBreakHandler;
+    private boolean clientPackOffered;
+    private volatile boolean clientPackLoaded;
+    private final TitleSession titleSession;
     private volatile boolean closed;
 
     GeyserPlayer(CraftEngineGeyserExtension extension, GeyserSession session) {
@@ -56,6 +62,7 @@ public final class GeyserPlayer {
         this.nativeModels = extension.entityManager().createNativeConnection(session);
         this.displayOwners = extension.entityManager().createDisplayOwners(session);
         this.session = session;
+        this.titleSession = new TitleSession(session.getTickEventLoop());
         this.javaConnection = new GeyserJavaPacketHandler(this, extension.javaPackets());
         this.activeUse = new GeyserActiveItemUse(session, extension.itemManager()::isRegisteredItem);
     }
@@ -107,6 +114,26 @@ public final class GeyserPlayer {
 
     public UiProfile uiProfile() {
         return this.session.getClientData().getUiProfile();
+    }
+
+    public void trackClientPack(ResourcePackStackPacket packet) {
+        String packId = this.extension.clientPackId();
+        this.clientPackOffered = packId != null && packet.getResourcePacks().stream().anyMatch(entry -> packId.equals(entry.getPackId()));
+    }
+
+    public void confirmClientPack(ResourcePackClientResponsePacket packet) {
+        if (packet.getStatus() == ResourcePackClientResponsePacket.Status.COMPLETED) {
+            this.clientPackLoaded = this.clientPackOffered;
+        }
+    }
+
+    @Nullable
+    public TitleSession titleSession() {
+        return this.clientPackLoaded ? this.titleSession : null;
+    }
+
+    public boolean clientPackLoaded() {
+        return this.clientPackLoaded;
     }
 
     public boolean isClosed() {
@@ -227,6 +254,7 @@ public final class GeyserPlayer {
             connection.close();
         }
         this.session.executeInEventLoop(() -> {
+            this.titleSession.close();
             if (this.elytra != null) {
                 this.elytra.close();
             }

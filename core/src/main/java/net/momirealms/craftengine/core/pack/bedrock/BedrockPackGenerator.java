@@ -13,6 +13,7 @@ import net.momirealms.craftengine.core.pack.bedrock.block.BlockRegistrationPlanW
 import net.momirealms.craftengine.core.pack.bedrock.font.BedrockFontGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockBossBars;
 import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockGuiGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockTitle;
 import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemResourceGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.display.BedrockItemDisplayGenerator;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanWriter;
@@ -64,6 +65,7 @@ public final class BedrockPackGenerator {
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
+            BedrockTitle.write(pack, Config.bedrockTitleLayer());
             NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockEntities()::dye);
 
             boolean protection = obfuscation && VersionHelper.PREMIUM;

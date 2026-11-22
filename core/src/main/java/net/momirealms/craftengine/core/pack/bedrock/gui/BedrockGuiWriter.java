@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static net.momirealms.craftengine.core.pack.bedrock.gui.BedrockTitleLayers.bind;
+
 public final class BedrockGuiWriter {
     private final JsonObject controls = new JsonObject();
     private final JsonArray routes = new JsonArray();
@@ -100,11 +102,11 @@ public final class BedrockGuiWriter {
         JsonObject trigger = new JsonObject();
         trigger.addProperty("binding_name", "#gamepad_helper_visible");
         bindings.add(trigger);
-        this.addBinding(bindings, "($ce_text + ('%.0s' * #gamepad_helper_visible))", "#ce_raw");
-        this.addBinding(bindings, "(#ce_raw - '§z§" + rows + "§r' - '§r" + marker + "' - '" + marker + "')", "#ce_data");
-        this.addBinding(bindings, "('%." + ContainerTitleCodec.COUNT_BYTES + "s' * #ce_data)", "#ce_count");
-        this.addBinding(bindings, "(#ce_count - 'N' - ':' + 0)", "#collection_length");
-        this.addBinding(bindings, "(#ce_data - #ce_count)", "#ce_payload");
+        bind(bindings, "($ce_text + ('%.0s' * #gamepad_helper_visible))", "#ce_raw");
+        bind(bindings, "(#ce_raw - '§z§" + rows + "§r' - '§r" + marker + "' - '" + marker + "')", "#ce_data");
+        bind(bindings, "('%." + ContainerTitleCodec.COUNT_BYTES + "s' * #ce_data)", "#ce_count");
+        bind(bindings, "(#ce_count - 'N' - ':' + 0)", "#collection_length");
+        bind(bindings, "(#ce_data - #ce_count)", "#ce_payload");
         panel.add("bindings", bindings);
         content.add(GsonHelper.createObject("title_layers", panel));
     }
@@ -120,32 +122,7 @@ public final class BedrockGuiWriter {
         label.addProperty("localize", false);
         label.addProperty("text_alignment", "left");
         label.addProperty("shadow", false);
-        label.addProperty("text", "#ce_layer");
-        JsonArray bindings = new JsonArray();
-        JsonObject details = new JsonObject();
-        details.addProperty("binding_type", "collection_details");
-        details.addProperty("binding_collection_name", "ce_title_layers");
-        details.addProperty("binding_collection_prefix", "ce");
-        bindings.add(details);
-        JsonObject source = new JsonObject();
-        source.addProperty("binding_type", "view");
-        source.addProperty("source_control_name", "title_layers");
-        source.addProperty("source_property_name", "#ce_payload");
-        source.addProperty("target_property_name", "#ce_payload");
-        bindings.add(source);
-        // Decode each generated control's table entry through the client-verified staged bindings.
-        this.addBinding(bindings, "('%.' + (#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ") + 's')", "#ce_skip_format");
-        this.addBinding(bindings, "(#ce_skip_format * #ce_payload)", "#ce_skip_prefix");
-        this.addBinding(bindings, "(#ce_payload - #ce_skip_prefix)", "#ce_skip_tail");
-        this.addBinding(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_skip_tail)", "#ce_skip");
-        this.addBinding(bindings, "('%.' + ((#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ") + " + ContainerTitleCodec.FORMAT_BYTES + ") + 's')", "#ce_take_format");
-        this.addBinding(bindings, "(#ce_take_format * #ce_payload)", "#ce_take_prefix");
-        this.addBinding(bindings, "(#ce_payload - #ce_take_prefix)", "#ce_take_tail");
-        this.addBinding(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_take_tail)", "#ce_take");
-        this.addBinding(bindings, "(#ce_skip * #ce_payload)", "#ce_body_prefix");
-        this.addBinding(bindings, "(#ce_payload - #ce_body_prefix)", "#ce_body_tail");
-        this.addBinding(bindings, "(#ce_take * #ce_body_tail)", "#ce_layer");
-        label.add("bindings", bindings);
+        BedrockTitleLayers.bindLayer(label, "ce_title_layers", "title_layers");
         JsonArray children = new JsonArray();
         children.add(GsonHelper.createObject("text", label));
         // Zero-width siblings share the title origin; equal child layers preserve factory drawing order.
@@ -154,14 +131,6 @@ public final class BedrockGuiWriter {
         item.addProperty("layer", 0);
         item.add("controls", children);
         this.controls.add("title_layer", item);
-    }
-
-    private void addBinding(JsonArray bindings, String expression, String target) {
-        JsonObject binding = new JsonObject();
-        binding.addProperty("binding_type", "view");
-        binding.addProperty("source_property_name", expression);
-        binding.addProperty("target_property_name", target);
-        bindings.add(binding);
     }
 
     public void write(Path root) throws IOException {

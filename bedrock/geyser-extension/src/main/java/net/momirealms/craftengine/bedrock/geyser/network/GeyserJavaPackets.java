@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserWorldItemViews;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
+import net.momirealms.craftengine.bedrock.geyser.title.GeyserTitle;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.geyser.registry.PacketTranslatorRegistry;
 import org.geysermc.geyser.session.GeyserSession;
@@ -25,6 +26,8 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.Clie
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundLevelEventPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.title.ClientboundSetSubtitleTextPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.title.ClientboundSetTitleTextPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.inventory.ServerboundContainerClickPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundPlayerActionPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundSetCarriedItemPacket;
@@ -66,6 +69,9 @@ public final class GeyserJavaPackets {
         ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
         if (layout != null) {
             this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout));
+            GeyserTitle titles = new GeyserTitle(layout, extension.config().forceJavaTitleLayout());
+            this.intercept(ClientboundSetTitleTextPacket.class, titles::title);
+            this.intercept(ClientboundSetSubtitleTextPacket.class, titles::subtitle);
         }
         GeyserWorldBlocks blocks = extension.blockManager().worldBlocks();
         if (!blocks.isEmpty()) {

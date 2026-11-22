@@ -27,13 +27,24 @@ public final class ContainerTitleLayout {
 
     public List<List<Run>> layout(List<GuiTitlePart> parts, boolean force) {
         // 没有需要映射的自定义字形时，交给原生标题渲染。
-        if (!force && !this.hasCustomGlyph(parts)) {
+        if (!force && !this.requiresLayout(parts, false)) {
             return List.of();
         }
         return this.layoutWithWidth(parts).layers();
     }
 
     public MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts) {
+        return this.layoutWithWidth(parts, false);
+    }
+
+    public List<List<Run>> layoutTitle(List<GuiTitlePart> parts, boolean force) {
+        if (parts.isEmpty() || (!force && !this.requiresLayout(parts, true))) {
+            return List.of();
+        }
+        return this.layoutWithWidth(parts, true).layers();
+    }
+
+    private MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts, boolean centered) {
         List<Layer> layers = new ArrayList<>();
         int remainingBytes = ContainerTitleCodec.MAX_BYTES;
         // Java 光标允许负间距回退；每个基岩图层的光标只能通过间距字符向右移动。
@@ -74,13 +85,10 @@ public final class ContainerTitleLayout {
                     remainingBytes -= ContainerTitleCodec.ENTRY_BYTES;
                 }
                 int gap = (int) (position - selected.cursor);
-                int spacerCount = Math.ceilDiv(gap, MAX_SPACER);
                 // 每个可见字符至少占一字节；间距段的 §r 前缀和每个 E2 字符各占三个 UTF-8 字节。
                 // 先扣除确定的开销再展开间距，格式化后的实际字节数由编码器校验。
                 remainingBytes--;
-                if (spacerCount > 0) {
-                    remainingBytes -= RESET_PREFIX_BYTES + spacerCount * SPACER_BYTES;
-                }
+                remainingBytes -= spacingBytes(gap);
                 if (remainingBytes < 0) {
                     throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
                 }
@@ -99,6 +107,24 @@ public final class ContainerTitleLayout {
         int pixelWidth = Math.max(0, (int) Math.ceil(width));
         if (layers.isEmpty()) {
             return new MeasuredLayout(List.of(List.of()), pixelWidth);
+        }
+        if (centered) {
+            // 给每层补到相同的宽度，让 HUD 用原生居中对齐叠在同一条基线上。
+            double centeredWidth = 2 * ORIGIN + Math.ceil(width);
+            for (Layer layer : layers) {
+                double padding = centeredWidth - layer.cursor;
+                if (padding < 0 || padding == 1 || padding > ContainerTitleCodec.MAX_BYTES / SPACER_BYTES * MAX_SPACER) {
+                    throw new UnsupportedOperationException("Title cannot be centered within the layout margin");
+                }
+                int gap = (int) padding;
+                remainingBytes -= spacingBytes(gap);
+                if (remainingBytes < 0) {
+                    throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
+                }
+                if (gap > 0) {
+                    layer.appendSpacing(gap);
+                }
+            }
         }
         List<List<Run>> result = new ArrayList<>(layers.size());
         for (Layer layer : layers) {
@@ -148,7 +174,11 @@ public final class ContainerTitleLayout {
         return null;
     }
 
-    private boolean hasCustomGlyph(List<GuiTitlePart> parts) {
+    private static int spacingBytes(int gap) {
+        return gap == 0 ? 0 : RESET_PREFIX_BYTES + Math.ceilDiv(gap, MAX_SPACER) * SPACER_BYTES;
+    }
+
+    private boolean requiresLayout(List<GuiTitlePart> parts, boolean negativeOnly) {
         for (GuiTitlePart part : parts) {
             Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
             if (font == null) {
@@ -158,7 +188,7 @@ public final class ContainerTitleLayout {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
                 FontGlyph glyph = font.get(codepoint);
-                if (glyph != null && glyph.character() != codepoint) {
+                if (glyph != null && (negativeOnly ? glyph.advance() < 0 : glyph.character() != codepoint)) {
                     return true;
                 }
             }

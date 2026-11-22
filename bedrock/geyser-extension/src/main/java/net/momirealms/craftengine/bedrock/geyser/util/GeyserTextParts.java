@@ -14,6 +14,19 @@ public final class GeyserTextParts {
     private GeyserTextParts() {
     }
 
+    public static Object resolvedText(String text) {
+        AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
+        return proxy.font(proxy.text(text), RESOLVED_FONT);
+    }
+
+    public static List<String> serializeLayers(List<List<ContainerTitleLayout.Run>> layers, List<GuiTitlePart> parts, String locale) {
+        List<String> layerTexts = new ArrayList<>(layers.size());
+        for (List<ContainerTitleLayout.Run> layer : layers) {
+            layerTexts.add(serializeLayer(layer, parts, locale));
+        }
+        return layerTexts;
+    }
+
     public static String serializeLayer(List<ContainerTitleLayout.Run> layer, List<GuiTitlePart> parts, String locale) {
         StringBuilder text = new StringBuilder();
         for (ContainerTitleLayout.Run run : layer) {

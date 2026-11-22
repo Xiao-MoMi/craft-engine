@@ -306,6 +306,7 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
     private boolean bedrock$enable = true;
+    private int bedrock$title$layer;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private List<ExternalItemModel> bedrock$item$external = List.of();
     private BedrockEntitySettings bedrockEntities = BedrockEntitySettings.DEFAULT;
@@ -800,6 +801,7 @@ public final class Config {
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
+        this.bedrock$title$layer = config.getInt("bedrock.title.layer", 1);
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
         this.bedrock$item$external = config.getList("bedrock.item.external", value -> {
             ConfigSection section = value.getAsSection();
@@ -1554,6 +1556,10 @@ public final class Config {
 
     public static String packDescription() {
         return instance.resource_pack$description;
+    }
+
+    public static int bedrockTitleLayer() {
+        return instance.bedrock$title$layer;
     }
 
     public static BedrockSidebarConfig bedrockScoreboard() {

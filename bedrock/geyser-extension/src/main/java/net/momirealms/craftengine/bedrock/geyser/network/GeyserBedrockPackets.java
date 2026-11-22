@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarSession;
+import net.momirealms.craftengine.bedrock.geyser.title.TitleSession;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.*;
 
@@ -22,6 +23,8 @@ public final class GeyserBedrockPackets {
     private static final Table OUTGOING = new Table();
 
     static {
+        INCOMING.on(ResourcePackClientResponsePacket.class,
+                bind(Function.identity(), (player, event) -> player.confirmClientPack(event.packet())));
         INCOMING.on(MobEquipmentPacket.class,
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::restoreEquipment));
         INCOMING.on(InventoryTransactionPacket.class,
@@ -37,6 +40,9 @@ public final class GeyserBedrockPackets {
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::restorePlayerInput),
                 bind(Function.identity(), (player, event) -> player.cameraDirection(event.packet().getCameraOrientation())));
 
+        OUTGOING.on(ResourcePackStackPacket.class,
+                bind(Function.identity(), (player, event) -> player.trackClientPack(event.packet())));
+        OUTGOING.on(SetTitlePacket.class, bind(GeyserPlayer::titleSession, TitleSession::onTitle));
         OUTGOING.on(SetDisplayObjectivePacket.class,
                 bind(GeyserPlayer::sidebar, SidebarSession::onDisplay));
         OUTGOING.on(SetScorePacket.class,
@@ -85,7 +91,8 @@ public final class GeyserBedrockPackets {
         OUTGOING.on(ChangeDimensionPacket.class,
                 bind(GeyserPlayer::nativeModels, (models, event) -> models.clear()),
                 bind(GeyserPlayer::displayOwners, (owners, event) -> owners.clear()),
-                bind(GeyserPlayer::activeUse, (use, event) -> use.reset()));
+                bind(GeyserPlayer::activeUse, (use, event) -> use.reset()),
+                bind(GeyserPlayer::titleSession, TitleSession::onDimensionChange));
     }
 
     private GeyserBedrockPackets() {

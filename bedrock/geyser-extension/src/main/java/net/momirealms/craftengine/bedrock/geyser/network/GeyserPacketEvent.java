@@ -5,6 +5,8 @@ import io.netty.util.ReferenceCountUtil;
 import org.cloudburstmc.protocol.bedrock.netty.BedrockPacketWrapper;
 import org.cloudburstmc.protocol.bedrock.packet.BedrockPacket;
 
+import java.util.function.Consumer;
+
 public final class GeyserPacketEvent<T extends BedrockPacket> {
     private final BedrockPacketWrapper wrapper;
     private final ChannelHandlerContext context;
@@ -37,6 +39,13 @@ public final class GeyserPacketEvent<T extends BedrockPacket> {
 
     public void writeBefore(BedrockPacket packet) {
         this.context.write(BedrockPacketWrapper.create(0, this.wrapper.getSenderSubClientId(), this.wrapper.getTargetSubClientId(), packet, null));
+    }
+
+    public Consumer<BedrockPacket> deferredWriter() {
+        ChannelHandlerContext channel = this.context;
+        int sender = this.wrapper.getSenderSubClientId();
+        int target = this.wrapper.getTargetSubClientId();
+        return packet -> channel.writeAndFlush(BedrockPacketWrapper.create(0, sender, target, packet, null));
     }
 
     public boolean isCancelled() {

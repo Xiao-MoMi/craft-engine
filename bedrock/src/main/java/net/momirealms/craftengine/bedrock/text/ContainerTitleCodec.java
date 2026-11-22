@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.text;
 import java.util.List;
 
 public final class ContainerTitleCodec {
+    public static final String TITLE_MARKER = "ce:title/";
     public static final int FORMAT_BYTES = 7;
     public static final int ENTRY_BYTES = FORMAT_BYTES * 2;
     public static final int COUNT_BYTES = 6;
@@ -36,7 +37,7 @@ public final class ContainerTitleCodec {
             if (layer.contains(marker) || layer.contains(count)) {
                 throw new UnsupportedOperationException("Title contains its layout marker or layer count");
             }
-            int byteLength = layerByteLength(layer);
+            int byteLength = utf8Length(layer, 0);
             if (byteOffset + byteLength > MAX_BYTES) {
                 throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
             }
@@ -55,10 +56,10 @@ public final class ContainerTitleCodec {
         return encoded;
     }
 
-    private static int layerByteLength(String layer) {
+    static int utf8Length(String layer, int start) {
         // 只统计长度，不创建 UTF-8 字节数组；孤立代理字符按 Java 编码器的 '?' 替换计一字节。
         int bytes = 0;
-        for (int i = 0, length = layer.length(); i < length; i++) {
+        for (int i = start, length = layer.length(); i < length; i++) {
             char character = layer.charAt(i);
             if (character < 0x80) {
                 bytes++;
@@ -71,9 +72,6 @@ public final class ContainerTitleCodec {
                 i++;
             } else {
                 bytes++;
-            }
-            if (bytes > MAX_BYTES) {
-                throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
             }
         }
         return bytes;

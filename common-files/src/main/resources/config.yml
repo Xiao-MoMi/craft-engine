@@ -876,6 +876,9 @@ bedrock:
     #   - "minecraft:oak_stairs[facing=east]"
     #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
     vanilla-blocks: []
+  title:
+    # Draw layer of the custom Bedrock title panel in the generated resource pack.
+    layer: 1
   scoreboard:
     # Match an existing sidebar to image decorations and a horizontal offset.
     #

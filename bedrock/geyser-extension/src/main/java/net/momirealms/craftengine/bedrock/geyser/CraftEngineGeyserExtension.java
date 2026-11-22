@@ -24,6 +24,7 @@ import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
 import org.geysermc.geyser.registry.Registries;
 import org.geysermc.geyser.session.GeyserSession;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,6 +46,7 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserExtensionData extensionData;
     private GeyserSoundMappings sounds;
     private GeyserCustomPayloads customPayloads;
+    private String clientPackId;
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
@@ -78,8 +80,15 @@ public final class CraftEngineGeyserExtension implements Extension {
     public void onDefineResourcePacks(GeyserDefineResourcePacksEvent event) {
         Path pack = this.extensionData.clientPack();
         if (pack != null) {
-            event.register(ResourcePack.create(PackCodec.path(pack)));
+            ResourcePack resourcePack = ResourcePack.create(PackCodec.path(pack));
+            event.register(resourcePack);
+            this.clientPackId = resourcePack.uuid().toString();
         }
+    }
+
+    @Nullable
+    public String clientPackId() {
+        return this.clientPackId;
     }
 
     @Subscribe
