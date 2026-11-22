@@ -44,8 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public final class BlockGenerator {
-    private static final BukkitBlockShape STONE_SHAPE =
-            new BukkitBlockShape(BlocksProxy.STONE$defaultState, BlocksProxy.STONE$defaultState);
+    private static final BukkitBlockShape STONE_SHAPE = new BukkitBlockShape(BlocksProxy.STONE$defaultState, BlocksProxy.STONE$defaultState);
     private static SConstructor1 constructor$CraftEngineBlock;
     private static SField field$CraftEngineBlock$behavior;
     private static SField field$CraftEngineBlock$shape;

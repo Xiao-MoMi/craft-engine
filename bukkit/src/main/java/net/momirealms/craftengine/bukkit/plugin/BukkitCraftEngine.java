@@ -178,11 +178,6 @@ public final class BukkitCraftEngine extends CraftEngine {
         } catch (Throwable e) {
             throw new InjectionException("Error injecting recipes", e);
         }
-        try {
-            DispenserInjector.init();
-        } catch (Throwable e) {
-            throw new InjectionException("Error injecting dispensers", e);
-        }
         // 初始化一些注册表
         super.onPluginLoad();
         RuntimePatcher.checkChunkCacheAvailability(this);

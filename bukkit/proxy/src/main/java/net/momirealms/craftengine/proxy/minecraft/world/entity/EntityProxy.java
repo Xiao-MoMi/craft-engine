@@ -7,6 +7,7 @@ import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import org.bukkit.entity.Entity;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -171,6 +172,9 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getBukkitEntity")
     Entity getBukkitEntity(Object target);
+
+    @FieldSetter(name = "projectileSource")
+    void setProjectileSource(Object target, ProjectileSource source);
 
     @MethodInvoker(name = "isRemoved")
     boolean isRemoved(Object target);

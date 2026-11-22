@@ -3,6 +3,7 @@ package net.momirealms.craftengine.proxy.minecraft.server.level;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleOptionsProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.WorldGenLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
@@ -60,6 +61,9 @@ public interface ServerLevelProxy extends LevelProxy, WorldGenLevelProxy {
 
     @MethodInvoker(name = "getServer")
     Object getServer(Object target);
+
+    @MethodInvoker(name = "addFreshEntity")
+    boolean addFreshEntity(Object target, @Type(clazz = EntityProxy.class) Object entity);
 
     @FieldGetter(name = "ENTITY_COUNTER", isStatic = true, activeIf = "min_version=26.2")
     AtomicInteger getEntityCounter();
