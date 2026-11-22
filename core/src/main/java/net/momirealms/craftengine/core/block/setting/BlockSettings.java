@@ -40,6 +40,7 @@ public final class BlockSettings {
     int luminance;
     String instrument = "harp";
     BlockSounds sounds = BlockSounds.EMPTY;
+    BlockParticles particles = BlockParticles.EMPTY;
     @Nullable
     Key itemId;
     Set<Key> tags = Set.of();
@@ -116,6 +117,7 @@ public final class BlockSettings {
         newSettings.luminance = settings.luminance;
         newSettings.instrument = settings.instrument;
         newSettings.sounds = settings.sounds;
+        newSettings.particles = settings.particles;
         newSettings.itemId = settings.itemId;
         newSettings.tags = settings.tags;
         newSettings.burnChance = settings.burnChance;
@@ -175,6 +177,10 @@ public final class BlockSettings {
 
     public BlockSounds sounds() {
         return sounds;
+    }
+
+    public BlockParticles particles() {
+        return this.particles;
     }
 
     public float resistance() {
@@ -363,6 +369,11 @@ public final class BlockSettings {
 
     public BlockSettings itemId(Key itemId) {
         this.itemId = itemId;
+        return this;
+    }
+
+    public BlockSettings particles(BlockParticles particles) {
+        this.particles = particles;
         return this;
     }
 

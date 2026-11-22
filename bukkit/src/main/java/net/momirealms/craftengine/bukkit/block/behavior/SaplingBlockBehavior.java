@@ -31,6 +31,7 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
@@ -245,11 +246,10 @@ public final class SaplingBlockBehavior extends BukkitBlockBehavior implements B
             sendParticles = true;
         }
         if (sendParticles) {
-            World world = LevelProxy.INSTANCE.getWorld(level);
             int x = Vec3iProxy.INSTANCE.getX(blockPos);
             int y = Vec3iProxy.INSTANCE.getY(blockPos);
             int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-            world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
+            ParticleUtils.broadcastParticles(level, ParticleTypesProxy.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25, 1);
         }
         return success;
     }

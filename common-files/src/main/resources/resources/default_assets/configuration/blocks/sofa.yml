@@ -111,6 +111,14 @@ items:
             step: minecraft:block.wood.step
           destroy_stages:
             template: internal:destroy_stages
+          particle:
+            break:
+              particle: minecraft:item
+              item: default:sofa
+              speed: 0.085
+            step:
+              particle: minecraft:item
+              item: default:sofa
           tags:
             - minecraft:mineable/axe
           $$>=26.2:

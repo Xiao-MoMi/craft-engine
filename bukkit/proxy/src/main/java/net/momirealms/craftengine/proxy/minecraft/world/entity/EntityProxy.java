@@ -117,6 +117,9 @@ public interface EntityProxy {
     @MethodInvoker(name = "isSpectator")
     boolean isSpectator(Object target);
 
+    @MethodInvoker(name = "canSpawnSprintParticle")
+    boolean canSpawnSprintParticle(Object target);
+
     @MethodInvoker(name = "isShiftKeyDown")
     boolean isShiftKeyDown(Object target);
 
@@ -134,6 +137,9 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getDeltaMovement")
     Object getDeltaMovement(Object target);
+
+    @MethodInvoker(name = "getBbWidth")
+    float getBbWidth(Object target);
 
     @MethodInvoker(name = "getSharedFlag")
     boolean getSharedFlag(Object target, int flag);

@@ -136,6 +136,10 @@ public final class BlockSettingsModifiers {
             return settings -> settings.sounds(blockSounds);
         }
     });
+    public static final BlockSettingsModifierType<BlockSettingsModifier> PARTICLE = register(Key.ce("particle"), value -> {
+        BlockParticles particles = BlockParticles.fromConfig(value.getAsSection());
+        return settings -> settings.particles(particles);
+    });
     public static final BlockSettingsModifierType<BlockSettingsModifier> FLUID_STATE = register(Key.ce("fluid_state"), value -> {
         String state = value.getAsString();
         return settings -> settings.fluidState(state.equals("water"));

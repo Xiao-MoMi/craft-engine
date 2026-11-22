@@ -21,7 +21,6 @@ import net.momirealms.craftengine.proxy.paper.configuration.GlobalConfigurationP
 import net.momirealms.craftengine.proxy.spigotmc.SpigotConfigProxy;
 import net.momirealms.sparrow.nbt.Tag;
 import org.bukkit.Bukkit;
-import org.bukkit.Particle;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -73,7 +72,7 @@ public final class BukkitPlatform implements Platform {
 
     @Override
     public ParticleType getParticleType(Key name) {
-        Particle particle = ParticleUtils.getParticle(name);
+        Object particle = ParticleUtils.getParticleType(name);
         if (particle == null) {
             throw new IllegalArgumentException("Invalid particle: " + name);
         }

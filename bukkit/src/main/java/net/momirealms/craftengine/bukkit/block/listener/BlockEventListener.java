@@ -7,6 +7,8 @@ import net.momirealms.craftengine.bukkit.api.event.CustomBlockBreakEvent;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
+import net.momirealms.craftengine.bukkit.plugin.network.listener.game.LevelEventListener;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitExistingBlock;
@@ -34,7 +36,9 @@ import net.momirealms.craftengine.core.util.random.RandomUtils;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.Vec3d;
 import net.momirealms.craftengine.core.world.WorldPosition;
+import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
@@ -43,6 +47,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheP
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.AbilitiesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.player.PlayerProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
@@ -70,6 +75,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static net.momirealms.craftengine.core.block.UpdateFlags.UPDATE_CLIENTS;
 import static net.momirealms.craftengine.core.block.UpdateFlags.UPDATE_KNOWN_SHAPE;
@@ -248,6 +254,10 @@ public final class BlockEventListener implements Listener {
             if (!event.isCancelled()) {
                 // play sound
                 serverPlayer.playSound(position, state.settings().sounds().breakSound(), SoundSource.BLOCK);
+                ParticleConfig particle = state.settings().particles().breakParticle();
+                if (particle != null) {
+                    this.sendBreakParticles(serverPlayer, world, blockPos, stateId, particle);
+                }
             }
             // Restore sounds in cancelled events
             else {
@@ -256,6 +266,37 @@ public final class BlockEventListener implements Listener {
                     serverPlayer.playSound(position, state.settings().sounds().breakSound(), SoundSource.BLOCK);
                 }
             }
+        }
+    }
+
+    private void sendBreakParticles(BukkitServerPlayer breaker, net.momirealms.craftengine.core.world.World world,
+                                    BlockPos pos, int stateId, ParticleConfig particle) {
+        Object packet = ParticleUtils.createParticlePacket(particle, pos.x(), pos.y(), pos.z());
+        if (packet == null) {
+            return;
+        }
+        breaker.sendPacket(packet, false);
+        Object level = world.minecraftWorld();
+        Object breakerEntity = breaker.minecraftPlayer();
+        BukkitNetworkManager network = BukkitNetworkManager.instance();
+        for (Object viewerEntity : ServerLevelProxy.INSTANCE.players(level)) {
+            if (viewerEntity == breakerEntity) {
+                continue;
+            }
+            double dx = pos.x() - EntityProxy.INSTANCE.getX(viewerEntity);
+            double dy = pos.y() - EntityProxy.INSTANCE.getY(viewerEntity);
+            double dz = pos.z() - EntityProxy.INSTANCE.getZ(viewerEntity);
+            if (dx * dx + dy * dy + dz * dz >= 64 * 64) {
+                continue;
+            }
+            UUID viewerId = EntityProxy.INSTANCE.getUUID(viewerEntity);
+            BukkitServerPlayer viewer = network.getOnlineUser(viewerId);
+            if (viewer == null || viewer.isFakePlayer() || !viewer.platformPlayer().canSee(breaker.platformPlayer())) {
+                continue;
+            }
+            // The native break event follows this particle packet and still carries the break sound.
+            LevelEventListener.markPlayerBreakEffect(world.uuid(), pos, stateId, viewerId);
+            viewer.sendPacket(packet, false);
         }
     }
 
@@ -306,6 +347,27 @@ public final class BlockEventListener implements Listener {
                         RandomUtils.generateRandomLong()
                 );
                 serverPlayer.sendPacket(packet, false);
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
+    public void onStepParticles(GenericGameEvent event) {
+        if (event.getEvent() != GameEvent.STEP || !(event.getEntity() instanceof Player player)) {
+            return;
+        }
+        Object entity = CraftEntityProxy.INSTANCE.getEntity(player);
+        if (!EntityProxy.INSTANCE.canSpawnSprintParticle(entity)) {
+            return;
+        }
+        Object level = EntityProxy.INSTANCE.getLevel(entity);
+        Object pos = EntityProxy.INSTANCE.getOnPos(entity);
+        Object blockState = BlockGetterProxy.INSTANCE.getBlockState(level, pos);
+        ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(blockState);
+        if (state != null) {
+            ParticleConfig particle = state.settings().particles().stepParticle();
+            if (particle != null) {
+                ParticleUtils.sendStepParticles(level, entity, pos, particle);
             }
         }
     }

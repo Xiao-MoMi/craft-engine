@@ -20,6 +20,14 @@ items:
             support_shape: cobweb
             destroy_stages:
               template: internal:destroy_stages
+            particle:
+              break:
+                particle: minecraft:item
+                item: default:table_lamp
+                speed: 0.085
+              step:
+                particle: minecraft:item
+                item: default:table_lamp
         behaviors:
           - type: toggleable_lamp_block
             can_toggle_with_hand: true
@@ -88,18 +96,50 @@ items:
               appearance: east_on
               settings:
                 luminance: 15
+                particle:
+                  break:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
+                    speed: 0.085
+                  step:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
             facing=north,lit=true:
               appearance: north_on
               settings:
                 luminance: 15
+                particle:
+                  break:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
+                    speed: 0.085
+                  step:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
             facing=south,lit=true:
               appearance: south_on
               settings:
                 luminance: 15
+                particle:
+                  break:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
+                    speed: 0.085
+                  step:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
             facing=west,lit=true:
               appearance: west_on
               settings:
                 luminance: 15
+                particle:
+                  break:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
+                    speed: 0.085
+                  step:
+                    particle: minecraft:item
+                    item: default:table_lamp_on
   default:table_lamp_on:
     data:
       item_name: <!i><lang:item.default.table_lamp>

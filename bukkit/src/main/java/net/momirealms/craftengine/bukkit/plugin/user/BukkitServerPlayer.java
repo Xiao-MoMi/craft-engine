@@ -80,6 +80,7 @@ import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleOptionsProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPopPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
@@ -122,8 +123,6 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.craftengine.proxy.paper.chunk.system.entity.RegionizedPlayerChunkLoaderProxy;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Registry;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -1025,7 +1024,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
         if (custom) {
             // 如果是自定义方块且秒破
-            if (canInstantBreak) {
+            if (canInstantBreak && customState.settings().particles().breakParticle() == null) {
                 BlockStateWrapper vanillaBlockState = customState.visualBlockState();
                 // 通常不会null
                 if (vanillaBlockState != null) {
@@ -1035,8 +1034,7 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
                     boolean attributeCannotBreak = VersionHelper.isOrAbove1_20_5 && !this.clientSideCanBreak;
                     // 2. 客户端侧的方块就是不能秒破
                     if (attributeCannotBreak || getDestroyProgress(vanillaBlockState.minecraftState(), pos) < 1f) {
-                        Object levelEventPacket = ClientboundLevelEventPacketProxy.INSTANCE.newInstance(
-                                WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(pos), BlockStateUtils.blockStateToId(state), false);
+                        Object levelEventPacket = ClientboundLevelEventPacketProxy.INSTANCE.newInstance(WorldEvents.BLOCK_BREAK_EFFECT, LocationUtils.toBlockPos(pos), BlockStateUtils.blockStateToId(state), false);
                         sendPacket(levelEventPacket, false);
                     }
                 }
@@ -1235,8 +1233,10 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             return;
         }
 
-        int stateId = BlockStateUtils.blockStateToId(destroyedState);
-        this.sendPacket(ClientboundLevelEventPacketProxy.INSTANCE.newInstance(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, stateId, false), false);
+        if (customState == null || customState.settings().particles().breakParticle() == null) {
+            int stateId = BlockStateUtils.blockStateToId(destroyedState);
+            this.sendPacket(ClientboundLevelEventPacketProxy.INSTANCE.newInstance(WorldEvents.BLOCK_BREAK_EFFECT, blockPos, stateId, false), false);
+        }
         this.clearActiveDestroyProgress(true);
         this.destroyPos = null;
         this.miningProgress = 0;
@@ -2059,13 +2059,18 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
 
     @Override
     public void playParticle(Key particleId, double x, double y, double z) {
-        Particle particle = Registry.PARTICLE_TYPE.get(KeyUtils.toNamespacedKey(particleId));
-        if (particle != null) {
-            if (VersionHelper.hasPaperPatch) {
-                platformPlayer().getWorld().spawnParticle(particle, List.of(platformPlayer()), null, x, y, z, 1, 0, 0, 0, 0, null, false);
-            } else {
-                platformPlayer().spawnParticle(particle, x, y, z, 1, 0, 0, 0, 0);
-            }
+        Object particle = ParticleUtils.getParticleType(particleId);
+        if (!ParticleOptionsProxy.CLASS.isInstance(particle)) {
+            return;
+        }
+        boolean overrideLimiter = !VersionHelper.hasPaperPatch && !VersionHelper.isOrAbove1_20_5;
+        Object packet = ParticleUtils.createParticlePacket(particle, overrideLimiter, x, y, z, 1, 0, 0, 0, 0);
+        if (VersionHelper.hasPaperPatch) {
+            Object player = this.minecraftPlayer();
+            Object level = EntityProxy.INSTANCE.getLevel(player);
+            ServerLevelProxy.INSTANCE.sendParticlesToPlayer(level, player, false, x, y, z, packet);
+        } else {
+            this.sendPacket(packet, false);
         }
     }
 

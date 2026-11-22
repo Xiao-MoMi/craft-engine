@@ -27,10 +27,10 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BonemealableBlockProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
@@ -85,11 +85,10 @@ public final class GrassBlockBehavior extends BukkitBlockBehavior implements Bon
             sendParticles = true;
         }
         if (sendParticles) {
-            World world = LevelProxy.INSTANCE.getWorld(level);
             int x = Vec3iProxy.INSTANCE.getX(blockPos);
             int y = Vec3iProxy.INSTANCE.getY(blockPos);
             int z = Vec3iProxy.INSTANCE.getZ(blockPos);
-            world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 1.5, z + 0.5, 20, 2, 0, 2);
+            ParticleUtils.broadcastParticles(level, ParticleTypesProxy.HAPPY_VILLAGER, x + 0.5, y + 1.5, z + 0.5, 20, 2, 0, 2, 1);
         }
         return true;
     }

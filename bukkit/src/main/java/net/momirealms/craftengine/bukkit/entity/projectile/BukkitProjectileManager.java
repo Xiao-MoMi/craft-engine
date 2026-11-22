@@ -24,6 +24,7 @@ import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ChunkMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
@@ -292,7 +293,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
             } else if (!this.checkInGround) {
                 updateProjectileUpdateInterval(1);
                 if (EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) {
-                    this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
+                    this.spawnBubbleParticles(nmsEntity);
                 }
             } else {
                 boolean inGround;
@@ -302,7 +303,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     inGround = AbstractArrowProxy.INSTANCE.isInGround$1(nmsEntity);
                 }
                 if (canSpawnParticle(nmsEntity, inGround)) {
-                    this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
+                    this.spawnBubbleParticles(nmsEntity);
                 }
                 if (inGround) {
                     updateProjectileUpdateInterval(Integer.MAX_VALUE);
@@ -310,6 +311,10 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     updateProjectileUpdateInterval(1);
                 }
             }
+        }
+
+        private void spawnBubbleParticles(Object entity) {
+            ParticleUtils.broadcastParticles(EntityProxy.INSTANCE.getLevel(entity), ParticleTypesProxy.BUBBLE, EntityProxy.INSTANCE.getX(entity), EntityProxy.INSTANCE.getY(entity), EntityProxy.INSTANCE.getZ(entity), 3, 0.1, 0.1, 0.1, 0);
         }
 
         private void updateProjectileUpdateInterval(int updateInterval) {
