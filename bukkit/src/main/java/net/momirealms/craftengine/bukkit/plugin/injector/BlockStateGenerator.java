@@ -97,7 +97,7 @@ public final class BlockStateGenerator {
                 .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$is))
                 .intercept(MethodDelegation.to(IsBlockInterceptor.INSTANCE));
         Class<?> stateClass = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
-        RuntimePatcher.installBlockIdentityHook(stateClass, BlockReflections.method$BlockStateBase$is.getName());
+//        RuntimePatcher.installBlockIdentityHook(stateClass, BlockReflections.method$BlockStateBase$is.getName());
         SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(stateClass);
 
         constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(

@@ -6,6 +6,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.utility.JavaModule;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Method;
@@ -26,7 +27,7 @@ public final class BlockIdentityAgent {
                 .with(AgentBuilder.RedefinitionStrategy.Listener.ErrorEscalating.FAIL_FAST)
                 .with(new AgentBuilder.Listener.Adapter() {
                     @Override
-                    public void onTransformation(TypeDescription type, ClassLoader loader, JavaModule module, boolean loaded, DynamicType dynamicType) {
+                    public void onTransformation(@NotNull TypeDescription type, ClassLoader loader, JavaModule module, boolean loaded, @NotNull DynamicType dynamicType) {
                         transformed.set(true);
                     }
                 })

@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
-import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.core.entity.CollisionEntity;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
 import net.momirealms.craftengine.core.entity.furniture.ColliderProperties;
