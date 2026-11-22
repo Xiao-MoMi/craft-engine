@@ -21,6 +21,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.loot.DatapackLootTable;
+import net.momirealms.craftengine.bukkit.plugin.agent.RuntimePatcher;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
@@ -95,7 +96,9 @@ public final class BlockStateGenerator {
                 .intercept(MethodDelegation.to(SetPropertyValueInterceptor.INSTANCE))
                 .method(ElementMatchers.is(BlockReflections.method$BlockStateBase$is))
                 .intercept(MethodDelegation.to(IsBlockInterceptor.INSTANCE));
-        SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded());
+        Class<?> stateClass = stateBuilder.make().load(BlockStateGenerator.class.getClassLoader()).getLoaded();
+        RuntimePatcher.installBlockIdentityHook(stateClass, BlockReflections.method$BlockStateBase$is.getName());
+        SparrowClass<?> clazz$CraftEngineBlock = SparrowClass.of(stateClass);
 
         constructor$CraftEngineBlockState = clazz$CraftEngineBlock.getSparrowConstructor(ConstructorMatcher.takeArguments(
                 BlockProxy.CLASS,
@@ -357,7 +360,9 @@ public final class BlockStateGenerator {
         public boolean intercept(@This Object thisObj, @Argument(value = 0) Object block) {
             DelegatingBlockState customState = (DelegatingBlockState) thisObj;
             Object thisBlock = customState.blockOwner();
-            if (thisBlock == null) return false;
+            if (thisBlock == null || block == null) {
+                return false;
+            }
             if (BlockProxy.INSTANCE.getDefaultBlockState(block) instanceof DelegatingBlockState holder) {
                 Object holderBlock = holder.blockOwner();
                 if (holderBlock == null) return false;

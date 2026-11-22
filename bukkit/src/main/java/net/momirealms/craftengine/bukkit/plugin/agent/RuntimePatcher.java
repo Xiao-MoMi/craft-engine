@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bukkit.api.CraftEngineFurniture;
 import net.momirealms.craftengine.bukkit.entity.furniture.BukkitFurnitureManager;
 import net.momirealms.craftengine.bukkit.entity.projectile.BukkitProjectileManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
+import net.momirealms.craftengine.bukkit.plugin.injector.BlockStateGenerator;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.ItemStackUtils;
 import net.momirealms.craftengine.bukkit.world.BukkitChunkLifecycle;
@@ -21,6 +22,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemStackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.ItemCostProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.trading.MerchantOfferProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlockProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
 import net.momirealms.sparrow.reflection.SReflection;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import org.bukkit.Bukkit;
@@ -28,6 +31,7 @@ import org.bukkit.entity.*;
 
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Map;
@@ -119,6 +123,27 @@ public final class RuntimePatcher {
             instrumentation = ReflectionUtils.JNI_IS_AVAILABLE ? ImplLookupGetter.INSTRUMENTATION : ByteBuddyAgent.install();
         }
         return instrumentation;
+    }
+
+    public static void installBlockIdentityHook(Class<?> customStateClass, String methodName) {
+        Method method;
+        try {
+            // Moonrise adds a typed is(Block) overload even when vanilla only declares is(Object).
+            method = BlockStateProxy.CLASS.getMethod(methodName, BlockProxy.CLASS);
+        } catch (NoSuchMethodException ignored) {
+            return;
+        }
+        if (!Modifier.isFinal(method.getModifiers()) || method.getReturnType() != boolean.class) {
+            return;
+        }
+        try {
+            Class<?> bridge = injectBridge();
+            bridge.getField("CUSTOM_BLOCK_STATE").set(null, customStateClass);
+            bridge.getField("CUSTOM_BLOCK_MATCH").set(null, (BiPredicate<Object, Object>) BlockStateGenerator.IsBlockInterceptor.INSTANCE::intercept);
+            BlockIdentityAgent.install(instrumentation(), method);
+        } catch (Throwable t) {
+            BukkitCraftEngine.instance().logger().warn("Failed to patch block identity checks; scheduled ticks may be lost across custom block state changes", t);
+        }
     }
 
     public static void installEquipmentChangeHook(BukkitCraftEngine plugin) {
