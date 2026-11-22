@@ -25,13 +25,13 @@ public record BedrockEntitySettings(Map<String, BedrockModelIntegration> integra
         ConfigSection modes = entity.getSection("integrations");
         if (modes != null) {
             for (String plugin : List.of("bettermodel", "modelengine")) {
-                integrations.put(plugin, modes.getEnum(plugin, BedrockModelIntegration.class, BedrockModelIntegration.DISABLED));
+                integrations.put(plugin, modes.getEnum(plugin, BedrockModelIntegration.class, BedrockModelIntegration.DISABLED, BedrockModelIntegration::byId));
             }
         }
         Map<Key, Model> overrides = new HashMap<>();
         for (ConfigSection entry : entity.getSectionList("overrides", section -> section)) {
             List<Key> models = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_IDENTIFIER, value -> value.getAsNonEmptyList(ConfigValue::getAsIdentifier));
-            BedrockModelIntegration mode = entry.getEnum("mode", BedrockModelIntegration.class);
+            BedrockModelIntegration mode = entry.getEnum("mode", BedrockModelIntegration.class, null, BedrockModelIntegration::byId);
             BedrockEntityDye dye = BedrockEntityDye.read(entry, List.of());
             for (Key id : models) {
                 BedrockModelIntegration resolvedMode = mode == null ? integrations.getOrDefault(id.namespace(), BedrockModelIntegration.DISABLED) : mode;

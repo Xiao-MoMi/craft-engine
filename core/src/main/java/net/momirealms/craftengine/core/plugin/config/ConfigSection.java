@@ -485,6 +485,10 @@ public final class ConfigSection {
         return getValue(key, v -> v.getAsEnum(enumClass), def);
     }
 
+    public <T extends Enum<T>> T getEnum(String key, Class<T> enumClass, T def, Function<String, T> custom) {
+        return getValue(key, v -> v.getAsEnum(enumClass, custom), def);
+    }
+
     public <T extends Enum<T>> T getEnum(String[] keys, Class<T> enumClass, T def) {
         return getValue(keys, v -> v.getAsEnum(enumClass), def);
     }
