@@ -10,4 +10,7 @@ public interface NonNullListProxy {
 
     @MethodInvoker(name = "createWithCapacity", isStatic = true)
     Object createWithCapacity(int capacity);
+
+    @MethodInvoker(name = "withSize", isStatic = true)
+    Object withSize(int size, Object value);
 }

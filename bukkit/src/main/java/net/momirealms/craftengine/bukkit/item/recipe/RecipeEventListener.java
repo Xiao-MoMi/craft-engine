@@ -5,7 +5,6 @@ import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.item.DataComponentTypes;
-import net.momirealms.craftengine.bukkit.nms.Clearable;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
@@ -368,8 +367,8 @@ public final class RecipeEventListener implements Listener {
             Object blockEntity = BlockGetterProxy.INSTANCE.getBlockEntity(chunkAccess, LocationUtils.toBlockPos(furnace.getX(), furnace.getY(), furnace.getZ()));
             if (AbstractFurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
                 Object quickCheck = AbstractFurnaceBlockEntityProxy.INSTANCE.getQuickCheck(blockEntity);
-                if (quickCheck instanceof Clearable clearable) {
-                    clearable.clear();
+                if (quickCheck instanceof FurnaceRecipeCheck.Cache cache) {
+                    cache.clear();
                 } else {
                     BukkitRecipeManager.injectFurnaceBlockEntity(blockEntity);
                 }
