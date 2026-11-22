@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.BiomeFilterGenerator;
 import net.momirealms.craftengine.bukkit.plugin.injector.LevelCallbackGenerator;
@@ -19,6 +18,7 @@ import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.world.chunk.BukkitCEChunk;
 import net.momirealms.craftengine.bukkit.world.chunk.BukkitChunkAccess;
 import net.momirealms.craftengine.bukkit.world.gen.ConditionalFeature;
+import net.momirealms.craftengine.bukkit.world.gen.ChunkGeneratorAdapter;
 import net.momirealms.craftengine.bukkit.world.gen.CraftEngineFeatures;
 import net.momirealms.craftengine.bukkit.world.gen.InjectedChunkGenerator;
 import net.momirealms.craftengine.core.block.BlockDefinition;
@@ -115,7 +115,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
     private final Map<Key, Object> placedFeatures = new ConcurrentHashMap<>();
     private List<ConditionalFeature> customPlacedFeatures = List.of();
     private List<Suggestion> cachedConfiguredFeaturesSuggestion = List.of();
-    public long lastReloadFeatureTime;
+    public volatile long lastReloadFeatureTime;
     private volatile boolean disabled;
 
     public BukkitWorldManager(BukkitCraftEngine plugin) {
@@ -242,7 +242,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
 
     /*
 
-    Features, for FastNMS
+    Features
 
      */
 
@@ -474,7 +474,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             Object worldGenContext = ChunkMapProxy.INSTANCE.getWorldGenContext(chunkMap);
             Object previousGenerator = WorldGenContextProxy.INSTANCE.getGenerator(worldGenContext);
             if (!(previousGenerator instanceof InjectedChunkGenerator)) {
-                InjectedChunkGenerator customGenerator = FastNMS.INSTANCE.createInjectedChunkGenerator(world, previousGenerator);
+                InjectedChunkGenerator customGenerator = ChunkGeneratorAdapter.create(world, previousGenerator);
                 worldGenContext = WorldGenContextProxy.INSTANCE.newInstance(
                         WorldGenContextProxy.INSTANCE.getLevel(worldGenContext),
                         customGenerator,
@@ -489,7 +489,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
             Object worldGenContext = ChunkMapProxy.INSTANCE.getWorldGenContext(chunkMap);
             Object previousGenerator = WorldGenContextProxy.INSTANCE.getGenerator(worldGenContext);
             if (!(previousGenerator instanceof InjectedChunkGenerator)) {
-                InjectedChunkGenerator customGenerator = FastNMS.INSTANCE.createInjectedChunkGenerator(world, previousGenerator);
+                InjectedChunkGenerator customGenerator = ChunkGeneratorAdapter.create(world, previousGenerator);
                 worldGenContext = WorldGenContextProxy.INSTANCE.newInstance(
                         WorldGenContextProxy.INSTANCE.getLevel(worldGenContext),
                         customGenerator,
@@ -502,7 +502,7 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         } else {
             Object generator = ChunkMapProxy.INSTANCE.getGenerator(chunkMap);
             if (!(generator instanceof InjectedChunkGenerator)) {
-                InjectedChunkGenerator customGenerator = FastNMS.INSTANCE.createInjectedChunkGenerator(world, generator);
+                InjectedChunkGenerator customGenerator = ChunkGeneratorAdapter.create(world, generator);
                 ChunkMapProxy.INSTANCE.setGenerator(chunkMap, customGenerator);
             }
         }
@@ -574,7 +574,6 @@ public final class BukkitWorldManager implements WorldManager, Listener {
         }
     }
 
-    // for FastNMS chunk generator
     public Runnable handleChunkGenerate(BukkitWorld world, ChunkPos chunkPos, Object chunkAccess, ChunkGenerationStage stage) {
         if (!stage.enabled()) return null;
         if (this.disabled) return null;

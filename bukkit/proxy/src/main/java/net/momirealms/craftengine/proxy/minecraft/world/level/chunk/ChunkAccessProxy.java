@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.world.level.chunk;
 
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
@@ -12,6 +13,7 @@ import java.util.Map;
 @ReflectionProxy(name = "net.minecraft.world.level.chunk.ChunkAccess")
 public interface ChunkAccessProxy {
     ChunkAccessProxy INSTANCE = ASMProxyFactory.create(ChunkAccessProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.chunk.ChunkAccess");
 
     @FieldGetter(name = "blockEntities", activeIf = "max_version=1.21.10 || !has_patch=canvas")
     Map<Object, Object> getBlockEntities(Object target);

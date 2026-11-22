@@ -21,4 +21,13 @@ public interface LevelHeightAccessorProxy {
 
     @MethodInvoker(name = {"getMaxY", "getMaxBuildHeight"})
     int getMaxY(Object target);
+
+    @MethodInvoker(name = "getHeight")
+    int getHeight(Object target);
+
+    @MethodInvoker(name = "getMinSection", activeIf = "max_version=1.21.1")
+    int getMinSection(Object target);
+
+    @MethodInvoker(name = "getMinSectionY", activeIf = "min_version=1.21.2")
+    int getMinSectionY(Object target);
 }

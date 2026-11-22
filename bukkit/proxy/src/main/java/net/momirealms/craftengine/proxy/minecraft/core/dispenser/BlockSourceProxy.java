@@ -5,10 +5,10 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
-@ReflectionProxy(name = "net.minecraft.core.dispenser.BlockSource")
+@ReflectionProxy(name = {"net.minecraft.core.dispenser.BlockSource", "net.minecraft.core.BlockSource"})
 public interface BlockSourceProxy {
     BlockSourceProxy INSTANCE = ASMProxyFactory.create(BlockSourceProxy.class);
-    Class<?> CLASS = SparrowClass.find("net.minecraft.core.dispenser.BlockSource");
+    Class<?> CLASS = SparrowClass.find("net.minecraft.core.dispenser.BlockSource", "net.minecraft.core.BlockSource");
 
     @MethodInvoker(name = "level", activeIf = "min_version=1.20.5")
     Object level(Object target);

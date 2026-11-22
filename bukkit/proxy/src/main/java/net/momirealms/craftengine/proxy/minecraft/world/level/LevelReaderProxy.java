@@ -21,6 +21,12 @@ public interface LevelReaderProxy extends BlockAndLightGetterProxy, CollisionGet
     @MethodInvoker(name = "getBiome")
     Object getBiome(Object target, @Type(clazz = BlockPosProxy.class) Object pos);
 
+    @MethodInvoker(name = "isEmptyBlock")
+    boolean isEmptyBlock(Object target, @Type(clazz = BlockPosProxy.class) Object pos);
+
+    @MethodInvoker(name = "getChunk")
+    Object getChunk(Object target, int x, int z);
+
     @MethodInvoker(name = "getMaxLocalRawBrightness")
     int getMaxLocalRawBrightness(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
 }
