@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bukkit.plugin.injector;
 
 import net.bytebuddy.implementation.bind.annotation.This;
 import net.momirealms.craftengine.bukkit.block.entity.renderer.display.BukkitDestroyStageDisplayRecorder;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.util.LightUtils;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.DelegatingBlockState;
@@ -23,7 +22,6 @@ import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.core.world.chunk.CESection;
 import net.momirealms.craftengine.core.world.chunk.InjectedStorage;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkSectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.PalettedContainerProxy;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -44,15 +42,14 @@ public final class WorldStorageInjector {
             if (container instanceof InjectedStorage.Palette holder) {
                 storage = holder;
             } else {
-                storage = FastNMS.INSTANCE.createInjectedPalettedContainer(container);
-                PalettedContainerProxy.INSTANCE.setData(storage, PalettedContainerProxy.INSTANCE.getData(container));
+                storage = ChunkStorageAdapters.createPalette(container);
                 LevelChunkSectionProxy.INSTANCE.setStates(nmsSection, storage);
             }
         } else {
             if (nmsSection instanceof InjectedStorage.Section holder) {
                 storage = holder;
             } else {
-                storage = FastNMS.INSTANCE.createInjectedLevelChunkSection(nmsSection);
+                storage = ChunkStorageAdapters.createSection(nmsSection);
                 callback.accept(storage);
             }
         }

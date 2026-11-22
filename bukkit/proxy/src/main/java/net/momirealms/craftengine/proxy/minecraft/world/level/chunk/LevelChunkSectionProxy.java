@@ -52,20 +52,23 @@ public interface LevelChunkSectionProxy {
     @FieldSetter(name = "tickingFluidCount")
     void setTickingFluidCount(Object target, short tickingFluidCount);
 
-    @FieldGetter(name = "specialCollidingBlocks", activeIf = "min_version=1.21.2 && has_patch=paper")
+    @FieldGetter(name = "specialCollidingBlocks", activeIf = "min_version=1.21.2", optional = true)
     default short getSpecialCollidingBlocks(Object target) {
         return 0;
     }
 
-    @FieldSetter(name = "specialCollidingBlocks", activeIf = "min_version=1.21.2 && has_patch=paper")
+    @FieldSetter(name = "specialCollidingBlocks", activeIf = "min_version=1.21.2", optional = true)
     default void setSpecialCollidingBlocks(Object target, short specialCollidingBlocks) {
     }
 
-    @FieldGetter(name = "specialCollidingBlocks", activeIf = "max_version=1.21.1")
-    int getSpecialCollidingBlocks$legacy(Object target);
+    @FieldGetter(name = "specialCollidingBlocks", activeIf = "max_version=1.21.1", optional = true)
+    default int getSpecialCollidingBlocks$legacy(Object target) {
+        return 0;
+    }
 
-    @FieldSetter(name = "specialCollidingBlocks", activeIf = "max_version=1.21.1")
-    void setSpecialCollidingBlocks$legacy(Object target, int specialCollidingBlocks);
+    @FieldSetter(name = "specialCollidingBlocks", activeIf = "max_version=1.21.1", optional = true)
+    default void setSpecialCollidingBlocks$legacy(Object target, int specialCollidingBlocks) {
+    }
 
     @FieldGetter(name = {"tickingBlocks", "tickingList"}, optional = true)
     default Object getTickingBlocks(Object target) {
@@ -76,11 +79,14 @@ public interface LevelChunkSectionProxy {
     default void setTickingBlocks(Object target, Object tickingBlocks) {
     }
 
-    @FieldGetter(name = "knownBlockCollisionData", activeIf = "max_version=1.20.1")
-    long[] getKnownBlockCollisionData(Object target);
+    @FieldGetter(name = "knownBlockCollisionData", activeIf = "max_version=1.20.1", optional = true)
+    default long[] getKnownBlockCollisionData(Object target) {
+        return null;
+    }
 
-    @FieldSetter(name = "knownBlockCollisionData", activeIf = "max_version=1.20.1")
-    void setKnownBlockCollisionData(Object target, long[] knownBlockCollisionData);
+    @FieldSetter(name = "knownBlockCollisionData", activeIf = "max_version=1.20.1", optional = true)
+    default void setKnownBlockCollisionData(Object target, long[] knownBlockCollisionData) {
+    }
 
     @FieldGetter(name = "fluidCount", optional = true)
     default short getFluidCount(Object target) {
@@ -109,16 +115,21 @@ public interface LevelChunkSectionProxy {
     default void setWaterFluids(Object target, short waterFluids) {
     }
 
-    @FieldGetter(name = "isRandomlyTickingBlocksStatus", activeIf = "has_patch=universespigot", optional = true)
+    @FieldGetter(name = "isRandomlyTickingBlocksStatus", optional = true)
     default boolean isRandomlyTickingBlocksStatus(Object target) {
         return false;
     }
 
-    @FieldSetter(name = "isRandomlyTickingBlocksStatus", activeIf = "has_patch=universespigot", optional = true)
+    @FieldSetter(name = "isRandomlyTickingBlocksStatus", optional = true)
     default void setIsRandomlyTickingBlocksStatus(Object target, boolean status) {
     }
 
-    @FieldSetter(name = "hasOnlyAir", activeIf = "has_patch=universespigot", optional = true)
+    @FieldGetter(name = "hasOnlyAir", optional = true)
+    default boolean getHasOnlyAir(Object target) {
+        return false;
+    }
+
+    @FieldSetter(name = "hasOnlyAir", optional = true)
     default void setHasOnlyAir(Object target, boolean hasOnlyAir) {
     }
 }
