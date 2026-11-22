@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.world.entity;
 
 import net.momirealms.craftengine.proxy.minecraft.world.damagesource.DamageSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
@@ -182,6 +183,27 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getBoundingBox")
     Object getBoundingBox(Object target);
+
+    @MethodInvoker(name = "setBoundingBox")
+    void setBoundingBox(Object target, @Type(clazz = AABBProxy.class) Object box);
+
+    @MethodInvoker(name = "setInvisible")
+    void setInvisible(Object target, boolean invisible);
+
+    @MethodInvoker(name = "setSilent")
+    void setSilent(Object target, boolean silent);
+
+    @MethodInvoker(name = "setInvulnerable", activeIf = "max_version=26.2")
+    void setInvulnerable(Object target, boolean invulnerable);
+
+    @MethodInvoker(name = "setPermanentlyInvulnerable", activeIf = "min_version=26.3")
+    void setPermanentlyInvulnerable(Object target, boolean invulnerable);
+
+    @FieldSetter(name = "noPhysics")
+    void setNoPhysics(Object target, boolean noPhysics);
+
+    @MethodInvoker(name = "getEncodeId")
+    String getEncodeId(Object target);
 
     @MethodInvoker(name = "level")
     Object getLevel(Object target);

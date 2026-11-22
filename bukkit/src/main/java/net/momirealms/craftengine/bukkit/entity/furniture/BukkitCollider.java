@@ -1,6 +1,6 @@
 package net.momirealms.craftengine.bukkit.entity.furniture;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.injector.CollisionEntityGenerator;
 import net.momirealms.craftengine.core.entity.CollisionEntity;
 import net.momirealms.craftengine.core.entity.furniture.Collider;
 import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
@@ -17,8 +17,8 @@ public final class BukkitCollider implements Collider {
         Object aabb = AABBProxy.INSTANCE.newInstance(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ);
         ColliderProperties flags = config.properties;
         this.collisionEntity = BukkitFurnitureManager.COLLISION_ENTITY_TYPE == ColliderType.INTERACTION ?
-                FastNMS.INSTANCE.createCollisionInteraction(level, aabb, x, y, z, flags.canBeHitByProjectile, flags.canCollide, flags.blocksBuilding) :
-                FastNMS.INSTANCE.createCollisionBoat(level, aabb, x, y, z, flags.canBeHitByProjectile, flags.canCollide, flags.blocksBuilding);
+                CollisionEntityGenerator.createInteraction(level, aabb, x, y, z, flags.canBeHitByProjectile, flags.canCollide, flags.blocksBuilding) :
+                CollisionEntityGenerator.createBoat(level, aabb, x, y, z, flags.canBeHitByProjectile, flags.canCollide, flags.blocksBuilding);
     }
 
     @Override
