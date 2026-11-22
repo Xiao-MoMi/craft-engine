@@ -11,6 +11,8 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResolver;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
+import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CustomModelDataRangeDispatchProperty;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
@@ -45,7 +47,7 @@ final class VanillaItemOverrides {
                     continue;
                 }
                 Key mappedModel = mappedModels.get(vanillaModel);
-                SelectedDefinition definition = mappedModel == null ? changedDefinition(vanillaModel, vanillaModel, resources) : null;
+                ItemModelDefinitionBinding definition = mappedModel == null ? changedDefinition(vanillaModel, vanillaModel, resources) : null;
                 if (definition == null && mappedModel == null) {
                     continue;
                 }
@@ -66,8 +68,7 @@ final class VanillaItemOverrides {
                     continue;
                 }
 
-                ItemModelDefinitionBinding model = ItemModelBindingCompiler.compile(clientModel, definition.model(), definition.useRootFallback());
-                ResolvedItemBinding binding = resolver.resolve(item, clientItem, clientModel, model);
+                ResolvedItemBinding binding = resolver.resolve(item, clientItem, clientModel, definition);
                 if (!index.add(binding)) {
                     TranslationManager.warn("resource_pack.bedrock.item.vanilla_occupied", itemId.asString(), clientModel.asString());
                     continue;
@@ -80,7 +81,7 @@ final class VanillaItemOverrides {
         return overrides;
     }
 
-    private static @Nullable SelectedDefinition changedDefinition(Key vanillaModel, Key clientModel, JavaModelResources resources) throws IOException {
+    private static @Nullable ItemModelDefinitionBinding changedDefinition(Key vanillaModel, Key clientModel, JavaModelResources resources) throws IOException {
         JavaResourcePack pack = resources.pack();
         String path = ResourcePackUtils.itemDefinitionPath(vanillaModel);
         JsonObject vanilla = pack.readVanillaJson(path);
@@ -101,24 +102,24 @@ final class VanillaItemOverrides {
         if (definition == null) {
             return null;
         }
-        VanillaItemModelDefaults.Selection selection = VanillaItemModelDefaults.selectRootFallback(definition);
-        JsonObject selected = selection == null ? definition : selection.definition();
-        boolean useRootFallback = selection != null && selection.useRootFallback();
         ModernItemModel parsed = null;
-        if (custom) {
-            VanillaItemModelDefaults.Selection vanillaSelection = vanilla == null ? null : VanillaItemModelDefaults.selectRootFallback(vanilla);
-            JsonObject original = vanillaSelection == null ? vanilla : vanillaSelection.definition();
-            if (original == null || !Objects.equals(selected.get("model"), original.get("model"))) {
-                parsed = ItemModelBindingCompiler.readDefinition(clientModel, selected);
-                // 原版文件和 Java 打包器可能采用不同的命名空间写法，按解析后的模型判断是否有变化
-                if (original == null || !parsed.model().equals(ItemModelBindingCompiler.readDefinition(vanillaModel, original).model())) {
-                    return new SelectedDefinition(parsed, useRootFallback);
+        if (custom && (vanilla == null || !Objects.equals(definition.get("model"), vanilla.get("model")))) {
+            parsed = ItemModelBindingCompiler.readDefinition(clientModel, definition);
+            ModernItemModel original = vanilla == null ? null : ItemModelBindingCompiler.readDefinition(vanillaModel, vanilla);
+            if (original == null || !parsed.model().equals(original.model())) {
+                // 默认分支与原版外观相同时，只注册带阈值的变体，让普通物品沿用基岩原生渲染。
+                if (original != null && parsed.model() instanceof RangeDispatchItemModel range
+                        && range.property() instanceof CustomModelDataRangeDispatchProperty
+                        && range.transformation() == null && original.model().equals(range.fallBack())
+                        && !hasChangedReference(definition.getAsJsonObject("model").get("fallback"), resources.models())) {
+                    return range.entries().isEmpty() ? null : ItemModelBindingCompiler.compile(clientModel, parsed, true);
                 }
+                return ItemModelBindingCompiler.compile(clientModel, parsed, false);
             }
         }
-        if (hasChangedReference(selected.get("model"), resources.models())) {
-            ModernItemModel model = parsed == null ? ItemModelBindingCompiler.readDefinition(clientModel, selected) : parsed;
-            return new SelectedDefinition(model, useRootFallback);
+        if (hasChangedReference(definition.get("model"), resources.models())) {
+            ModernItemModel model = parsed == null ? ItemModelBindingCompiler.readDefinition(clientModel, definition) : parsed;
+            return ItemModelBindingCompiler.compile(clientModel, model, false);
         }
         return null;
     }
@@ -144,8 +145,5 @@ final class VanillaItemOverrides {
             }
         }
         return false;
-    }
-
-    private record SelectedDefinition(ModernItemModel model, boolean useRootFallback) {
     }
 }

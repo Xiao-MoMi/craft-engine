@@ -58,15 +58,10 @@ public final class ItemModelBindingCompiler {
         }
     }
 
-    static ItemModelDefinitionBinding compile(Key definitionId, ModernItemModel definition, boolean useRootFallback) {
+    static ItemModelDefinitionBinding compile(Key definitionId, ModernItemModel definition, boolean nativeRangeFallback) {
         Builder builder = new Builder();
-        if (useRootFallback) {
-            RangeDispatchItemModel range = (RangeDispatchItemModel) definition.model();
-            Transformation transformation = range.transformation();
-            if (transformation != null) {
-                builder.transformations.add(transformation);
-            }
-            builder.visitOrMissing(range.fallBack(), "$.model.fallback");
+        if (nativeRangeFallback) {
+            builder.range((RangeDispatchItemModel) definition.model(), "$.model", false);
         } else {
             builder.visit(definition.model(), "$.model");
         }
@@ -114,7 +109,7 @@ public final class ItemModelBindingCompiler {
                     this.branch(new ItemBindingCondition.BooleanMatch(condition.property(), false), condition.onFalse(), path + ".on_false");
                 }
                 case SelectItemModel select -> this.select(select, path);
-                case RangeDispatchItemModel range -> this.range(range, path);
+                case RangeDispatchItemModel range -> this.range(range, path, true);
                 case CompositeItemModel composite -> this.composite(composite, path);
                 default -> throw new IllegalArgumentException("Unsupported item model at " + path + ": " + model.getClass().getName());
             }
@@ -153,23 +148,25 @@ public final class ItemModelBindingCompiler {
             );
         }
 
-        private void range(RangeDispatchItemModel range, String path) {
+        private void range(RangeDispatchItemModel range, String path, boolean includeFallback) {
             List<IndexedEntry> entries = new ObjectArrayList<>(range.entries().size());
             for (int i = 0; i < range.entries().size(); i++) {
                 entries.add(new IndexedEntry(i, range.entries().get(i)));
             }
             entries.sort(Comparator.comparingDouble(entry -> entry.entry().threshold()));
             // fallback 覆盖第一个阈值之前，每个条目覆盖从自身阈值到下一阈值的左闭右开区间
-            Float firstThreshold = entries.isEmpty() ? null : entries.getFirst().entry().threshold();
-            this.branch(new ItemBindingCondition.NumericRange(
-                            range.property(),
-                            range.scale(),
-                            null,
-                            firstThreshold
-                    ),
-                    range.fallBack(),
-                    path + ".fallback"
-            );
+            if (includeFallback) {
+                Float firstThreshold = entries.isEmpty() ? null : entries.getFirst().entry().threshold();
+                this.branch(new ItemBindingCondition.NumericRange(
+                                range.property(),
+                                range.scale(),
+                                null,
+                                firstThreshold
+                        ),
+                        range.fallBack(),
+                        path + ".fallback"
+                );
+            }
             for (int i = 0; i < entries.size(); i++) {
                 IndexedEntry indexed = entries.get(i);
                 float threshold = indexed.entry().threshold();
