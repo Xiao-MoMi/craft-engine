@@ -3,7 +3,7 @@ package net.momirealms.craftengine.bukkit.plugin;
 import com.google.gson.JsonElement;
 import io.netty.buffer.ByteBuf;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
+import net.momirealms.craftengine.bukkit.plugin.injector.ContainerGenerator;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.util.*;
 import net.momirealms.craftengine.bukkit.world.BukkitContainer;
@@ -86,11 +86,7 @@ public final class BukkitPlatform implements Platform {
 
     @Override
     public Object createContainer(Container container) {
-        if (container instanceof BukkitContainer bukkitContainer) {
-            return FastNMS.INSTANCE.createContainer(bukkitContainer);
-        } else {
-            throw new IllegalArgumentException("Container is not a BukkitContainer");
-        }
+        return ContainerGenerator.create((BukkitContainer) container);
     }
 
     public Item readItem(ByteBuf buf) {
