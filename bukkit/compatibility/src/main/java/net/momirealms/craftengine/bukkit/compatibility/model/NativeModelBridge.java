@@ -103,7 +103,7 @@ public abstract class NativeModelBridge<T, V> implements Listener {
         boolean refresh = tick % 20 == 0;
         if (this.lastSettings != settings) {
             this.lastSettings = settings;
-            this.configured = settings.uses(this.namespace, BedrockModelIntegration.CUSTOM_ENTITY) || settings.uses(this.namespace, BedrockModelIntegration.DISPLAY_ENTITY);
+            this.configured = settings.uses(this.namespace, BedrockModelIntegration.NATIVE_ENTITY) || settings.uses(this.namespace, BedrockModelIntegration.DISPLAY_ENTITY);
         }
         this.online.clear();
         if (enabled && this.configured) {
@@ -198,7 +198,7 @@ public abstract class NativeModelBridge<T, V> implements Listener {
         NativeModelPayload.Snapshot current;
         try {
             int interval = this.lastSettings.boneVisibilityIntervalTicks();
-            boolean checkVisibility = mode == BedrockModelIntegration.CUSTOM_ENTITY && (newViewer
+            boolean checkVisibility = mode == BedrockModelIntegration.NATIVE_ENTITY && (newViewer
                     || !(previous instanceof NativeModelPayload.NativeState)
                     || model.visibilityInterval != interval || (tick + model.visibilityPhase) % interval == 0);
             current = model.sample(mode, this.parts, checkVisibility);

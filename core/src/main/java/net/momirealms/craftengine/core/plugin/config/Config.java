@@ -307,6 +307,7 @@ public final class Config {
 
     private boolean bedrock$enable = true;
     private int bedrock$title$layer;
+    private boolean bedrock$title$force_java_layout;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private List<ExternalItemModel> bedrock$item$external = List.of();
     private BedrockEntitySettings bedrockEntities = BedrockEntitySettings.DEFAULT;
@@ -802,6 +803,7 @@ public final class Config {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
         this.bedrock$title$layer = config.getInt("bedrock.title.layer", 1);
+        this.bedrock$title$force_java_layout = config.getBoolean("bedrock.title.force-java-layout", false);
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
         this.bedrock$item$external = config.getList("bedrock.item.external", value -> {
             ConfigSection section = value.getAsSection();
@@ -1560,6 +1562,10 @@ public final class Config {
 
     public static int bedrockTitleLayer() {
         return instance.bedrock$title$layer;
+    }
+
+    public static boolean bedrockTitleForceJavaLayout() {
+        return instance.bedrock$title$force_java_layout;
     }
 
     public static BedrockSidebarConfig bedrockScoreboard() {

@@ -149,7 +149,7 @@ public final class ModelEngineNativeBridge extends NativeModelBridge<ActiveModel
                 hidden.clear();
             }
             if (this.source.getModelRenderer() instanceof DisplayRenderer renderer) {
-                if (mode == BedrockModelIntegration.CUSTOM_ENTITY) {
+                if (mode == BedrockModelIntegration.NATIVE_ENTITY) {
                     UUID pivot = renderer.getPivot().getUuid();
                     UUID hitboxPivot = renderer.getHitbox().getPivotUuid();
                     if (this.anchors.isEmpty() || !pivot.equals(this.anchors.get(0)) || !hitboxPivot.equals(this.anchors.get(1))) {

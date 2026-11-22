@@ -29,11 +29,12 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
             null, null, null, null,
-            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY,
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false,
             null, null, null, null
     );
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
+    private final boolean forceJavaTitleLayout;
     private final JsonObject items;
     private final JsonObject blocks;
     private final JsonObject modelDisplays;
@@ -51,6 +52,7 @@ public final class GeyserExtensionData {
                                 GeyserGlyphData glyphs,
                                 GeyserLanguageData languages,
                                 SidebarProfiles scoreboard,
+                                boolean forceJavaTitleLayout,
                                 @Nullable JsonObject nativeModels,
                                 @Nullable JsonObject soundMappings,
                                 @Nullable JsonObject bossBars,
@@ -59,6 +61,7 @@ public final class GeyserExtensionData {
         this.soundMappings = soundMappings;
         this.clientPack = clientPack;
         this.scoreboard = scoreboard;
+        this.forceJavaTitleLayout = forceJavaTitleLayout;
         this.nativeModels = nativeModels;
         this.items = items;
         this.blocks = blocks;
@@ -76,11 +79,14 @@ public final class GeyserExtensionData {
             JsonObject items = readPlan(archive, RegistrationPlanKind.ITEM);
             JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK);
             JsonObject sounds = readJson(archive, BedrockPackLayout.SOUND_MAPPINGS);
+            JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
+            boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
             GeyserGlyphData glyphs = GeyserGlyphs.parse(readJson(archive, BedrockPackLayout.GLYPHS));
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
                     readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
                     glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
+                    forceJavaTitleLayout,
                     readJson(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     readJson(archive, BedrockPackLayout.BOSS_BARS),
                     extractClientPack(archive, cacheDirectory));
@@ -165,6 +171,10 @@ public final class GeyserExtensionData {
 
     public SidebarProfiles scoreboard() {
         return this.scoreboard;
+    }
+
+    public boolean forceJavaTitleLayout() {
+        return this.forceJavaTitleLayout;
     }
 
     public GeyserGlyphData glyphs() {

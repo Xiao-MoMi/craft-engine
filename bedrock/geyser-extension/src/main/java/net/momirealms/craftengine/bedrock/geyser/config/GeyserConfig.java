@@ -29,7 +29,6 @@ public final class GeyserConfig {
     private String dataFileName = DEFAULT_DATA_FILE;
     private boolean debug;
     private boolean containerCloseHandlerEnabled = true;
-    private boolean forceJavaTitleLayout;
 
     public GeyserConfig(Path directory, ExtensionLogger logger) {
         this.configFilePath = directory.resolve("config.yml");
@@ -104,7 +103,6 @@ public final class GeyserConfig {
         this.debug = this.config.getBooleanOrDefault(false, Route.from("debug"));
         this.dataFileName = this.config.getStringOrDefault(DEFAULT_DATA_FILE, Route.from("data-file"));
         this.containerCloseHandlerEnabled = this.config.getBooleanOrDefault(true, Route.from("container-close-handler"));
-        this.forceJavaTitleLayout = this.config.getBooleanOrDefault(false, Route.from("force-java-title-layout"));
     }
 
     public Path dataFile() {
@@ -125,9 +123,5 @@ public final class GeyserConfig {
 
     public static boolean containerCloseHandlerEnabled() {
         return instance.containerCloseHandlerEnabled;
-    }
-
-    public boolean forceJavaTitleLayout() {
-        return this.forceJavaTitleLayout;
     }
 }

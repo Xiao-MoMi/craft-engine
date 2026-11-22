@@ -4,4 +4,3 @@ forced-locale: ''
 debug: false
 data-file: 'craftengine.cedata'
 container-close-handler: true
-force-java-title-layout: false

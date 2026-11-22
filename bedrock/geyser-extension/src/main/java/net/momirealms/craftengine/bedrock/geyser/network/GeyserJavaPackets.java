@@ -69,7 +69,7 @@ public final class GeyserJavaPackets {
         ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
         if (layout != null) {
             this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout));
-            GeyserTitle titles = new GeyserTitle(layout, extension.config().forceJavaTitleLayout());
+            GeyserTitle titles = new GeyserTitle(layout, extension.extensionData().forceJavaTitleLayout());
             this.intercept(ClientboundSetTitleTextPacket.class, titles::title);
             this.intercept(ClientboundSetSubtitleTextPacket.class, titles::subtitle);
         }

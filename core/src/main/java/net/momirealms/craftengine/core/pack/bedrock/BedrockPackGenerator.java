@@ -66,6 +66,9 @@ public final class BedrockPackGenerator {
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
             BedrockTitle.write(pack, Config.bedrockTitleLayer());
+            JsonObject title = new JsonObject();
+            title.addProperty(BedrockPackLayout.FORCE_JAVA_LAYOUT, Config.bedrockTitleForceJavaLayout());
+            GsonHelper.writeJsonFile(title, data.resolve(BedrockPackLayout.TITLE));
             NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockEntities()::dye);
 
             boolean protection = obfuscation && VersionHelper.PREMIUM;

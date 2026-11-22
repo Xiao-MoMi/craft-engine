@@ -832,17 +832,17 @@ bedrock:
     # Available values:
     #  - disabled
     #  - display_entity: full Java Edition movement recreation, with variable-speed playback and pause support but at higher performance cost
-    #  - custom_entity: embedded PNG .bbmodel and Bedrock animations; procedural poses may differ
+    #  - native_entity: embedded PNG .bbmodel and Bedrock animations; procedural poses may differ
     integrations:
       bettermodel: disabled
       modelengine: disabled
-    # Bone visibility check interval in milliseconds for BetterModel and ModelEngine custom_entity models.
+    # Bone visibility check interval in milliseconds for BetterModel and ModelEngine native_entity models.
     # Rounded up to the next multiple of 50 ms, with a minimum of 50 ms.
     bone-visibility-check-interval: 100
     # -1 disables dynamic tinting. Positive values limit mask layers per dyeable material
     dye-max-layers: -1
     # Exact RGB matches use baked textures, including when dynamic tinting is disabled
-    # display_entity can prebake the plugin's hurt tint. custom_entity always uses the native hurt event.
+    # display_entity can prebake the plugin's hurt tint. native_entity always uses the native hurt event.
     prebaked-colors: ["#FF8080"]
     # A matching entry replaces BOTH dye settings. Omitted settings mean -1 and [].
     # Omit mode to inherit the plugin's mode.
@@ -879,6 +879,8 @@ bedrock:
   title:
     # Draw layer of the custom Bedrock title panel in the generated resource pack.
     layer: 1
+    # Use Java layout even for titles and subtitles that could use native Bedrock layout.
+    force-java-layout: false
   scoreboard:
     # Match an existing sidebar to image decorations and a horizontal offset.
     #

@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 public final class BedrockSidebarWriter {
+    private static final int HEADER_BYTES = SidebarCodec.PREFIX_BYTES + ContainerTitleCodec.COUNT_BYTES;
     private final JsonArray profiles;
     private final JsonObject controls = new JsonObject();
 
@@ -32,14 +33,15 @@ public final class BedrockSidebarWriter {
         scores.addProperty("collection_name", "scoreboard_players");
         this.controls.add("scoreboard_sidebar/main/lists/scores", scores);
         JsonArray overlays = new JsonArray();
-        JsonArray offsetBindings = new JsonArray();
-        offsetBindings.add(this.input("#objective_sidebar_name", "", "#ce_raw"));
-        StringBuilder offsetX = new StringBuilder("(0");
+        StringBuilder offsetX = new StringBuilder();
         for (JsonElement value : this.profiles) {
             JsonObject profile = value.getAsJsonObject();
             int index = profile.get("index").getAsInt();
             String match = "(('%.18s' * #ce_raw) = '" + SidebarCodec.MARKER + "§r§r" + String.format(Locale.ROOT, "P%04d:", index) + "')";
-            offsetX.append(" + (").append(match).append(" * ").append(profile.get("offset-x").getAsInt()).append(")");
+            int offset = profile.get("offset-x").getAsInt();
+            if (offset != 0) {
+                offsetX.append(" + (").append(match).append(" * ").append(offset).append(")");
+            }
             for (JsonElement element : profile.getAsJsonArray("elements")) {
                 JsonObject image = element.getAsJsonObject();
                 JsonObject control = new JsonObject();
@@ -81,13 +83,15 @@ public final class BedrockSidebarWriter {
         }
         Files.createDirectories(root.resolve("ui"));
         GsonHelper.writeJsonFile(this.controls, root.resolve("ui/scoreboards.json"));
-        if (!this.profiles.isEmpty()) {
+        if (!offsetX.isEmpty()) {
             JsonObject position = new JsonObject();
             position.addProperty("use_anchored_offset", true);
             JsonObject properties = new JsonObject();
             properties.addProperty("#anchored_offset_value_x", 0);
             position.add("property_bag", properties);
-            bind(offsetBindings, offsetX.append(")").toString(), "#anchored_offset_value_x");
+            JsonArray offsetBindings = new JsonArray();
+            offsetBindings.add(this.input("#objective_sidebar_name", "", "#ce_raw"));
+            bind(offsetBindings, "(0" + offsetX + ")", "#anchored_offset_value_x");
             position.add("bindings", offsetBindings);
             JsonObject wrapper = new JsonObject();
             wrapper.addProperty("type", "panel");
@@ -129,19 +133,17 @@ public final class BedrockSidebarWriter {
         JsonObject nativeLabel = label();
         nativeLabel.addProperty("text", "#ce_native");
         nativeLabel.add("max_size", GsonHelper.createArray(250, 10));
-        JsonArray nativeBindings = source(input, collection);
-        bind(nativeBindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #ce_raw)", "#ce_native");
-        bind(nativeBindings, "(not #ce_encoded)", "#visible");
+        JsonArray nativeBindings = new JsonArray();
+        nativeBindings.add(fromSibling("sidebar_layers", "#ce_native", "#ce_native"));
+        nativeBindings.add(fromSibling("sidebar_layers", "(not #ce_encoded)", "#visible"));
         nativeLabel.add("bindings", nativeBindings);
         children.add(GsonHelper.createObject("native_text", nativeLabel));
         JsonObject measure = label();
         measure.addProperty("alpha", 0);
-        measure.addProperty("text", "#ce_slice");
-        JsonArray measureBindings = source(input, collection);
-        decode(measureBindings, "0");
-        bind(measureBindings, "(('%.' + (#ce_encoded * 10032) + 's') * #ce_slice)", "#ce_measure");
         measure.addProperty("text", "#ce_measure");
-        bind(measureBindings, "#ce_encoded", "#visible");
+        JsonArray measureBindings = new JsonArray();
+        measureBindings.add(fromSibling("sidebar_layers", "#ce_measure", "#ce_measure"));
+        measureBindings.add(fromSibling("sidebar_layers", "#ce_encoded", "#visible"));
         measure.add("bindings", measureBindings);
         children.add(GsonHelper.createObject("measure", measure));
         JsonObject layers = new JsonObject();
@@ -158,8 +160,10 @@ public final class BedrockSidebarWriter {
         factory.addProperty("max_children_size", ContainerTitleCodec.MAX_BYTES / ContainerTitleCodec.ENTRY_BYTES);
         layers.add("factory", factory);
         JsonArray bindings = source(input, collection);
+        bind(bindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #ce_raw)", "#ce_native");
+        decode(bindings, null, "'%.7s'", "#ce_measure");
+        bind(bindings, "(#ce_header - ('%." + SidebarCodec.PREFIX_BYTES + "s' * #ce_header))", "#ce_count");
         bind(bindings, "((#ce_count - 'N' - ':' + 0 - 2) * #ce_encoded)", "#collection_length");
-        bind(bindings, "#ce_encoded", "#visible");
         layers.add("bindings", bindings);
         children.add(GsonHelper.createObject("sidebar_layers", layers));
         panel.add("controls", children);
@@ -176,17 +180,16 @@ public final class BedrockSidebarWriter {
         JsonObject original = label();
         original.addProperty("text", "#ce_native");
         original.addProperty("color", "$player_score_color");
-        JsonArray bindings = source("#player_name_sidebar", "scoreboard_players");
+        JsonArray bindings = new JsonArray();
+        bindings.add(fromSibling("formatted_score", "#ce_encoded", "#ce_encoded"));
         bindings.add(this.input("#player_score_sidebar", "scoreboard_scores", "#player_score_sidebar"));
         bind(bindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #player_score_sidebar)", "#ce_native");
         bind(bindings, "(not #ce_encoded)", "#visible");
         original.add("bindings", bindings);
         children.add(GsonHelper.createObject("native_score", original));
         JsonObject formatted = label();
-        formatted.addProperty("text", "#ce_slice");
         bindings = source("#player_name_sidebar", "scoreboard_players");
-        decode(bindings, "1");
-        bind(bindings, "(('%.' + (#ce_encoded * 10032) + 's') * #ce_slice)", "#ce_score");
+        decode(bindings, "'%.14s'", "'%.21s'", "#ce_score");
         formatted.addProperty("text", "#ce_score");
         bind(bindings, "#ce_encoded", "#visible");
         formatted.add("bindings", bindings);
@@ -207,8 +210,11 @@ public final class BedrockSidebarWriter {
         details.addProperty("binding_collection_name", "ce_sidebar_layers");
         details.addProperty("binding_collection_prefix", "ce");
         bindings.add(details);
-        bindings.addAll(source(title ? "#objective_sidebar_name" : "#player_name_sidebar", title ? "" : "scoreboard_players"));
-        decode(bindings, "(#ce_collection_index + 2)");
+        // A factory entry must read its own scoreboard row; named controls can resolve to a different row.
+        bindings.add(this.input(title ? "#objective_sidebar_name" : "#player_name_sidebar", title ? "" : "scoreboard_players", "#ce_raw"));
+        bind(bindings, "(#ce_raw - ('%." + HEADER_BYTES + "s' * #ce_raw))", "#ce_payload");
+        String offset = "((#ce_collection_index + 2) * " + ContainerTitleCodec.ENTRY_BYTES + ")";
+        decode(bindings, "('%.' + " + offset + " + 's')", "('%.' + (" + offset + " + " + ContainerTitleCodec.FORMAT_BYTES + ") + 's')", "#ce_slice");
         text.add("bindings", bindings);
         JsonArray children = new JsonArray();
         children.add(GsonHelper.createObject("text", text));
@@ -220,10 +226,8 @@ public final class BedrockSidebarWriter {
         JsonArray bindings = new JsonArray();
         bindings.add(this.input(input, collection, "#ce_raw"));
         bind(bindings, "(('%.6s' * #ce_raw) = '" + SidebarCodec.MARKER + "')", "#ce_encoded");
-        bind(bindings, "('%." + SidebarCodec.PREFIX_BYTES + "s' * #ce_raw)", "#ce_prefix");
-        bind(bindings, "(#ce_raw - #ce_prefix)", "#ce_data");
-        bind(bindings, "('%.6s' * #ce_data)", "#ce_count");
-        bind(bindings, "(#ce_data - #ce_count)", "#ce_payload");
+        bind(bindings, "('%." + HEADER_BYTES + "s' * #ce_raw)", "#ce_header");
+        bind(bindings, "((('%.' + (#ce_encoded * 10032) + 's') * #ce_raw) - #ce_header)", "#ce_payload");
         return bindings;
     }
 
@@ -238,19 +242,21 @@ public final class BedrockSidebarWriter {
         return binding;
     }
 
-    private static void decode(JsonArray bindings, String index) {
-        String skip = "('%.' + (" + index + " * 14) + 's')";
-        String take = "('%.' + ((" + index + " * 14) + 7) + 's')";
-        // Keep the payload in the format binding's dependencies when the client reuses a layer control.
-        bind(bindings, "(" + skip + " * #ce_payload)", "#ce_skip_prefix");
-        bind(bindings, "(#ce_payload - #ce_skip_prefix)", "#ce_skip_tail");
-        bind(bindings, "('%.7s' * #ce_skip_tail)", "#ce_skip");
-        bind(bindings, "(" + take + " * #ce_payload)", "#ce_take_prefix");
-        bind(bindings, "(#ce_payload - #ce_take_prefix)", "#ce_take_tail");
-        bind(bindings, "('%.7s' * #ce_take_tail)", "#ce_take");
-        bind(bindings, "(#ce_skip * #ce_payload)", "#ce_body_prefix");
-        bind(bindings, "(#ce_payload - #ce_body_prefix)", "#ce_body_tail");
-        bind(bindings, "(#ce_take * #ce_body_tail)", "#ce_slice");
+    private static void decode(JsonArray bindings, String start, String middle, String target) {
+        String entry = start == null ? "#ce_payload" : "(#ce_payload - (" + start + " * #ce_payload))";
+        bind(bindings, "('%.7s' * " + entry + ")", "#ce_skip");
+        bind(bindings, "('%.7s' * (#ce_payload - (" + middle + " * #ce_payload)))", "#ce_take");
+        bind(bindings, "(#ce_take * (#ce_payload - (#ce_skip * #ce_payload)))", target);
+    }
+
+    private static JsonObject fromSibling(String control, String source, String target) {
+        JsonObject binding = new JsonObject();
+        binding.addProperty("binding_type", "view");
+        binding.addProperty("source_control_name", control);
+        binding.addProperty("source_property_name", source);
+        binding.addProperty("target_property_name", target);
+        binding.addProperty("resolve_sibling_scope", true);
+        return binding;
     }
 
     private static void bind(JsonArray bindings, String expression, String target) {

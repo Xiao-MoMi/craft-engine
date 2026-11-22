@@ -18,7 +18,7 @@ public final class ModelEngineProvider implements ModelProvider {
 
     @Override
     public List<NativeModelSource> bedrockModels() throws IOException {
-        if (!Config.bedrockEntities().uses("modelengine", BedrockModelIntegration.CUSTOM_ENTITY)) {
+        if (!Config.bedrockEntities().uses("modelengine", BedrockModelIntegration.NATIVE_ENTITY)) {
             return List.of();
         }
         return NativeModelSources.collect(
@@ -27,7 +27,7 @@ public final class ModelEngineProvider implements ModelProvider {
                 ModelEngineAPI.getAPI().getModelRegistry().getValues()
                         .stream()
                         .map(ModelBlueprint::getName)
-                        .filter(name -> Config.bedrockEntities().mode(Key.of("modelengine", name)) == BedrockModelIntegration.CUSTOM_ENTITY)
+                        .filter(name -> Config.bedrockEntities().mode(Key.of("modelengine", name)) == BedrockModelIntegration.NATIVE_ENTITY)
                         .toList()
         );
     }

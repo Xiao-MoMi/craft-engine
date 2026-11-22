@@ -18,7 +18,7 @@ public final class BetterModelProvider implements ModelProvider {
 
     @Override
     public List<NativeModelSource> bedrockModels() throws IOException {
-        if (!Config.bedrockEntities().uses("bettermodel", BedrockModelIntegration.CUSTOM_ENTITY)) {
+        if (!Config.bedrockEntities().uses("bettermodel", BedrockModelIntegration.NATIVE_ENTITY)) {
             return List.of();
         }
         return NativeModelSources.collect(
@@ -27,7 +27,7 @@ public final class BetterModelProvider implements ModelProvider {
                 BetterModel.models()
                         .stream()
                         .map(ModelRenderer::name)
-                        .filter(name -> Config.bedrockEntities().mode(Key.of("bettermodel", name)) == BedrockModelIntegration.CUSTOM_ENTITY)
+                        .filter(name -> Config.bedrockEntities().mode(Key.of("bettermodel", name)) == BedrockModelIntegration.NATIVE_ENTITY)
                         .toList()
         );
     }

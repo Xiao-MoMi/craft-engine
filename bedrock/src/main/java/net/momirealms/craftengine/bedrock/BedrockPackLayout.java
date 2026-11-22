@@ -14,6 +14,8 @@ public final class BedrockPackLayout {
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
+    public static final String TITLE = "craftengine/title.json";
+    public static final String FORCE_JAVA_LAYOUT = "force_java_layout";
     public static final String GLYPHS = "craftengine/glyphs.json";
     public static final String CRAFTENGINE_TEXTURES = "textures/" + NAMESPACE;
     public static final String NATIVE_MODEL_TEXTURES = CRAFTENGINE_TEXTURES + "/native";
