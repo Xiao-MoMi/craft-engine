@@ -100,7 +100,7 @@ public final class BlockGenerator {
                 .method(is(BlockReflections.RANDOM_TICK)).intercept(forward("randomTick"))
                 .method(is(BlockReflections.ON_PLACE)).intercept(forward("onPlace"))
                 .method(is(BlockReflections.CAN_SURVIVE)).intercept(customBehavior("canSurvive"))
-                .method(is(BlockReflections.UPDATE_SHAPE)).intercept(customBehavior("updateShape"))
+                .method(is(BlockReflections.UPDATE_SHAPE)).intercept(capability(BlockBehaviorMethods.ShapeUpdate.class))
                 .method(is(BlockReflections.NEIGHBOR_CHANGED)).intercept(forward("neighborChanged"))
                 .method(is(BlockReflections.ENTITY_INSIDE)).intercept(forward("entityInside"))
                 .method(is(BlockReflections.GET_SIGNAL)).intercept(forward("getSignal"))

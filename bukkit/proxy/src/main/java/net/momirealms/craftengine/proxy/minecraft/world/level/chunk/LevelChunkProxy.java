@@ -8,6 +8,9 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface LevelChunkProxy extends ChunkAccessProxy {
     LevelChunkProxy INSTANCE = ASMProxyFactory.create(LevelChunkProxy.class);
 
+    @MethodInvoker(name = "getBlockState", activeIf = "has_patch=paper")
+    Object getBlockState(Object target, int x, int y, int z);
+
     @MethodInvoker(name = "getFullStatus")
     Object getFullStatus(Object target);
 

@@ -21,10 +21,10 @@ public class BukkitBlockBehavior extends BlockBehavior {
         super(blockDefinition);
     }
 
-    protected static final int updateShape$level = VersionHelper.isOrAbove1_21_2 ? 1 : 3;
-    protected static final int updateShape$blockPos = VersionHelper.isOrAbove1_21_2 ? 3 : 4;
-    protected static final int updateShape$neighborState = VersionHelper.isOrAbove1_21_2 ? 6 : 2;
-    protected static final int updateShape$direction = VersionHelper.isOrAbove1_21_2 ? 4 : 1;
+    public static final int updateShape$level = VersionHelper.isOrAbove1_21_2 ? 1 : 3;
+    public static final int updateShape$blockPos = VersionHelper.isOrAbove1_21_2 ? 3 : 4;
+    public static final int updateShape$neighborState = VersionHelper.isOrAbove1_21_2 ? 6 : 2;
+    public static final int updateShape$direction = VersionHelper.isOrAbove1_21_2 ? 4 : 1;
 
     protected static final int isPathFindable$type = VersionHelper.isOrAbove1_20_5 ? 1 : 3;
 

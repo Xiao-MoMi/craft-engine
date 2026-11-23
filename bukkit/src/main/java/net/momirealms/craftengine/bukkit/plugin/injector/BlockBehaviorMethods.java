@@ -12,12 +12,7 @@ import net.momirealms.craftengine.bukkit.util.NoteBlockChainUpdateUtils;
 import net.momirealms.craftengine.core.block.DelegatingBlock;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
-import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.ObjectHolder;
-import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,11 +20,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 
-public final class BlockBehaviorMethods {
-    private static final int UPDATE_LEVEL = VersionHelper.isOrAbove1_21_2 ? 1 : 3;
-    private static final int UPDATE_DIRECTION = VersionHelper.isOrAbove1_21_2 ? 4 : 1;
-    private static final int UPDATE_POS = VersionHelper.isOrAbove1_21_2 ? 3 : 4;
+import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$blockPos;
+import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$direction;
+import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$level;
+import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$neighborState;
 
+public final class BlockBehaviorMethods {
     private BlockBehaviorMethods() {
     }
 
@@ -97,32 +93,33 @@ public final class BlockBehaviorMethods {
         return true;
     }
 
-    @RuntimeType
-    public static Object updateShape(@This DelegatingBlock thisBlock,
-                                     @FieldValue("behaviorHolder") ObjectHolder<BlockBehavior> holder,
-                                     @AllArguments Object[] args) {
-        if (thisBlock.isNoteBlock() && ServerLevelProxy.CLASS.isInstance(args[UPDATE_LEVEL])) {
-            startNoteBlockChain(args);
-        }
-        try {
-            return holder.value().updateShape(thisBlock, args);
-        } catch (Exception e) {
-            CraftEngine.instance().logger().error("Failed to run updateShape", e);
-            return args[0];
-        }
-    }
+    static final class ShapeUpdate {
+        @Advice.OnMethodExit(backupArguments = false)
+        static void apply(@Advice.This DelegatingBlock thisBlock,
+                          @Advice.FieldValue("behaviorHolder") ObjectHolder<BlockBehavior> holder,
+                          @Advice.FieldValue("isClientSideNoteBlock") boolean note,
+                          @Advice.FieldValue("isClientSideTripwire") boolean wire,
+                          @Advice.AllArguments Object[] args,
+                          @Advice.Return(readOnly = false, typing = Assigner.Typing.DYNAMIC) Object result) {
+            // Read @AllArguments once so the callback and its failure path see the same array.
+            Object[] behaviorArgs = args;
+            if (note || wire) {
+                try {
+                    NoteBlockChainUpdateUtils.onUpdateShape(behaviorArgs[0], behaviorArgs[updateShape$level], behaviorArgs[updateShape$blockPos], behaviorArgs[updateShape$direction], behaviorArgs[updateShape$neighborState]);
+                } catch (Exception e) {
+                    CraftEngine.instance().logger().error("Failed to correct neighbor shapes during block animation", e);
+                }
+            }
 
-    private static void startNoteBlockChain(Object[] args) {
-        Object direction = args[UPDATE_DIRECTION];
-        Object serverLevel = args[UPDATE_LEVEL];
-        Object blockPos = args[UPDATE_POS];
-        if (direction != DirectionProxy.DOWN && direction != DirectionProxy.UP) {
-            return;
+            Object updated;
+            try {
+                updated = holder.value().updateShape(thisBlock, behaviorArgs);
+            } catch (Exception e) {
+                CraftEngine.instance().logger().error("Failed to run updateShape", e);
+                updated = behaviorArgs[0];
+            }
+            result = updated;
         }
-        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
-        ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
-        Object opposite = direction == DirectionProxy.DOWN ? DirectionProxy.UP : DirectionProxy.DOWN;
-        NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, opposite, blockPos, Config.maxNoteBlockChainUpdate());
     }
 
     public static void setPlacedBy(@This Object thisBlock,

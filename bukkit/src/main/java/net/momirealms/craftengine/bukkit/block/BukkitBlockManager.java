@@ -165,6 +165,12 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     public void registerBlockStatePacketListener() {
+        for (int i = 0; i < this.customBlocks.length; i++) {
+            int appearance = this.blockStateMappings[this.vanillaBlockStateCount + i];
+            Key owner = appearance < 0 ? null : BlockRegistryMirror.byId(appearance).ownerId();
+            BlockGenerator.field$CraftEngineBlock$isNoteBlock().set(this.customBlocks[i], BlockKeys.NOTE_BLOCK.equals(owner));
+            BlockGenerator.field$CraftEngineBlock$isTripwire().set(this.customBlocks[i], BlockKeys.TRIPWIRE.equals(owner));
+        }
         this.plugin.networkManager().registerBlockStatePacketListeners(this.blockStateMappings, this::isViewBlockingBlock); // 重置方块映射表
     }
 
@@ -390,8 +396,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             Key vanillaBlockId = state.visualBlockState().ownerId();
-            BlockGenerator.field$CraftEngineBlock$isNoteBlock().set(nmsBlock, vanillaBlockId.equals(BlockKeys.NOTE_BLOCK));
-            BlockGenerator.field$CraftEngineBlock$isTripwire().set(nmsBlock, vanillaBlockId.equals(BlockKeys.TRIPWIRE));
             if (vanillaBlockId.equals(BlockKeys.BARRIER)) {
                 state.setRestoreBlockState(createBlockState("minecraft:glass"));
             } else {

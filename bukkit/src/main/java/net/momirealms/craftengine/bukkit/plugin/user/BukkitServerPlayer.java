@@ -317,9 +317,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
         this.name = player.getName();
         this.entityId = player.getEntityId();
         this.isNameVerified = true;
-        if (this.gameEdition == null) {
-            this.gameEdition = this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
-        }
         this.initPlayStageFields();
         this.equipmentLod = VersionHelper.isOrAbove1_21_2 && Config.enableEquipmentLod() ? new EquipmentLodTracker(this) : null;
         byte[] bytes = player.getPersistentDataContainer().get(KeyUtils.toNamespacedKey(CooldownData.COOLDOWN_KEY), PersistentDataType.BYTE_ARRAY);
@@ -343,6 +340,9 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             if (!ItemStackUtils.isEmpty(item)) {
                 this.obtainedItems.add(UniqueKey.create(BukkitItemManager.instance().wrap(item).id()));
             }
+        }
+        if (this.gameEdition == null) {
+            this.gameEdition = this.plugin.compatibilityManager().isBedrockPlayer(this) ? GameEdition.BEDROCK : GameEdition.JAVA;
         }
     }
 

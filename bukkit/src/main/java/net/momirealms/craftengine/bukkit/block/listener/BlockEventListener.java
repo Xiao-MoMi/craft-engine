@@ -39,11 +39,9 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSystemChatPacketProxy;
-import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundSourceProxy;
@@ -433,23 +431,9 @@ public final class BlockEventListener implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onBlockPhysics(BlockPhysicsEvent event) {
-        // for vanilla blocks
-        if (event.getChangedType() == Material.NOTE_BLOCK) {
-            Block block = event.getBlock();
-            Block sourceBlock = event.getSourceBlock();
-            if (block.getX() == sourceBlock.getX() && block.getX() == sourceBlock.getZ()) {
-                World world = block.getWorld();
-                Location location = block.getLocation();
-                Object serverLevel = CraftWorldProxy.INSTANCE.getWorld(world);
-                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(serverLevel);
-                Object blockPos = LocationUtils.toBlockPos(location.getBlockX(), location.getBlockY(), location.getBlockZ());
-                ServerChunkCacheProxy.INSTANCE.blockChanged(chunkSource, blockPos);
-                if (block.getY() > sourceBlock.getY()) {
-                    NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.UP, blockPos, Config.maxNoteBlockChainUpdate());
-                } else {
-                    NoteBlockChainUpdateUtils.noteBlockChainUpdate(serverLevel, chunkSource, DirectionProxy.DOWN, blockPos, Config.maxNoteBlockChainUpdate());
-                }
-            }
+        Material type = event.getChangedType();
+        if (type == Material.NOTE_BLOCK || type == Material.TRIPWIRE) {
+            NoteBlockChainUpdateUtils.onVanillaPhysics(type, event.getBlock(), event.getSourceBlock());
         }
     }
 

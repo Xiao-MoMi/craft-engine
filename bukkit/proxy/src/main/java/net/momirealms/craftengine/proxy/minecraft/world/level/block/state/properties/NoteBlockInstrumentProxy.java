@@ -9,6 +9,9 @@ public interface NoteBlockInstrumentProxy {
     NoteBlockInstrumentProxy INSTANCE = ASMProxyFactory.create(NoteBlockInstrumentProxy.class);
     Enum<?> HARP = INSTANCE.valueOf("HARP");
 
+    @MethodInvoker(name = "worksAboveNoteBlock")
+    boolean worksAboveNoteBlock(Object target);
+
     @MethodInvoker(name = "values", isStatic = true)
     Enum<?>[] values();
 
