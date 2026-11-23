@@ -7,11 +7,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.world.GeneratingWorld;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelHeightAccessorProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.LevelWriterProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.ServerLevelAccessorProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 
 public final class WorldGenAccess implements GeneratingWorld {
     private final Object level;

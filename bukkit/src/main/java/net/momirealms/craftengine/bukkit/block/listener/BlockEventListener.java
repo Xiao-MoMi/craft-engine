@@ -54,7 +54,10 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.BlocksProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.SoundTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
-import org.bukkit.*;
+import org.bukkit.GameEvent;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.SoundCategory;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
@@ -433,7 +436,7 @@ public final class BlockEventListener implements Listener {
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Material type = event.getChangedType();
         if (type == Material.NOTE_BLOCK || type == Material.TRIPWIRE) {
-            NoteBlockChainUpdateUtils.onVanillaPhysics(type, event.getBlock(), event.getSourceBlock());
+            NoteBlockChainUpdateUtils.onVanillaPhysics(event.getBlock(), event.getSourceBlock());
         }
     }
 

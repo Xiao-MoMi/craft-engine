@@ -45,9 +45,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public final class ContainerGenerator {
     private static final Class<?> CUSTOM_CONTAINER = generateContainer();

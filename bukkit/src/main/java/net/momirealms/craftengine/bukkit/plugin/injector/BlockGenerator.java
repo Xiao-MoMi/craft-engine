@@ -6,11 +6,7 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
-import net.bytebuddy.implementation.FieldAccessor;
-import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockShape;
 import net.momirealms.craftengine.bukkit.block.behavior.EmptyBlockBehavior;
@@ -40,9 +36,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import static java.util.Objects.requireNonNull;
-import static net.momirealms.craftengine.bukkit.plugin.injector.BlockBehaviorMethods.forward;
 import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.momirealms.craftengine.bukkit.plugin.injector.BlockBehaviorMethods.forward;
 
 public final class BlockGenerator {
     private static SConstructor3 constructor;

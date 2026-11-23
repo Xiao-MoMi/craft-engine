@@ -2,12 +2,7 @@ package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.IdMapProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.IdMapperProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.MappedRegistryProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryAccessProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.*;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;

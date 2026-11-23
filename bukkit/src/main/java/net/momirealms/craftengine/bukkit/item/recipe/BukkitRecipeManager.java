@@ -34,13 +34,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRe
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.BlastingRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.CampfireCookingRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.SmeltingRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.SmokingRecipeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.AbstractFurnaceBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.BlastFurnaceBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.FurnaceBlockEntityProxy;

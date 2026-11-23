@@ -4,7 +4,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.core.block.BlockKeys;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -15,7 +14,6 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
-import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
@@ -34,17 +32,11 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.proper
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.properties.NoteBlockInstrumentProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.LevelChunkProxy;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.lang.ref.WeakReference;
 import java.util.Locale;
-
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$blockPos;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$direction;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$level;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$neighborState;
 
 public final class NoteBlockChainUpdateUtils {
     private static final Direction[] DIRECTIONS = Direction.values();
@@ -106,7 +98,7 @@ public final class NoteBlockChainUpdateUtils {
         }
     }
 
-    public static void onVanillaPhysics(Material type, Block target, Block sourceBlock) {
+    public static void onVanillaPhysics(Block target, Block sourceBlock) {
         int x = target.getX();
         int y = target.getY();
         int z = target.getZ();

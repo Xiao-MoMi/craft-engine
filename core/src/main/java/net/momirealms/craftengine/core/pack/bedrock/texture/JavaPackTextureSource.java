@@ -22,11 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.AbstractPackManager.MISSING_NO;
 

@@ -20,10 +20,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$blockPos;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$direction;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$level;
-import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.updateShape$neighborState;
+import static net.momirealms.craftengine.bukkit.block.behavior.BukkitBlockBehavior.*;
 
 public final class BlockBehaviorMethods {
     private BlockBehaviorMethods() {
