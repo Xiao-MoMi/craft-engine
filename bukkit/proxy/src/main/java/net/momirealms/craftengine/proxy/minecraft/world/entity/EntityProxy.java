@@ -241,4 +241,19 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getPose")
     Object getPose(Object target);
+
+    @ReflectionProxy(name = "net.minecraft.world.entity.Entity$RemovalReason")
+    interface RemovalReasonProxy {
+        RemovalReasonProxy INSTANCE = ASMProxyFactory.create(RemovalReasonProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.Entity$RemovalReason");
+        Object DISCARDED = INSTANCE.getDiscarded();
+
+        @FieldGetter(name = "DISCARDED", isStatic = true)
+        Object getDiscarded();
+    }
+
+    @ReflectionProxy(name = "net.minecraft.world.entity.Entity$MoveFunction")
+    interface MoveFunctionProxy {
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.Entity$MoveFunction");
+    }
 }

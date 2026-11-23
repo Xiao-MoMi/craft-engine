@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.MethodCall;
@@ -13,13 +12,13 @@ import net.momirealms.craftengine.bukkit.world.BukkitWorld;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.WorldHeight;
 import net.momirealms.craftengine.core.world.WorldHolder;
+import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldBorderProxy;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftWorldProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.SConstructor5;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import org.bukkit.World;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.util.UUID;
 
@@ -39,12 +38,12 @@ public final class WorldBorderGenerator {
     }
 
     private static SConstructor5 generate() {
-        Class<?> craftWorld = requireNonNull(SparrowClass.find("org.bukkit.craftbukkit.CraftWorld"));
-        Class<?> craftWorldBorder = requireNonNull(SparrowClass.find("org.bukkit.craftbukkit.CraftWorldBorder"));
+        Class<?> craftWorld = CraftWorldProxy.CLASS;
+        Class<?> craftWorldBorder = CraftWorldBorderProxy.CLASS;
         Constructor<?> borderConstructor = requireNonNull(SparrowClass.of(craftWorldBorder)
                 .getDeclaredConstructor(ConstructorMatcher.takeArguments(craftWorld)));
         Class<?>[] parameters = {craftWorld, Object.class, WorldHeight.class, UUID.class, String.class};
-        Class<?> generated = new ByteBuddy(ClassFileVersion.JAVA_V21)
+        Class<?> generated = InjectorClassLoading.load(new ByteBuddy(ClassFileVersion.JAVA_V21)
                 .subclass(craftWorldBorder, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(WorldBorderGenerator.class.getPackageName() + ".InjectedWorldBorder")
                 .implement(BukkitWorld.class, WorldHolder.class)
@@ -73,10 +72,7 @@ public final class WorldBorderGenerator {
                 .method(ElementMatchers.named("name"))
                 .intercept(FieldAccessor.ofField("name"))
                 .method(ElementMatchers.named("storageWorld").or(ElementMatchers.named("setStorageWorld")))
-                .intercept(FieldAccessor.ofField("storageWorld"))
-                .make()
-                .load(WorldBorderGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup()))
-                .getLoaded();
+                .intercept(FieldAccessor.ofField("storageWorld")));
         return SparrowClass.of(generated).getSparrowConstructor(ConstructorMatcher.takeArguments(parameters)).asm$5();
     }
 }

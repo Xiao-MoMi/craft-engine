@@ -25,12 +25,12 @@ public final class StatePredicateGenerator {
     private static Object alwaysTrue;
     private static Object alwaysFalse;
 
-    private StatePredicateGenerator() {}
+    private StatePredicateGenerator() {
+    }
 
     public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V21);
-        String packageWithName = StatePredicateGenerator.class.getName();
-        String packageName = packageWithName.substring(0, packageWithName.lastIndexOf('.'));
+        String packageName = StatePredicateGenerator.class.getPackageName();
         alwaysTrue = generate(byteBuddy, packageName + ".CraftEngineAlwaysTrueStatePredicate", true);
         alwaysFalse = generate(byteBuddy, packageName + ".CraftEngineAlwaysFalseStatePredicate", false);
     }

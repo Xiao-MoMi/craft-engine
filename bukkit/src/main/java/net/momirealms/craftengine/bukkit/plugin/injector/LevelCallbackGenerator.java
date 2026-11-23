@@ -6,7 +6,6 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.Implementation;
@@ -21,6 +20,7 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.InjectedWorldCallback;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.DisplayProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.entity.LevelCallbackProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.entity.LevelEntityGetterProxy;
@@ -31,7 +31,6 @@ import net.momirealms.sparrow.reflection.constructor.SConstructor2;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -39,7 +38,6 @@ import java.lang.reflect.Modifier;
 import static java.util.Objects.requireNonNull;
 
 public final class LevelCallbackGenerator {
-    static final Class<?> ITEM_DISPLAY_CLASS = SparrowClass.find("net.minecraft.world.entity.Display$ItemDisplay");
     static final boolean IS_AT_MOST_26_1_2 = VersionHelper.MINECRAFT_VERSION.compareTo(MinecraftVersion.V26_1_2) <= 0;
     static final boolean HAS_TRACKER_ENTITIES = hasTrackerEntities();
     private static final SConstructor2 CONSTRUCTOR = generate();
@@ -61,17 +59,11 @@ public final class LevelCallbackGenerator {
             return injected;
         }
         for (Object entity : LevelEntityGetterProxy.INSTANCE.getAll(entityLookup)) {
-            if (entity instanceof NonTickingEntity || (ITEM_DISPLAY_CLASS.isInstance(entity) && CraftEngineFurniture.isFurniture(EntityProxy.INSTANCE.getBukkitEntity(entity)))) {
+            if (skipTicking(entity)) {
                 LevelCallbackProxy.INSTANCE.onTickingEnd(callback, entity);
             }
             if (entity instanceof UntrackedEntity) {
-                Object level = EntityProxy.INSTANCE.getLevel(entity);
-                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(level);
-                ServerChunkCacheProxy.INSTANCE.removeEntity(chunkSource, entity);
-                if (HAS_TRACKER_ENTITIES) {
-                    Object trackerEntities = ServerEntityLookupProxy.INSTANCE.getTrackerEntities(entityLookup);
-                    ServerEntityLookupProxy.ReferenceListProxy.INSTANCE.remove(trackerEntities, entity);
-                }
+                removeTracking(entity, entityLookup);
             }
         }
         return injected;
@@ -107,9 +99,7 @@ public final class LevelCallbackGenerator {
             }
             builder = builder.method(ElementMatchers.is(method)).intercept(implementation);
         }
-        Class<?> generated = builder.make()
-                .load(LevelCallbackGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup()))
-                .getLoaded();
+        Class<?> generated = InjectorClassLoading.load(builder);
         return SparrowClass.of(generated).getSparrowConstructor(ConstructorMatcher.takeArguments(callbackClass, Object.class)).asm$2();
     }
 
@@ -125,10 +115,26 @@ public final class LevelCallbackGenerator {
         }
     }
 
+    static boolean skipTicking(Object entity) {
+        return entity instanceof NonTickingEntity || (DisplayProxy.ItemDisplayProxy.CLASS.isInstance(entity) && CraftEngineFurniture.isFurniture(EntityProxy.INSTANCE.getBukkitEntity(entity)));
+    }
+
+    static void removeTracking(Object entity, Object entityLookup) {
+        Object level = EntityProxy.INSTANCE.getLevel(entity);
+        Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(level);
+        ServerChunkCacheProxy.INSTANCE.removeEntity(chunkSource, entity);
+        if (HAS_TRACKER_ENTITIES) {
+            Object trackerEntities = ServerEntityLookupProxy.INSTANCE.getTrackerEntities(entityLookup);
+            ServerEntityLookupProxy.ReferenceListProxy.INSTANCE.remove(trackerEntities, entity);
+        } else if (VersionHelper.hasFoliaPatch && VersionHelper.isOrAbove1_21_4 && IS_AT_MOST_26_1_2) {
+            ServerEntityLookupProxy.INSTANCE.removeRegionTracker(entityLookup, entity);
+        }
+    }
+
     static final class TickingStartAdvice {
         @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
         static boolean onEnter(@Advice.Argument(0) Object entity) {
-            return entity instanceof NonTickingEntity || (ITEM_DISPLAY_CLASS.isInstance(entity) && CraftEngineFurniture.isFurniture(EntityProxy.INSTANCE.getBukkitEntity(entity)));
+            return skipTicking(entity);
         }
     }
 
@@ -136,15 +142,7 @@ public final class LevelCallbackGenerator {
         @Advice.OnMethodExit
         static void onExit(@Advice.Argument(0) Object entity, @Advice.FieldValue("entityLookup") Object entityLookup) {
             if (entity instanceof UntrackedEntity) {
-                Object level = EntityProxy.INSTANCE.getLevel(entity);
-                Object chunkSource = ServerLevelProxy.INSTANCE.getChunkSource(level);
-                ServerChunkCacheProxy.INSTANCE.removeEntity(chunkSource, entity);
-                if (HAS_TRACKER_ENTITIES) {
-                    Object trackerEntities = ServerEntityLookupProxy.INSTANCE.getTrackerEntities(entityLookup);
-                    ServerEntityLookupProxy.ReferenceListProxy.INSTANCE.remove(trackerEntities, entity);
-                } else if (VersionHelper.hasFoliaPatch && VersionHelper.isOrAbove1_21_4 && IS_AT_MOST_26_1_2) {
-                    ServerEntityLookupProxy.INSTANCE.removeRegionTracker(entityLookup, entity);
-                }
+                removeTracking(entity, entityLookup);
             }
         }
     }

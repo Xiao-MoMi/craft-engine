@@ -12,7 +12,6 @@ import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
@@ -35,14 +34,15 @@ import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.LootC
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.entries.LootPoolEntryTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.entries.SingleEntryContainerBaseProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.entries.UniformContainerBaseProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.functions.LootItemFunctionProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.parameters.LootContextParamsProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.predicates.LootItemConditionProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.SConstructor5;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 import org.bukkit.entity.Player;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -77,8 +77,8 @@ public final class CraftEngineItemGenerator {
             conditions = List.class;
             functions = List.class;
         } else {
-            conditions = requireNonNull(SparrowClass.find("net.minecraft.world.level.storage.loot.predicates.LootItemCondition")).arrayType();
-            functions = requireNonNull(SparrowClass.find("net.minecraft.world.level.storage.loot.functions.LootItemFunction")).arrayType();
+            conditions = LootItemConditionProxy.CLASS.arrayType();
+            functions = LootItemFunctionProxy.CLASS.arrayType();
         }
         return requireNonNull(SparrowClass.of(BASE).getDeclaredConstructor(ConstructorMatcher.takeArguments(int.class, int.class, conditions, functions)));
     }
@@ -89,7 +89,7 @@ public final class CraftEngineItemGenerator {
         Method createItemStack = method(BASE, "createItemStack", Consumer.class, LootContextProxy.CLASS);
         Method typeMethod = requireNonNull(SparrowClass.of(BASE).getMethod(
                 MethodMatcher.named(VersionHelper.isOrAbove26_1 ? "codec" : "getType").and(MethodMatcher.takeArguments(new Class<?>[0]))));
-        Class<?> generated = load(subclass(BYTE_BUDDY, BASE, "CraftEngineItem")
+        Class<?> generated = InjectorClassLoading.load(subclass(BYTE_BUDDY, BASE, "CraftEngineItem")
                 .implement(NamedEntry.class)
                 .defineField("name", IdentifierProxy.CLASS, Visibility.PRIVATE, FieldManifestation.FINAL)
                 .defineConstructor(Visibility.PUBLIC).withParameters(parameters)
@@ -132,7 +132,7 @@ public final class CraftEngineItemGenerator {
         MethodDescription serializeCustom = new MethodDescription.ForLoadedMethod(serialize);
         MethodDescription writeName = new MethodDescription.ForLoadedMethod(method(CraftEngineItemGenerator.class, "writeName", JsonObject.class, Object.class));
         // The inherited Gson bridge writes conditions before calling serializeCustom.
-        Class<?> generated = load(subclass(BYTE_BUDDY.with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE), base, "CraftEngineItemSerializer")
+        Class<?> generated = InjectorClassLoading.load(subclass(BYTE_BUDDY.with(MethodGraph.Compiler.ForDeclaredMethods.INSTANCE), base, "CraftEngineItemSerializer")
                 .defineConstructor(Visibility.PUBLIC)
                 .intercept(MethodCall.invoke(requireNonNull(SparrowClass.of(base).getDeclaredConstructor(ConstructorMatcher.takeArguments(new Class<?>[0])))))
                 .defineMethod(serialize.getName(), void.class, Visibility.PUBLIC).withParameters(serialize.getParameterTypes())
@@ -152,10 +152,6 @@ public final class CraftEngineItemGenerator {
     private static DynamicType.Builder<?> subclass(ByteBuddy byteBuddy, Class<?> base, String name) {
         return byteBuddy.subclass(base, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .name(CraftEngineItemGenerator.class.getPackageName() + "." + name);
-    }
-
-    private static Class<?> load(DynamicType.Builder<?> builder) {
-        return builder.make().load(CraftEngineItemGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup())).getLoaded();
     }
 
     private static Method method(Class<?> type, String name, Class<?>... parameters) {

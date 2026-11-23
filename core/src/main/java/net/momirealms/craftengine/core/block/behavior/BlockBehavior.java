@@ -203,7 +203,7 @@ public abstract class BlockBehavior {
     }
 
     /**
-     * --- 1.21+ ---<br>
+     * --- 1.20.3+ ---<br>
      * <code>args[0]</code>: BlockState (state)<br>
      * <code>args[1]</code>: ServerLevel (level)<br>
      * <code>args[2]</code>: BlockPos (pos)<br>
@@ -216,7 +216,7 @@ public abstract class BlockBehavior {
     }
 
     /**
-     * --- 1.21+ ---<br>
+     * --- 1.20.3+ ---<br>
      * <code>args[0]</code>: BlockState (state)<br>
      * <code>args[1]</code>: ServerLevel (level)<br>
      * <code>args[2]</code>: BlockPos (pos)<br>

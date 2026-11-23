@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.injector;
 
-import net.momirealms.craftengine.core.util.MiscUtils;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.DirectionProxy;
@@ -33,317 +32,190 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.CollisionCon
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-import static java.util.Objects.requireNonNull;
+import static net.momirealms.sparrow.reflection.method.matcher.MethodMatcher.takeArguments;
 
 final class BlockReflections {
-    private BlockReflections() {}
+    static final Method GET_SHAPE = method(BlockBehaviourProxy.CLASS, "getShape", VoxelShapeProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, CollisionContextProxy.CLASS));
+    static final Method GET_COLLISION_SHAPE = method(BlockBehaviourProxy.CLASS, "getCollisionShape", VoxelShapeProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, CollisionContextProxy.CLASS));
+    static final Method GET_BLOCK_SUPPORT_SHAPE = method(BlockBehaviourProxy.CLASS, "getBlockSupportShape", VoxelShapeProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS));
+    static final Method IS_PATHFINDABLE = method(BlockBehaviourProxy.CLASS, "isPathfindable", boolean.class,
+            VersionHelper.isOrAbove1_20_5
+                    ? takeArguments(BlockStateProxy.CLASS, PathComputationTypeProxy.CLASS)
+                    : takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, PathComputationTypeProxy.CLASS));
+    static final Method MIRROR = method(BlockBehaviourProxy.CLASS, "mirror", BlockStateProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, MirrorProxy.CLASS));
+    static final Method ROTATE = method(BlockBehaviourProxy.CLASS, "rotate", BlockStateProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, RotationProxy.CLASS));
+    static final Method CAN_SURVIVE = method(BlockBehaviourProxy.CLASS, "canSurvive", boolean.class,
+            takeArguments(BlockStateProxy.CLASS, LevelReaderProxy.CLASS, BlockPosProxy.CLASS));
+    static final Method UPDATE_SHAPE = method(BlockBehaviourProxy.CLASS, "updateShape", BlockStateProxy.CLASS,
+            VersionHelper.isOrAbove1_21_2
+                    ? takeArguments(BlockStateProxy.CLASS, LevelReaderProxy.CLASS, ScheduledTickAccessProxy.CLASS, BlockPosProxy.CLASS,
+                            DirectionProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, RandomSourceProxy.CLASS)
+                    : takeArguments(BlockStateProxy.CLASS, DirectionProxy.CLASS, BlockStateProxy.CLASS,
+                            LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockPosProxy.CLASS));
+    static final Method NEIGHBOR_CHANGED = method(BlockBehaviourProxy.CLASS, "neighborChanged", void.class,
+            takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockProxy.CLASS,
+                    VersionHelper.isOrAbove1_21_2 ? OrientationProxy.CLASS : BlockPosProxy.CLASS, boolean.class));
 
-    public static final Method method$BlockBehaviour$isPathfindable = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isPathfindable")
-                    .and(VersionHelper.isOrAbove1_20_5
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, PathComputationTypeProxy.CLASS)
-                            : MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, PathComputationTypeProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
+    static final Method IS_SIGNAL_SOURCE = method(BlockBehaviourProxy.CLASS, "isSignalSource", boolean.class,
+            takeArguments(BlockStateProxy.CLASS));
+    static final Method GET_SIGNAL = method(BlockBehaviourProxy.CLASS, "getSignal", int.class,
+            takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS));
+    static final Method GET_DIRECT_SIGNAL = method(BlockBehaviourProxy.CLASS, "getDirectSignal", int.class,
+            takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS));
+    static final Method HAS_ANALOG_OUTPUT_SIGNAL = method(BlockBehaviourProxy.CLASS, "hasAnalogOutputSignal", boolean.class,
+            takeArguments(BlockStateProxy.CLASS));
+    static final Method GET_ANALOG_OUTPUT_SIGNAL = method(BlockBehaviourProxy.CLASS, "getAnalogOutputSignal", int.class,
+            VersionHelper.isOrAbove1_21_9
+                    ? takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS)
+                    : takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS));
 
-    public static final Method method$BlockBehaviour$getShape = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getShape")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, CollisionContextProxy.CLASS))
-                    .and(MethodMatcher.returnType(VoxelShapeProxy.CLASS)))
-    );
+    static final Method TICK = method(BlockBehaviourProxy.CLASS, "tick", void.class,
+            takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, RandomSourceProxy.CLASS));
+    static final Method RANDOM_TICK = method(BlockBehaviourProxy.CLASS, "randomTick", void.class,
+            takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, RandomSourceProxy.CLASS));
+    static final Method ON_PLACE = method(BlockBehaviourProxy.CLASS, "onPlace", void.class,
+            takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class));
+    static final Method AFFECT_NEIGHBORS_AFTER_REMOVAL = lookup(BlockBehaviourProxy.CLASS, void.class,
+            VersionHelper.isOrAbove1_21_5
+                    ? takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, boolean.class)
+                    : takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class),
+            true, "affectNeighborsAfterRemoval", "onRemove");
+    static final Method ATTACK = method(BlockBehaviourProxy.CLASS, "attack", void.class,
+            takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, PlayerProxy.CLASS));
+    static final Method TRIGGER_EVENT = method(BlockBehaviourProxy.CLASS, "triggerEvent", boolean.class,
+            takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, int.class, int.class));
+    static final Method ENTITY_INSIDE = method(BlockBehaviourProxy.CLASS, "entityInside", void.class,
+            entityInsideArguments());
+    static final Method ON_PROJECTILE_HIT = method(BlockBehaviourProxy.CLASS, "onProjectileHit", void.class,
+            takeArguments(LevelProxy.CLASS, BlockStateProxy.CLASS, BlockHitResultProxy.CLASS, ProjectileProxy.CLASS));
+    static final Method SPAWN_AFTER_BREAK = method(BlockBehaviourProxy.CLASS, "spawnAfterBreak", void.class,
+            takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, ItemStackProxy.CLASS, boolean.class));
+    @Nullable
+    static final Method ON_EXPLOSION_HIT = lookup(BlockBehaviourProxy.CLASS, void.class,
+            takeArguments(BlockStateProxy.CLASS, VersionHelper.isOrAbove1_21_2 ? ServerLevelProxy.CLASS : LevelProxy.CLASS,
+                    BlockPosProxy.CLASS, ExplosionProxy.CLASS, BiConsumer.class),
+            VersionHelper.isOrAbove1_21, "onExplosionHit");
 
-    public static final Method method$BlockBehaviour$getCollisionShape = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getCollisionShape")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, CollisionContextProxy.CLASS))
-                    .and(MethodMatcher.returnType(VoxelShapeProxy.CLASS)))
-    );
+    static final Method SET_PLACED_BY = method(BlockProxy.CLASS, "setPlacedBy", void.class,
+            takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, LivingEntityProxy.CLASS, ItemStackProxy.CLASS));
+    static final Method PLAYER_WILL_DESTROY = method(BlockProxy.CLASS, "playerWillDestroy",
+            VersionHelper.isOrAbove1_20_3 ? BlockStateProxy.CLASS : void.class,
+            takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, PlayerProxy.CLASS));
+    static final Method STEP_ON = method(BlockProxy.CLASS, "stepOn", void.class,
+            takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, EntityProxy.CLASS));
+    static final Method FALL_ON = method(BlockProxy.CLASS, "fallOn", void.class,
+            takeArguments(LevelProxy.CLASS, BlockStateProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS,
+                    VersionHelper.isOrAbove1_21_5 ? double.class : float.class));
+    @Nullable
+    static final Method UPDATE_ENTITY_MOVEMENT_AFTER_FALL_ON = lookup(BlockProxy.CLASS, void.class,
+            takeArguments(BlockGetterProxy.CLASS, EntityProxy.CLASS),
+            !VersionHelper.isOrAbove26_2, "updateEntityMovementAfterFallOn", "updateEntityAfterFallOn");
+    static final Method HANDLE_PRECIPITATION = method(BlockProxy.CLASS, "handlePrecipitation", void.class,
+            takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BiomeProxy.PrecipitationProxy.CLASS));
 
-    public static final Method method$BlockBehaviour$getBlockSupportShape = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getBlockSupportShape")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS))
-                    .and(MethodMatcher.returnType(VoxelShapeProxy.CLASS)))
-    );
+    static final Method ON_LAND = method(FallableProxy.CLASS, "onLand", void.class,
+            takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BlockStateProxy.CLASS, FallingBlockEntityProxy.CLASS));
+    static final Method ON_BROKEN_AFTER_FALL = method(FallableProxy.CLASS, "onBrokenAfterFall", void.class,
+            takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, FallingBlockEntityProxy.CLASS));
 
-    public static final Method method$BlockBehaviour$hasAnalogOutputSignal = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("hasAnalogOutputSignal")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
+    static final Method IS_VALID_BONEMEAL_TARGET = method(BonemealableBlockProxy.CLASS, "isValidBonemealTarget", boolean.class,
+            bonemealTargetArguments());
+    static final Method IS_BONEMEAL_SUCCESS = method(BonemealableBlockProxy.CLASS, "isBonemealSuccess", boolean.class,
+            VersionHelper.isOrAbove26_3
+                    ? takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
+                    : takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS));
+    static final Method PERFORM_BONEMEAL = method(BonemealableBlockProxy.CLASS, "performBonemeal", void.class,
+            VersionHelper.isOrAbove26_3
+                    ? takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
+                    : takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS));
 
-    public static final Method method$BlockBehaviour$getAnalogOutputSignal = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getAnalogOutputSignal")
-                    .and(VersionHelper.isOrAbove1_21_9
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS)
-                            : MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS))
-                    .and(MethodMatcher.returnType(int.class)))
-    );
+    static final Method CAN_PLACE_LIQUID = method(SimpleWaterloggedBlockProxy.CLASS, "canPlaceLiquid", boolean.class,
+            canPlaceLiquidArguments());
+    static final Method PLACE_LIQUID = method(SimpleWaterloggedBlockProxy.CLASS, "placeLiquid", boolean.class,
+            takeArguments(LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidStateProxy.CLASS));
+    static final Method PICKUP_BLOCK = method(SimpleWaterloggedBlockProxy.CLASS, "pickupBlock", ItemStackProxy.CLASS,
+            pickupBlockArguments());
+    static final Method GET_PICKUP_SOUND = method(SimpleWaterloggedBlockProxy.CLASS, "getPickupSound", Optional.class,
+            MethodMatcher.any());
 
-    public static final Method method$BlockBehaviour$updateShape = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("updateShape")
-                    .and(VersionHelper.isOrAbove1_21_2
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelReaderProxy.CLASS, ScheduledTickAccessProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, RandomSourceProxy.CLASS)
-                            : MethodMatcher.takeArguments(BlockStateProxy.CLASS, DirectionProxy.CLASS, BlockStateProxy.CLASS, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockPosProxy.CLASS))
-                    .and(MethodMatcher.returnType(BlockStateProxy.CLASS)))
-    );
+    static final Method GET_CONTAINER = method(WorldlyContainerHolderProxy.CLASS, "getContainer", WorldlyContainerProxy.CLASS,
+            takeArguments(BlockStateProxy.CLASS, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS));
 
-    public static final Method method$BlockBehaviour$canSurvive = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("canSurvive")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelReaderProxy.CLASS, BlockPosProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
+    static final Method HAS_PROPERTY = method(StateHolderProxy.CLASS, "hasProperty", boolean.class,
+            takeArguments(PropertyProxy.CLASS));
+    static final Method GET_VALUE = method(StateHolderProxy.CLASS, "getValue", Comparable.class,
+            takeArguments(PropertyProxy.CLASS));
+    static final Method SET_VALUE = method(StateHolderProxy.CLASS, "setValue", Object.class,
+            takeArguments(PropertyProxy.CLASS, Comparable.class));
+    static final Method GET_DROPS = method(BlockBehaviourProxy.BlockStateBaseProxy.CLASS, "getDrops", List.class,
+            takeArguments(LootParamsProxy.BuilderProxy.CLASS));
+    static final Method IS_BLOCK = VersionHelper.isOrAbove26_1
+            ? method(TypedInstanceProxy.CLASS, "is", boolean.class, takeArguments(Object.class))
+            : method(BlockBehaviourProxy.BlockStateBaseProxy.CLASS, "is", boolean.class, takeArguments(BlockProxy.CLASS));
 
-    public static final Method method$Block$stepOn = requireNonNull(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("stepOn")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, EntityProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
+    private BlockReflections() {
+    }
 
-    public static final Method method$Fallable$onLand = requireNonNull(
-            SparrowClass.of(FallableProxy.CLASS).getDeclaredMethod(MethodMatcher.named("onLand")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BlockStateProxy.CLASS, FallingBlockEntityProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
+    private static MethodMatcher bonemealTargetArguments() {
+        if (VersionHelper.isOrAbove26_3) {
+            return takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS);
+        }
+        if (VersionHelper.isOrAbove1_20_2) {
+            return takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS);
+        }
+        return takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class);
+    }
 
-    public static final Method method$Fallable$onBrokenAfterFall = requireNonNull(
-            SparrowClass.of(FallableProxy.CLASS).getDeclaredMethod(MethodMatcher.named("onBrokenAfterFall")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, FallingBlockEntityProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
+    private static MethodMatcher entityInsideArguments() {
+        if (VersionHelper.isOrAbove1_21_10) {
+            return takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS,
+                    InsideBlockEffectApplierProxy.CLASS, boolean.class);
+        }
+        if (VersionHelper.isOrAbove1_21_5) {
+            return takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS,
+                    InsideBlockEffectApplierProxy.CLASS);
+        }
+        return takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS);
+    }
 
-    public static final Method method$StateHolder$hasProperty = requireNonNull(
-            SparrowClass.of(StateHolderProxy.CLASS).getDeclaredMethod(MethodMatcher.named("hasProperty")
-                    .and(MethodMatcher.takeArguments(PropertyProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
+    private static MethodMatcher canPlaceLiquidArguments() {
+        if (VersionHelper.isOrAbove1_20_2) {
+            Class<?> actor = VersionHelper.isOrAbove1_21_5 ? LivingEntityProxy.CLASS : PlayerProxy.CLASS;
+            return takeArguments(actor, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidProxy.CLASS);
+        }
+        return takeArguments(BlockGetterProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidProxy.CLASS);
+    }
 
-    public static final Method method$StateHolder$getValue = requireNonNull(
-            SparrowClass.of(StateHolderProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getValue")
-                    .and(MethodMatcher.takeArguments(PropertyProxy.CLASS))
-                    .and(MethodMatcher.returnType(Comparable.class)))
-    );
+    private static MethodMatcher pickupBlockArguments() {
+        if (VersionHelper.isOrAbove1_20_2) {
+            Class<?> actor = VersionHelper.isOrAbove1_21_5 ? LivingEntityProxy.CLASS : PlayerProxy.CLASS;
+            return takeArguments(actor, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS);
+        }
+        return takeArguments(LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS);
+    }
 
-    public static final Method method$StateHolder$setValue = requireNonNull(
-            SparrowClass.of(StateHolderProxy.CLASS).getDeclaredMethod(MethodMatcher.named("setValue")
-                    .and(MethodMatcher.takeArguments(PropertyProxy.CLASS, Comparable.class))
-                    .and(MethodMatcher.returnType(Object.class)))
-    );
+    private static Method method(Class<?> owner, String name, Class<?> returnType, MethodMatcher parameters) {
+        return lookup(owner, returnType, parameters, true, name);
+    }
 
-    public static final Method method$BonemealableBlock$isValidBonemealTarget = requireNonNull(
-            SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isValidBonemealTarget")
-                    .and(VersionHelper.isOrAbove26_3
-                            ? MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
-                            : VersionHelper.isOrAbove1_20_2
-                            ? MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS)
-                            : MethodMatcher.takeArguments(LevelReaderProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$WorldlyContainerHolder$getContainer = requireNonNull(
-            SparrowClass.of(WorldlyContainerHolderProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getContainer")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS))
-                    .and(MethodMatcher.returnType(WorldlyContainerProxy.CLASS)))
-    );
-
-    public static final Method method$BonemealableBlock$isBonemealSuccess = requireNonNull(
-            SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isBonemealSuccess")
-                    .and(VersionHelper.isOrAbove26_3
-                            ? MethodMatcher.takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
-                            : MethodMatcher.takeArguments(LevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$SimpleWaterloggedBlock$canPlaceLiquid = requireNonNull(
-            SparrowClass.of(SimpleWaterloggedBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("canPlaceLiquid")
-                    .and(VersionHelper.isOrAbove1_21_5
-                            ? MethodMatcher.takeArguments(LivingEntityProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidProxy.CLASS)
-                            : VersionHelper.isOrAbove1_20_2
-                                ? MethodMatcher.takeArguments(PlayerProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidProxy.CLASS)
-                                : MethodMatcher.takeArguments(BlockGetterProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$SimpleWaterloggedBlock$placeLiquid = requireNonNull(
-            SparrowClass.of(SimpleWaterloggedBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("placeLiquid")
-                    .and(MethodMatcher.takeArguments(LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, FluidStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$SimpleWaterloggedBlock$pickupBlock = requireNonNull(
-            SparrowClass.of(SimpleWaterloggedBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("pickupBlock")
-                    .and(VersionHelper.isOrAbove1_21_5
-                            ? MethodMatcher.takeArguments(LivingEntityProxy.CLASS, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS)
-                            : VersionHelper.isOrAbove1_20_2
-                                ? MethodMatcher.takeArguments(PlayerProxy.CLASS, LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS)
-                                : MethodMatcher.takeArguments(LevelAccessorProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(ItemStackProxy.CLASS)))
-    );
-
-    public static final Method method$SimpleWaterloggedBlock$getPickupSound = requireNonNull(
-            SparrowClass.of(SimpleWaterloggedBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getPickupSound")
-                    .and(MethodMatcher.returnType(Optional.class)))
-    );
-
-    public static final Method method$BlockBehaviour$rotate = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("rotate")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, RotationProxy.CLASS))
-                    .and(MethodMatcher.returnType(BlockStateProxy.CLASS)))
-    );
-
-    public static final Method method$BlockBehaviour$mirror = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("mirror")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, MirrorProxy.CLASS))
-                    .and(MethodMatcher.returnType(BlockStateProxy.CLASS)))
-    );
-
-    public static final Method method$BlockBehaviour$neighborChanged = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("neighborChanged")
-                    .and(VersionHelper.isOrAbove1_21_2
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockProxy.CLASS, OrientationProxy.CLASS, boolean.class)
-                            : MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockProxy.CLASS, BlockPosProxy.CLASS, boolean.class))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BonemealableBlock$performBonemeal = requireNonNull(
-            SparrowClass.of(BonemealableBlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("performBonemeal")
-                    .and(VersionHelper.isOrAbove26_3
-                            ? MethodMatcher.takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, BonemealSourceProxy.CLASS)
-                            : MethodMatcher.takeArguments(ServerLevelProxy.CLASS, RandomSourceProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$tick = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("tick")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, RandomSourceProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$randomTick = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("randomTick")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, RandomSourceProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$onPlace = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("onPlace")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$entityInside = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("entityInside")
-                    .and(VersionHelper.isOrAbove1_21_10
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS, InsideBlockEffectApplierProxy.CLASS, boolean.class)
-                            : VersionHelper.isOrAbove1_21_5
-                                ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS, InsideBlockEffectApplierProxy.CLASS)
-                                : MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$affectNeighborsAfterRemoval = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("affectNeighborsAfterRemoval", "onRemove")
-                    .and(VersionHelper.isOrAbove1_21_5
-                            ? MethodMatcher.takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, boolean.class)
-                            : MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, boolean.class))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$getSignal = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getSignal")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS))
-                    .and(MethodMatcher.returnType(int.class)))
-    );
-
-    public static final Method method$BlockBehaviour$getDirectSignal = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getDirectSignal")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS, DirectionProxy.CLASS))
-                    .and(MethodMatcher.returnType(int.class)))
-    );
-
-    public static final Method method$BlockBehaviour$isSignalSource = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("isSignalSource")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$BlockStateBase$getDrops = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.BlockStateBaseProxy.CLASS).getDeclaredMethod(MethodMatcher.named("getDrops")
-                    .and(MethodMatcher.takeArguments(LootParamsProxy.BuilderProxy.CLASS))
-                    .and(MethodMatcher.returnType(List.class)))
-    );
-
-    public static final Method method$Block$playerWillDestroy = requireNonNull(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("playerWillDestroy")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, PlayerProxy.CLASS))
-                    .and(MethodMatcher.returnType(VersionHelper.isOrAbove1_20_3 ? BlockStateProxy.CLASS : void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$spawnAfterBreak = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("spawnAfterBreak")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, ServerLevelProxy.CLASS, BlockPosProxy.CLASS, ItemStackProxy.CLASS, boolean.class))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$Block$fallOn = requireNonNull(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("fallOn")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockStateProxy.CLASS, BlockPosProxy.CLASS, EntityProxy.CLASS, VersionHelper.isOrAbove1_21_5 ? double.class : float.class))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockStateBase$is = requireNonNull(
-            SparrowClass.of((Class<?>) (VersionHelper.isOrAbove26_1 ? TypedInstanceProxy.CLASS : BlockBehaviourProxy.BlockStateBaseProxy.CLASS)).getDeclaredMethod(MethodMatcher.named("is")
-                    .and(MethodMatcher.takeArguments(VersionHelper.isOrAbove26_1 ? Object.class : BlockProxy.CLASS))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$BlockBehaviour$onProjectileHit = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("onProjectileHit")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockStateProxy.CLASS, BlockHitResultProxy.CLASS, ProjectileProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$Block$setPlacedBy = requireNonNull(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("setPlacedBy")
-                    .and(MethodMatcher.takeArguments(LevelProxy.CLASS, BlockPosProxy.CLASS, BlockStateProxy.CLASS, LivingEntityProxy.CLASS, ItemStackProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$attack = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("attack")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, PlayerProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    public static final Method method$BlockBehaviour$triggerEvent = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("triggerEvent")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, int.class, int.class))
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
-
-    public static final Method method$Block$handlePrecipitation = requireNonNull(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("handlePrecipitation")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, LevelProxy.CLASS, BlockPosProxy.CLASS, BiomeProxy.PrecipitationProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class)))
-    );
-
-    // 1.21+
-    public static final Method method$BlockBehaviour$onExplosionHit = MiscUtils.requireNonNullIf(
-            SparrowClass.of(BlockBehaviourProxy.CLASS).getDeclaredMethod(MethodMatcher.named("onExplosionHit")
-                    .and(MethodMatcher.takeArguments(BlockStateProxy.CLASS, VersionHelper.isOrAbove1_21_2 ? ServerLevelProxy.CLASS : LevelProxy.CLASS, BlockPosProxy.CLASS, ExplosionProxy.CLASS, BiConsumer.class))
-                    .and(MethodMatcher.returnType(void.class))),
-            VersionHelper.isOrAbove1_21
-    );
-
-    // 1.20~26.1.2
-    public static final Method method$Block$updateEntityMovementAfterFallOn = MiscUtils.requireNonNullIf(
-            SparrowClass.of(BlockProxy.CLASS).getDeclaredMethod(MethodMatcher.named("updateEntityMovementAfterFallOn", "updateEntityAfterFallOn")
-                    .and(MethodMatcher.takeArguments(BlockGetterProxy.CLASS, EntityProxy.CLASS))
-                    .and(MethodMatcher.returnType(void.class))),
-            !VersionHelper.isOrAbove26_2
-    );
+    private static Method lookup(Class<?> owner, Class<?> returnType, MethodMatcher parameters, boolean required, String... names) {
+        Method method = SparrowClass.of(owner).getDeclaredMethod(MethodMatcher.returnType(returnType)
+                .and(MethodMatcher.named(names)).and(parameters));
+        if (method == null && required) {
+            throw new IllegalStateException("Missing method " + owner.getName() + "." + String.join(" / ", names) + " returning " + returnType.getTypeName());
+        }
+        return method;
+    }
 }

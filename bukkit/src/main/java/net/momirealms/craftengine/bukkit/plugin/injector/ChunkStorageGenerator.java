@@ -6,7 +6,6 @@ import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.FixedValue;
@@ -32,7 +31,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -79,7 +77,7 @@ final class ChunkStorageGenerator {
         Method exchange = requireNonNull(method(nativeType, "getAndSet", int.class, int.class, int.class, Object.class));
         Method uncheckedExchange = requireNonNull(method(nativeType, "getAndSetUnchecked", int.class, int.class, int.class, Object.class));
         Advice advice = Advice.to(BlockWriteAdvice.class);
-        Class<?> generated = load(storageBuilder(base, "NativePalettedContainer", InjectedStorage.Palette.class)
+        Class<?> generated = InjectorClassLoading.load(storageBuilder(base, "NativePalettedContainer", InjectedStorage.Palette.class)
                 .defineConstructor(Visibility.PUBLIC).withParameters(parameters).intercept(constructor)
                 .method(namedOneOf("delegated")).intercept(FixedValue.self())
                 .method(is(exchange)).intercept(advice.wrap(MethodCall.invoke(exchange).onSuper().withAllArguments()))
@@ -128,7 +126,7 @@ final class ChunkStorageGenerator {
             }
             builder = builder.method(is(candidate)).intercept(implementation);
         }
-        return load(builder).asSubclass(PaletteBridge.class);
+        return InjectorClassLoading.load(builder).asSubclass(PaletteBridge.class);
     }
 
     private static Set<Method> paletteMutators(SparrowClass<?> type) {
@@ -156,7 +154,7 @@ final class ChunkStorageGenerator {
         Constructor<?> parent = requireNonNull(nativeType.getDeclaredConstructor(ConstructorMatcher.takeArguments(arguments)));
         Method recalc = requireNonNull(method(nativeType, "recalcBlockCounts"));
         Method set = requireNonNull(method(nativeType, "setBlockState", int.class, int.class, int.class, BlockStateProxy.CLASS, boolean.class));
-        Class<?> generated = load(storageBuilder(base, "InjectedLevelChunkSection", InjectedStorage.Section.class)
+        Class<?> generated = InjectorClassLoading.load(storageBuilder(base, "InjectedLevelChunkSection", InjectedStorage.Section.class)
                 .defineField("initialized", boolean.class, Visibility.PRIVATE, FieldManifestation.FINAL)
                 .defineConstructor(Visibility.PUBLIC).withParameters(arguments)
                 .intercept(MethodCall.invoke(parent).withAllArguments()
@@ -183,10 +181,6 @@ final class ChunkStorageGenerator {
 
     private static Method method(SparrowClass<?> owner, String name, Class<?>... arguments) {
         return owner.getDeclaredMethod(MethodMatcher.named(name).and(MethodMatcher.takeArguments(arguments)));
-    }
-
-    private static Class<?> load(DynamicType.Builder<?> builder) {
-        return builder.make().load(ChunkStorageGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup())).getLoaded();
     }
 
     interface PaletteBridge extends InjectedStorage.Palette {
@@ -244,9 +238,13 @@ final class ChunkStorageGenerator {
 
     private static final class BlockWriteAdvice {
         @Advice.OnMethodExit
-        private static void finish(@Advice.This InjectedStorage storage, @Advice.FieldValue("active") boolean active,
-                                   @Advice.Argument(0) int x, @Advice.Argument(1) int y, @Advice.Argument(2) int z,
-                                   @Advice.Argument(3) Object state, @Advice.Return Object previous) {
+        private static void finish(@Advice.This InjectedStorage storage,
+                                   @Advice.FieldValue("active") boolean active,
+                                   @Advice.Argument(0) int x,
+                                   @Advice.Argument(1) int y,
+                                   @Advice.Argument(2) int z,
+                                   @Advice.Argument(3) Object state,
+                                   @Advice.Return Object previous) {
             if (active) {
                 WorldStorageInjector.compareAndUpdateBlockState(x, y, z, state, previous, storage);
             }

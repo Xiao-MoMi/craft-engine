@@ -6,17 +6,17 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.implementation.FieldAccessor;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.bind.annotation.Argument;
 import net.bytebuddy.implementation.bind.annotation.FieldValue;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.resources.IdentifierProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.util.RandomSourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelReaderProxy;
@@ -31,6 +31,7 @@ import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.function.Predicate;
 
 import static java.util.Objects.requireNonNull;
@@ -45,17 +46,15 @@ public final class BiomeFilterGenerator {
     public static final Method method$PlacementModifier$type = requireNonNull(
             SparrowClass.of(PlacementModifierProxy.CLASS).getDeclaredMethod(MethodMatcher.takeArguments(new Class<?>[0]).and(MethodMatcher.returnType(VersionHelper.isOrAbove26_3 ? MapCodec.class : PlacementModifierTypeProxy.CLASS)))
     );
-    private static SConstructor1 constructor$CraftEngineBiomeFilter;
-    private static Object placementModifierType$BIOME_FILTER;
+    private static SConstructor1 constructor;
 
-    private BiomeFilterGenerator() {}
+    private BiomeFilterGenerator() {
+    }
 
     public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V21);
-        placementModifierType$BIOME_FILTER = PlacementModifierTypeProxy.INSTANCE.getBiomeFilter();
-        String packageWithName = BiomeFilterGenerator.class.getName();
-        String generatedClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineBiomeFilter";
-        Class<?> clazz$CraftEngineBiomeFilter = byteBuddy
+        String generatedClassName = BiomeFilterGenerator.class.getPackageName() + ".CraftEngineBiomeFilter";
+        Class<?> generated = byteBuddy
                 .subclass(PlacementFilterProxy.CLASS)
                 .name(generatedClassName)
                 .defineField("filter", Predicate.class, Visibility.PRIVATE, FieldManifestation.FINAL)
@@ -64,33 +63,26 @@ public final class BiomeFilterGenerator {
                 .intercept(MethodCall.invoke(constructor$PlacementFilter).andThen(FieldAccessor.ofField("filter").setsArgumentAt(0)))
                 .method(ElementMatchers.is(method$PlacementFilter$shouldPlace))
                 .intercept(MethodDelegation.to(ShouldPlaceInterceptor.class))
+                .defineField("type", method$PlacementModifier$type.getReturnType(), Modifier.PRIVATE | Modifier.STATIC)
+                .initializer(new LoadedTypeInitializer.ForStaticField("type", PlacementModifierTypeProxy.INSTANCE.getBiomeFilter()))
                 .method(ElementMatchers.is(method$PlacementModifier$type))
-                .intercept(MethodDelegation.to(TypeInterceptor.class))
+                .intercept(FieldAccessor.ofField("type"))
                 .make()
                 .load(BiomeFilterGenerator.class.getClassLoader())
                 .getLoaded();
-        constructor$CraftEngineBiomeFilter = SparrowClass.of(clazz$CraftEngineBiomeFilter)
+        constructor = SparrowClass.of(generated)
                 .getSparrowConstructor(ConstructorMatcher.takeArguments(Predicate.class))
                 .asm$1();
     }
 
     public static Object createBiomePlacementFilter(Predicate<Key> filter) {
-        return constructor$CraftEngineBiomeFilter.newInstance(filter);
-    }
-
-    public static class TypeInterceptor {
-
-        private TypeInterceptor() {}
-
-        @RuntimeType
-        public static Object intercept() {
-            return placementModifierType$BIOME_FILTER;
-        }
+        return constructor.newInstance(filter);
     }
 
     public static class ShouldPlaceInterceptor {
 
-        private ShouldPlaceInterceptor() {}
+        private ShouldPlaceInterceptor() {
+        }
 
         public static boolean intercept(@FieldValue("filter") Predicate<Key> filter,
                                         @Argument(0) Object context,
@@ -99,7 +91,7 @@ public final class BiomeFilterGenerator {
             Object biomeHolder = LevelReaderProxy.INSTANCE.getBiome(level, pos);
             Object resourceKey = HolderProxy.ReferenceProxy.INSTANCE.getKey(biomeHolder);
             Object identifier = ResourceKeyProxy.INSTANCE.getIdentifier(resourceKey);
-            Key biomeId = Key.of(IdentifierProxy.INSTANCE.getNamespace(identifier), IdentifierProxy.INSTANCE.getPath(identifier));
+            Key biomeId = KeyUtils.identifierToKey(identifier);
             return filter.test(biomeId);
         }
     }

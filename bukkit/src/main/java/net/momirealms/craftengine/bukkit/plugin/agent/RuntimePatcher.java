@@ -125,27 +125,6 @@ public final class RuntimePatcher {
         return instrumentation;
     }
 
-    public static void installBlockIdentityHook(Class<?> customStateClass, String methodName) {
-        Method method;
-        try {
-            // Moonrise adds a typed is(Block) overload even when vanilla only declares is(Object).
-            method = BlockStateProxy.CLASS.getMethod(methodName, BlockProxy.CLASS);
-        } catch (NoSuchMethodException ignored) {
-            return;
-        }
-        if (!Modifier.isFinal(method.getModifiers()) || method.getReturnType() != boolean.class) {
-            return;
-        }
-        try {
-            Class<?> bridge = injectBridge();
-            bridge.getField("CUSTOM_BLOCK_STATE").set(null, customStateClass);
-            bridge.getField("CUSTOM_BLOCK_MATCH").set(null, (BiPredicate<Object, Object>) BlockStateGenerator.IsBlockInterceptor.INSTANCE::intercept);
-            BlockIdentityAgent.install(instrumentation(), method);
-        } catch (Throwable t) {
-            BukkitCraftEngine.instance().logger().warn("Failed to patch block identity checks; scheduled ticks may be lost across custom block state changes", t);
-        }
-    }
-
     public static void installEquipmentChangeHook(BukkitCraftEngine plugin) {
         if (!requiresEquipmentChangeHook()) return;
         if (equipmentChangeHookInstalled) return;

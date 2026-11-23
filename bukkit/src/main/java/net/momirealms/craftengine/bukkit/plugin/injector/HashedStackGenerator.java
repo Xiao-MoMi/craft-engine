@@ -33,24 +33,26 @@ public final class HashedStackGenerator {
             SparrowClass.of(HashedStackProxy.CLASS).getDeclaredMethod(MethodMatcher.takeArguments(ItemStackProxy.CLASS, HashedPatchMapProxy.HashGeneratorProxy.CLASS)
                     .and(MethodMatcher.returnType(boolean.class)))
     );
-    private static SConstructor2 constructor$CraftEngineHashedStack;
+    private static SConstructor2 constructor;
 
-    private HashedStackGenerator() {}
+    private HashedStackGenerator() {
+    }
 
     public static void init() {
         ByteBuddy byteBuddy = new ByteBuddy(ClassFileVersion.JAVA_V17);
-        String packageWithName = HashedStackGenerator.class.getName();
-        String generatedClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineHashedStack";
-        Class<?> clazz$CraftEngineHashedStack;
+        String generatedClassName = HashedStackGenerator.class.getPackageName() + ".CraftEngineHashedStack";
+        Class<?> generated;
         try {
-            clazz$CraftEngineHashedStack = byteBuddy
+            generated = byteBuddy
                     .subclass(Object.class)
                     .name(generatedClassName)
                     .defineField("hashedStack", Object.class, Visibility.PRIVATE, FieldManifestation.FINAL)
                     .defineField("player", Player.class, Visibility.PRIVATE, FieldManifestation.FINAL)
                     .defineConstructor(Visibility.PUBLIC)
                     .withParameters(Object.class, Player.class)
-                    .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()).andThen(FieldAccessor.ofField("hashedStack").setsArgumentAt(0)).andThen(FieldAccessor.ofField("player").setsArgumentAt(1)))
+                    .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor())
+                            .andThen(FieldAccessor.ofField("hashedStack").setsArgumentAt(0))
+                            .andThen(FieldAccessor.ofField("player").setsArgumentAt(1)))
                     .implement(HashedStackProxy.CLASS)
                     .method(ElementMatchers.is(method$HashedStack$matches))
                     .intercept(MethodDelegation.to(MatchesInterceptor.class))
@@ -60,18 +62,19 @@ public final class HashedStackGenerator {
         } catch (NoSuchMethodException e) {
             throw new IllegalStateException("Failed to generate " + generatedClassName, e);
         }
-        constructor$CraftEngineHashedStack = SparrowClass.of(clazz$CraftEngineHashedStack)
+        constructor = SparrowClass.of(generated)
                 .getSparrowConstructor(ConstructorMatcher.takeArguments(Object.class, Player.class))
                 .asm$2();
     }
 
     public static Object create(Object hashedStack, Player player) {
-        return constructor$CraftEngineHashedStack.newInstance(hashedStack, player);
+        return constructor.newInstance(hashedStack, player);
     }
 
     public static class MatchesInterceptor {
 
-        private MatchesInterceptor() {}
+        private MatchesInterceptor() {
+        }
 
         public static boolean intercept(@FieldValue("hashedStack") Object hashedStack,
                                         @FieldValue("player") Player player,

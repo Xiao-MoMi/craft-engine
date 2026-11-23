@@ -7,7 +7,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.FixedValue;
@@ -21,9 +20,13 @@ import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
 import net.momirealms.craftengine.proxy.minecraft.nbt.CompoundTagProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerLevelProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.damagesource.DamageSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityDimensionsProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityTypesProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.InteractionProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.LeashableProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.MoverTypeProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.vehicle.boat.BoatProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.item.ItemsProxy;
@@ -34,10 +37,8 @@ import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.constructor.SConstructor4;
 import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
-import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.function.Supplier;
@@ -49,16 +50,13 @@ import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 public final class CollisionEntityGenerator {
     private static final Class<?>[] CONSTRUCTOR_PARAMETERS = {EntityTypeProxy.CLASS, LevelProxy.CLASS, boolean.class, Supplier.class};
     private static final Supplier<Object> AIR = () -> ItemsProxy.AIR;
-    private static final Class<?> INTERACTION = requireNonNull(SparrowClass.find("net.minecraft.world.entity.Interaction"));
     private static final Class<?> SAVE_OUTPUT = VersionHelper.isOrAbove1_21_6 ? ValueOutputProxy.CLASS : CompoundTagProxy.CLASS;
-    private static final Class<?> REMOVAL_REASON = requireNonNull(SparrowClass.find("net.minecraft.world.entity.Entity$RemovalReason"));
-    private static final Object DISCARDED = SparrowClass.of(REMOVAL_REASON).getDeclaredSparrowField(FieldMatcher.named("DISCARDED")).asm().get(null);
     private static final Class<?> COLLISION_BOAT_CLASS = generate(BoatProxy.CLASS, "CollisionBoat", true);
-    private static final Class<?> COLLISION_INTERACTION_CLASS = generate(INTERACTION, "CollisionInteraction", false);
+    private static final Class<?> COLLISION_INTERACTION_CLASS = generate(InteractionProxy.CLASS, "CollisionInteraction", false);
     private static final SConstructor4 COLLISION_BOAT = constructor(COLLISION_BOAT_CLASS);
     private static final SConstructor4 NON_COLLISION_BOAT = constructor(generateNonCollision(BoatProxy.CLASS, COLLISION_BOAT_CLASS, "NonCollisionBoat"));
     private static final SConstructor4 COLLISION_INTERACTION = constructor(COLLISION_INTERACTION_CLASS);
-    private static final SConstructor4 NON_COLLISION_INTERACTION = constructor(generateNonCollision(INTERACTION, COLLISION_INTERACTION_CLASS, "NonCollisionInteraction"));
+    private static final SConstructor4 NON_COLLISION_INTERACTION = constructor(generateNonCollision(InteractionProxy.CLASS, COLLISION_INTERACTION_CLASS, "NonCollisionInteraction"));
 
     private CollisionEntityGenerator() {
     }
@@ -109,7 +107,8 @@ public final class CollisionEntityGenerator {
                 .defineConstructor(Visibility.PUBLIC).withParameters(CONSTRUCTOR_PARAMETERS)
                 .intercept(initialize)
                 .method(named("destroy").and(takesArguments(0)))
-                .intercept(MethodCall.invoke(method(base, "remove", REMOVAL_REASON)).withReference(DISCARDED))
+                .intercept(MethodCall.invoke(method(base, "remove", EntityProxy.RemovalReasonProxy.CLASS))
+                        .withReference(EntityProxy.RemovalReasonProxy.DISCARDED))
                 .method(named("getEntityId").and(takesArguments(0)))
                 .intercept(MethodCall.invoke(method(base, "getId")))
                 .method(virtual(base, "setPos", double.class, double.class, double.class))
@@ -125,11 +124,11 @@ public final class CollisionEntityGenerator {
         if (boat) {
             builder = boatMethods(builder, base);
         }
-        return load(collisionMethods(builder, base, true));
+        return InjectorClassLoading.load(collisionMethods(builder, base, true));
     }
 
     private static Class<?> generateNonCollision(Class<?> base, Class<?> collision, String name) {
-        return load(collisionMethods(subclass(collision, name, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING), base, false));
+        return InjectorClassLoading.load(collisionMethods(subclass(collision, name, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING), base, false));
     }
 
     private static DynamicType.Builder<?> collisionMethods(DynamicType.Builder<?> builder, Class<?> base, boolean collides) {
@@ -146,10 +145,9 @@ public final class CollisionEntityGenerator {
 
     private static DynamicType.Builder<?> boatMethods(DynamicType.Builder<?> builder, Class<?> base) {
         Class<?> entity = EntityProxy.CLASS;
-        Class<?> damage = requireNonNull(SparrowClass.find("net.minecraft.world.damagesource.DamageSource"));
-        Class<?> moveFunction = requireNonNull(SparrowClass.find("net.minecraft.world.entity.Entity$MoveFunction"));
+        Class<?> damage = DamageSourceProxy.CLASS;
         ElementMatcher.Junction<MethodDescription> noOp = virtual(base, "push", entity)
-                .or(virtual(base, "positionRider", entity, moveFunction))
+                .or(virtual(base, "positionRider", entity, EntityProxy.MoveFunctionProxy.CLASS))
                 .or(virtual(base, "animateHurt", float.class))
                 .or(virtual(base, "setDeltaMovement", Vec3Proxy.CLASS))
                 .or(virtual(base, "move", MoverTypeProxy.CLASS, Vec3Proxy.CLASS))
@@ -168,13 +166,11 @@ public final class CollisionEntityGenerator {
                         ? virtual(base, "hurtServer", ServerLevelProxy.CLASS, damage, float.class)
                         : virtual(base, "hurt", damage, float.class));
         if (VersionHelper.isOrAbove1_21) {
-            Class<?> leashData = requireNonNull(SparrowClass.find("net.minecraft.world.entity.Leashable$LeashData"));
-            noOp = noOp.or(virtual(base, "setLeashData", leashData));
+            noOp = noOp.or(virtual(base, "setLeashData", LeashableProxy.LeashDataProxy.CLASS));
             builder = builder.method(virtual(base, "getLeashData")).intercept(FixedValue.nullValue());
         }
         if (VersionHelper.isOrAbove1_21_2) {
-            Class<?> dimensions = requireNonNull(SparrowClass.find("net.minecraft.world.entity.EntityDimensions"));
-            builder = builder.method(virtual(base, "rideHeight", dimensions)).intercept(FixedValue.value(0.0));
+            builder = builder.method(virtual(base, "rideHeight", EntityDimensionsProxy.CLASS)).intercept(FixedValue.value(0.0));
         }
         PushReaction reaction = VersionHelper.isOrAbove26_3 ? PushReaction.IMMOVEABLE : PushReaction.IGNORE_ENTITY;
         return builder.method(noOp).intercept(StubMethod.INSTANCE)
@@ -211,12 +207,6 @@ public final class CollisionEntityGenerator {
         return new ByteBuddy(ClassFileVersion.JAVA_V21)
                 .subclass(base, constructors)
                 .name(CollisionEntityGenerator.class.getPackageName() + "." + name);
-    }
-
-    private static Class<?> load(DynamicType.Builder<?> builder) {
-        return builder.make()
-                .load(CollisionEntityGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup()))
-                .getLoaded();
     }
 
     private static SConstructor4 constructor(Class<?> generated) {

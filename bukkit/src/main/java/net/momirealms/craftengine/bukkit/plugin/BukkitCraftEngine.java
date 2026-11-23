@@ -89,8 +89,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     private ServerEventListener serverEventListener;
 
     BukkitCraftEngine(JavaPlugin plugin) {
-        this(new JavaPluginLogger(plugin.getLogger()), plugin.getDataFolder().toPath().toAbsolutePath(),
-                new URLClassPathAppender(Bukkit.class.getClassLoader()), new ReflectionClassPathAppender(plugin.getClass().getClassLoader()));
+        this(new JavaPluginLogger(plugin.getLogger()), plugin.getDataFolder().toPath().toAbsolutePath(), new URLClassPathAppender(Bukkit.class.getClassLoader()), new ReflectionClassPathAppender(plugin.getClass().getClassLoader()));
         this.setJavaPlugin(plugin);
     }
 

@@ -5,7 +5,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
 import net.bytebuddy.implementation.FixedValue;
@@ -40,7 +39,6 @@ import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 import org.bukkit.Location;
 import org.bukkit.entity.HumanEntity;
 
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -107,7 +105,7 @@ public final class ContainerGenerator {
         builder = adapt(builder, type, "canPlaceItem", int.class, stack);
         builder = adapt(builder, type, "canTakeItem", type, int.class, stack);
         builder = adapt(builder, type, "hasAnyMatching", Predicate.class);
-        return load(builder);
+        return InjectorClassLoading.load(builder);
     }
 
     private static Class<?> generateWorldlyContainer() {
@@ -121,7 +119,7 @@ public final class ContainerGenerator {
         builder = adapt(builder, type, "getSlotsForFace", side);
         builder = adapt(builder, type, "canPlaceItemThroughFace", int.class, stack, side);
         builder = adapt(builder, type, "canTakeItemThroughFace", int.class, stack, side);
-        return load(builder);
+        return InjectorClassLoading.load(builder);
     }
 
     private static DynamicType.Builder<?> forward(DynamicType.Builder<?> builder, Method source, String target, Class<?>... parameters) {
@@ -137,12 +135,6 @@ public final class ContainerGenerator {
     private static Method method(Class<?> type, String name, Class<?>... parameters) {
         return requireNonNull(SparrowClass.of(type).getMethod(MethodMatcher.named(name).and(MethodMatcher.takeArguments(parameters))),
                 () -> type.getName() + "." + name);
-    }
-
-    private static Class<?> load(DynamicType.Builder<?> builder) {
-        return builder.make()
-                .load(ContainerGenerator.class.getClassLoader(), ClassLoadingStrategy.UsingLookup.of(MethodHandles.lookup()))
-                .getLoaded();
     }
 
     private static SConstructor1 constructor(Class<?> generated) {
