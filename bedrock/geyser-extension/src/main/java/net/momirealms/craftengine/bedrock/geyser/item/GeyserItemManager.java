@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatchCache;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemText;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemCategory;
@@ -86,9 +87,8 @@ public final class GeyserItemManager {
                 ConvertedItem item = adapter.convert(entry, this.extension.blockManager().displayBlocks());
                 registration.skipped += item.skipped();
                 registration.failed += item.failed();
-                boolean vanillaOverride = entry.has(VANILLA_MODEL_OVERRIDE) && entry.get(VANILLA_MODEL_OVERRIDE).getAsBoolean();
                 for (ConvertedVariant variant : item.variants()) {
-                    this.registerVariant(item, variant, registration, !vanillaOverride);
+                    this.registerVariant(item, variant, registration);
                 }
             } catch (UnsupportedOperationException exception) {
                 registration.skipped++;
@@ -98,8 +98,8 @@ public final class GeyserItemManager {
                 GeyserTranslationManager.error("item.register_failed", exception, entry.get(BEDROCK_IDENTIFIER), entry.get(ITEM_TYPE), entry.get(MODEL));
             }
         }
-        if (!registration.patches.isEmpty()) {
-            this.componentPatches = new GeyserItemComponentPatchCache(registration.patches);
+        if (!registration.patches.isEmpty() || !registration.itemText.isEmpty()) {
+            this.componentPatches = new GeyserItemComponentPatchCache(registration.patches, registration.itemText);
         }
         this.tintSources = Map.copyOf(registration.tintSources);
         this.elytraVariants = Map.copyOf(registration.elytraVariants);
@@ -107,13 +107,13 @@ public final class GeyserItemManager {
         GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
     }
 
-    private void registerVariant(ConvertedItem item, ConvertedVariant variant, Registration registration, boolean creative) {
+    private void registerVariant(ConvertedItem item, ConvertedVariant variant, Registration registration) {
         CustomItemDefinition definition = variant.definition();
         String primaryId = definition.bedrockIdentifier().toString();
         try {
             this.registerDefinition(item, definition, registration);
-            if (creative && variant.inventory()) {
-                registration.creativeVariants.put(primaryId, CreativeItemCategory.ALL);
+            if (variant.creativeCategory() != null) {
+                registration.creativeVariants.put(primaryId, variant.creativeCategory());
             }
             if (!variant.tintSources().isEmpty()) {
                 registration.tintSources.put(primaryId, GeyserItemTints.from(variant.tintSources()));
@@ -150,6 +150,9 @@ public final class GeyserItemManager {
         }
         if (item.componentPatch() != null) {
             registration.patches.put(identifier, item.componentPatch());
+        }
+        if (item.text() != null) {
+            registration.itemText.put(identifier, item.text());
         }
     }
 
@@ -220,6 +223,7 @@ public final class GeyserItemManager {
         private final JsonObject elytraPlan;
         private final Map<String, Integer> elytraVariants = new HashMap<>();
         private final Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
+        private final Map<String, GeyserItemText> itemText = new HashMap<>();
         private final Map<String, GeyserItemTints> tintSources = new HashMap<>();
         private final Map<String, CreativeItemCategory> creativeVariants = new HashMap<>();
         private int registered;

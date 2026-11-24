@@ -13,8 +13,15 @@ import net.momirealms.craftengine.core.util.Key;
 import java.util.*;
 
 public final class BukkitItemRegistrationReader implements ItemRegistrationReader {
-    private static final Set<Key> EFFECTIVE_COMPONENTS = Set.of(DataComponentKeys.EQUIPPABLE, DataComponentKeys.KINETIC_WEAPON);
+    private static final Set<Key> EFFECTIVE_COMPONENTS = Set.of(
+            DataComponentKeys.CUSTOM_NAME,
+            DataComponentKeys.ITEM_NAME,
+            DataComponentKeys.EQUIPPABLE,
+            DataComponentKeys.KINETIC_WEAPON);
     private static final List<Key> COMPONENTS = List.of(
+            DataComponentKeys.CUSTOM_NAME,
+            DataComponentKeys.ITEM_NAME,
+            DataComponentKeys.LORE,
             DataComponentKeys.CONSUMABLE,
             DataComponentKeys.FOOD,
             DataComponentKeys.EQUIPPABLE,

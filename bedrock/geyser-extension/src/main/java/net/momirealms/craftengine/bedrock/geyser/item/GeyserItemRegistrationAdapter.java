@@ -5,9 +5,11 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatch;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
+import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemText;
 import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.proxy.item.custom.GeyserCustomItemDefinitionBuilderProxy;
+import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemCategory;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemIcons;
@@ -38,9 +40,15 @@ public final class GeyserItemRegistrationAdapter {
     public ConvertedItem convert(JsonObject entry, Map<String, String> displayBlocks) {
         Identifier itemType = Identifier.of(entry.get(ITEM_TYPE).getAsString());
         Identifier model = Identifier.of(entry.get(MODEL).getAsString());
-        String displayName = entry.has(VANILLA_MODEL_OVERRIDE) && entry.get(VANILLA_MODEL_OVERRIDE).getAsBoolean() ? GeyserVanillaItemNames.nameKey(itemType.toString()) : null;
+        boolean vanillaOverride = entry.has(VANILLA_MODEL_OVERRIDE) && entry.get(VANILLA_MODEL_OVERRIDE).getAsBoolean();
+        String vanillaDisplayName = vanillaOverride ? GeyserVanillaItemNames.nameKey(itemType.toString()) : null;
+        GeyserItemText text = vanillaOverride ? null : GeyserItemText.read(entry.getAsJsonObject(COMPONENTS));
         JsonObject behavior = entry.getAsJsonObject(CLIENT_BEHAVIOR);
         boolean placesBlock = behavior != null && behavior.has(PLACES_BLOCK) && behavior.get(PLACES_BLOCK).getAsBoolean();
+        CreativeItemCategory creativeCategory = null;
+        if (!vanillaOverride) {
+            creativeCategory = placesBlock ? CreativeItemCategory.CONSTRUCTION : CreativeItemCategory.ITEMS;
+        }
         JsonArray variants = entry.getAsJsonArray(VARIANTS);
         List<ConvertedVariant> converted = new ArrayList<>(variants.size());
         boolean contextual = false;
@@ -56,7 +64,7 @@ public final class GeyserItemRegistrationAdapter {
             }
             JsonObject variant = branch.getAsJsonObject();
             try {
-                ConvertedVariant result = convertVariant(model, variant, displayBlocks, branchPriority, displayName);
+                ConvertedVariant result = convertVariant(model, variant, displayBlocks, branchPriority, vanillaDisplayName, creativeCategory);
                 converted.add(result);
                 contextual |= result.definition().predicates().stream().anyMatch(GeyserItemPredicates::requiresSession);
             } catch (UnsupportedOperationException exception) {
@@ -67,14 +75,16 @@ public final class GeyserItemRegistrationAdapter {
                 GeyserTranslationManager.error("item.register_failed", exception, variant.get(BEDROCK_IDENTIFIER), itemType, model);
             }
         }
-        return new ConvertedItem(itemType, converted, contextual, placesBlock, GeyserItemComponentPatches.read(entry, this.sourceVersion), skipped, failed);
+        GeyserItemComponentPatch patch = GeyserItemComponentPatches.read(entry, this.sourceVersion);
+        return new ConvertedItem(itemType, converted, contextual, placesBlock, patch, text, skipped, failed);
     }
 
     private static ConvertedVariant convertVariant(Identifier model,
                                                    JsonObject variant,
                                                    Map<String, String> displayBlocks,
                                                    int priority,
-                                                   @Nullable String displayName) {
+                                                   @Nullable String displayName,
+                                                   @Nullable CreativeItemCategory creativeCategory) {
         JsonObject resources = variant.get(RESOURCES).getAsJsonObject();
         if (resources.has(UNSUPPORTED_REASON)) {
             throw new UnsupportedOperationException(resources.get(UNSUPPORTED_REASON).getAsString());
@@ -89,8 +99,8 @@ public final class GeyserItemRegistrationAdapter {
             Identifier headId = Identifier.of(variant.get(HEAD_IDENTIFIER).getAsString());
             head = buildDefinition(model, variant, headId, id, displayBlocks, 0, displayName);
         }
-        boolean inventory = !variant.has(WORLD_VIEW) && (!variant.has(INVENTORY_VISIBLE) || variant.get(INVENTORY_VISIBLE).getAsBoolean());
-        return new ConvertedVariant(definition, head, tintSources(resources), inventory);
+        boolean inventoryVisible = !variant.has(WORLD_VIEW) && (!variant.has(INVENTORY_VISIBLE) || variant.get(INVENTORY_VISIBLE).getAsBoolean());
+        return new ConvertedVariant(definition, head, tintSources(resources), inventoryVisible ? creativeCategory : null);
     }
 
     private static Map<String, Integer> tintSources(JsonObject resources) {
@@ -188,10 +198,14 @@ public final class GeyserItemRegistrationAdapter {
                                 boolean contextual,
                                 boolean placesBlock,
                                 @Nullable GeyserItemComponentPatch componentPatch,
+                                @Nullable GeyserItemText text,
                                 int skipped,
                                 int failed) {
     }
 
-    public record ConvertedVariant(CustomItemDefinition definition, @Nullable CustomItemDefinition head, Map<String, Integer> tintSources, boolean inventory) {
+    public record ConvertedVariant(CustomItemDefinition definition,
+                                   @Nullable CustomItemDefinition head,
+                                   Map<String, Integer> tintSources,
+                                   @Nullable CreativeItemCategory creativeCategory) {
     }
 }
