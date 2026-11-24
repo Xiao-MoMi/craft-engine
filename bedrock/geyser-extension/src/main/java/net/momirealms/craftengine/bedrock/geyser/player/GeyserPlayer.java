@@ -48,6 +48,7 @@ public final class GeyserPlayer {
     private Vector2f cameraAngles;
     private SidebarSession sidebar;
     private GeyserItemRuntime items;
+    private GeyserCreativeInventory creativeInventory;
     private GeyserHeldDye heldDye;
     private GeyserElytraEquipment elytra;
     private BlockBreakHandler originalBlockBreakHandler;
@@ -71,6 +72,7 @@ public final class GeyserPlayer {
         this.heldDye = this.extension.itemManager().initPlayerDye(this);
         this.componentPatcher = this.extension.itemManager().createComponentPatcher(this);
         this.items = this.extension.itemManager().initPlayer(this);
+        this.creativeInventory = this.extension.itemManager().initCreativeInventory(this);
         this.placement = this.extension.blockManager().initPlayer(this);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
 
@@ -143,6 +145,11 @@ public final class GeyserPlayer {
     @Nullable
     public GeyserItemRuntime items() {
         return this.items;
+    }
+
+    @Nullable
+    public GeyserCreativeInventory creativeInventory() {
+        return this.creativeInventory;
     }
 
     @Nullable
@@ -257,6 +264,9 @@ public final class GeyserPlayer {
             this.titleSession.close();
             if (this.elytra != null) {
                 this.elytra.close();
+            }
+            if (this.creativeInventory != null) {
+                this.creativeInventory.close();
             }
             if (this.items != null) {
                 this.items.close();

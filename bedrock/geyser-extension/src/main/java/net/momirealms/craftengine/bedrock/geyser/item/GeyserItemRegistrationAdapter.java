@@ -89,7 +89,8 @@ public final class GeyserItemRegistrationAdapter {
             Identifier headId = Identifier.of(variant.get(HEAD_IDENTIFIER).getAsString());
             head = buildDefinition(model, variant, headId, id, displayBlocks, 0, displayName);
         }
-        return new ConvertedVariant(definition, head, tintSources(resources));
+        boolean inventory = !variant.has(WORLD_VIEW) && (!variant.has(INVENTORY_VISIBLE) || variant.get(INVENTORY_VISIBLE).getAsBoolean());
+        return new ConvertedVariant(definition, head, tintSources(resources), inventory);
     }
 
     private static Map<String, Integer> tintSources(JsonObject resources) {
@@ -191,6 +192,6 @@ public final class GeyserItemRegistrationAdapter {
                                 int failed) {
     }
 
-    public record ConvertedVariant(CustomItemDefinition definition, @Nullable CustomItemDefinition head, Map<String, Integer> tintSources) {
+    public record ConvertedVariant(CustomItemDefinition definition, @Nullable CustomItemDefinition head, Map<String, Integer> tintSources, boolean inventory) {
     }
 }

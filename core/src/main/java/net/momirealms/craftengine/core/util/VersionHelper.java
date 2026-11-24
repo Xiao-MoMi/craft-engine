@@ -15,6 +15,7 @@ public final class VersionHelper {
     public static final MinecraftVersion MINECRAFT_VERSION;
     public static final boolean COMPONENT_RELEASE;
     public static final int WORLD_VERSION;
+    public static final int JAVA_PROTOCOL_VERSION;
     public static final int version;
     public static final int majorVersion;
     public static final int minorVersion;
@@ -67,6 +68,7 @@ public final class VersionHelper {
             }
             JsonObject json = GsonHelper.parseJsonToJsonObject(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
             WORLD_VERSION = GsonHelper.getAsInt(json.get("world_version"), -1);
+            JAVA_PROTOCOL_VERSION = GsonHelper.getAsInt(json.get("protocol_version"), -1);
             if (WORLD_VERSION == -1) {
                 throw new IllegalStateException("Failed to get world_version from version.json");
             }

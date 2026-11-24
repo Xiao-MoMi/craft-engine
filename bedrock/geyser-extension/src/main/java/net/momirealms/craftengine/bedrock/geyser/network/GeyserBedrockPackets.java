@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.network;
 import io.netty.channel.ChannelHandlerContext;
 import net.momirealms.craftengine.bedrock.geyser.block.GeyserBlockPlacementHandler;
 import net.momirealms.craftengine.bedrock.geyser.entity.model.GeyserNativeModels;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserCreativeInventory;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatcher;
@@ -42,6 +43,7 @@ public final class GeyserBedrockPackets {
 
         OUTGOING.on(ResourcePackStackPacket.class,
                 bind(Function.identity(), (player, event) -> player.trackClientPack(event.packet())));
+        OUTGOING.on(CreativeContentPacket.class, bind(GeyserPlayer::creativeInventory, GeyserCreativeInventory::onCreativeContent));
         OUTGOING.on(SetTitlePacket.class, bind(GeyserPlayer::titleSession, TitleSession::onTitle));
         OUTGOING.on(SetDisplayObjectivePacket.class,
                 bind(GeyserPlayer::sidebar, SidebarSession::onDisplay));

@@ -142,7 +142,7 @@ final class BedrockItemVisualWriter {
                                             BedrockItemGenerationContext context) throws IOException {
         BedrockTexture image = new BedrockTexture(new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB));
         String texture = writeIconTexture(id, image, context);
-        return new GeneratedItemVariant(id, conditions, texture, null, false, null, displayModels, null, null);
+        return new GeneratedItemVariant(id, conditions, texture, null, false, null, displayModels, null, null, Map.of(), false);
     }
 
     static String writeIconTexture(Key id, BedrockTexture image, BedrockItemGenerationContext context) throws IOException {

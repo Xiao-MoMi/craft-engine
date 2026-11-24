@@ -20,7 +20,7 @@ public record ClientboundBedrockHandshakePacket(int protocolVersion) implements 
     @Override
     public void handle(GeyserPlayer player) {
         if (this.protocolVersion == BedrockProtocol.VERSION) {
-            player.send(ServerboundBedrockHandshakePacket.INSTANCE);
+            player.send(player.creativeInventory() == null ? ServerboundBedrockHandshakePacket.WITHOUT_CREATIVE_ITEMS : ServerboundBedrockHandshakePacket.WITH_CREATIVE_ITEMS);
         }
     }
 }

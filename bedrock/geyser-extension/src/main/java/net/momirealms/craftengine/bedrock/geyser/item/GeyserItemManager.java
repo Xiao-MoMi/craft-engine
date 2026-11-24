@@ -13,6 +13,7 @@ import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemCompon
 import net.momirealms.craftengine.bedrock.geyser.item.component.GeyserItemComponentPatches;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemCategory;
 import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
@@ -33,6 +34,7 @@ public final class GeyserItemManager {
     private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
     private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
     private final Map<String, String> headIdentifiers = new HashMap<>();
+    private Map<String, CreativeItemCategory> creativeVariants = Map.of();
     private GeyserItemComponentPatchCache componentPatches;
     private GeyserDyeProperties mainHandDye;
     private GeyserDyeProperties offHandDye;
@@ -52,6 +54,7 @@ public final class GeyserItemManager {
         this.registeredItems.clear();
         this.contextualItems.clear();
         this.headIdentifiers.clear();
+        this.creativeVariants = Map.of();
         this.extension.blockManager().clearBlockItems();
         this.hasDyedItems = false;
         this.tintSources = Map.of();
@@ -83,8 +86,9 @@ public final class GeyserItemManager {
                 ConvertedItem item = adapter.convert(entry, this.extension.blockManager().displayBlocks());
                 registration.skipped += item.skipped();
                 registration.failed += item.failed();
+                boolean vanillaOverride = entry.has(VANILLA_MODEL_OVERRIDE) && entry.get(VANILLA_MODEL_OVERRIDE).getAsBoolean();
                 for (ConvertedVariant variant : item.variants()) {
-                    this.registerVariant(item, variant, registration);
+                    this.registerVariant(item, variant, registration, !vanillaOverride);
                 }
             } catch (UnsupportedOperationException exception) {
                 registration.skipped++;
@@ -99,14 +103,18 @@ public final class GeyserItemManager {
         }
         this.tintSources = Map.copyOf(registration.tintSources);
         this.elytraVariants = Map.copyOf(registration.elytraVariants);
+        this.creativeVariants = Map.copyOf(registration.creativeVariants);
         GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
     }
 
-    private void registerVariant(ConvertedItem item, ConvertedVariant variant, Registration registration) {
+    private void registerVariant(ConvertedItem item, ConvertedVariant variant, Registration registration, boolean creative) {
         CustomItemDefinition definition = variant.definition();
         String primaryId = definition.bedrockIdentifier().toString();
         try {
             this.registerDefinition(item, definition, registration);
+            if (creative && variant.inventory()) {
+                registration.creativeVariants.put(primaryId, CreativeItemCategory.ALL);
+            }
             if (!variant.tintSources().isEmpty()) {
                 registration.tintSources.put(primaryId, GeyserItemTints.from(variant.tintSources()));
                 this.hasDyedItems |= variant.tintSources().values().stream().anyMatch(BedrockTintSource::isDynamic);
@@ -190,6 +198,11 @@ public final class GeyserItemManager {
         return null;
     }
 
+    @Nullable
+    public GeyserCreativeInventory initCreativeInventory(GeyserPlayer player) {
+        return this.creativeVariants.isEmpty() ? null : new GeyserCreativeInventory(player.session(), this.creativeVariants, this.extension.logger());
+    }
+
     public boolean hasRegisteredItems() {
         return !this.registeredItems.isEmpty();
     }
@@ -208,6 +221,7 @@ public final class GeyserItemManager {
         private final Map<String, Integer> elytraVariants = new HashMap<>();
         private final Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
         private final Map<String, GeyserItemTints> tintSources = new HashMap<>();
+        private final Map<String, CreativeItemCategory> creativeVariants = new HashMap<>();
         private int registered;
         private int skipped;
         private int failed;

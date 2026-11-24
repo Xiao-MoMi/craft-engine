@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.network;
 
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundBedrockHandshakePacket;
+import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundBedrockCreativeItemsPacket;
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundHardHitboxPacket;
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ClientboundNativeModelPacket;
 import net.momirealms.craftengine.bedrock.geyser.network.protocol.ServerboundBedrockHandshakePacket;
@@ -16,6 +17,7 @@ public final class GeyserCustomPackets {
     public static final ClientCustomPacketType<ClientboundNativeModelPacket> NATIVE_MODEL = registerClientbound(NativeModelPayload.CHANNEL, ClientboundNativeModelPacket.CODEC);
     public static final ClientCustomPacketType<ClientboundHardHitboxPacket> HARD_HITBOX = registerClientbound(ClientboundHardHitboxPacket.ID, ClientboundHardHitboxPacket.CODEC);
     public static final ClientCustomPacketType<ClientboundBedrockHandshakePacket> BEDROCK_HANDSHAKE_REQUEST = registerClientbound(ClientboundBedrockHandshakePacket.ID, ClientboundBedrockHandshakePacket.CODEC);
+    public static final ClientCustomPacketType<ClientboundBedrockCreativeItemsPacket> BEDROCK_CREATIVE_ITEMS = registerClientbound(ClientboundBedrockCreativeItemsPacket.ID, ClientboundBedrockCreativeItemsPacket.CODEC);
     public static final ServerCustomPacketType<ServerboundBedrockHandshakePacket> BEDROCK_HANDSHAKE = registerServerbound(ServerboundBedrockHandshakePacket.ID, ServerboundBedrockHandshakePacket.class, ServerboundBedrockHandshakePacket.CODEC);
 
     private GeyserCustomPackets() {

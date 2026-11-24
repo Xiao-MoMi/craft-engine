@@ -4,8 +4,12 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldSetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
+import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemData;
+import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemGroup;
 import org.geysermc.geyser.registry.type.ItemMapping;
 import org.geysermc.geyser.registry.type.ItemMappings;
+
+import java.util.List;
 
 @ReflectionProxy(name = "org.geysermc.geyser.registry.type.ItemMappings")
 public interface ItemMappingsProxy {
@@ -27,10 +31,14 @@ public interface ItemMappingsProxy {
     Object customBlockItemDefinitions(Object target);
 
     default ItemMappings copy(ItemMappings source, ItemMapping[] items) {
+        return this.copy(source, items, source.getCreativeItems(), source.getCreativeItemGroups());
+    }
+
+    default ItemMappings copy(ItemMappings source, ItemMapping[] items, List<CreativeItemData> creativeItems, List<CreativeItemGroup> creativeGroups) {
         // 仅复制当前连接的映射数组；协议注册表继续共享，fastutil 类型交给 proxy 适配重定位。
         ItemMappings.ItemMappingsBuilder builder = ItemMappings.builder().items(items)
-                .lodestoneCompass(source.getLodestoneCompass()).creativeItemGroups(source.getCreativeItemGroups())
-                .creativeItems(source.getCreativeItems()).storedItems(source.getStoredItems())
+                .lodestoneCompass(source.getLodestoneCompass()).creativeItemGroups(creativeGroups)
+                .creativeItems(creativeItems).storedItems(source.getStoredItems())
                 .javaOnlyItems(source.getJavaOnlyItems()).buckets(source.getBuckets()).boats(source.getBoats())
                 .zeroBlockDefinitionRuntimeId(source.getZeroBlockDefinitionRuntimeId());
         Builder.INSTANCE.lightBlocks(builder, this.lightBlocks(source));

@@ -19,7 +19,21 @@ public record GeneratedItemVariant(Key id,
                                    Map<ItemDisplayContext, ItemBindingRule> displayModels,
                                    @Nullable ItemDisplayContext worldView,
                                    @Nullable Key headId,
-                                   Map<ItemDisplayContext, Integer> tintSources) {
+                                   Map<ItemDisplayContext, Integer> tintSources,
+                                   boolean inventoryVisible) {
+
+    public GeneratedItemVariant(Key id,
+                                List<ItemBindingCondition> conditions,
+                                @Nullable String iconTexture,
+                                @Nullable BedrockItemDisplayBlocks.DisplayBlock displayBlock,
+                                boolean attachable,
+                                @Nullable Integer dyeColor,
+                                Map<ItemDisplayContext, ItemBindingRule> displayModels,
+                                @Nullable ItemDisplayContext worldView,
+                                @Nullable Key headId,
+                                Map<ItemDisplayContext, Integer> tintSources) {
+        this(id, conditions, iconTexture, displayBlock, attachable, dyeColor, displayModels, worldView, headId, tintSources, true);
+    }
 
     public GeneratedItemVariant(Key id,
                                 List<ItemBindingCondition> conditions,
@@ -43,7 +57,7 @@ public record GeneratedItemVariant(Key id,
     }
 
     public GeneratedItemVariant withTintSources(Map<ItemDisplayContext, Integer> sources) {
-        return new GeneratedItemVariant(this.id, this.conditions, this.iconTexture, this.displayBlock, this.attachable, this.dyeColor, this.displayModels, this.worldView, this.headId, Map.copyOf(sources));
+        return new GeneratedItemVariant(this.id, this.conditions, this.iconTexture, this.displayBlock, this.attachable, this.dyeColor, this.displayModels, this.worldView, this.headId, Map.copyOf(sources), this.inventoryVisible);
     }
 
     public static GeneratedItemVariant icon(Key id, List<ItemBindingCondition> conditions, String texture, boolean attachable) {
@@ -60,7 +74,7 @@ public record GeneratedItemVariant(Key id,
     }
 
     public static GeneratedItemVariant displayContextItem(GeneratedItemVariant inventory, Map<ItemDisplayContext, ItemBindingRule> models, @Nullable Key headId) {
-        return new GeneratedItemVariant(inventory.id(), inventory.conditions(), inventory.iconTexture(), inventory.displayBlock(), true, inventory.dyeColor(), models, null, headId, inventory.tintSources());
+        return new GeneratedItemVariant(inventory.id(), inventory.conditions(), inventory.iconTexture(), inventory.displayBlock(), true, inventory.dyeColor(), models, null, headId, inventory.tintSources(), inventory.inventoryVisible());
     }
 
     public boolean generated() {

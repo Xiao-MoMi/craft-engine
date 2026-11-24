@@ -53,6 +53,7 @@ public final class BedrockPackLayout {
     public static final String TINT_SOURCES = "tint_sources";
     public static final String ITEM_TYPE = "item_type";
     public static final String VANILLA_MODEL_OVERRIDE = "vanilla_model_override";
+    public static final String INVENTORY_VISIBLE = "inventory_visible";
     public static final String MODEL = "model";
     public static final String COMPONENTS = "components";
     public static final String RESOURCES = "resources";

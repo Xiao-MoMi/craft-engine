@@ -317,6 +317,7 @@ public final class Config {
     private String bedrock$resource_pack$description;
     private List<Pattern> bedrock$font$exclude = List.of();
     private int bedrock$item$icon_size;
+    private boolean bedrock$item$async_creative_packet_build = true;
     private BedrockEntityDye displayDye = new BedrockEntityDye(10, List.of());
     private Map<Key, BedrockEntityDye> displayDyeOverrides = Map.of();
     private String bedrock$additional_identification$name_prefix;
@@ -816,8 +817,8 @@ public final class Config {
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$font$exclude = config.getPatterns("bedrock.font.exclude");
         this.bedrock$item$icon_size = config.getInt("bedrock.item.icon-size", 64, 1, Integer.MAX_VALUE);
-        this.displayDye = config.read("bedrock.display-entity",
-                value -> BedrockEntityDye.readDisplay(value.getAsSection(), false), new BedrockEntityDye(10, List.of()));
+        this.bedrock$item$async_creative_packet_build = config.getBoolean("bedrock.item.async-creative-packet-build", true);
+        this.displayDye = config.read("bedrock.display-entity", value -> BedrockEntityDye.readDisplay(value.getAsSection(), false), new BedrockEntityDye(10, List.of()));
         Map<Key, BedrockEntityDye> displayOverrides = new HashMap<>();
         for (Map.Entry<Key, BedrockEntityDye> override : config.getList("bedrock.display-entity.overrides", value -> {
             ConfigSection section = value.getAsSection();
@@ -1586,6 +1587,10 @@ public final class Config {
 
     public static int bedrockItemIconSize() {
         return instance.bedrock$item$icon_size;
+    }
+
+    public static boolean bedrockAsyncCreativePacketBuild() {
+        return instance.bedrock$item$async_creative_packet_build;
     }
 
     public static BedrockEntityDye bedrockDisplayDye() {

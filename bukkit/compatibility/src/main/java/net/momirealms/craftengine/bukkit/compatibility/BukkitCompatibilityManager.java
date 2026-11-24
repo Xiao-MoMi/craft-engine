@@ -46,6 +46,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ClientboundItemRewriter;
 import net.momirealms.craftengine.core.plugin.compatibility.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
@@ -89,6 +90,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     private boolean hasGeyser;
     private boolean hasFloodgate;
     private boolean hasLuckPerms;
+    private boolean hasViaVersion;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -275,6 +277,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     @Override
     public void onDelayedEnable() {
+        this.hasViaVersion = this.isPluginEnabled("ViaVersion");
         if (this.isPluginEnabled("CoreProtect")) {
             runCatchingHook(() -> registerProtectionLogger(new CoreProtectProtectionLogger()), "CoreProtect");
         }
@@ -530,6 +533,12 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     @Override
     public int getViaVersionProtocolVersion(NetWorkUser user) {
         return ViaVersionUtils.getPlayerProtocolVersion(user);
+    }
+
+    @Override
+    @Nullable
+    public ClientboundItemRewriter getViaVersionClientboundItemRewriter(NetWorkUser user, int serverProtocol, int clientProtocol) {
+        return this.hasViaVersion ? ViaVersionUtils.getClientboundItemRewriter(user, serverProtocol, clientProtocol) : null;
     }
 
     @Override

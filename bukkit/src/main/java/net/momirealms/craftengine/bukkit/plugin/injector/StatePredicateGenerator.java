@@ -17,11 +17,6 @@ import java.lang.reflect.Method;
 import static java.util.Objects.requireNonNull;
 
 public final class StatePredicateGenerator {
-    public static final Method method$StatePredicate$test = requireNonNull(
-            SparrowClass.of(BlockBehaviourProxy.StatePredicateProxy.CLASS)
-                    .getDeclaredMethod(MethodMatcher.takeArguments(BlockStateProxy.CLASS, BlockGetterProxy.CLASS, BlockPosProxy.CLASS)
-                    .and(MethodMatcher.returnType(boolean.class)))
-    );
     private static Object alwaysTrue;
     private static Object alwaysFalse;
 
