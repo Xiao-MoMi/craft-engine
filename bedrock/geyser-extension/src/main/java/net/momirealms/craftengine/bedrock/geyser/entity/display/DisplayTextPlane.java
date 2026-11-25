@@ -8,6 +8,8 @@ import java.util.Arrays;
 
 public final class DisplayTextPlane {
     static final float PIXEL = 0.025f;
+    // DebugText 原生字形的横向像素间距，由连续位图和独立位图对照测得。
+    private static final float DEBUG_TEXT_PIXEL = PIXEL * (16f / 15f);
     static final float LINE_CENTER = 4.5f;
     private static final int LINE_HEIGHT = 10;
     // 让基岩背景的逐行高度与 Java 的 10 像素行距对齐
@@ -139,6 +141,11 @@ public final class DisplayTextPlane {
             this.shadows[index] = position;
         }
         return position;
+    }
+
+    Vector3f imagePosition(Vector3f line, float center) {
+        float x = center * DEBUG_TEXT_PIXEL;
+        return line.add(this.right.getX() * x, this.right.getY() * x, this.right.getZ() * x);
     }
 
     private float lineX(int index) {

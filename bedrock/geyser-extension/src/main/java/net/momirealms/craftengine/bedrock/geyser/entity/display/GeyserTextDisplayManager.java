@@ -17,9 +17,11 @@ public final class GeyserTextDisplayManager {
 
     private final GeyserPlayerManager players;
     private final GeyserGlyphData glyphs;
+    private final TextPassengerSeats seats;
     private final VanillaEntityType<GeyserTextDisplayEntity> definition;
 
     public GeyserTextDisplayManager(GeyserPlayerManager players, GeyserGlyphData glyphs) {
+        this.seats = TextPassengerSeats.load();
         this.players = players;
         this.glyphs = glyphs;
         EntityTypeBase.Builder<GeyserTextDisplayEntity> base = EntityTypeBase.baseBuilder(GeyserTextDisplayEntity.class);
@@ -65,6 +67,6 @@ public final class GeyserTextDisplayManager {
     }
 
     public GeyserTextDisplayEntity create(EntitySpawnContext context, GeyserPlayer player) {
-        return new GeyserTextDisplayEntity(context, player, this.glyphs);
+        return new GeyserTextDisplayEntity(context, player, this.glyphs, this.seats);
     }
 }

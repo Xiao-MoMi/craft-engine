@@ -430,14 +430,6 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         }
     }
 
-    Vector3f renderPosition() {
-        return this.renderPosition;
-    }
-
-    float renderYaw() {
-        return this.renderYaw;
-    }
-
     @Override
     public Vector3f bedrockPosition() {
         float offset = this.getOffset();

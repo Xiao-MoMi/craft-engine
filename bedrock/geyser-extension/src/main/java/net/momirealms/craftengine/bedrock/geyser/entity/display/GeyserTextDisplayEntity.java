@@ -69,11 +69,11 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     private boolean dirty = true;
     private boolean clientFacing;
     private boolean hidden;
-    private Vector3f seatOffset;
-    private Vector3f vehiclePosition;
-    private Vector3f passengerAnchor;
-    private float vehicleYaw;
-    private float seatHeight;
+    private Long shapeAttachmentId;
+    private final TextPassengerSeats seats;
+    private float seatAnimation;
+    private Vector3f originalSeat;
+    private Vector3f appliedSeat;
     private int dimension = Integer.MIN_VALUE;
     private float cameraYaw;
     private float cameraPitch;
@@ -86,8 +86,9 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     private float targetYaw;
     private float targetPitch;
 
-    GeyserTextDisplayEntity(EntitySpawnContext context, GeyserPlayer player, GeyserGlyphData glyphs) {
+    GeyserTextDisplayEntity(EntitySpawnContext context, GeyserPlayer player, GeyserGlyphData glyphs, TextPassengerSeats seats) {
         super(context);
+        this.seats = seats;
         this.player = player;
         this.glyphs = glyphs;
     }
@@ -179,8 +180,13 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     @Override
     public void setVehicle(Entity vehicle) {
         if (this.vehicle != vehicle) {
-            this.seatOffset = null;
-            this.vehiclePosition = null;
+            if ((this.vehicle == null) != (vehicle == null)) {
+                this.layout = null;
+            }
+            this.seatAnimation = 0;
+            this.originalSeat = null;
+            this.appliedSeat = null;
+            this.shapeAttachmentId = vehicle == null ? null : this.geyserId();
             this.dirty = true;
         }
         super.setVehicle(vehicle);
@@ -188,12 +194,9 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
 
     @Override
     public void setRiderSeatPosition(Vector3f offset) {
-        super.setRiderSeatPosition(offset);
-        if (!Objects.equals(this.seatOffset, offset)) {
-            this.seatOffset = offset;
-            this.vehiclePosition = null;
-            this.dirty = true;
-        }
+        this.originalSeat = offset;
+        this.appliedSeat = this.seats.resolve(this.vehicle, this, offset, this.seatAnimation, this.appliedSeat);
+        super.setRiderSeatPosition(this.appliedSeat);
     }
 
     @Override
@@ -219,6 +222,16 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
 
     @Override
     public void tick() {
+        boolean seatChanged = false;
+        if (this.vehicle != null && this.originalSeat != null) {
+            Vector3f seat = this.seats.resolve(this.vehicle, this, this.originalSeat, this.seatAnimation, this.appliedSeat);
+            this.seatAnimation = TextPassengerSeats.nextAnimation(this.vehicle, this.seatAnimation);
+            if (seat != this.appliedSeat && !seat.equals(this.appliedSeat)) {
+                this.appliedSeat = seat;
+                super.setRiderSeatPosition(seat);
+                seatChanged = true;
+            }
+        }
         this.transform.tick();
         if (this.moveTo != null) {
             float fraction = Math.min(1, ++this.moveStep / (float) Math.max(1, this.teleportDuration));
@@ -231,7 +244,11 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
                 this.moveTo = null;
             }
         }
-        this.updateDisplay();
+        if (seatChanged) {
+            this.updateBedrockMetadata();
+        } else {
+            this.updateDisplay();
+        }
     }
 
     @Override
@@ -263,11 +280,9 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
             return;
         }
         int dimension = this.session.getBedrockDimension().bedrockId();
-        Vector3f passengerAnchor = this.passengerAnchor();
-        if (dimension != this.dimension || !Objects.equals(passengerAnchor, this.passengerAnchor)) {
+        if (dimension != this.dimension) {
             this.dirty = true;
             this.dimension = dimension;
-            this.passengerAnchor = passengerAnchor;
         }
         String locale = this.session.locale();
         if (this.textComponent != null && !Objects.equals(this.textLocale, locale)) {
@@ -291,7 +306,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
             List<GuiTitlePart> parts = new ArrayList<>();
             boolean useFontMetrics = GeyserTextParts.collectDisplayParts(translated, parts, locale);
             this.layout = useFontMetrics
-                    ? DisplayTextLayout.wrap(parts, this.glyphs, this.lineWidth, locale)
+                    ? DisplayTextLayout.wrap(parts, this.glyphs, this.lineWidth, locale, this.shapeAttachmentId != null)
                     : DisplayTextLayout.wrapLegacy(this.text, this.lineWidth, this.glyphs.font("minecraft:default"));
             this.backgroundText = null;
             this.shadowLines = null;
@@ -316,25 +331,6 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         this.cameraYaw = cameraYaw;
         this.cameraPitch = cameraPitch;
         this.render(pose, followsYaw, followsPitch);
-    }
-
-    private Vector3f passengerAnchor() {
-        if (this.vehicle == null) {
-            return null;
-        }
-        GeyserModelDisplayEntity displayVehicle = this.vehicle instanceof GeyserModelDisplayEntity display ? display : null;
-        Vector3f position = displayVehicle == null ? this.vehicle.getPosition() : displayVehicle.renderPosition();
-        Vector3f seat = this.seatOffset;
-        float height = seat == null ? this.vehicle.getBoundingBoxHeight() : seat.getY();
-        boolean offsetSideways = seat != null && (seat.getX() != 0 || seat.getZ() != 0);
-        float yaw = offsetSideways ? (displayVehicle == null ? this.vehicle.getYaw() : displayVehicle.renderYaw()) : 0;
-        if (position.equals(this.vehiclePosition) && yaw == this.vehicleYaw && height == this.seatHeight) {
-            return this.passengerAnchor;
-        }
-        this.vehiclePosition = position;
-        this.vehicleYaw = yaw;
-        this.seatHeight = height;
-        return offsetSideways ? position.add(Quaternionf.fromAngleDegAxis(-yaw, Vector3f.UNIT_Y).rotate(seat)) : position.up(height);
     }
 
     private void render(DisplayPose pose, boolean followsYaw, boolean followsPitch) {
@@ -368,7 +364,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         }
         float yaw = followsYaw ? this.cameraYaw + 180 : this.yaw;
         float pitch = followsPitch ? -this.cameraPitch : this.pitch;
-        Vector3f base = this.passengerAnchor == null ? this.position : this.passengerAnchor;
+        Vector3f base = this.vehicle == null ? this.position : Vector3f.ZERO;
         if (this.plane == null) {
             int protocol = this.session.protocolVersion();
             this.plane = new DisplayTextPlane(GameProtocol.is26_50orHigher(protocol), BedrockBitmapFont.forProtocol(protocol));
@@ -381,7 +377,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         Vector3f angles = this.plane.rotation();
         float scale = this.plane.scale();
         boolean shadowed = (this.style & SHADOW) != 0 && this.foreground.getAlpha() != 0;
-        boolean separateBackground = !transparent && lineCount > 1;
+        boolean separateBackground = !transparent && (lineCount > 1 || !this.layout.lines().getFirst().images().isEmpty());
         int shapeIndex = 0;
         if (separateBackground) {
             this.writeShape(
@@ -403,6 +399,19 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         for (int index = 0; index < lineCount; index++) {
             DisplayTextLayout.Line line = this.layout.lines().get(index);
             if (lineBackground.getAlpha() == 0 && (!line.visible() || this.foreground.getAlpha() == 0)) {
+                continue;
+            }
+            if (!line.images().isEmpty()) {
+                if (shadowed) {
+                    for (DisplayTextLayout.ImagePiece piece : line.images()) {
+                        this.writeShape(shapeIndex++, piece.shadow(), this.plane.imagePosition(this.plane.shadow(index), piece.center()),
+                                angles, scale, this.shadowColor, TRANSPARENT, 0, true, depthTest, renderDistance);
+                    }
+                }
+                for (DisplayTextLayout.ImagePiece piece : line.images()) {
+                    this.writeShape(shapeIndex++, piece.text(), this.plane.imagePosition(this.plane.line(index), piece.center()),
+                            angles, scale, this.foreground, TRANSPARENT, 0, true, depthTest, renderDistance);
+                }
                 continue;
             }
             if (shadowed && line.visible()) {
@@ -505,7 +514,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         }
     }
 
-    private static String withoutTextColors(String text) {
+    static String withoutTextColors(String text) {
         int first = text.indexOf('§');
         if (first < 0) {
             return text;
@@ -545,12 +554,13 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
                             boolean depthTest,
                             float renderDistance) {
         DebugText previous = index < this.shapes.size() ? this.shapes.get(index) : null;
-        boolean sameDimension = previous != null && previous.getDimension() == this.dimension;
+        boolean reuseId = previous != null && previous.getDimension() == this.dimension
+                && Objects.equals(previous.getAttachedToEntityId(), this.shapeAttachmentId);
         Float previousScale = previous == null ? null : previous.getScale();
         Float previousDistance = previous == null ? null : previous.getMaximumRenderDistance();
         boolean sameScale = previousScale != null && previousScale == scale;
         boolean sameDistance = previousDistance != null && previousDistance == renderDistance;
-        if (sameDimension
+        if (reuseId
                 && Objects.equals(previous.getPosition(), position)
                 && Objects.equals(previous.getRotation(), rotation)
                 && sameScale && previous.getText().equals(text)
@@ -562,12 +572,13 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
                 && sameDistance) {
             return;
         }
-        if (previous != null && !sameDimension) {
+        if (previous != null && !reuseId) {
             this.player.queueShape(new DebugShape(previous.getId(), previous.getDimension()));
         }
         DebugText shape = new DebugText();
-        shape.setId(sameDimension ? previous.getId() : IDS.getAndIncrement());
+        shape.setId(reuseId ? previous.getId() : IDS.getAndIncrement());
         shape.setDimension(this.dimension);
+        shape.setAttachedToEntityId(this.shapeAttachmentId);
         shape.setPosition(position);
         shape.setRotation(rotation);
         shape.setScale(sameScale ? previousScale : Float.valueOf(scale));
