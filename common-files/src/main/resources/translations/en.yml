@@ -328,7 +328,7 @@ resource_pack.bedrock.block.tint: "Block tint that depends on the world is unsup
 resource_pack.bedrock.block.uv: "UV lock cannot be represented by a rectangular face"
 resource_pack.bedrock.block.weighted: "Weighted block models are unsupported"
 resource_pack.bedrock.font.bitmap: "Bitmap <arg:0> is missing or invalid"
-resource_pack.bedrock.font.capacity: "Skipped font <arg:0>. It exceeds the remaining capacity of pages E3–F8."
+resource_pack.bedrock.font.capacity: "Font <arg:0> exceeds the remaining capacity of pages E3–F8. Unallocated glyphs retain their Java widths for native BossBar text."
 resource_pack.bedrock.font.cell: "Bitmap <arg:0> has a zero-sized cell"
 resource_pack.bedrock.font.cycle: "Circular reference to font <arg:0>"
 resource_pack.bedrock.font.definition: "Skipped font <arg:0> in <arg:1>. Expected an object with a providers array."

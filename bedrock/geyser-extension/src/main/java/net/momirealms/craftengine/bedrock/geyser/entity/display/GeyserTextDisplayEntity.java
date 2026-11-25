@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.AdventureTranslationRendererProxy;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.MessageTranslatorProxy;
 import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.cloudburstmc.math.GenericMath;
 import org.cloudburstmc.math.imaginary.Quaternionf;
 import org.cloudburstmc.math.vector.Vector2f;
@@ -180,9 +181,6 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     @Override
     public void setVehicle(Entity vehicle) {
         if (this.vehicle != vehicle) {
-            if ((this.vehicle == null) != (vehicle == null)) {
-                this.layout = null;
-            }
             this.seatAnimation = 0;
             this.originalSeat = null;
             this.appliedSeat = null;
@@ -306,7 +304,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
             List<GuiTitlePart> parts = new ArrayList<>();
             boolean useFontMetrics = GeyserTextParts.collectDisplayParts(translated, parts, locale);
             this.layout = useFontMetrics
-                    ? DisplayTextLayout.wrap(parts, this.glyphs, this.lineWidth, locale, this.shapeAttachmentId != null)
+                    ? DisplayTextLayout.wrap(parts, this.glyphs, this.lineWidth, locale)
                     : DisplayTextLayout.wrapLegacy(this.text, this.lineWidth, this.glyphs.font("minecraft:default"));
             this.backgroundText = null;
             this.shadowLines = null;
@@ -317,7 +315,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         }
         DisplayPose pose = this.transform.currentPose();
         this.clientFacing = this.billboard == CENTER && this.vehicle == null && (this.style & SHADOW) == 0
-                && this.layout.lines().size() == 1 && pose.translation().equals(Vector3f.ZERO)
+                && this.layout.lines().size() == 1 && this.layout.lines().getFirst().pieces().isEmpty() && pose.translation().equals(Vector3f.ZERO)
                 && pose.left().equals(Quaternionf.IDENTITY) && pose.right().equals(Quaternionf.IDENTITY)
                 && pose.scale().getX() > 0 && pose.scale().getX() == pose.scale().getY();
         boolean followsYaw = !this.clientFacing && (this.billboard == 1 || this.billboard == CENTER);
@@ -377,7 +375,7 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         Vector3f angles = this.plane.rotation();
         float scale = this.plane.scale();
         boolean shadowed = (this.style & SHADOW) != 0 && this.foreground.getAlpha() != 0;
-        boolean separateBackground = !transparent && (lineCount > 1 || !this.layout.lines().getFirst().images().isEmpty());
+        boolean separateBackground = !transparent && (lineCount > 1 || !this.layout.lines().getFirst().pieces().isEmpty());
         int shapeIndex = 0;
         if (separateBackground) {
             this.writeShape(
@@ -401,15 +399,15 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
             if (lineBackground.getAlpha() == 0 && (!line.visible() || this.foreground.getAlpha() == 0)) {
                 continue;
             }
-            if (!line.images().isEmpty()) {
+            if (!line.pieces().isEmpty()) {
                 if (shadowed) {
-                    for (DisplayTextLayout.ImagePiece piece : line.images()) {
-                        this.writeShape(shapeIndex++, piece.shadow(), this.plane.imagePosition(this.plane.shadow(index), piece.center()),
+                    for (DisplayTextLayout.Piece piece : line.pieces()) {
+                        this.writeShape(shapeIndex++, piece.shadow(), this.plane.piecePosition(this.plane.shadow(index), piece.center()),
                                 angles, scale, this.shadowColor, TRANSPARENT, 0, true, depthTest, renderDistance);
                     }
                 }
-                for (DisplayTextLayout.ImagePiece piece : line.images()) {
-                    this.writeShape(shapeIndex++, piece.text(), this.plane.imagePosition(this.plane.line(index), piece.center()),
+                for (DisplayTextLayout.Piece piece : line.pieces()) {
+                    this.writeShape(shapeIndex++, piece.text(), this.plane.piecePosition(this.plane.line(index), piece.center()),
                             angles, scale, this.foreground, TRANSPARENT, 0, true, depthTest, renderDistance);
                 }
                 continue;
@@ -469,7 +467,19 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     private String backgroundText() {
         if (this.backgroundText == null) {
             this.prepareShadowLines();
-            this.backgroundText = joinBackgroundLines(this.shadowLines);
+            List<String> lines = this.shadowLines;
+            for (int i = 0; i < this.layout.lines().size(); i++) {
+                DisplayTextLayout.Line line = this.layout.lines().get(i);
+                if (!line.pieces().isEmpty()) {
+                    if (lines == this.shadowLines) {
+                        lines = new ArrayList<>(lines);
+                    }
+                    StringBuilder spacing = new StringBuilder();
+                    ContainerTitleLayout.appendSpacers(spacing, Math.max(2, line.width()));
+                    lines.set(i, spacing.toString());
+                }
+            }
+            this.backgroundText = joinBackgroundLines(lines);
         }
         return this.backgroundText;
     }

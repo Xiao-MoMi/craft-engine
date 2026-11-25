@@ -2,7 +2,9 @@ package net.momirealms.craftengine.core.pack.bedrock.gui;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
+import net.momirealms.craftengine.bedrock.text.BossBarTitleCodec;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.GsonHelper;
@@ -71,25 +73,21 @@ public final class BedrockBossBars {
                 panels.add(GsonHelper.createObject("ce_boss_bar_" + id, panel));
             }
         }
-        if (styles.isEmpty()) {
-            return;
-        }
+        boolean hasStyles = !styles.isEmpty();
+        styles.addProperty(BedrockPackLayout.BOSS_BAR_TITLE_LAYOUT, BossBarTitleCodec.LEFT_ANCHORED_VERSION);
         GsonHelper.writeJsonFile(styles, data);
         Path hudPath = pack.resolve("ui/hud_screen.json");
         Files.createDirectories(hudPath.getParent());
         JsonObject hud = Files.exists(hudPath) ? GsonHelper.readJsonObjectFromFile(hudPath) : new JsonObject();
         hud.addProperty("namespace", "hud");
-        JsonObject nativeBar = new JsonObject();
-        nativeBar.add("offset", GsonHelper.createArray(0, 10));
-        // 只要标题带有自定义标记的公共前缀，就隐藏原版进度条
-        nativeBar.add("bindings", visibility("(not " + BossBarStyle.titleMatches(BossBarStyle.PREFIX) + ")"));
         JsonArray modifications = new JsonArray();
-        JsonObject replace = new JsonObject();
-        replace.addProperty("array_name", "controls");
-        replace.addProperty("operation", "replace");
-        replace.addProperty("control_name", "progress_bar_for_collections");
-        replace.add("value", GsonHelper.createObject("progress_bar_for_collections@common.progress_bar_for_collections", nativeBar));
-        modifications.add(replace);
+        modifications.add(replaceControl("boss_name", "boss_name", BedrockBossBarTitle.panel(hud)));
+        if (hasStyles) {
+            JsonObject nativeBar = new JsonObject();
+            nativeBar.add("offset", GsonHelper.createArray(0, 10));
+            nativeBar.add("bindings", visibility("(not " + BossBarStyle.titleMatches(BossBarStyle.PREFIX) + ")"));
+            modifications.add(replaceControl("progress_bar_for_collections", "progress_bar_for_collections@common.progress_bar_for_collections", nativeBar));
+        }
         if (!panels.isEmpty()) {
             JsonObject append = new JsonObject();
             append.addProperty("array_name", "controls");
@@ -99,6 +97,15 @@ public final class BedrockBossBars {
         }
         hud.add("boss_health_panel", GsonHelper.createObject("modifications", modifications));
         GsonHelper.writeJsonFile(hud, hudPath);
+    }
+
+    private static JsonObject replaceControl(String name, String template, JsonObject control) {
+        JsonObject replace = new JsonObject();
+        replace.addProperty("array_name", "controls");
+        replace.addProperty("operation", "replace");
+        replace.addProperty("control_name", name);
+        replace.add("value", GsonHelper.createObject(template, control));
+        return replace;
     }
 
     private static boolean overridden(JavaResourcePack resources, String name) {
@@ -163,7 +170,7 @@ public final class BedrockBossBars {
         return bindings;
     }
 
-    private static JsonObject collection(String name) {
+    static JsonObject collection(String name) {
         JsonObject binding = new JsonObject();
         binding.addProperty("binding_type", "collection");
         binding.addProperty("binding_collection_name", "boss_bars");

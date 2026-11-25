@@ -4,6 +4,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
+import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 
@@ -70,7 +72,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         return new FormattedParts(expanded == null ? parts : expanded.finish(), trailingFormat);
     }
 
-    static DisplayTextLayout wrap(List<GuiTitlePart> source, GeyserGlyphData glyphs, int maxWidth, String locale, boolean mounted) {
+    static DisplayTextLayout wrap(List<GuiTitlePart> source, GeyserGlyphData glyphs, int maxWidth, String locale) {
         FormattedParts formatted = expandFormatting(source);
         List<GuiTitlePart> parts = formatted.parts();
         if (parts.size() == 1) {
@@ -113,7 +115,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         }
 
         boolean plainText = plain;
-        boolean positionImages = mounted && negativeAdvance;
+        boolean hasNegativeAdvance = negativeAdvance;
         return split(text, (index, codepoint) -> advances[index], maxWidth, formatted.trailingFormat(), new LineText() {
             private int firstPart;
 
@@ -125,7 +127,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 while (this.firstPart < parts.size() && partStarts[this.firstPart + 1] <= start) {
                     this.firstPart++;
                 }
-                return serializeLine(parts, partStarts, this.firstPart, start, end, width, locale, positionImages ? glyphs : null);
+                return serializeLine(parts, partStarts, this.firstPart, start, end, width, locale, glyphs, hasNegativeAdvance);
             }
         });
     }
@@ -211,8 +213,15 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         return new DisplayTextLayout(lines, maximum);
     }
 
-    private static Line serializeLine(List<GuiTitlePart> parts, int[] starts, int first, int start, int end, int width,
-                                      String locale, GeyserGlyphData imageFonts) {
+    private static Line serializeLine(List<GuiTitlePart> parts,
+                                      int[] starts,
+                                      int first,
+                                      int start,
+                                      int end,
+                                      int width,
+                                      String locale,
+                                      GeyserGlyphData fonts,
+                                      boolean hasNegativeAdvance) {
         GuiTitlePart.Builder line = new GuiTitlePart.Builder(new ArrayList<>());
         for (int index = first; index < parts.size() && starts[index] < end; index++) {
             GuiTitlePart part = parts.get(index);
@@ -220,14 +229,68 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             line.append(part.font(), text, part.color(), part.decorations());
         }
         List<GuiTitlePart> contents = line.finish();
-        String text = GeyserTextParts.serializeParts(contents, locale);
-        List<ImagePiece> images = imageFonts == null ? List.of() : imagePieces(contents, imageFonts, locale);
-        return new Line(text, width, Line.hasVisibleText(text), images);
+        List<Piece> pieces = hasNegativeAdvance ? positionedPieces(contents, fonts, locale) : List.of();
+        String text = GeyserTextParts.serializeParts(inlineSpacing(contents, fonts), locale);
+        return new Line(text, width, Line.hasVisibleText(text), pieces);
     }
 
-    static List<ImagePiece> imagePieces(List<GuiTitlePart> parts, GeyserGlyphData fonts, String locale) {
+    static List<GuiTitlePart> inlineSpacing(List<GuiTitlePart> parts, GeyserGlyphData fonts) {
+        GuiTitlePart.Builder output = null;
+        double gap = 0;
+        for (int index = 0; index < parts.size(); index++) {
+            GuiTitlePart part = parts.get(index);
+            FontData.Font font = fonts.font(part.font());
+            String text = part.text();
+            boolean bold = (part.decorations() & 2) != 0;
+            int start = 0;
+            for (int offset = 0; offset < text.length();) {
+                int code = text.codePointAt(offset);
+                int next = offset + Character.charCount(code);
+                FontGlyph glyph = font.rendering().get(code);
+                if (glyph != null && !glyph.visible()) {
+                    if (output == null) {
+                        output = new GuiTitlePart.Builder(new ArrayList<>(parts.subList(0, index)));
+                    }
+                    if (start < offset) {
+                        appendInlineGap(output, gap);
+                        gap = 0;
+                        output.append(part.font(), text.substring(start, offset), part.color(), part.decorations());
+                    }
+                    gap += font.advance(code, bold);
+                    start = next;
+                }
+                offset = next;
+            }
+            if (output != null && start < text.length()) {
+                appendInlineGap(output, gap);
+                gap = 0;
+                output.append(part.font(), text.substring(start), part.color(), part.decorations());
+            }
+        }
+        if (output == null) {
+            return parts;
+        }
+        appendInlineGap(output, gap);
+        return output.finish();
+    }
+
+    private static int appendInlineGap(GuiTitlePart.Builder output, double gap) {
+        // 整行中两次可见绘制之间只能前进 0 或至少 2 像素，等距时向前取整。
+        if (gap >= 1) {
+            int width = Math.max(2, (int) Math.round(gap));
+            StringBuilder text = new StringBuilder();
+            ContainerTitleLayout.appendSpacers(text, width);
+            output.append(GeyserGlyphSerializer.RESOLVED_FONT, text.toString(), 0xffffff, 0);
+            return width;
+        }
+        return 0;
+    }
+
+    static List<Piece> positionedPieces(List<GuiTitlePart> parts, GeyserGlyphData fonts, String locale) {
         float width = 0;
-        boolean negative = false;
+        float gap = 0;
+        boolean backtracks = false;
+        boolean onlyImages = true;
         for (GuiTitlePart part : parts) {
             FontData.Font font = fonts.font(part.font());
             boolean bold = (part.decorations() & 2) != 0;
@@ -235,39 +298,74 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 int code = part.text().codePointAt(i);
                 i += Character.charCount(code);
                 FontGlyph glyph = font.rendering().get(code);
-                // 导出的图片带有 bearing；原生文字仍交给基岩整行排版。
-                if (glyph == null || (glyph.visible() && glyph.bearing() == 0)) {
-                    return List.of();
-                }
                 float advance = font.advance(code, bold);
-                negative |= !glyph.visible() && advance < 0;
                 width += advance;
+                if (glyph != null && !glyph.visible()) {
+                    gap += advance;
+                } else {
+                    backtracks |= gap < 0;
+                    onlyImages &= glyph != null && glyph.bearing() != 0;
+                    gap = 0;
+                }
             }
         }
-        if (!negative) {
+        if (!backtracks && gap >= 0) {
             return List.of();
         }
-        List<ImagePiece> pieces = new ArrayList<>();
-        float cursor = -width * 0.5f;
+
+        // Java 游标决定每段的起点，基岩字宽决定该段 DebugText 的中心。
+        List<Piece> pieces = new ArrayList<>();
+        GuiTitlePart.Builder run = new GuiTitlePart.Builder(new ArrayList<>());
+        float cursor = -Math.max(0, width) * 0.5f;
+        float start = cursor;
+        float rendered = 0;
+        gap = 0;
         for (GuiTitlePart part : parts) {
             FontData.Font font = fonts.font(part.font());
             boolean bold = (part.decorations() & 2) != 0;
-            for (int i = 0; i < part.text().length();) {
-                int code = part.text().codePointAt(i);
-                i += Character.charCount(code);
+            String text = part.text();
+            int slice = 0;
+            for (int i = 0; i < text.length();) {
+                int code = text.codePointAt(i);
+                int next = i + Character.charCount(code);
                 FontGlyph glyph = font.rendering().get(code);
-                if (glyph.visible()) {
-                    String text = Character.toString(glyph.character());
-                    if (part.color() != 0xFFFFFF || part.decorations() != 0) {
-                        text = GeyserTextParts.serializePart(part, text, locale);
+                float advance = font.advance(code, bold);
+                if (glyph != null && !glyph.visible()) {
+                    run.append(part.font(), text.substring(slice, i), part.color(), part.decorations());
+                    slice = next;
+                    gap += advance;
+                } else {
+                    if (onlyImages || gap < 0) {
+                        flushPiece(run, pieces, start, rendered, locale);
+                        start = cursor;
+                        rendered = 0;
+                    } else if (gap > 0) {
+                        rendered += appendInlineGap(run, gap);
                     }
-                    float center = cursor + (glyph.renderedAdvance() + (bold ? 1 : 0)) * 0.5f;
-                    pieces.add(new ImagePiece(text, GeyserTextDisplayEntity.withoutTextColors(text), center));
+                    gap = 0;
+                    float glyphWidth = glyph != null && glyph.renderedAdvance() >= 0 ? glyph.renderedAdvance() + (bold ? 1 : 0) : advance;
+                    rendered += glyphWidth;
+                    if (onlyImages) {
+                        run.append(part.font(), text.substring(i, next), part.color(), part.decorations());
+                        slice = next;
+                    }
                 }
-                cursor += font.advance(code, bold);
+                cursor += advance;
+                i = next;
             }
+            run.append(part.font(), text.substring(slice), part.color(), part.decorations());
         }
+        flushPiece(run, pieces, start, rendered, locale);
         return pieces;
+    }
+
+    private static void flushPiece(GuiTitlePart.Builder run, List<Piece> pieces, float start, float width, String locale) {
+        List<GuiTitlePart> contents = run.finish();
+        if (!contents.isEmpty()) {
+            String text = GeyserTextParts.serializeParts(contents, locale);
+            pieces.add(new Piece(text, GeyserTextDisplayEntity.withoutTextColors(text), start + width * 0.5f));
+            contents.clear();
+        }
     }
 
     static DisplayTextLayout wrapLegacy(String text, int maxWidth, FontData.Font font) {
@@ -345,10 +443,10 @@ public record DisplayTextLayout(List<Line> lines, int width) {
     private record FormatChange(int visibleIndex, int skipped, String format) {
     }
 
-    record ImagePiece(String text, String shadow, float center) {
+    record Piece(String text, String shadow, float center) {
     }
 
-    record Line(String text, int width, boolean visible, List<ImagePiece> images) {
+    record Line(String text, int width, boolean visible, List<Piece> pieces) {
         Line(String text, int width) {
             this(text, width, hasVisibleText(text), List.of());
         }

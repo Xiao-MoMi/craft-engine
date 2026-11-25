@@ -328,7 +328,7 @@ resource_pack.bedrock.block.tint: "월드 환경에 따라 달라지는 블록 �
 resource_pack.bedrock.block.uv: "직사각형 면으로 이 UV 잠금을 표현할 수 없습니다"
 resource_pack.bedrock.block.weighted: "가중치가 있는 블록 모델은 지원하지 않습니다"
 resource_pack.bedrock.font.bitmap: "비트맵 <arg:0>이 없거나 잘못되었습니다"
-resource_pack.bedrock.font.capacity: "E3–F8 페이지의 남은 공간이 부족하여 글꼴 <arg:0>을 건너뛰었습니다."
+resource_pack.bedrock.font.capacity: "<arg:0> 글꼴이 E3–F8 페이지의 남은 용량을 초과합니다. 텍스처가 할당되지 않은 글자는 보스바에서 기본 글꼴로 표시할 때 Java 글자 너비를 유지합니다."
 resource_pack.bedrock.font.cell: "비트맵 <arg:0>의 셀 너비 또는 높이가 0입니다"
 resource_pack.bedrock.font.cycle: "글꼴 <arg:0>에 대한 순환 참조입니다"
 resource_pack.bedrock.font.definition: "<arg:1>의 글꼴 <arg:0>을 건너뛰었습니다. providers 배열을 포함한 객체가 필요합니다."

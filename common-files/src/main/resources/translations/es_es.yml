@@ -328,7 +328,7 @@ resource_pack.bedrock.block.tint: "No se admite el tinte de bloque que depende d
 resource_pack.bedrock.block.uv: "El bloqueo UV no se puede representar con una cara rectangular"
 resource_pack.bedrock.block.weighted: "No se admiten modelos de bloque ponderados"
 resource_pack.bedrock.font.bitmap: "El mapa de bits <arg:0> falta o no es válido"
-resource_pack.bedrock.font.capacity: "Se omitió la fuente <arg:0>. No queda suficiente espacio en las páginas E3–F8."
+resource_pack.bedrock.font.capacity: "La fuente <arg:0> supera la capacidad restante de las páginas E3–F8. Los caracteres sin textura conservan su ancho de Java para el texto nativo de la barra de jefe."
 resource_pack.bedrock.font.cell: "El mapa de bits <arg:0> tiene una celda de ancho o alto cero"
 resource_pack.bedrock.font.cycle: "Referencia circular a la fuente <arg:0>"
 resource_pack.bedrock.font.definition: "Se omitió la fuente <arg:0> en <arg:1>. Se esperaba un objeto con un array providers."

@@ -8,6 +8,7 @@ public final class BedrockPackLayout {
     public static final String DYED_ICON_PREFIX = NAMESPACE + "_dye:";
 
     public static final String BOSS_BARS = "craftengine/boss_bars.json";
+    public static final String BOSS_BAR_TITLE_LAYOUT = "title_layout";
     public static final String SOUND_MAPPINGS = "craftengine/sounds.json";
     public static final String MODEL_DISPLAYS = "craftengine/model_displays.json";
     public static final String ELYTRA_VARIANTS = "craftengine/elytra_variants.json";

@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
@@ -47,7 +46,7 @@ public final class BedrockFontGenerator {
                 continue;
             }
             Int2ObjectMap<FontGlyph> allocated = atlas.allocateFont(font, rendering == fonts ? glyphs : rendering.resolve(font));
-            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated == null ? Int2ObjectMaps.emptyMap() : allocated));
+            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated));
         }
         Path directory = Files.createDirectories(root.resolve("font"));
         atlas.writePages(directory);

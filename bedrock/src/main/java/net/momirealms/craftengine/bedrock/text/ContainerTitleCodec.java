@@ -84,7 +84,11 @@ public final class ContainerTitleCodec {
     }
 
     static void appendNumber(StringBuilder output, int value) {
-        for (int divisor = 1000; divisor > 0; divisor /= 10) {
+        appendNumber(output, value, 1000);
+    }
+
+    static void appendNumber(StringBuilder output, int value, int divisor) {
+        for (; divisor > 0; divisor /= 10) {
             output.append((char) ('0' + value / divisor % 10));
         }
     }

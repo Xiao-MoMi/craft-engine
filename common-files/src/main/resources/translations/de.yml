@@ -328,7 +328,7 @@ resource_pack.bedrock.block.tint: "Weltabhängige Blockfärbung wird nicht unter
 resource_pack.bedrock.block.uv: "Die UV-Sperre lässt sich nicht durch eine rechteckige Fläche darstellen"
 resource_pack.bedrock.block.weighted: "Gewichtete Blockmodelle werden nicht unterstützt"
 resource_pack.bedrock.font.bitmap: "Bitmap <arg:0> fehlt oder ist ungültig"
-resource_pack.bedrock.font.capacity: "Schrift <arg:0> übersprungen. Der freie Platz auf den Seiten E3–F8 reicht nicht aus."
+resource_pack.bedrock.font.capacity: "Für die Schrift <arg:0> reicht der Platz auf den Seiten E3–F8 nicht aus. Zeichen ohne Textur behalten ihre Java-Breite für die native BossBar-Darstellung."
 resource_pack.bedrock.font.cell: "Bitmap <arg:0> hat eine Zelle mit Breite oder Höhe null"
 resource_pack.bedrock.font.cycle: "Zyklischer Verweis auf Schrift <arg:0>"
 resource_pack.bedrock.font.definition: "Schrift <arg:0> in <arg:1> übersprungen. Erwartet wurde ein Objekt mit einem providers-Array."

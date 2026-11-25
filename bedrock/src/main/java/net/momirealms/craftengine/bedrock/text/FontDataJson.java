@@ -77,7 +77,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
             if (value.character() != code) {
                 writer.name("character").value(value.character());
             }
-            if (value.renderedAdvance() >= 0) {
+            if (value.renderedAdvance() >= 0 || value.renderedAdvance() == FontGlyph.NATIVE_FALLBACK) {
                 writer.name("rendered_advance").value(value.renderedAdvance());
             }
             if (value.bearing() != 0) {

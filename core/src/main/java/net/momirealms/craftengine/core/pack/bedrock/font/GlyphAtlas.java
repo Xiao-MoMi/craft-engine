@@ -9,7 +9,6 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.core.util.Key;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,7 +23,6 @@ final class GlyphAtlas {
     private final Set<Glyph> unsupported = new HashSet<>();
     private final List<GlyphPage> pages = new ArrayList<>();
 
-    @Nullable
     Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
         IntArrayList codepoints = new IntArrayList();
         Int2ObjectMaps.fastForEach(glyphs, entry -> {
@@ -56,9 +54,9 @@ final class GlyphAtlas {
             pending.add(glyph);
         }
         // 容量检查通过后才分配，保证容量不足的字体不消耗任何槽位。
-        if (!this.hasRoomFor(pending)) {
+        boolean allocate = this.hasRoomFor(pending);
+        if (!allocate) {
             TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
-            return null;
         }
         Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.size());
         for (int i = 0; i < codepoints.size(); i++) {
@@ -70,6 +68,9 @@ final class GlyphAtlas {
             } else if (glyph.advanceOnly()) {
                 boolean ordinarySpace = codepoint == ' ' && advance == 4;
                 result.put(codepoint, new FontGlyph(ordinarySpace ? ' ' : -1, ordinarySpace ? 4 : 0, 0));
+            } else if (!allocate) {
+                FontGlyph existing = this.allocations.get(glyph);
+                result.put(codepoint, existing == null ? new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0) : existing);
             } else if (!this.unsupported.contains(glyph)) {
                 result.put(codepoint, this.allocateBitmap(glyph));
             }

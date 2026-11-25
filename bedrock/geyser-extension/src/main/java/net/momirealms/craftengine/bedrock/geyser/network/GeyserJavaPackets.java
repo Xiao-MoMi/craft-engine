@@ -79,7 +79,7 @@ public final class GeyserJavaPackets {
         }
         JsonObject styles = extension.extensionData().bossBars();
         if (styles != null && !styles.isEmpty()) {
-            this.intercept(ClientboundBossEventPacket.class, new GeyserBossBars(styles));
+            this.intercept(ClientboundBossEventPacket.class, new GeyserBossBars(styles, layout));
         }
         if (extension.sidebarManager() != null) {
             this.interceptSidebar(ClientboundSetObjectivePacket.class, SidebarSession::translate);

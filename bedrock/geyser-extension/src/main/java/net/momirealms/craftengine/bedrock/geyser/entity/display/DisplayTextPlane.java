@@ -143,7 +143,7 @@ public final class DisplayTextPlane {
         return position;
     }
 
-    Vector3f imagePosition(Vector3f line, float center) {
+    Vector3f piecePosition(Vector3f line, float center) {
         float x = center * DEBUG_TEXT_PIXEL;
         return line.add(this.right.getX() * x, this.right.getY() * x, this.right.getZ() * x);
     }
