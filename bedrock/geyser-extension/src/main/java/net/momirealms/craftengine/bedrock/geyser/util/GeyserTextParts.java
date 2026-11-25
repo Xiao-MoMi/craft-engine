@@ -88,6 +88,20 @@ public final class GeyserTextParts {
                                        int inheritedDecorations,
                                        List<GuiTitlePart> parts,
                                        String locale) {
+        return collectParts(component, inheritedFont, inheritedColor, inheritedDecorations, parts, locale, false);
+    }
+
+    public static boolean collectDisplayParts(Object component, List<GuiTitlePart> parts, String locale) {
+        return collectParts(component, "minecraft:default", 0xffffff, 0, parts, locale, true);
+    }
+
+    private static boolean collectParts(Object component,
+                                        String inheritedFont,
+                                        int inheritedColor,
+                                        int inheritedDecorations,
+                                        List<GuiTitlePart> parts,
+                                        String locale,
+                                        boolean keepComponents) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         // 当前组件显式设置的样式覆盖父级；未设置的样式继续继承
         Object ownFont = proxy.font(component);
@@ -97,7 +111,15 @@ public final class GeyserTextParts {
         int color = ownColor == null ? inheritedColor : AdventureTextColorProxy.INSTANCE.value(ownColor);
         int decorations = GuiTitlePart.decorations(inheritedDecorations, AdventureStyleProxy.INSTANCE.decorations(style));
         if (AdventureTextComponentProxy.CLASS.isInstance(component)) {
-            GuiTitlePart.append(parts, font, AdventureTextComponentProxy.INSTANCE.content(component), color, decorations);
+            String content = AdventureTextComponentProxy.INSTANCE.content(component);
+            if (keepComponents) {
+                // Java 在每个组件起点恢复其样式。先保留边界，避免 § 格式延续到相邻组件。
+                if (!content.isEmpty()) {
+                    parts.add(new GuiTitlePart(font, content, color, decorations));
+                }
+            } else {
+                GuiTitlePart.append(parts, font, content, color, decorations);
+            }
         } else if (AdventureTranslatableComponentProxy.CLASS.isInstance(component)) {
             // 暂不展开带参数的翻译组件，避免丢失参数内部的样式和布局信息
             if (!AdventureTranslatableComponentProxy.INSTANCE.arguments(component).isEmpty()) {
@@ -105,7 +127,7 @@ public final class GeyserTextParts {
             }
             // 只翻译当前节点，子组件留到下方逐个检查，避免绕过带参数翻译的限制
             Object translated = AdventureTranslationRendererProxy.INSTANCE.render(MessageTranslatorProxy.INSTANCE.renderer(), proxy.children(component, List.of()), locale);
-            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, parts, locale)) {
+            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, parts, locale, keepComponents)) {
                 return false;
             }
         } else {
@@ -115,7 +137,7 @@ public final class GeyserTextParts {
         List<?> children = proxy.children(component);
         for (int i = 0, size = children.size(); i < size; i++) {
             Object child = children.get(i);
-            if (!collectParts(child, font, color, decorations, parts, locale)) {
+            if (!collectParts(child, font, color, decorations, parts, locale, keepComponents)) {
                 return false;
             }
         }

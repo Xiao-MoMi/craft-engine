@@ -288,20 +288,16 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         if (this.layout == null) {
             Object translated = AdventureTranslationRendererProxy.INSTANCE.render(MessageTranslatorProxy.INSTANCE.renderer(), this.textComponent, locale);
             List<GuiTitlePart> parts = new ArrayList<>();
-            boolean useFontMetrics = GeyserTextParts.collectParts(translated, "minecraft:default", 0xFFFFFF, 0, parts, locale);
-            if (useFontMetrics) {
-                for (int index = 0, size = parts.size(); index < size; index++) {
-                    if (parts.get(index).text().indexOf('§') >= 0) {
-                        useFontMetrics = false;
-                        break;
-                    }
-                }
-            }
+            boolean useFontMetrics = GeyserTextParts.collectDisplayParts(translated, parts, locale);
             this.layout = useFontMetrics
-                    ? DisplayTextLayout.wrap(parts, this.glyphs.metrics(), this.lineWidth, locale)
-                    : DisplayTextLayout.wrapLegacy(this.text, this.lineWidth);
+                    ? DisplayTextLayout.wrap(parts, this.glyphs, this.lineWidth, locale)
+                    : DisplayTextLayout.wrapLegacy(this.text, this.lineWidth, this.glyphs.font("minecraft:default"));
             this.backgroundText = null;
             this.shadowLines = null;
+        }
+        if (this.layout.lines().isEmpty()) {
+            this.removeShapes(0);
+            return;
         }
         DisplayPose pose = this.transform.currentPose();
         this.clientFacing = this.billboard == CENTER && this.vehicle == null && (this.style & SHADOW) == 0

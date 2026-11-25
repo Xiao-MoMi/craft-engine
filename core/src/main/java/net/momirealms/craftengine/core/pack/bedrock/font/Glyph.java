@@ -13,7 +13,16 @@ public record Glyph(@Nullable BufferedImage image,
                     int ascent,
                     float spacing,
                     boolean nativeText, // 未覆写的原版字形，仅导出度量，保留字符交给基岩原生字体绘制
-                    int actualWidth) {
+                    int actualWidth,
+                    float boldOffset) {
+
+    public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText, int actualWidth) {
+        this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText, actualWidth, 1);
+    }
+
+    static Glyph unihex(int width) {
+        return new Glyph(null, 0, 0, width, 16, 8, 7, width / 2 + 1, true, width, 0.5f);
+    }
 
     public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText) {
         this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText,
@@ -29,7 +38,10 @@ public record Glyph(@Nullable BufferedImage image,
     }
 
     public boolean advanceOnly() {
-        return this.image == null || this.height <= 0 || this.ascent < -2048 || this.actualWidth == 0;
+        if (this.image == null) {
+            return !this.nativeText;
+        }
+        return this.height <= 0 || this.ascent < -2048 || this.actualWidth == 0;
     }
 
     private static int measureWidth(BufferedImage image, int x, int y, int width, int sourceHeight) {
@@ -41,6 +53,10 @@ public record Glyph(@Nullable BufferedImage image,
             }
         }
         return 0;
+    }
+
+    public float advance(boolean bold) {
+        return this.advance() + (bold ? this.boldOffset : 0);
     }
 
     public float advance() {

@@ -15,7 +15,7 @@ public final class GeyserGlyphManager {
     public void load(GeyserGlyphData glyphs) {
         this.glyphs = glyphs;
         this.originalSerializer = MessageTranslatorProxy.INSTANCE.bedrockSerializer();
-        MessageTranslatorProxy.INSTANCE.bedrockSerializer(new GeyserGlyphSerializer(this.originalSerializer, glyphs.fonts()).wrap());
+        MessageTranslatorProxy.INSTANCE.bedrockSerializer(new GeyserGlyphSerializer(this.originalSerializer, glyphs.replacements()).wrap());
     }
 
     public GeyserGlyphData glyphs() {

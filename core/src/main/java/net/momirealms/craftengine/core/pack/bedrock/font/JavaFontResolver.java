@@ -6,10 +6,13 @@ import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.MinecraftVersion;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -18,18 +21,73 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public final class JavaFontResolver {
+    public record FontOptions(boolean uniform, boolean japaneseVariants) {
+        public static final FontOptions DEFAULT = new FontOptions(false, false);
+    }
+
+    private record Lookup(Key font, int inheritedFilters) {
+    }
+
+    private static final int UNIFORM = 1;
+    private static final int JAPANESE_VARIANTS = 2;
+    private static final Key DEFAULT_FONT = Key.of("minecraft:default");
+    private static final Key UNIFORM_FONT = Key.of("minecraft:uniform");
+    private static final Glyph MISSING = Glyph.space(FontData.MISSING_ADVANCE);
+    private final FontOptions options;
     private final JavaResourcePack resources;
+    private final Map<String, JavaUnihexFont> unihexFonts = new HashMap<>();
     private final List<Pattern> excludedFonts;
     private final Map<String, BufferedImage> images = new HashMap<>();
-    private final Map<Key, Int2ObjectMap<Glyph>> resolved = new HashMap<>();
+    private final Map<Lookup, Int2ObjectMap<Glyph>> resolved = new HashMap<>();
     private final Set<Key> resolving = new HashSet<>();
     private int circularReferences;
     private final Map<Key, List<JavaResourcePack.FontResource>> fonts;
 
     public JavaFontResolver(JavaResourcePack resources, List<Pattern> excludedFonts) throws IOException {
+        this(resources, excludedFonts, FontOptions.DEFAULT);
+    }
+
+    public JavaFontResolver(JavaResourcePack resources, List<Pattern> excludedFonts, FontOptions options) throws IOException {
+        this.options = options;
         this.resources = resources;
         this.excludedFonts = excludedFonts;
         this.fonts = resources.fonts();
+    }
+
+    public float advance(Key font, int codepoint, boolean bold) throws IOException {
+        return this.resolve(font).getOrDefault(codepoint, MISSING).advance(bold);
+    }
+
+    public int width(List<GuiTitlePart> parts) throws IOException {
+        float width = 0;
+        for (GuiTitlePart part : parts) {
+            Int2ObjectMap<Glyph> glyphs = this.resolve(Key.of(part.font()));
+            boolean initialBold = (part.decorations() & 2) != 0;
+            boolean bold = initialBold;
+            String text = part.text();
+            for (int i = 0; i < text.length();) {
+                int code = text.codePointAt(i);
+                i += Character.charCount(code);
+                if (code == '§') {
+                    if (i < text.length()) {
+                        char format = Character.toLowerCase(text.charAt(i++));
+                        if (format == 'l') {
+                            bold = true;
+                        } else if (format == 'r') {
+                            bold = initialBold;
+                        } else if ("0123456789abcdef".indexOf(format) >= 0) {
+                            bold = false;
+                        }
+                    }
+                    continue;
+                }
+                if (code >= Character.MIN_SURROGATE && code <= Character.MAX_SURROGATE) {
+                    code = 0xfffd;
+                }
+                width += glyphs.getOrDefault(code, MISSING).advance(bold);
+            }
+        }
+        return (int) Math.ceil(width);
     }
 
     public Set<Key> fonts() {
@@ -47,10 +105,18 @@ public final class JavaFontResolver {
     }
 
     public Int2ObjectMap<Glyph> resolve(Key font) throws IOException {
+        if (this.options.uniform() && !this.resources.version().isAtOrAbove(MinecraftVersion.V1_20_5) && DEFAULT_FONT.equals(font)) {
+            font = UNIFORM_FONT;
+        }
+        return this.resolveDefinition(font, 0);
+    }
+
+    private Int2ObjectMap<Glyph> resolveDefinition(Key font, int inheritedFilters) throws IOException {
         if (this.isExcluded(font)) {
             return Int2ObjectMaps.emptyMap();
         }
-        Int2ObjectMap<Glyph> cached = this.resolved.get(font);
+        Lookup lookup = new Lookup(font, inheritedFilters);
+        Int2ObjectMap<Glyph> cached = this.resolved.get(lookup);
         if (cached != null) {
             return cached;
         }
@@ -68,7 +134,7 @@ public final class JavaFontResolver {
                 for (int index = 0; index < providers.size(); index++) {
                     Int2ObjectMap<Glyph> loaded;
                     try {
-                        loaded = this.loadProvider(providers.get(index).getAsJsonObject(), resource.custom(), font, index);
+                        loaded = this.loadProvider(providers.get(index).getAsJsonObject(), resource.custom(), font, index, inheritedFilters);
                     } catch (IOException | RuntimeException exception) {
                         String source = resource.custom() ? "resource_pack" : "vanilla";
                         TranslationManager.warn(
@@ -85,7 +151,7 @@ public final class JavaFontResolver {
             }
             // 跳过循环引用后，结果依赖本次引用路径，不能复用到其他字体。
             if (this.circularReferences == cyclesBefore) {
-                this.resolved.put(font, glyphs);
+                this.resolved.put(lookup, glyphs);
             }
             return glyphs;
         } finally {
@@ -93,9 +159,22 @@ public final class JavaFontResolver {
         }
     }
 
-    private Int2ObjectMap<Glyph> loadProvider(JsonObject provider, boolean custom, Key font, int index) throws IOException {
-        if (provider.has("filter") && provider.getAsJsonObject("filter").entrySet().stream().anyMatch(entry -> entry.getValue().getAsBoolean())) {
-            return Int2ObjectMaps.emptyMap();
+    private Int2ObjectMap<Glyph> loadProvider(JsonObject provider, boolean custom, Key font, int index, int inheritedFilters) throws IOException {
+        JsonObject filter = provider.getAsJsonObject("filter");
+        if (filter != null && this.resources.version().isAtOrAbove(MinecraftVersion.V1_20_5)) {
+            // 引用者的同名条件优先；已在外层匹配的条件不再用子字体的值重复筛选。
+            for (Map.Entry<String, JsonElement> entry : filter.entrySet()) {
+                int option = switch (entry.getKey()) {
+                    case "uniform" -> UNIFORM;
+                    case "jp" -> JAPANESE_VARIANTS;
+                    default -> throw new IOException("Unknown font option " + entry.getKey());
+                };
+                boolean enabled = option == UNIFORM ? this.options.uniform() : this.options.japaneseVariants();
+                if ((inheritedFilters & option) == 0 && entry.getValue().getAsBoolean() != enabled) {
+                    return Int2ObjectMaps.emptyMap();
+                }
+                inheritedFilters |= option;
+            }
         }
         Key type = Key.of(provider.get("type").getAsString());
         if (!type.isMinecraftNamespace()) {
@@ -115,7 +194,7 @@ public final class JavaFontResolver {
                     this.circularReferences++;
                     throw new IOException(TranslationManager.message("resource_pack.bedrock.font.cycle", target.asString()));
                 }
-                yield this.resolve(target);
+                yield this.resolveDefinition(target, inheritedFilters);
             }
             case "space" -> {
                 Int2ObjectMap<Glyph> spaces = new Int2ObjectOpenHashMap<>();
@@ -128,7 +207,25 @@ public final class JavaFontResolver {
                 }
                 yield spaces;
             }
-            // TODO TTF/UNIHEX
+            case "unihex" -> {
+                Key file = Key.of(provider.get("hex_file").getAsString());
+                String path = "assets/" + file.namespace() + "/" + file.value();
+                JavaUnihexFont source = this.unihexFonts.get(path);
+                if (source == null) {
+                    try (InputStream input = this.resources.openResource(path)) {
+                        if (input == null) {
+                            throw new IOException("Missing unihex resource " + path);
+                        }
+                        source = new JavaUnihexFont(input);
+                    }
+                    this.unihexFonts.put(path, source);
+                }
+                JsonArray sizes = provider.getAsJsonArray("size_overrides");
+                if (sizes == null && !this.resources.version().isAtOrAbove(MinecraftVersion.V1_21_6)) {
+                    throw new IOException("Missing size_overrides in " + path);
+                }
+                yield source.glyphs(sizes);
+            }
             default -> {
                 if (custom) {
                     TranslationManager.warn("resource_pack.bedrock.font.skipped_provider", font.asString(), Integer.toString(index), type.asString());

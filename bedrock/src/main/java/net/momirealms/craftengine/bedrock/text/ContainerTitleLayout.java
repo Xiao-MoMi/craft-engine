@@ -1,12 +1,10 @@
 package net.momirealms.craftengine.bedrock.text;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public final class ContainerTitleLayout {
     public static final int ORIGIN = 256;
@@ -15,9 +13,9 @@ public final class ContainerTitleLayout {
     public static final int MAX_SPACER = 33;
     private static final int SPACER_BYTES = 3;
     private static final int RESET_PREFIX_BYTES = 3;
-    private final Map<String, Int2ObjectMap<FontGlyph>> fonts;
+    private final FontData fonts;
 
-    public ContainerTitleLayout(Map<String, Int2ObjectMap<FontGlyph>> fonts) {
+    public ContainerTitleLayout(FontData fonts) {
         this.fonts = fonts;
     }
 
@@ -52,18 +50,19 @@ public final class ContainerTitleLayout {
         double width = 0;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
-            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
+            FontData.Font font = this.fonts.font(part.font());
             int boldAdvance = (part.decorations() & 2) != 0 ? 1 : 0;
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                FontGlyph glyph = font == null ? null : font.get(codepoint);
+                FontGlyph glyph = font.rendering().get(codepoint);
                 if (glyph == null || codepoint == '\n' || codepoint == '§') {
                     throw new UnsupportedOperationException("Unknown title glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
                 }
                 if (!glyph.visible()) {
-                    width += glyph.advance();
-                    javaCursor += glyph.advance();
+                    float advance = font.advance(codepoint, false);
+                    width += advance;
+                    javaCursor += advance;
                     continue;
                 }
                 if (glyph.renderedAdvance() < 0) {
@@ -98,7 +97,7 @@ public final class ContainerTitleLayout {
                 selected.appendGlyph(partIndex, glyph.character());
                 selected.addSpan(inkStart, inkEnd);
                 selected.cursor = position + advance;
-                float javaAdvance = glyph.advance() + boldAdvance;
+                float javaAdvance = font.advance(codepoint, false) + boldAdvance;
                 javaCursor += javaAdvance;
                 width += javaAdvance;
             }
@@ -137,15 +136,15 @@ public final class ContainerTitleLayout {
     public int width(List<GuiTitlePart> parts) {
         double width = 0;
         for (GuiTitlePart part : parts) {
-            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
+            FontData.Font font = this.fonts.font(part.font());
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                FontGlyph glyph = font == null ? null : font.get(codepoint);
+                FontGlyph glyph = font.rendering().get(codepoint);
                 if (glyph == null) {
                     throw new UnsupportedOperationException("Unknown glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
                 }
-                width += glyph.advance() + (glyph.visible() && (part.decorations() & 2) != 0 ? 1 : 0);
+                width += font.advance(codepoint, false) + (glyph.visible() && (part.decorations() & 2) != 0 ? 1 : 0);
             }
         }
         return Math.max(0, (int) Math.ceil(width));
@@ -180,15 +179,15 @@ public final class ContainerTitleLayout {
 
     private boolean requiresLayout(List<GuiTitlePart> parts, boolean negativeOnly) {
         for (GuiTitlePart part : parts) {
-            Int2ObjectMap<FontGlyph> font = this.fonts.get(part.font());
-            if (font == null) {
+            FontData.Font font = this.fonts.font(part.font());
+            if (font.rendering().isEmpty()) {
                 continue;
             }
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                FontGlyph glyph = font.get(codepoint);
-                if (glyph != null && (negativeOnly ? glyph.advance() < 0 : glyph.character() != codepoint)) {
+                FontGlyph glyph = font.rendering().get(codepoint);
+                if (glyph != null && (negativeOnly ? font.advance(codepoint, false) < 0 : glyph.character() != codepoint)) {
                     return true;
                 }
             }

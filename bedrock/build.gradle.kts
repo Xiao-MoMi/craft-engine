@@ -1,5 +1,6 @@
 dependencies {
     compileOnly(libs.fastutil)
+    compileOnly(libs.gson)
 }
 
 tasks.jar {

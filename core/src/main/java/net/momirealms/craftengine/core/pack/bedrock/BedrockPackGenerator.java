@@ -61,7 +61,7 @@ public final class BedrockPackGenerator {
             if (!translations.isEmpty()) {
                 GsonHelper.writeJsonFile(translations, data.resolve(BedrockPackLayout.TRANSLATIONS));
             }
-            BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.GLYPHS));
+            BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.FONTS));
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));

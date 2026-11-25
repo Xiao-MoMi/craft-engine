@@ -16,7 +16,7 @@ public final class BedrockPackFiles {
             BedrockPackLayout.SCOREBOARD,
             BedrockPackLayout.TITLE,
             BedrockPackLayout.BOSS_BARS,
-            BedrockPackLayout.GLYPHS
+            BedrockPackLayout.FONTS
     );
 
     private BedrockPackFiles() {

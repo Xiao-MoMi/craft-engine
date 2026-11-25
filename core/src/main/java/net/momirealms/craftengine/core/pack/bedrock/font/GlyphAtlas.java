@@ -5,6 +5,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +17,13 @@ final class GlyphAtlas {
     private static final int FIRST_BITMAP_PAGE = 0xE3;
     private static final int LAST_BITMAP_PAGE = 0xF8;
 
-    private final Map<Glyph, Allocation> allocations = new HashMap<>();
+    private final Map<Glyph, FontGlyph> allocations = new HashMap<>();
     private final Map<Glyph, GlyphMetrics> metrics = new HashMap<>();
     private final Set<Glyph> unsupported = new HashSet<>();
     private final List<GlyphPage> pages = new ArrayList<>();
 
     @Nullable
-    Int2ObjectMap<Allocation> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
+    Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
         int[] codepoints = glyphs.keySet().toIntArray();
         IntArrays.quickSort(codepoints);
         // 多个字符可能引用同一字形，估算本字体所需空间时只计一个槽位。
@@ -50,7 +51,7 @@ final class GlyphAtlas {
             TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
             return null;
         }
-        Int2ObjectMap<Allocation> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
+        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
         for (int codepoint : codepoints) {
             Glyph glyph = glyphs.get(codepoint);
             if (glyph == null) {
@@ -58,10 +59,10 @@ final class GlyphAtlas {
             }
             float advance = glyph.advance();
             if (glyph.nativeText()) {
-                result.put(codepoint, new Allocation(codepoint, advance, (int) advance, 0));
+                result.put(codepoint, new FontGlyph(codepoint, (int) advance, 0));
             } else if (glyph.advanceOnly()) {
                 boolean ordinarySpace = codepoint == ' ' && advance == 4;
-                result.put(codepoint, new Allocation(ordinarySpace ? ' ' : -1, advance, ordinarySpace ? 4 : 0, 0));
+                result.put(codepoint, new FontGlyph(ordinarySpace ? ' ' : -1, ordinarySpace ? 4 : 0, 0));
             } else if (!this.unsupported.contains(glyph)) {
                 result.put(codepoint, this.allocateBitmap(glyph));
             }
@@ -91,14 +92,14 @@ final class GlyphAtlas {
         return true;
     }
 
-    private Allocation allocateBitmap(Glyph glyph) {
-        Allocation existing = this.allocations.get(glyph);
+    private FontGlyph allocateBitmap(Glyph glyph) {
+        FontGlyph existing = this.allocations.get(glyph);
         if (existing != null) {
             return existing;
         }
         GlyphMetrics metrics = this.metrics.get(glyph);
         GlyphPage page = this.pageWithFreeSlot(metrics.cellSize());
-        Allocation allocation = new Allocation(page.add(glyph, metrics), glyph.advance(), metrics.advance(), 1);
+        FontGlyph allocation = new FontGlyph(page.add(glyph, metrics), metrics.advance(), 1);
         this.allocations.put(glyph, allocation);
         return allocation;
     }
@@ -118,8 +119,5 @@ final class GlyphAtlas {
         for (GlyphPage page : this.pages) {
             page.write(directory);
         }
-    }
-
-    record Allocation(int character, float advance, int renderedAdvance, int bearing) {
     }
 }
