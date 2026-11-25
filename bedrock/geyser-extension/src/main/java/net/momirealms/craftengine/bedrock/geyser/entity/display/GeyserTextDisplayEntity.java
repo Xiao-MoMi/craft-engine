@@ -25,6 +25,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class GeyserTextDisplayEntity extends TextDisplayEntity implements Tickable {
@@ -459,9 +460,35 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     private String backgroundText() {
         if (this.backgroundText == null) {
             this.prepareShadowLines();
-            this.backgroundText = String.join("\n", this.shadowLines);
+            this.backgroundText = joinBackgroundLines(this.shadowLines);
         }
         return this.backgroundText;
+    }
+
+    static String joinBackgroundLines(List<String> lines) {
+        if (!lines.contains("")) {
+            return String.join("\n", lines);
+        }
+        // DebugText 的背景会跳过空行。透明层借用已有的一枚字形占行，窄文本也不会被空格撑宽。
+        String placeholder = backgroundPlaceholder(lines);
+        StringJoiner text = new StringJoiner("\n");
+        for (String line : lines) {
+            text.add(line.isEmpty() ? placeholder : line);
+        }
+        return text.toString();
+    }
+
+    private static String backgroundPlaceholder(List<String> lines) {
+        for (String line : lines) {
+            int start = 0;
+            while (start + 1 < line.length() && line.charAt(start) == '§') {
+                start += 2;
+            }
+            if (start < line.length() && line.charAt(start) != '§') {
+                return line.substring(start, line.offsetByCodePoints(start, 1));
+            }
+        }
+        return ".";
     }
 
     private String shadowLine(int index) {
