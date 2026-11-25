@@ -369,7 +369,8 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
         float pitch = followsPitch ? -this.cameraPitch : this.pitch;
         Vector3f base = this.passengerAnchor == null ? this.position : this.passengerAnchor;
         if (this.plane == null) {
-            this.plane = new DisplayTextPlane(GameProtocol.is26_50orHigher(this.session.protocolVersion()));
+            int protocol = this.session.protocolVersion();
+            this.plane = new DisplayTextPlane(GameProtocol.is26_50orHigher(protocol), BedrockBitmapFont.forProtocol(protocol));
         }
         float alignment = (this.style & ALIGN_LEFT) != 0 ? -0.5f : ((this.style & ALIGN_RIGHT) != 0 ? 0.5f : 0);
         if (!this.plane.prepare(pose, base, yaw, pitch, this.layout, alignment)) {

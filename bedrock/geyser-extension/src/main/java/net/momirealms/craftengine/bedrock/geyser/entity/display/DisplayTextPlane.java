@@ -15,6 +15,7 @@ public final class DisplayTextPlane {
     private static final float BACKGROUND_LINE_OFFSET = LINE_HEIGHT * 0.5f * PIXEL;
     private static final float BACKGROUND_DEPTH = 0.003f;
     private final float backgroundLineGap;
+    private final BedrockBitmapFont bitmapFont;
     private DisplayPose pose;
     private Vector3f base;
     private float yaw;
@@ -33,9 +34,11 @@ public final class DisplayTextPlane {
     private Vector3f shadowAnchor;
     private Vector3f[] lines;
     private Vector3f[] shadows;
+    private float[] shadowOffsets;
 
-    DisplayTextPlane(boolean supportsLineGap) {
+    DisplayTextPlane(boolean supportsLineGap, BedrockBitmapFont bitmapFont) {
         this.backgroundLineGap = supportsLineGap ? BACKGROUND_LINE_GAP : 0;
+        this.bitmapFont = bitmapFont;
     }
 
     boolean prepare(DisplayPose pose, Vector3f base, float yaw, float pitch, DisplayTextLayout layout, float alignment) {
@@ -60,6 +63,9 @@ public final class DisplayTextPlane {
             this.base = base;
             this.anchor = Vector3f.ZERO.equals(pose.translation()) ? base : base.add(this.orientation.rotate(pose.translation()));
             this.shadowAnchor = null;
+        }
+        if (this.layout != layout) {
+            this.shadowOffsets = null;
         }
         this.layout = layout;
         this.alignment = alignment;
@@ -122,7 +128,14 @@ public final class DisplayTextPlane {
             if (this.shadowAnchor == null) {
                 this.shadowAnchor = this.anchor.sub(this.normal.mul(0.001f));
             }
-            position = this.position(this.shadowAnchor, this.lineX(index) + 2, this.lineY(index) - 1);
+            if (this.shadowOffsets == null) {
+                this.shadowOffsets = new float[lineCount];
+                for (int i = 0; i < lineCount; i++) {
+                    this.shadowOffsets[i] = this.bitmapFont.shadowOffset(this.layout.lines().get(i).text());
+                }
+            }
+            float offset = this.shadowOffsets[index];
+            position = this.position(this.shadowAnchor, this.lineX(index) + 1 + offset, this.lineY(index) - offset);
             this.shadows[index] = position;
         }
         return position;
