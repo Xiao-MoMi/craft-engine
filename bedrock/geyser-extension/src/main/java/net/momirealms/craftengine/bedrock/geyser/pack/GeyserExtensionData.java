@@ -2,6 +2,9 @@ package net.momirealms.craftengine.bedrock.geyser.pack;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.Strictness;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
@@ -81,7 +84,7 @@ public final class GeyserExtensionData {
             JsonObject sounds = readJson(archive, BedrockPackLayout.SOUND_MAPPINGS);
             JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
-            GeyserGlyphData glyphs = new GeyserGlyphData(FontData.fromJson(readJson(archive, BedrockPackLayout.FONTS)));
+            GeyserGlyphData glyphs = readFonts(archive);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
                     readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
@@ -122,6 +125,21 @@ public final class GeyserExtensionData {
     @Nullable
     public Path clientPack() {
         return this.clientPack;
+    }
+
+    private static GeyserGlyphData readFonts(ZipFile archive) throws IOException {
+        ZipEntry entry = archive.getEntry(BedrockPackLayout.FONTS);
+        if (entry == null) {
+            throw new IOException("Missing " + BedrockPackLayout.FONTS + "; regenerate the Bedrock pack");
+        }
+        try (JsonReader reader = new JsonReader(new InputStreamReader(archive.getInputStream(entry), StandardCharsets.UTF_8))) {
+            reader.setStrictness(Strictness.LENIENT);
+            FontData fonts = FontData.read(reader);
+            if (reader.peek() != JsonToken.END_DOCUMENT) {
+                throw new IOException("Unexpected trailing data in " + entry.getName());
+            }
+            return new GeyserGlyphData(fonts);
+        }
     }
 
     @Nullable

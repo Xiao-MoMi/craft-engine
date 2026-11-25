@@ -23,7 +23,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
     }
 
     static FormattedParts expandFormatting(List<GuiTitlePart> parts) {
-        List<GuiTitlePart> expanded = null;
+        GuiTitlePart.Builder expanded = null;
         boolean trailingFormat = false;
         for (int i = 0; i < parts.size(); i++) {
             GuiTitlePart part = parts.get(i);
@@ -35,19 +35,19 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             if (marker < 0) {
                 trailingFormat = false;
                 if (expanded != null) {
-                    expanded.add(part);
+                    expanded.addComponent(part);
                 }
                 continue;
             }
             if (expanded == null) {
-                expanded = new ArrayList<>(parts.subList(0, i));
+                expanded = new GuiTitlePart.Builder(new ArrayList<>(parts.subList(0, i)));
             }
             String font = part.font();
             int color = part.color();
             int decorations = part.decorations();
             int start = 0;
             while (marker >= 0) {
-                GuiTitlePart.append(expanded, font, text.substring(start, marker), color, decorations);
+                expanded.append(font, text.substring(start, marker), color, decorations);
                 start = Math.min(text.length(), marker + 2);
                 if (marker + 1 < text.length()) {
                     int format = JAVA_FORMATS.indexOf(Character.toLowerCase(text.charAt(marker + 1)));
@@ -65,14 +65,23 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 marker = text.indexOf('§', start);
             }
             trailingFormat = start == text.length();
-            GuiTitlePart.append(expanded, font, text.substring(start), color, decorations);
+            expanded.append(font, text.substring(start), color, decorations);
         }
-        return new FormattedParts(expanded == null ? parts : expanded, trailingFormat);
+        return new FormattedParts(expanded == null ? parts : expanded.finish(), trailingFormat);
     }
 
     static DisplayTextLayout wrap(List<GuiTitlePart> source, GeyserGlyphData glyphs, int maxWidth, String locale) {
         FormattedParts formatted = expandFormatting(source);
         List<GuiTitlePart> parts = formatted.parts();
+        if (parts.size() == 1) {
+            GuiTitlePart part = parts.getFirst();
+            if (part.font().equals(DEFAULT_FONT) && part.color() == 0xffffff && part.decorations() == 0) {
+                FontData.Font font = glyphs.font(DEFAULT_FONT);
+                if (isPlainText(part.text(), font.rendering())) {
+                    return splitPlain(part.text(), maxWidth, font, formatted.trailingFormat());
+                }
+            }
+        }
         StringBuilder text = new StringBuilder();
         int[] partStarts = new int[parts.size() + 1];
         for (int index = 0; index < parts.size(); index++) {
@@ -94,16 +103,15 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                     text.setCharAt(index, (char) codepoint);
                 }
                 if (codepoint != '\n') {
-                    FontGlyph glyph = rendering.get(codepoint);
                     advances[index] = font.advance(codepoint, bold);
-                    plain &= codepoint >= ' ' && codepoint <= '~' && (glyph == null || glyph.character() == codepoint);
+                    plain = plain && isPlainGlyph(codepoint, rendering);
                 }
                 index += Character.charCount(codepoint);
             }
         }
 
         boolean plainText = plain;
-        return split(text, advances, maxWidth, formatted.trailingFormat(), new LineText() {
+        return split(text, (index, codepoint) -> advances[index], maxWidth, formatted.trailingFormat(), new LineText() {
             private int firstPart;
 
             @Override
@@ -124,7 +132,34 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         String slice(int start, int end);
     }
 
-    private static DisplayTextLayout split(StringBuilder text, float[] advances, int maxWidth, boolean trailingFormat, LineText contents) {
+    private static boolean isPlainText(String text, Int2ObjectMap<FontGlyph> rendering) {
+        for (int i = 0; i < text.length(); i++) {
+            char character = text.charAt(i);
+            if (character != '\n' && !isPlainGlyph(character, rendering)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isPlainGlyph(int codepoint, Int2ObjectMap<FontGlyph> rendering) {
+        if (codepoint < ' ' || codepoint > '~') {
+            return false;
+        }
+        FontGlyph glyph = rendering.get(codepoint);
+        return glyph == null || glyph.character() == codepoint;
+    }
+
+    @FunctionalInterface
+    private interface Advance {
+        float at(int index, int codepoint);
+    }
+
+    private static DisplayTextLayout splitPlain(String text, int maxWidth, FontData.Font font, boolean trailingFormat) {
+        return split(text, (index, codepoint) -> font.advance(codepoint, false), maxWidth, trailingFormat, text::substring);
+    }
+
+    private static DisplayTextLayout split(CharSequence text, Advance advances, int maxWidth, boolean trailingFormat, LineText contents) {
         List<Line> lines = new ArrayList<>();
         int maximum = 0;
         int start = 0;
@@ -137,7 +172,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             float widthAtSpace = 0;
             boolean hasWidth = false;
             while (end < text.length()) {
-                int codepoint = text.codePointAt(end);
+                int codepoint = Character.codePointAt(text, end);
                 if (codepoint == '\n') {
                     next = end + 1;
                     break;
@@ -146,7 +181,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                     lastSpace = end;
                     widthAtSpace = width;
                 }
-                float advance = advances[end];
+                float advance = advances.at(end, codepoint);
                 if (hasWidth && width + advance > maxWidth) {
                     if (lastSpace >= start) {
                         end = lastSpace;
@@ -174,31 +209,34 @@ public record DisplayTextLayout(List<Line> lines, int width) {
     }
 
     private static String serializeLine(List<GuiTitlePart> parts, int[] starts, int first, int start, int end, String locale) {
-        List<GuiTitlePart> line = new ArrayList<>();
+        GuiTitlePart.Builder line = new GuiTitlePart.Builder(new ArrayList<>());
         for (int index = first; index < parts.size() && starts[index] < end; index++) {
             GuiTitlePart part = parts.get(index);
             String text = part.text().substring(Math.max(0, start - starts[index]), Math.min(part.text().length(), end - starts[index]));
-            GuiTitlePart.append(line, part.font(), text, part.color(), part.decorations());
+            line.append(part.font(), text, part.color(), part.decorations());
         }
-        return GeyserTextParts.serializeParts(line, locale);
+        return GeyserTextParts.serializeParts(line.finish(), locale);
     }
 
     static DisplayTextLayout wrapLegacy(String text, int maxWidth, FontData.Font font) {
+        if (text.indexOf('§') < 0) {
+            return splitPlain(text, maxWidth, font, false);
+        }
         StringBuilder visible = new StringBuilder();
         float[] advances = new float[text.length()];
-        int[] rawOffsets = new int[text.length() + 1];
-        String[] prefixes = new String[text.length() + 1];
+        List<FormatChange> changes = new ArrayList<>();
         String format = "";
         String color = "";
-        int rawStart = 0;
-        String prefix = "";
+        boolean formatChanged = false;
         boolean bold = false;
         boolean italic = false;
         boolean obfuscated = false;
         for (int index = 0; index < text.length();) {
+            int rawIndex = index;
             int character = text.codePointAt(index);
             index += Character.charCount(character);
             if (character == '§') {
+                formatChanged = true;
                 if (index == text.length()) {
                     break;
                 }
@@ -220,19 +258,39 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 continue;
             }
             int offset = visible.length();
-            rawOffsets[offset] = rawStart;
-            prefixes[offset] = prefix;
+            if (formatChanged) {
+                changes.add(new FormatChange(offset, rawIndex - offset, format));
+                formatChanged = false;
+            }
             advances[offset] = font.advance(character, bold);
             visible.appendCodePoint(character);
-            rawStart = index;
-            prefix = format;
         }
-        rawOffsets[visible.length()] = text.length();
-        prefixes[visible.length()] = format;
-        return split(visible, advances, maxWidth, rawStart < text.length(), (start, end) -> {
-            String line = text.substring(rawOffsets[start], rawOffsets[end]);
-            return start == 0 || line.isEmpty() ? line : prefixes[start] + line;
+        return split(visible, (index, codepoint) -> advances[index], maxWidth, formatChanged, new LineText() {
+            private int nextChange;
+            private int skipped;
+            private String prefix = "";
+
+            @Override
+            public String slice(int start, int end) {
+                int rawStart = this.rawOffset(start);
+                String active = this.prefix;
+                String line = text.substring(rawStart, this.rawOffset(end));
+                return start == 0 || line.isEmpty() || active.isEmpty() ? line : active + line;
+            }
+
+            private int rawOffset(int visibleOffset) {
+                // 紧邻断点的格式码属于下一行；末尾格式码随原始字符串保留。
+                while (this.nextChange < changes.size() && changes.get(this.nextChange).visibleIndex() < visibleOffset) {
+                    FormatChange change = changes.get(this.nextChange++);
+                    this.skipped = change.skipped();
+                    this.prefix = change.format();
+                }
+                return visibleOffset == visible.length() ? text.length() : visibleOffset + this.skipped;
+            }
         });
+    }
+
+    private record FormatChange(int visibleIndex, int skipped, String format) {
     }
 
     record Line(String text, int width, boolean visible) {

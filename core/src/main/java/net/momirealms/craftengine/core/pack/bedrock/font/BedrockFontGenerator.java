@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
+import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
@@ -9,7 +9,6 @@ import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.config.Config;
-import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;
@@ -20,7 +19,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public final class BedrockFontGenerator {
     private static final int SPACER_PAGE = ContainerTitleLayout.SPACER_FIRST >>> 8;
@@ -34,8 +32,7 @@ public final class BedrockFontGenerator {
 
     public static void write(JavaResourcePack resources, Path root, Path fontFile) throws IOException {
         JavaFontResolver fonts = new JavaFontResolver(resources, List.of());
-        List<Pattern> excluded = Config.bedrockExcludedFonts();
-        JavaFontResolver rendering = excluded.isEmpty() ? fonts : new JavaFontResolver(resources, excluded);
+        JavaFontResolver rendering = fonts.excluding(Config.bedrockExcludedFonts());
         write(fonts, rendering, root, fontFile);
     }
 
@@ -49,22 +46,16 @@ public final class BedrockFontGenerator {
             if (glyphs.isEmpty()) {
                 continue;
             }
-            Int2ObjectMap<Glyph> renderGlyphs = new Int2ObjectOpenHashMap<>();
-            Int2ObjectMaps.fastForEach(rendering.resolve(font), entry -> {
-                Glyph glyph = entry.getValue();
-                if (!glyph.nativeText() || glyph.image() != null) {
-                    renderGlyphs.put(entry.getIntKey(), glyph);
-                }
-            });
-            Int2ObjectMap<FontGlyph> allocated = atlas.allocateFont(font, renderGlyphs);
-            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset,
-                    allocated == null ? Int2ObjectMaps.emptyMap() : allocated));
+            Int2ObjectMap<FontGlyph> allocated = atlas.allocateFont(font, rendering == fonts ? glyphs : rendering.resolve(font));
+            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated == null ? Int2ObjectMaps.emptyMap() : allocated));
         }
         Path directory = Files.createDirectories(root.resolve("font"));
         atlas.writePages(directory);
         copySpacerPage(directory);
         Files.createDirectories(fontFile.getParent());
-        GsonHelper.writeJsonFile(new FontData(entries).toJson(), fontFile);
+        try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(fontFile))) {
+            new FontData(entries).write(writer);
+        }
     }
 
     private static void copySpacerPage(Path directory) throws IOException {

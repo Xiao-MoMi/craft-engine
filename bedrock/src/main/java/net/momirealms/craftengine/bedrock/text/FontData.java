@@ -1,19 +1,20 @@
 package net.momirealms.craftengine.bedrock.text;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
+
+import java.io.IOException;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.ToDoubleFunction;
 
 public final class FontData {
-    private static final int VERSION = 1;
     public static final float MISSING_ADVANCE = 6;
     private static final float DEFAULT_BOLD_OFFSET = 1;
     public static final FontData EMPTY = new FontData(Map.of());
@@ -31,89 +32,28 @@ public final class FontData {
         return this.fonts;
     }
 
+    public void write(JsonWriter writer) throws IOException {
+        FontDataJson.INSTANCE.write(writer, this);
+    }
+
+    public static FontData read(JsonReader reader) throws IOException {
+        return FontDataJson.INSTANCE.read(reader);
+    }
+
     public JsonObject toJson() {
-        JsonArray tables = new JsonArray();
-        Map<WidthPage, Integer> ids = new HashMap<>();
-        JsonObject definitions = new JsonObject();
-        for (Map.Entry<String, Font> entry : this.fonts.entrySet()) {
-            Font font = entry.getValue();
-            JsonArray indices = new JsonArray();
-            int[] keys = font.pages.keySet().toIntArray();
-            IntArrays.quickSort(keys);
-            for (int key : keys) {
-                WidthPage page = font.pages.get(key);
-                Integer id = ids.putIfAbsent(page, tables.size());
-                if (id == null) {
-                    id = tables.size();
-                    tables.add(page.toJson());
-                }
-                indices.add(key);
-                indices.add(id);
-            }
-            JsonObject rendering = new JsonObject();
-            for (Int2ObjectMap.Entry<FontGlyph> glyph : font.rendering.int2ObjectEntrySet()) {
-                int code = glyph.getIntKey();
-                FontGlyph value = glyph.getValue();
-                JsonObject record = new JsonObject();
-                if (value.character() != code) {
-                    record.addProperty("character", value.character());
-                }
-                if (value.renderedAdvance() >= 0) {
-                    record.addProperty("rendered_advance", value.renderedAdvance());
-                }
-                if (value.bearing() != 0) {
-                    record.addProperty("bearing", value.bearing());
-                }
-                rendering.add(Integer.toHexString(code), record);
-            }
-            JsonObject definition = new JsonObject();
-            definition.add("pages", indices);
-            definition.add("rendering", rendering);
-            definitions.add(entry.getKey(), definition);
-        }
-        JsonObject root = new JsonObject();
-        root.addProperty("version", VERSION);
-        root.add("width_pages", tables);
-        root.add("fonts", definitions);
-        return root;
+        return FontDataJson.INSTANCE.toJsonTree(this).getAsJsonObject();
     }
 
     public static FontData fromJson(JsonObject root) {
-        if (root == null || !root.has("version") || root.get("version").getAsInt() != VERSION) {
-            throw new IllegalArgumentException("Missing or unsupported craftengine/fonts.json; regenerate the Bedrock pack");
-        }
-        JsonArray tables = root.getAsJsonArray("width_pages");
-        WidthPage[] pages = new WidthPage[tables.size()];
-        for (int i = 0; i < pages.length; i++) {
-            pages[i] = WidthPage.fromJson(tables.get(i).getAsJsonArray());
-        }
-        Map<String, Font> fonts = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : root.getAsJsonObject("fonts").entrySet()) {
-            JsonObject definition = entry.getValue().getAsJsonObject();
-            JsonArray indices = definition.getAsJsonArray("pages");
-            Int2ObjectMap<FontGlyph> rendering = new Int2ObjectOpenHashMap<>();
-            Font font = new Font(rendering);
-            for (int i = 0; i < indices.size(); i += 2) {
-                font.pages.put(indices.get(i).getAsInt(), pages[indices.get(i + 1).getAsInt()]);
-            }
-            for (Map.Entry<String, JsonElement> glyph : definition.getAsJsonObject("rendering").entrySet()) {
-                int code = Integer.parseInt(glyph.getKey(), 16);
-                JsonObject record = glyph.getValue().getAsJsonObject();
-                rendering.put(code, new FontGlyph(record.has("character") ? record.get("character").getAsInt() : code,
-                        record.has("rendered_advance") ? record.get("rendered_advance").getAsInt() : -1,
-                        record.has("bearing") ? record.get("bearing").getAsInt() : 0));
-            }
-            fonts.put(entry.getKey(), font);
-        }
-        return new FontData(fonts);
+        return FontDataJson.INSTANCE.fromJsonTree(root);
     }
 
     public static final class Font {
         private static final Font MISSING = new Font(Int2ObjectMaps.emptyMap());
-        private final Int2ObjectMap<WidthPage> pages = new Int2ObjectOpenHashMap<>();
+        final Int2ObjectMap<WidthPage> pages = new Int2ObjectOpenHashMap<>();
         private final Int2ObjectMap<FontGlyph> rendering;
 
-        private Font(Int2ObjectMap<FontGlyph> rendering) {
+        Font(Int2ObjectMap<FontGlyph> rendering) {
             this.rendering = Int2ObjectMaps.unmodifiable(rendering);
         }
 
@@ -143,17 +83,17 @@ public final class FontData {
         }
     }
 
-    private static final class WidthPage {
+    static final class WidthPage {
         private final float[] advances = new float[256];
-        private final float[] boldOffsets = new float[256];
+        private float[] boldOffsets = new float[256];
 
         private WidthPage() {
             Arrays.fill(this.advances, MISSING_ADVANCE);
             Arrays.fill(this.boldOffsets, DEFAULT_BOLD_OFFSET);
         }
 
-        private JsonArray toJson() {
-            JsonArray ranges = new JsonArray();
+        void write(JsonWriter writer) throws IOException {
+            writer.beginArray();
             int first = 0;
             while (first < 256) {
                 int end = first + 1;
@@ -161,24 +101,28 @@ public final class FontData {
                     end++;
                 }
                 if (this.advances[first] != MISSING_ADVANCE || this.boldOffsets[first] != DEFAULT_BOLD_OFFSET) {
-                    ranges.add(first);
-                    ranges.add(end - 1);
-                    ranges.add(this.advances[first]);
-                    ranges.add(this.boldOffsets[first]);
+                    writer.value(first);
+                    writer.value(end - 1);
+                    writer.value(this.advances[first]);
+                    writer.value(this.boldOffsets[first]);
                 }
                 first = end;
             }
-            return ranges;
+            writer.endArray();
         }
 
-        private static WidthPage fromJson(JsonArray ranges) {
+        static WidthPage read(JsonReader reader, ObjectOpenCustomHashSet<float[]> sharedBoldOffsets) throws IOException {
             WidthPage page = new WidthPage();
-            for (int i = 0; i < ranges.size(); i += 4) {
-                int start = ranges.get(i).getAsInt();
-                int end = ranges.get(i + 1).getAsInt() + 1;
-                Arrays.fill(page.advances, start, end, ranges.get(i + 2).getAsFloat());
-                Arrays.fill(page.boldOffsets, start, end, ranges.get(i + 3).getAsFloat());
+            reader.beginArray();
+            while (reader.hasNext()) {
+                int start = reader.nextInt();
+                int end = reader.nextInt() + 1;
+                Arrays.fill(page.advances, start, end, Float.parseFloat(reader.nextString()));
+                Arrays.fill(page.boldOffsets, start, end, Float.parseFloat(reader.nextString()));
             }
+            reader.endArray();
+            // 不同字宽页经常有完全相同的粗体增量。加载结束后数组只读，查询仍是直接下标访问。
+            page.boldOffsets = sharedBoldOffsets.addOrGet(page.boldOffsets);
             return page;
         }
 

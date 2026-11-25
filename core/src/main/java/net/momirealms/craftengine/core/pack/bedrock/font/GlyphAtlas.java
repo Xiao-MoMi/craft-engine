@@ -3,6 +3,8 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
@@ -24,14 +26,21 @@ final class GlyphAtlas {
 
     @Nullable
     Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
-        int[] codepoints = glyphs.keySet().toIntArray();
-        IntArrays.quickSort(codepoints);
+        IntArrayList codepoints = new IntArrayList();
+        Int2ObjectMaps.fastForEach(glyphs, entry -> {
+            Glyph glyph = entry.getValue();
+            if (!glyph.nativeText() || glyph.image() != null) {
+                codepoints.add(entry.getIntKey());
+            }
+        });
+        IntArrays.quickSort(codepoints.elements(), 0, codepoints.size());
         // 多个字符可能引用同一字形，估算本字体所需空间时只计一个槽位。
         Set<Glyph> pending = new LinkedHashSet<>();
-        for (int codepoint : codepoints) {
+        for (int i = 0; i < codepoints.size(); i++) {
+            int codepoint = codepoints.getInt(i);
             Glyph glyph = glyphs.get(codepoint);
             // 原生字符和纯间距字符无需绘制；此前已分配码位的字形可以复用原槽位。
-            if (glyph == null || glyph.nativeText() || glyph.advanceOnly() || this.allocations.containsKey(glyph) || this.unsupported.contains(glyph)) {
+            if (glyph.nativeText() || glyph.advanceOnly() || this.allocations.containsKey(glyph) || this.unsupported.contains(glyph)) {
                 continue;
             }
             // 测量得到的格子尺寸可供其他字体复用；失败也会记录，避免同一字形反复测量和告警。
@@ -51,12 +60,10 @@ final class GlyphAtlas {
             TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
             return null;
         }
-        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
-        for (int codepoint : codepoints) {
+        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.size());
+        for (int i = 0; i < codepoints.size(); i++) {
+            int codepoint = codepoints.getInt(i);
             Glyph glyph = glyphs.get(codepoint);
-            if (glyph == null) {
-                continue;
-            }
             float advance = glyph.advance();
             if (glyph.nativeText()) {
                 result.put(codepoint, new FontGlyph(codepoint, (int) advance, 0));
