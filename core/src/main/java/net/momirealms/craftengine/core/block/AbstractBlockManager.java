@@ -28,6 +28,7 @@ import net.momirealms.craftengine.core.pack.model.bbmodel.BBModelConverter;
 import net.momirealms.craftengine.core.pack.model.generation.AbstractModelGenerator;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
+import net.momirealms.craftengine.core.pack.model.generation.OffsetBlockModel;
 import net.momirealms.craftengine.core.pack.model.simplified.block.*;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.*;
@@ -49,6 +50,7 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -74,6 +76,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
     protected final Map<Key, Map<String, JsonElement>> blockStateOverrides = new ConcurrentHashMap<>(128);
     // 用于生成mod使用的block state json
     protected final Map<Integer, JsonElement> modBlockStateOverrides = new ConcurrentHashMap<>(128);
+    protected final Set<OffsetBlockModel> offsetBlockModels = ConcurrentHashMap.newKeySet();
     // 根据外观查找真实状态，用于debug指令
     protected final Map<Integer, List<Integer>> appearanceToRealState = Collections.synchronizedMap(new Int2ObjectOpenHashMap<>());
     // 用于note_block:0这样格式的自动分配
@@ -155,6 +158,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         this.namespacesInUse.clear();
         this.blockStateOverrides.clear();
         this.modBlockStateOverrides.clear();
+        this.offsetBlockModels.clear();
         this.byId.clear();
         this.blockStateArranger.clear();
         this.appearanceToRealState.clear();
@@ -219,6 +223,11 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
     @Override
     public Map<Key, Map<String, JsonElement>> blockOverrides() {
         return Collections.unmodifiableMap(this.blockStateOverrides);
+    }
+
+    @Override
+    public Set<OffsetBlockModel> offsetBlockModels() {
+        return Collections.unmodifiableSet(this.offsetBlockModels);
     }
 
     @Override
@@ -703,9 +712,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                             ConfigValue blueprintValue = appearanceSection.getValue("blueprint");
                             if (blueprintValue != null) {
                                 BBModelConverter.Converted converted = BBModelConverter.convert(pack, path, "block", modelValue, blueprintValue);
-                                JsonObject json = new JsonObject();
-                                json.addProperty("model", converted.model().asMinimalString());
-                                applyOtherBlockStateProperties(json, appearanceSection);
+                                JsonObject json = this.blockStateVariant(converted.model(), appearanceSection);
                                 prepareModelGeneration(new ModelGenerationHolder(converted.model(), ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata())));
                                 arrangeModelForStateAndVerify(visualBlockState, json, blueprintValue.path());
                             } else if (textureValue != null) {
@@ -724,9 +731,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                                     continue;
                                 }
 
-                                JsonObject json = new JsonObject();
-                                json.addProperty("model", modelPath.asMinimalString());
-                                applyOtherBlockStateProperties(json, appearanceSection);
+                                JsonObject json = this.blockStateVariant(modelPath, appearanceSection);
 
                                 SimplifiedBlockModelReader reader = SIMPLIFIED_BLOCK_MODEL_READERS.getOrDefault(pair.left().size(), CubeBlockModelReader.INSTANCE);
                                 ModelGeneration gen = reader.read(pair.left(), pair.right());
@@ -734,7 +739,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                                 arrangeModelForStateAndVerify(visualBlockState, json, activeConfigValue.path());
                             } else {
                                 if (modelValue != null) {
-                                    arrangeModelForStateAndVerify(visualBlockState, parseBlockModel(pack, path, modelValue), modelValue.path());
+                                    arrangeModelForStateAndVerify(visualBlockState, this.parseBlockModel(pack, path, modelValue, appearanceSection), modelValue.path());
                                 }
                             }
                         }
@@ -915,15 +920,23 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         }
 
         @Nullable
-        private JsonElement parseBlockModel(Pack pack, Path path, ConfigValue modelOrModels) {
-            if (modelOrModels == null) return null;
+        private JsonElement parseBlockModel(Pack pack, Path path, ConfigValue modelOrModels, ConfigSection appearanceSection) {
+            if (modelOrModels == null) {
+                return null;
+            }
             List<JsonObject> variants;
             if (modelOrModels.is(List.class)) {
                 variants = modelOrModels.getAsNonEmptyList(v -> this.parseAppearanceModelSectionAsJson(pack, path, v.getAsSection()));
             } else if (modelOrModels.is(Map.class)) {
                 variants = List.of(this.parseAppearanceModelSectionAsJson(pack, path, modelOrModels.getAsSection()));
             } else {
-                variants = List.of(MiscUtils.init(new JsonObject(), j -> j.addProperty("model", modelOrModels.getAsAssetPath().asMinimalString())));
+                Key model = modelOrModels.getAsAssetPath();
+                if (appearanceSection.containsKey("offset")) {
+                    return this.blockStateVariant(model, appearanceSection);
+                }
+                JsonObject variant = new JsonObject();
+                variant.addProperty("model", model.asMinimalString());
+                return variant;
             }
             return variants.isEmpty() ? null : minimizeVariant(variants);
         }
@@ -958,7 +971,6 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
         }
 
         private JsonObject parseAppearanceModelSectionAsJson(Pack pack, Path path, ConfigSection section) {
-            JsonObject json = new JsonObject();
             // 可选的 textures
             ConfigValue textureValue = section.getValue(TEXTURE);
             Pair<List<Key>, Key> pair = null;
@@ -987,9 +999,7 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
             else {
                 modelPath = section.getNonNullAssetPath(PATH);
             }
-            json.addProperty("model", modelPath.asMinimalString());
-            // 添加其他的属性
-            applyOtherBlockStateProperties(json, section);
+            JsonObject json = this.blockStateVariant(modelPath, section);
             // 有模型生成优先走模型生成
             ConfigSection generationSection = section.getSection("generation");
             if (generationSection != null) {
@@ -1003,7 +1013,9 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
             return json;
         }
 
-        private void applyOtherBlockStateProperties(JsonObject json, ConfigSection section) {
+        private JsonObject blockStateVariant(Key model, ConfigSection section) {
+            JsonObject json = new JsonObject();
+            json.addProperty("model", model.asMinimalString());
             if (section.containsKey("x")) {
                 int x = section.getInt("x");
                 if (x != 0) {
@@ -1034,10 +1046,25 @@ public abstract class AbstractBlockManager extends AbstractModelGenerator implem
                     }
                 }
             }
-            if (section.containsKey("uvlock"))
+            if (section.containsKey("uvlock")) {
                 json.addProperty("uvlock", section.getBoolean("uvlock"));
-            if (section.containsKey("weight"))
+            }
+            if (section.containsKey("weight")) {
                 json.addProperty("weight", section.getInt("weight"));
+            }
+            ConfigValue offsetValue = section.getValue("offset");
+            if (offsetValue != null) {
+                Vector3f offset = offsetValue.getAsVector3f();
+                if (!offset.isFinite()) {
+                    throw new KnownResourceException(ConfigConstants.PARSE_VEC3_FAILED, offsetValue.path(), offsetValue.getAsString());
+                }
+                if (offset.x != 0 || offset.y != 0 || offset.z != 0) {
+                    OffsetBlockModel shifted = new OffsetBlockModel(model, offset.x, offset.y, offset.z);
+                    AbstractBlockManager.this.offsetBlockModels.add(shifted);
+                    json.addProperty("model", shifted.id().asString());
+                }
+            }
+            return json;
         }
     }
 

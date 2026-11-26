@@ -85,12 +85,14 @@ public final class BedrockItemDisplayBlocks {
             if (model.kind() == JavaModel.GeometryKind.GENERATED) {
                 part = new JsonArray();
                 List<Texture> layers = resolver.resolveLayers(model);
+                // 复合模型最后会整体适配尺寸，变换或缩放前保留原边缘面的坐标。
+                boolean mergeEdges = models.size() == 1 && BedrockModelTransform.isIdentity(transformation);
                 for (int layer = 0; layer < layers.size(); layer++) {
                     int color = layer < target.tints().size() ? textures.resolveTint(target.tints().get(layer)) : WHITE;
                     BedrockElementGeometry.Material material = bindTexture(new TextureKey(layers.get(layer), color), bindings, images, textures);
                     TextureData data = textures.read(layers.get(layer), TextureUsage.ITEM);
                     int size = Math.max(data.image().getWidth(), data.image().getHeight());
-                    BedrockGeneratedGeometry.addLayer(part, data, material.name(), layer, size, size);
+                    BedrockGeneratedGeometry.addLayer(part, data, material.name(), layer, size, size, mergeEdges);
                 }
             } else if (model.kind() == JavaModel.GeometryKind.ELEMENTS) {
                 Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();

@@ -11,11 +11,19 @@ import java.awt.image.BufferedImage;
 import java.util.BitSet;
 
 public final class BedrockGeneratedGeometry {
+    private static final int UP = 1;
+    private static final int DOWN = 2;
+    private static final int WEST = 4;
+    private static final int EAST = 8;
 
     private BedrockGeneratedGeometry() {
     }
 
     public static void addLayer(JsonArray cubes, TextureData data, @Nullable String material, int layer, int textureWidth, int textureHeight) {
+        addLayer(cubes, data, material, layer, textureWidth, textureHeight, true);
+    }
+
+    public static void addLayer(JsonArray cubes, TextureData data, @Nullable String material, int layer, int textureWidth, int textureHeight, boolean mergeEdges) {
         int width = data.image().getWidth();
         int height = data.image().getHeight();
         float depth = 0.5f + layer / 1024f;
@@ -41,6 +49,8 @@ public final class BedrockGeneratedGeometry {
                 }
             }
         }
+        float pixelWidth = 16f / width;
+        float pixelHeight = 16f / height;
         float spanU = 0.8f * 16 / textureWidth;
         float spanV = 0.8f * 16 / textureHeight;
         for (int y = 0; y < height; y++) {
@@ -53,30 +63,26 @@ public final class BedrockGeneratedGeometry {
                 float bottom = 16 - (y + 1) * 16f / height;
                 float uvX = (x + 0.1f) * 16 / textureWidth;
                 float uvY = (y + 0.1f) * 16 / textureHeight;
-                for (int side = 0; side < 4; side++) {
-                    if ((edge & (1 << side)) == 0) {
-                        continue;
-                    }
-                    String direction = switch (side) {
-                        case 0 -> "up";
-                        case 1 -> "down";
-                        case 2 -> "west";
-                        default -> "east";
-                    };
+                while (edge != 0) {
+                    int sides = mergeEdges ? edge : Integer.lowestOneBit(edge);
+                    edge ^= sides;
                     JsonObject sideFaces = new JsonObject();
-                    sideFaces.add(direction, side < 2
-                            ? face(material, uvX + spanU, uvY + spanV, -spanU, -spanV)
-                            : face(material, uvX, uvY, spanU, spanV));
-                    cube(
-                            cubes,
-                            left + (side == 2 ? 16f / width : 0),
-                            bottom + (side == 0 ? 16f / height : 0),
-                            -depth,
-                            side < 2 ? 16f / width : 0,
-                            side < 2 ? 0 : 16f / height,
-                            depth * 2,
-                            sideFaces
-                    );
+                    if ((sides & UP) != 0) {
+                        sideFaces.add("up", face(material, uvX + spanU, uvY + spanV, -spanU, -spanV));
+                    }
+                    if ((sides & DOWN) != 0) {
+                        sideFaces.add("down", face(material, uvX + spanU, uvY + spanV, -spanU, -spanV));
+                    }
+                    if ((sides & WEST) != 0) {
+                        sideFaces.add("west", face(material, uvX, uvY, spanU, spanV));
+                    }
+                    if ((sides & EAST) != 0) {
+                        sideFaces.add("east", face(material, uvX, uvY, spanU, spanV));
+                    }
+                    boolean horizontalPlane = sides == UP || sides == DOWN;
+                    boolean verticalPlane = sides == WEST || sides == EAST;
+                    cube(cubes, sides == WEST ? left + pixelWidth : left, sides == UP ? bottom + pixelHeight : bottom, -depth,
+                            verticalPlane ? 0 : pixelWidth, horizontalPlane ? 0 : pixelHeight, depth * 2, sideFaces);
                 }
             }
         }
@@ -91,16 +97,16 @@ public final class BedrockGeneratedGeometry {
                     continue;
                 }
                 if (y == 0 || (pixels[index - width] >>> 24) == 0) {
-                    edges[index] |= 1;
+                    edges[index] |= UP;
                 }
                 if (y == height - 1 || (pixels[index + width] >>> 24) == 0) {
-                    edges[index] |= 2;
+                    edges[index] |= DOWN;
                 }
                 if (x == 0 || (pixels[index - 1] >>> 24) == 0) {
-                    edges[index] |= 4;
+                    edges[index] |= WEST;
                 }
                 if (x == width - 1 || (pixels[index + 1] >>> 24) == 0) {
-                    edges[index] |= 8;
+                    edges[index] |= EAST;
                 }
             }
         }

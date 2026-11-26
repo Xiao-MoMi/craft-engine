@@ -35,7 +35,7 @@ final class BedrockShieldRenderStrategy extends BedrockItemRenderStrategy {
     BedrockAttachablePose pose(ResolvedItemBinding entry) {
         JsonArray scripts = new JsonArray();
         // Geyser 用 EMERGING 区分是哪只手在格挡。
-        scripts.add("variable.ce_using_item = query.blocking && ((context.item_slot == 'main_hand' && !query.is_emerging) || (context.item_slot == 'off_hand' && query.is_emerging));");
+        scripts.add(BedrockItemUseScripts.BLOCKING);
         return BedrockAttachablePose.withoutBones(scripts);
     }
 

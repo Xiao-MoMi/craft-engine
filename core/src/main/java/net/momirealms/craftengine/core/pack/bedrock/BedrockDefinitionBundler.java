@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.bedrock;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.bedrock.item.render.BedrockItemUseScripts;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,17 +36,19 @@ public final class BedrockDefinitionBundler {
     static Map<String, JsonObject> bundle(Path root, Map<Path, JsonObject> models, boolean protection) throws IOException {
         // 保护模式下等引用改写完成再写出合并后的 JSON
         Map<String, JsonObject> deferred = protection ? new LinkedHashMap<>() : null;
+        BedrockItemUseScripts useScripts = new BedrockItemUseScripts();
         for (DefinitionType type : TYPES) {
             Path directory = root.resolve(type.directory());
             if (Files.exists(directory)) {
-                bundleType(directory, type, models, deferred);
+                bundleType(directory, type, models, deferred, useScripts);
             }
         }
+        useScripts.trimAttachables(root.resolve("attachables").resolve(NAMESPACE));
         return deferred == null ? Map.of() : deferred;
     }
 
     private static void bundleType(Path directory, DefinitionType type, Map<Path, JsonObject> models,
-                                   @Nullable Map<String, JsonObject> deferred) throws IOException {
+                                   @Nullable Map<String, JsonObject> deferred, BedrockItemUseScripts useScripts) throws IOException {
         List<Path> files;
         try (Stream<Path> paths = Files.walk(directory)) {
             files = paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".json")).sorted().toList();
@@ -74,10 +77,12 @@ public final class BedrockDefinitionBundler {
                 for (JsonElement definition : array) {
                     String identifier = definition.getAsJsonObject().getAsJsonObject("description").get("identifier").getAsString();
                     group.add(identifier, definition);
+                    useScripts.index(type.key(), identifier, definition);
                 }
             } else {
                 for (Map.Entry<String, JsonElement> definition : definitions.getAsJsonObject().entrySet()) {
                     group.add(definition.getKey(), definition.getValue());
+                    useScripts.index(type.key(), definition.getKey(), definition.getValue());
                 }
             }
             sources.add(file);

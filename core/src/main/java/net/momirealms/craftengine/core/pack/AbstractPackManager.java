@@ -40,6 +40,7 @@ import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemMo
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CustomModelDataRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.OffsetBlockModel;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
@@ -911,6 +912,7 @@ public abstract class AbstractPackManager implements PackManager {
             this.generateEquipments(generatedPackPath, equipmentOverlays::add, this.plugin.itemManager().equipments().values());
             this.generateParticle(generatedPackPath);
             this.generateAtlases(generatedPackPath);
+            OffsetBlockModel.generateAll(generatedPackPath, this.plugin.blockManager().offsetBlockModels());
 
             // Maps use CraftEngine block IDs instead of sacrificed vanilla block states.
             if (options.mapCompatibility()) {

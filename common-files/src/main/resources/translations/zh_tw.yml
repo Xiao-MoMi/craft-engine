@@ -393,6 +393,8 @@ resource_pack.missing_sound: 聲音事件 '<arg:0>' 缺少ogg檔案 '<arg:1>'
 resource_pack.missing_texture_reference: "模型「<arg:0>」在 <arg:1> 引用了未定義的紋理欄位：<arg:2>"
 resource_pack.model_display_out_of_bounds: '模型「<arg:0>」的顯示位置「<arg:1>」中，欄位「<arg:2>」的數值<arg:3>超出範圍，允許範圍為[-<arg:4>, <arg:4>]'
 resource_pack.model_generation.conflict: 無法生成模型，因為模型檔案 '<arg:0>' 已存在
+resource_pack.model_offset.clamped: "模型「<arg:0>」要求的偏移量為 <arg:1>。實際套用 <arg:2>，使所有元素座標維持在 [-16, 32] 範圍內。"
+resource_pack.model_offset.invalid_elements: "模型「<arg:0>」的元素幾何資料無效，無法套用偏移。"
 resource_pack.model_uv_out_of_bounds: '模型''<arg:0>''的元素<arg:1>、面''<arg:2>''在紋理''<arg:4>''上使用了越界UV <arg:3>。超出[0, 16]範圍的UV值可能導致26.1及以上用戶端無法烘焙模型'
 resource_pack.multiple_atlases: 模型 '<arg:0>' 使用了多個圖集：預期為 '<arg:1>'，但發現 '<arg:2>'。請確保所有模型紋理來自同一圖集
 resource_pack.not_a_json_object: Json 檔案 '<arg:0>' 不是一個 json 物件

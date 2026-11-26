@@ -393,6 +393,8 @@ resource_pack.missing_sound: "사운드 이벤트 '<arg:0>'에 ogg 파일 '<arg:
 resource_pack.missing_texture_reference: "모델 '<arg:0>'의 <arg:1>에서 정의되지 않은 텍스처 슬롯을 참조합니다: <arg:2>"
 resource_pack.model_display_out_of_bounds: '모델 <arg:0>의 표시 위치 <arg:1>, 필드 <arg:2>의 값 <arg:3>이(가) 허용 범위 [-<arg:4>, <arg:4>]을(를) 벗어납니다'
 resource_pack.model_generation.conflict: "모델 파일 '<arg:0>'이(가) 이미 존재하여 모델 생성 실패"
+resource_pack.model_offset.clamped: "모델 '<arg:0>'에 요청된 오프셋은 <arg:1>입니다. 모든 요소 좌표가 [-16, 32] 범위에 들도록 <arg:2>을(를) 적용했습니다."
+resource_pack.model_offset.invalid_elements: "모델 '<arg:0>'의 요소 형상이 잘못되어 오프셋을 적용할 수 없습니다."
 resource_pack.model_uv_out_of_bounds: '모델 ''<arg:0>''의 요소 <arg:1>, 면 ''<arg:2>''이(가) 텍스처 ''<arg:4>''에 범위를 벗어난 UV <arg:3>을(를) 사용합니다. [0, 16] 범위를 벗어난 UV 값은 26.1 이상 클라이언트에서 모델 베이킹을 방해할 수 있습니다'
 resource_pack.multiple_atlases: "모델 '<arg:0>'가 여러 아틀라스를 사용합니다: 기대값 '<arg:1>', 발견 '<arg:2>'. 모든 모델 텍스처가 동일 아틀라스에서 나오는지 확인하세요"
 resource_pack.not_a_json_object: "JSON 파일 '<arg:0>'이(가) JSON 객체가 아닙니다."

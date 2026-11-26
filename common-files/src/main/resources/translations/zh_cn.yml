@@ -396,6 +396,8 @@ resource_pack.missing_sound: 声音事件“<arg:0>”缺少ogg文件“<arg:1>�
 resource_pack.missing_texture_reference: "模型“<arg:0>”在 <arg:1> 引用了未定义的纹理槽位：<arg:2>"
 resource_pack.model_display_out_of_bounds: '模型“<arg:0>”的显示位置“<arg:1>”中，字段“<arg:2>”的数值<arg:3>越界，允许范围为[-<arg:4>, <arg:4>]'
 resource_pack.model_generation.conflict: 无法生成模型，因为模型文件“<arg:0>”已存在
+resource_pack.model_offset.clamped: "模型“<arg:0>”请求偏移 <arg:1>，实际偏移 <arg:2>，以使所有元素坐标保持在 [-16, 32] 范围内。"
+resource_pack.model_offset.invalid_elements: "模型“<arg:0>”的元素几何数据无效，无法应用偏移。"
 resource_pack.model_uv_out_of_bounds: 模型“<arg:0>”的第<arg:1>个元素在“<arg:2>”面使用了越界UV <arg:3>，纹理为“<arg:4>”。超出[0, 16]的UV可能导致26.1及以上客户端无法烘焙该模型
 resource_pack.multiple_atlases: 模型“<arg:0>”使用了多个图集：预期为“<arg:1>”，但发现“<arg:2>”。请确保所有模型纹理来自同一图集
 resource_pack.not_a_json_object: Json文件“<arg:0>”不是一个json对象

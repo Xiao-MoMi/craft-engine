@@ -32,17 +32,7 @@ class BedrockItemRenderStrategy {
     }
 
     static JsonArray useScripts(ItemBehaviorDescription.Use use) {
-        return useScripts(use.maximumDuration().value(), true);
-    }
-
-    static JsonArray useScripts(int maximumUseTicks, boolean enabled) {
-        JsonArray scripts = new JsonArray();
-        // 统一使用主手 tick 查询；已装填的弩关闭使用状态，其余时间变量仍按同一规则计算。
-        scripts.add("variable.ce_using_item = " + (enabled ? "context.item_slot == 'main_hand' && query.is_using_item && query.main_hand_item_use_duration > 0" : "0") + ";");
-        scripts.add("variable.ce_use_ticks = variable.ce_using_item ? math.max(0, query.main_hand_item_max_duration - query.main_hand_item_use_duration) : 0;");
-        // Geyser 的最大使用时长可能不同于 Java，剩余时间必须使用源物品的时长。
-        scripts.add("variable.ce_remaining_ticks = variable.ce_using_item ? math.max(0, " + maximumUseTicks + " - variable.ce_use_ticks) : 0;");
-        return scripts;
+        return BedrockItemUseScripts.create(use.maximumDuration().value(), true);
     }
 
     boolean accepts(ItemBindingRule rule) {

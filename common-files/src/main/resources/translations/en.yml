@@ -396,6 +396,8 @@ resource_pack.missing_sound: "Sound event '<arg:0>' is missing ogg file '<arg:1>
 resource_pack.missing_texture_reference: "Model '<arg:0>' has an undefined texture slot at <arg:1>: <arg:2>"
 resource_pack.model_display_out_of_bounds: "Model '<arg:0>' display '<arg:1>' field '<arg:2>' has out-of-bounds values <arg:3>. Expected range: [-<arg:4>, <arg:4>]"
 resource_pack.model_generation.conflict: Failed to generate model because the model file '<arg:0>' already exists
+resource_pack.model_offset.clamped: "Model '<arg:0>' requested offset <arg:1>. Applied <arg:2> to keep all element coordinates within [-16, 32]."
+resource_pack.model_offset.invalid_elements: "Could not offset model '<arg:0>' because its elements have invalid geometry."
 resource_pack.model_uv_out_of_bounds: "Model '<arg:0>' element <arg:1> face '<arg:2>' uses out-of-bounds UV <arg:3> with texture '<arg:4>'. UV values outside [0, 16] can prevent 26.1+ clients from baking the model"
 resource_pack.multiple_atlases: "Model '<arg:0>' uses multiple atlases: expected '<arg:1>', but found '<arg:2>'. Ensure all model textures come from the same atlas"
 resource_pack.not_a_json_object: Json file '<arg:0>' is not a json object

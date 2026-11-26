@@ -393,6 +393,8 @@ resource_pack.missing_sound: "Sound Event '<arg:0>' fehlt die OGG-Datei '<arg:1>
 resource_pack.missing_texture_reference: "Modell '<arg:0>' verweist bei <arg:1> auf einen undefinierten Texturplatz: <arg:2>"
 resource_pack.model_display_out_of_bounds: 'Modell <arg:0>, Anzeigeposition <arg:1>, Feld <arg:2> enthält Werte <arg:3> außerhalb des gültigen Bereichs [-<arg:4>, <arg:4>]'
 resource_pack.model_generation.conflict: Modell konnte nicht generiert werden, da die Modelldatei '<arg:0>' bereits existiert
+resource_pack.model_offset.clamped: "Für das Modell '<arg:0>' wurde der Versatz <arg:1> angefordert. Der angewendete Versatz beträgt <arg:2>, damit alle Elementkoordinaten im Bereich [-16, 32] liegen."
+resource_pack.model_offset.invalid_elements: "Das Modell '<arg:0>' konnte wegen ungültiger Elementgeometrie nicht verschoben werden."
 resource_pack.model_uv_out_of_bounds: 'Modell ''<arg:0>'', Element <arg:1>, Seite ''<arg:2>'' verwendet UV <arg:3> außerhalb des gültigen Bereichs mit Textur ''<arg:4>''. UV-Werte außerhalb von [0, 16] können die Modellverarbeitung auf Clients ab 26.1 verhindern'
 resource_pack.multiple_atlases: "Modell '<arg:0>' verwendet mehrere Atlanten: erwartet '<arg:1>', aber gefunden '<arg:2>'. Stelle sicher, dass alle Modelltexturen vom selben Atlas stammen"
 resource_pack.not_a_json_object: JSON-Datei '<arg:0>' ist kein JSON-Objekt

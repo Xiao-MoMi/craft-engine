@@ -22,8 +22,21 @@ items:
           template: default:loot_table/self
         state:
           auto_state: sugar_cane
-          model:
-            path: minecraft:block/custom/reed
+          models:
+            - path: minecraft:block/custom/reed
+              weight: 3
+            - path: minecraft:block/custom/reed
+              weight: 1
+              offset: [0.25, 0, 0]
+            - path: minecraft:block/custom/reed
+              weight: 1
+              offset: [-0.25, 0, 0]
+            - path: minecraft:block/custom/reed
+              weight: 1
+              offset: [0, 0, 0.25]
+            - path: minecraft:block/custom/reed
+              weight: 1
+              offset: [0, 0, 0.25]
 recipes:
   default:paper_from_reed:
     type: shaped

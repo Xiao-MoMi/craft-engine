@@ -112,7 +112,7 @@ public final class BedrockItemAttachables {
     }
 
     static JsonArray bowScripts(String stageSelection, int maximumUseTicks) {
-        JsonArray preAnimation = BedrockItemRenderStrategy.useScripts(maximumUseTicks, true);
+        JsonArray preAnimation = BedrockItemUseScripts.create(maximumUseTicks, true);
         // 保留原有输出顺序：using、ticks、charge、remaining、stage。
         preAnimation.asList().add(2, new JsonPrimitive(BedrockItemRenderStrategy.CHARGE_AMOUNT_SCRIPT));
         preAnimation.add(stageSelection);

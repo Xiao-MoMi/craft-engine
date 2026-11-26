@@ -393,6 +393,8 @@ resource_pack.missing_sound: "Al evento de sonido '<arg:0>' le falta el archivo 
 resource_pack.missing_texture_reference: "El modelo '<arg:0>' hace referencia a una ranura de textura no definida en <arg:1>: <arg:2>"
 resource_pack.model_display_out_of_bounds: 'El modelo <arg:0>, posición de visualización <arg:1>, campo <arg:2> contiene valores <arg:3> fuera del rango permitido [-<arg:4>, <arg:4>]'
 resource_pack.model_generation.conflict: Error al generar el modelo porque el archivo de modelo '<arg:0>' ya existe
+resource_pack.model_offset.clamped: "El desplazamiento solicitado para el modelo '<arg:0>' es <arg:1>. Se aplicó <arg:2> para mantener todas las coordenadas de sus elementos dentro del intervalo [-16, 32]."
+resource_pack.model_offset.invalid_elements: "No se pudo desplazar el modelo '<arg:0>' porque la geometría de sus elementos no es válida."
 resource_pack.model_uv_out_of_bounds: 'El modelo ''<arg:0>'', elemento <arg:1>, cara ''<arg:2>'' usa UV <arg:3> fuera de rango con la textura ''<arg:4>''. Los valores UV fuera de [0, 16] pueden impedir que los clientes 26.1+ procesen el modelo'
 resource_pack.multiple_atlases: "El modelo '<arg:0>' utiliza múltiples atlas: se esperaba '<arg:1>', pero se encontró '<arg:2>'. Asegúrate de que todas las texturas del modelo provengan del mismo atlas"
 resource_pack.not_a_json_object: El archivo Json '<arg:0>' no es un objeto json

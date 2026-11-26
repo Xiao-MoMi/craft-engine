@@ -63,9 +63,12 @@ public final class BedrockItemGeometryBuilder {
         Matrix4fc transformation = BedrockModelTransform.compose(rule.transformations());
         BedrockModelTransform.validate(transformation);
         ItemRenderTarget.Model target = (ItemRenderTarget.Model) rule.target();
-        JsonArray cubes = this.geometry(model, target, preserveDye);
+        boolean bakeCubes = BedrockModelTransform.canBakeCubes(transformation);
+        // 烘焙会绕各 cube 的中心计算并舍入坐标，保留原边缘面的中心才能逐顶点一致。
+        boolean mergeEdges = !bakeCubes || BedrockModelTransform.isIdentity(transformation);
+        JsonArray cubes = this.geometry(model, target, preserveDye, mergeEdges);
         // 等比变换沿用紧凑的 cubes；拉伸、反射、错切和零缩放保留给骨骼，避免改动 UV。
-        if (BedrockModelTransform.canBakeCubes(transformation)) {
+        if (bakeCubes) {
             BedrockModelTransform.apply(cubes, transformation, 1);
             transformation = BedrockModelTransform.compose(List.of());
         }
@@ -80,14 +83,14 @@ public final class BedrockItemGeometryBuilder {
         return this.tintSource == null ? BedrockTintSource.NONE : this.tintSource;
     }
 
-    private JsonArray geometry(JavaModel model, ItemRenderTarget.Model target, boolean preserveDye) throws IOException {
+    private JsonArray geometry(JavaModel model, ItemRenderTarget.Model target, boolean preserveDye, boolean mergeEdges) throws IOException {
         if (model.kind() == JavaModel.GeometryKind.GENERATED) {
             JsonArray cubes = new JsonArray();
             List<JavaModel.Texture> layers = this.models.resolveLayers(model);
             for (int layer = 0; layer < layers.size(); layer++) {
                 BedrockElementGeometry.Material material = this.material(layers.get(layer), target, layer, preserveDye);
                 TextureData data = this.textures.read(layers.get(layer), this.textureUsage);
-                BedrockGeneratedGeometry.addLayer(cubes, data, material.name(), layer, data.image().getWidth(), data.image().getHeight());
+                BedrockGeneratedGeometry.addLayer(cubes, data, material.name(), layer, data.image().getWidth(), data.image().getHeight(), mergeEdges);
             }
             return cubes;
         }

@@ -37,7 +37,7 @@ final class BedrockCrossbowStates {
 
     static JsonArray useScripts(boolean charged, ItemBehaviorDescription.Use use) {
         int chargeTicks = use.chargeDuration().value();
-        JsonArray scripts = BedrockItemRenderStrategy.useScripts(use.maximumDuration().value(), !charged);
+        JsonArray scripts = BedrockItemUseScripts.create(use.maximumDuration().value(), !charged);
         // 当前只支持普通弩；附魔修正后的装填时长需要后续运行时同步。
         scripts.add("variable.ce_pull = variable.ce_using_item ? variable.ce_use_ticks / " + chargeTicks + " : 0;");
         scripts.add(BedrockItemRenderStrategy.CHARGE_AMOUNT_SCRIPT);
