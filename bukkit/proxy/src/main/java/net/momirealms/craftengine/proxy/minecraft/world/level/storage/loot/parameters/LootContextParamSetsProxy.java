@@ -2,10 +2,7 @@ package net.momirealms.craftengine.proxy.minecraft.world.level.storage.loot.para
 
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
-import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
-
-import java.util.function.Consumer;
 
 @ReflectionProxy(name = "net.minecraft.world.level.storage.loot.parameters.LootContextParamSets")
 public interface LootContextParamSetsProxy {
@@ -26,8 +23,4 @@ public interface LootContextParamSetsProxy {
 
     @FieldGetter(name = "ALL_PARAMS", isStatic = true)
     Object getAllParams();
-
-    @MethodInvoker(name = "register", isStatic = true)
-    Object register(String name, Consumer<Object> constructor);
-
 }
