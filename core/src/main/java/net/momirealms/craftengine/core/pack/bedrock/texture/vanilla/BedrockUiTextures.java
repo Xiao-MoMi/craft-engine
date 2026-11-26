@@ -19,6 +19,9 @@ final class BedrockUiTextures implements BedrockTextureConverter {
 
     @Override
     public void convert(VanillaTextureContext context) {
+        if (!context.output().convertsUiTextures()) {
+            return;
+        }
         this.hotbar(context);
         this.writeSprite(
                 context,

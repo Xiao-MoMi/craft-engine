@@ -22,21 +22,27 @@ import static net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTextur
 final class VanillaTextureWriter {
     private final Path root;
     private final VanillaTextureRegistry textures;
+    private final boolean convertUiTextures;
 
-    VanillaTextureWriter(Path root, VanillaTextureRegistry textures) {
+    VanillaTextureWriter(Path root, VanillaTextureRegistry textures, boolean convertUiTextures) {
         this.root = root;
         this.textures = textures;
+        this.convertUiTextures = convertUiTextures;
     }
 
-    boolean contains(String output) {
-        return this.textures.contains(output);
+    boolean convertsUiTextures() {
+        return this.convertUiTextures;
+    }
+
+    boolean needsMappedTexture(String path) {
+        return (this.convertUiTextures || !path.startsWith("textures/ui/")) && !this.textures.contains(path);
     }
 
     void copyMappedTextures(String owner, List<BedrockTextureRule.Target> targets, int firstTarget, byte[] png) throws IOException {
         BufferedImage image = null;
         for (int index = firstTarget; index < targets.size(); index++) {
             BedrockTextureRule.Target target = targets.get(index);
-            if (this.contains(target.path())) {
+            if (!this.needsMappedTexture(target.path())) {
                 continue;
             }
             this.textures.claim(target.path(), owner);

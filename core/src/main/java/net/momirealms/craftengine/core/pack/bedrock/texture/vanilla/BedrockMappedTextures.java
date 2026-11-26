@@ -27,7 +27,7 @@ final class BedrockMappedTextures implements BedrockTextureConverter {
                 continue;
             }
             int firstTarget = 0;
-            while (firstTarget < rule.targets().size() && context.output().contains(rule.targets().get(firstTarget).path())) {
+            while (firstTarget < rule.targets().size() && !context.output().needsMappedTexture(rule.targets().get(firstTarget).path())) {
                 firstTarget++;
             }
             if (firstTarget == rule.targets().size()) {
@@ -45,7 +45,7 @@ final class BedrockMappedTextures implements BedrockTextureConverter {
                         context.pack().version().isAtOrAbove(MinecraftVersion.V1_21_11));
                 for (int index = firstTarget; index < rule.targets().size(); index++) {
                     BedrockTextureRule.Target target = rule.targets().get(index);
-                    if (!context.output().contains(target.path())) {
+                    if (context.output().needsMappedTexture(target.path())) {
                         context.output().writeMappedTexture(source, target, data);
                     }
                 }

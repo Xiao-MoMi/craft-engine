@@ -812,6 +812,10 @@ bedrock:
     name: "CraftEngine ResourcePack"
     # Resource pack description shown in the Bedrock client.
     description: "Generated from the Java resource pack"
+    vanilla:
+      # Convert Java replacements for vanilla UI textures, including the hotbar, hearts and smithing slots.
+      # Custom chest and boss bar textures are generated independently.
+      convert-ui-textures: false
   item:
     # Generated icon width and height in pixels (currently for dyeable items).
     icon-size: 64

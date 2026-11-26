@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.texture.vanilla;
 
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
+import net.momirealms.craftengine.core.plugin.config.Config;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,7 +23,8 @@ public final class BedrockVanillaTextures {
 
     public static void write(JavaResourcePack resources, Path root, BedrockTerrainAtlas atlas) throws IOException {
         VanillaTextureRegistry textures = new VanillaTextureRegistry();
-        VanillaTextureContext context = new VanillaTextureContext(resources, root, new VanillaTextureWriter(root, textures));
+        VanillaTextureWriter output = new VanillaTextureWriter(root, textures, Config.bedrockConvertVanillaUiTextures());
+        VanillaTextureContext context = new VanillaTextureContext(resources, root, output);
         for (BedrockTextureConverter converter : CONVERTERS) {
             converter.convert(context);
         }

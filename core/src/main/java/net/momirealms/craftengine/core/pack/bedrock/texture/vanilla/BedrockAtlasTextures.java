@@ -73,6 +73,12 @@ final class BedrockAtlasTextures implements BedrockTextureConverter {
                 "environment/celestial/moon/first_quarter.png",
                 "environment/celestial/moon/waxing_gibbous.png"
         );
+        if (context.output().convertsUiTextures()) {
+            this.smithing(context);
+        }
+    }
+
+    private void smithing(VanillaTextureContext context) {
         JsonObject ui = SMITHING_UI.deepCopy();
         boolean uiChanged = this.slots(
                 context,
