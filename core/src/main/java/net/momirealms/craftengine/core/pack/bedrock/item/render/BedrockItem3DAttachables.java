@@ -231,18 +231,16 @@ public final class BedrockItem3DAttachables {
         JsonObject controller = new JsonObject();
         controller.addProperty("geometry", "Geometry." + alias);
 
-        JsonObject textureArrays = GsonHelper.createObject("array.frames", frames);
-        if (defaultFrames != null) {
-            textureArrays.add("array.defaults", defaultFrames);
-        }
-        controller.add("arrays", GsonHelper.createObject("textures", textureArrays));
-
         // 将运行秒数换算为 tick，按动画总时长循环，再用采样间隔换算成贴图帧索引。
         String frame = animation == null ? "0" : "math.floor(math.mod(query.life_time * 20, " + animation.duration() + ") / " + animation.sampleInterval() + ")";
-        String texture = "array.frames[" + frame + "]";
+        String texture = ResourcePackUtils.selectBedrockResource(controller, "textures", "array.frames", frames, frame);
         JsonArray textures = new JsonArray();
         // 未染色时直接使用烘焙了默认色的贴图；只有实际染色的实例需要动态材质。
-        textures.add(defaultFrames == null ? texture : "variable.ce_hand_dye < 0 ? array.defaults[" + frame + "] : " + texture);
+        if (defaultFrames != null) {
+            String defaultTexture = ResourcePackUtils.selectBedrockResource(controller, "textures", "array.defaults", defaultFrames, frame);
+            texture = "variable.ce_hand_dye < 0 ? " + defaultTexture + " : " + texture;
+        }
+        textures.add(texture);
         textures.add("Texture.enchanted");
         controller.add("textures", textures);
 

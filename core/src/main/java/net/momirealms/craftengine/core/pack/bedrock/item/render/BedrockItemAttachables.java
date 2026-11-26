@@ -171,15 +171,9 @@ public final class BedrockItemAttachables {
 
     static void writeController(String id, JsonArray geometryFrames, JsonArray textureFrames, Path path) throws IOException {
         JsonObject controller = new JsonObject();
-        JsonObject arrays = new JsonObject();
-        JsonObject geometryArray = new JsonObject();
-        geometryArray.add("array.stage_geometries", geometryFrames);
-        arrays.add("geometries", geometryArray);
-        JsonObject textureArray = new JsonObject();
-        textureArray.add("array.stage_textures", textureFrames);
-        arrays.add("textures", textureArray);
-        controller.add("arrays", arrays);
-        addRenderBindings(controller, "array.stage_geometries[variable.ce_stage]", "array.stage_textures[variable.ce_stage]");
+        String geometry = ResourcePackUtils.selectBedrockResource(controller, "geometries", "array.stage_geometries", geometryFrames, "variable.ce_stage");
+        String texture = ResourcePackUtils.selectBedrockResource(controller, "textures", "array.stage_textures", textureFrames, "variable.ce_stage");
+        addRenderBindings(controller, geometry, texture);
         JsonObject definitions = new JsonObject();
         definitions.add(id, controller);
         ResourcePackUtils.writeBedrockJson(RENDER_CONTROLLER, "render_controllers", definitions, path);

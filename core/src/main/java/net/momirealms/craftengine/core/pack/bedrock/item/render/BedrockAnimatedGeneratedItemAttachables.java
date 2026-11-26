@@ -137,13 +137,9 @@ public final class BedrockAnimatedGeneratedItemAttachables {
 
         JsonObject controller = new JsonObject();
         controller.addProperty("geometry", "Geometry.default");
-        JsonObject frameArrays = new JsonObject();
-        frameArrays.add("array.frames", frames);
-        JsonObject arrays = new JsonObject();
-        arrays.add("textures", frameArrays);
-        controller.add("arrays", arrays);
         JsonArray selectedTextures = new JsonArray();
-        selectedTextures.add("array.frames[math.floor(math.mod(query.life_time * 20, " + animation.duration() + ") / " + animation.sampleInterval() + ")]");
+        String index = "math.floor(math.mod(query.life_time * 20, " + animation.duration() + ") / " + animation.sampleInterval() + ")";
+        selectedTextures.add(ResourcePackUtils.selectBedrockResource(controller, "textures", "array.frames", frames, index));
         selectedTextures.add("Texture.enchanted");
         controller.add("textures", selectedTextures);
         JsonObject material = new JsonObject();

@@ -49,6 +49,7 @@ final class BedrockAssetObfuscator {
         definitions.addAll(bundles.keySet());
         Map<String, JsonObject> definitionDocuments = new HashMap<>(bundles);
         Map<String, String> identifiers = definitionNames(pack, definitions, definitionDocuments);
+        BedrockAttachableSharing.share(pack, definitions, definitionDocuments, identifiers);
         shortenNativeEntities(data.resolve(BedrockPackLayout.NATIVE_MODELS), identifiers);
 
         Map<String, String> paths = new HashMap<>();

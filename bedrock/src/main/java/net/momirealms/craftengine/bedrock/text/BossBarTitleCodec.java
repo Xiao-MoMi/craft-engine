@@ -121,8 +121,7 @@ public final class BossBarTitleCodec {
                     return text.length();
                 }
                 length -= 2;
-            } else if (c != ' ' && (c < ContainerTitleLayout.SPACER_FIRST
-                    || c > ContainerTitleLayout.SPACER_FIRST + ContainerTitleLayout.MAX_SPACER - 2)) {
+            } else if (c != ' ' && (c < ContainerTitleLayout.SPACER_FIRST || c > ContainerTitleLayout.SPACER_FIRST + ContainerTitleLayout.MAX_SPACER - 2)) {
                 ink = true;
             }
         }

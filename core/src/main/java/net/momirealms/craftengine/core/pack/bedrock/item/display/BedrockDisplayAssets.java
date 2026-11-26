@@ -290,8 +290,7 @@ final class BedrockDisplayAssets {
             String sample = page.interval() == 0 ? index : index + " * " + page.frames()
                     + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
             JsonObject controller = new JsonObject();
-            JsonObject arrays = new JsonObject();
-            controller.add("geometry", selectResource(arrays, "geometries", "array.meshes", meshes, index));
+            controller.addProperty("geometry", ResourcePackUtils.selectBedrockResource(controller, "geometries", "array.meshes", meshes, index));
             JsonArray materials = new JsonArray();
             materials.add(createObject("*", new JsonPrimitive("Material.default")));
             controller.add("materials", materials);
@@ -299,11 +298,8 @@ final class BedrockDisplayAssets {
                 controller.add("overlay_color", displayColor(page.shade()));
             }
             JsonArray selected = new JsonArray();
-            selected.add(selectResource(arrays, "textures", "array.frames", textures, sample));
+            selected.add(ResourcePackUtils.selectBedrockResource(controller, "textures", "array.frames", textures, sample));
             controller.add("textures", selected);
-            if (!arrays.isEmpty()) {
-                controller.add("arrays", arrays);
-            }
             String id = "controller.render." + this.name + ".p" + this.controllers.size();
             this.controllers.add(id, controller);
             String condition = VISIBLE + " && " + shapeCondition(first, last, draws);
@@ -314,30 +310,31 @@ final class BedrockDisplayAssets {
         }
     }
 
-    private static JsonElement selectResource(JsonObject arrays, String type, String name, JsonArray entries, String index) {
-        JsonElement first = entries.get(0);
-        for (int i = 1; i < entries.size(); i++) {
-            if (!first.equals(entries.get(i))) {
-                arrays.add(type, createObject(name, entries));
-                return new JsonPrimitive(name + "[" + index + "]");
+    private static String shapeCondition(int first, int last, Map<Integer, Draw> draws) {
+        StringJoiner present = new StringJoiner(" || ", "(", ")");
+        StringJoiner exceptGaps = new StringJoiner(" && ", "(", ")");
+        exceptGaps.add(shapeRange(first, last, true));
+        // 同一页可以列出有绘制的区间，也可以在页边界内排除空洞。两种条件选较短的一个。
+        for (int start = first; start <= last;) {
+            boolean included = draws.containsKey(start);
+            int end = start;
+            while (end < last && draws.containsKey(end + 1) == included) {
+                end++;
             }
+            (included ? present : exceptGaps).add(shapeRange(start, end, included));
+            start = end + 1;
         }
-        return first;
+        return present.length() <= exceptGaps.length() ? present.toString() : exceptGaps.toString();
     }
 
-    private static String shapeCondition(int first, int last, Map<Integer, Draw> draws) {
-        // 不启用当前形状缺少的蒙版，否则其他物品的底色也会占用绘制次数。
-        StringJoiner ranges = new StringJoiner(" || ", "(", ")");
-        for (int shape = first; shape <= last; shape++) {
-            if (draws.containsKey(shape)) {
-                int start = shape;
-                while (shape < last && draws.containsKey(shape + 1)) {
-                    shape++;
-                }
-                ranges.add(start == shape ? SHAPE_VARIABLE + " == " + start : SHAPE_VARIABLE + " >= " + start + " && " + SHAPE_VARIABLE + " <= " + shape);
-            }
+    private static String shapeRange(int first, int last, boolean included) {
+        if (first == last) {
+            return SHAPE_VARIABLE + (included ? " == " : " != ") + first;
         }
-        return ranges.toString();
+        if (included) {
+            return SHAPE_VARIABLE + " >= " + first + " && " + SHAPE_VARIABLE + " <= " + last;
+        }
+        return "(" + SHAPE_VARIABLE + " < " + first + " || " + SHAPE_VARIABLE + " > " + last + ")";
     }
 
     void finish() throws IOException {

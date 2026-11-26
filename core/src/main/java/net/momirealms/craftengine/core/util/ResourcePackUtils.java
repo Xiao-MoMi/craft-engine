@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
@@ -27,6 +28,23 @@ public final class ResourcePackUtils {
         file.addProperty(BedrockPackLayout.FORMAT_VERSION, version);
         file.add(key, value);
         writeJson(file, path);
+    }
+
+    public static String selectBedrockResource(JsonObject controller, String type, String name, JsonArray entries, String index) {
+        if (!entries.isEmpty()) {
+            JsonElement first = entries.get(0);
+            int i = 1;
+            while (i < entries.size() && first.equals(entries.get(i))) {
+                i++;
+            }
+            if (i == entries.size()) {
+                return first.getAsString();
+            }
+        }
+        JsonObject arrays = controller.asMap().computeIfAbsent("arrays", key -> new JsonObject()).getAsJsonObject();
+        JsonObject group = arrays.asMap().computeIfAbsent(type, key -> new JsonObject()).getAsJsonObject();
+        group.add(name, entries);
+        return name + "[" + index + "]";
     }
 
     public static String vanillaTexturePath(String texture) {
