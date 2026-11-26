@@ -83,6 +83,10 @@ public final class SimpleStorageBlockEntityController extends BlockEntityControl
         return this.inventory;
     }
 
+    public boolean allowsInput() {
+        return this.behavior.canPlaceItem;
+    }
+
     public void onPlayerOpen(Player player) {
         if (!isValidContainer()) return;
         if (!player.isSpectatorMode()) {

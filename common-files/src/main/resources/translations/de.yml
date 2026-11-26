@@ -98,6 +98,10 @@ command.pack_preset.no_permission: '<red>Du hast keine Berechtigung, die Ressour
 command.pack_preset.success: '<white>Ressourcenpaket-Voreinstellung <arg:0> angewendet</white>'
 command.pack_preset.unchanged: '<red>Deine Ressourcenpaket-Einstellungen entsprechen bereits der Voreinstellung <arg:0></red>'
 command.pack_preset.unknown: '<red>Unbekannte Ressourcenpaket-Voreinstellung: <arg:0></red>'
+command.loot.input_disabled: '<red>Dieser Behälter nimmt keine Gegenstände an</red>'
+command.loot.inserted: '<white>Gegenstände aus <arg:0> Beutestapeln eingefügt</white>'
+command.loot.not_container: '<red>Der Zielblock ist kein Behälter</red>'
+command.loot.unknown_table: '<red>Unbekannte Beutetabelle: <arg:0></red>'
 command.place_feature.failed: <red>Feature konnte nicht platziert werden</red>
 command.place_feature.invalid: <red>Es gibt kein Feature vom Typ "<arg:0>"</red>
 command.place_feature.success: <white>"<arg:0>" platziert an <arg:1>, <arg:2>, <arg:3></white>

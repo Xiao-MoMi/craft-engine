@@ -98,6 +98,10 @@ command.pack_preset.no_permission: '<red>No tienes permiso para usar el preajust
 command.pack_preset.success: '<white>Se ha aplicado el preajuste de paquetes de recursos <arg:0></white>'
 command.pack_preset.unchanged: '<red>Tus preferencias ya coinciden con el preajuste <arg:0></red>'
 command.pack_preset.unknown: '<red>Preajuste de paquetes de recursos desconocido: <arg:0></red>'
+command.loot.input_disabled: '<red>Este contenedor no admite objetos</red>'
+command.loot.inserted: '<white>Se han insertado objetos de <arg:0> pilas de botín</white>'
+command.loot.not_container: '<red>El bloque de destino no es un contenedor</red>'
+command.loot.unknown_table: '<red>Tabla de botín desconocida: <arg:0></red>'
 command.place_feature.failed: "<red>Error al colocar la característica (feature)</red>"
 command.place_feature.invalid: "<red>No existe ninguna característica (feature) con el tipo \"<arg:0>\"</red>"
 command.place_feature.success: "<white>Se colocó \"<arg:0>\" en <arg:1>, <arg:2>, <arg:3></white>"

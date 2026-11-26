@@ -98,6 +98,10 @@ command.pack_preset.no_permission: '<red>You do not have permission to use resou
 command.pack_preset.success: '<white>Applied resource pack preset <arg:0></white>'
 command.pack_preset.unchanged: '<red>Your resource pack preferences already match preset <arg:0></red>'
 command.pack_preset.unknown: '<red>Unknown resource pack preset: <arg:0></red>'
+command.loot.input_disabled: '<red>This container does not accept items</red>'
+command.loot.inserted: '<white>Inserted items from <arg:0> loot stacks</white>'
+command.loot.not_container: '<red>The target block is not a container</red>'
+command.loot.unknown_table: '<red>Unknown loot table: <arg:0></red>'
 command.place_feature.failed: "<red>Failed to place feature</red>"
 command.place_feature.invalid: "<red>There is no feature with type \"<arg:0>\"</red>"
 command.place_feature.success: "<white>Placed \"<arg:0>\" at <arg:1>, <arg:2>, <arg:3></white>"

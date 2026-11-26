@@ -225,6 +225,13 @@ set_damage_visibility:
     - /craftengine feature damage-visibility set
     - /ce feature damage-visibility set
 
+loot:
+  enable: true
+  permission: ce.command.admin.loot
+  usage:
+    - /craftengine feature loot
+    - /ce feature loot
+
 place_feature:
   enable: true
   permission: ce.command.admin.place_feature

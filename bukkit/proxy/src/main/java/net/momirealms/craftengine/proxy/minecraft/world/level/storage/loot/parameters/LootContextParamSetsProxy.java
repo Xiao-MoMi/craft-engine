@@ -12,6 +12,7 @@ public interface LootContextParamSetsProxy {
     LootContextParamSetsProxy INSTANCE = ASMProxyFactory.create(LootContextParamSetsProxy.class);
     Object EMPTY = INSTANCE.getEmpty();
     Object BLOCK = INSTANCE.getBlock();
+    Object CHEST = INSTANCE.getChest();
     Object ALL_PARAMS = INSTANCE.getAllParams();
 
     @FieldGetter(name = "EMPTY", isStatic = true)
@@ -19,6 +20,9 @@ public interface LootContextParamSetsProxy {
 
     @FieldGetter(name = "BLOCK", isStatic = true)
     Object getBlock();
+
+    @FieldGetter(name = "CHEST", isStatic = true)
+    Object getChest();
 
     @FieldGetter(name = "ALL_PARAMS", isStatic = true)
     Object getAllParams();

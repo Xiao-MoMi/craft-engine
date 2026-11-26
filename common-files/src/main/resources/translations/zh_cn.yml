@@ -98,6 +98,10 @@ command.pack_preset.no_permission: '<red>你没有使用资源包预设<arg:0>�
 command.pack_preset.success: '<white>已应用资源包预设<arg:0></white>'
 command.pack_preset.unchanged: '<red>资源包偏好已符合预设<arg:0></red>'
 command.pack_preset.unknown: '<red>未知的资源包预设：<arg:0></red>'
+command.loot.input_disabled: '<red>此容器禁止放入物品</red>'
+command.loot.inserted: '<white>已放入来自 <arg:0> 组战利品的物品</white>'
+command.loot.not_container: '<red>目标方块不是容器</red>'
+command.loot.unknown_table: '<red>未知的战利品表：<arg:0></red>'
 command.place_feature.failed: <red>放置地物失败</red>
 command.place_feature.invalid: <red>没有类型为“<arg:0>”的地物</red>
 command.place_feature.success: <white>已在<arg:1>, <arg:2>, <arg:3>处放置“<arg:0>”</white>

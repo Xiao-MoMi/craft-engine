@@ -92,6 +92,7 @@ public final class BukkitCommandManager extends AbstractCommandManager<CommandSe
                 new DebugItemModelCommand(this, plugin),
                 new DebugImageCommand(this, plugin),
                 new PlaceFeatureCommand(this, plugin),
+                new LootCommand(this, plugin),
                 new ItemComponentCommand(this, plugin, ItemComponentCommand.Action.ADD),
                 new ItemComponentCommand(this, plugin, ItemComponentCommand.Action.REMOVE),
                 new ItemComponentCommand(this, plugin, ItemComponentCommand.Action.RESET),

@@ -32,28 +32,18 @@ public class DatapackLootTable implements Loot {
     public LazyReference<Object> minecraftLootTable;
 
     public DatapackLootTable(Key identifier) {
-        this.minecraftLootTable = LazyReference.untilNotNull(() -> {
-            Object minecraftServer = MinecraftServerProxy.INSTANCE.getServer();
-            // 1.20.5 +
-            if (VersionHelper.isOrAbove1_20_5) {
-                Object registryKey = ResourceKeyProxy.INSTANCE.create(
-                        RegistriesProxy.LOOT_TABLE,
-                        IdentifierProxy.INSTANCE.newInstance(identifier.namespace(), identifier.value())
-                );
-                // 非空, 至少会返回一个 LootTable.EMPTY.
-                Object reloadableRegistriesHolder = MinecraftServerProxy.INSTANCE.reloadableRegistries(minecraftServer);
-                return ReloadableServerRegistriesProxy.HolderProxy.INSTANCE.getLootTable(reloadableRegistriesHolder, registryKey);
-            }
-            // 1.20 +
-            else {
-                Object lootDataManager = MinecraftServerProxy.INSTANCE.getLootData(minecraftServer);
-                // 非空, 至少会返回一个 LootTable.EMPTY.
-                return LootDataResolverProxy.INSTANCE.getLootTable(
-                        lootDataManager,
-                        IdentifierProxy.INSTANCE.newInstance(identifier.namespace(), identifier.value())
-                );
-            }
-        });
+        this.minecraftLootTable = LazyReference.untilNotNull(() -> resolve(identifier));
+    }
+
+    public static Object resolve(Key identifier) {
+        Object server = MinecraftServerProxy.INSTANCE.getServer();
+        Object id = IdentifierProxy.INSTANCE.newInstance(identifier.namespace(), identifier.value());
+        if (VersionHelper.isOrAbove1_20_5) {
+            Object key = ResourceKeyProxy.INSTANCE.create(RegistriesProxy.LOOT_TABLE, id);
+            Object registries = MinecraftServerProxy.INSTANCE.reloadableRegistries(server);
+            return ReloadableServerRegistriesProxy.HolderProxy.INSTANCE.getLootTable(registries, key);
+        }
+        return LootDataResolverProxy.INSTANCE.getLootTable(MinecraftServerProxy.INSTANCE.getLootData(server), id);
     }
 
     @Override

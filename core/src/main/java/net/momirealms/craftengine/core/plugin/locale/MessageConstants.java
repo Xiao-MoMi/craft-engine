@@ -97,6 +97,10 @@ public interface MessageConstants {
     TranslatableComponent.Builder COMMAND_ENTITY_CULLING_DISTANCE_SCALE_SET_SUCCESS = Component.translatable().key("command.entity_culling_distance_scale.set.success");
     TranslatableComponent.Builder COMMAND_TOGGLE_ENTITY_CULLING_SUCCESS = Component.translatable().key("command.entity_culling.toggle.success");
     TranslatableComponent.Builder COMMAND_SET_DAMAGE_VISIBILITY_SUCCESS = Component.translatable().key("command.damage_visibility.set.success");
+    TranslatableComponent.Builder COMMAND_LOOT_INPUT_DISABLED = Component.translatable().key("command.loot.input_disabled");
+    TranslatableComponent.Builder COMMAND_LOOT_INSERTED = Component.translatable().key("command.loot.inserted");
+    TranslatableComponent.Builder COMMAND_LOOT_NOT_CONTAINER = Component.translatable().key("command.loot.not_container");
+    TranslatableComponent.Builder COMMAND_LOOT_UNKNOWN_TABLE = Component.translatable().key("command.loot.unknown_table");
     TranslatableComponent.Builder COMMAND_PLACE_FEATURE_FAILED = Component.translatable().key("command.place_feature.failed");
     TranslatableComponent.Builder COMMAND_PLACE_FEATURE_SUCCESS = Component.translatable().key("command.place_feature.success");
     TranslatableComponent.Builder COMMAND_PLACE_FEATURE_INVALID = Component.translatable().key("command.place_feature.invalid");

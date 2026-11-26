@@ -869,7 +869,7 @@ bedrock:
     overrides: []
   display-entity:
     # Dyeable materials on ordinary displays and furniture. -1 disables dynamic dye.
-    dye-max-layers: 10
+    dye-max-layers: 5
     # Match the original Java minecraft:item_model ID
     # overrides:
     #   - item-model: "myserver:sofa"
