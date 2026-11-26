@@ -23,7 +23,7 @@ public final class JavaFontResolver {
         public static final FontOptions DEFAULT = new FontOptions(false, false);
     }
 
-    private record Lookup(Key font, int inheritedFilters) {
+    private record Lookup(Key font, int inheritedFilters, boolean nativeRendering) {
     }
 
     private static final int UNIFORM = 1;
@@ -44,17 +44,9 @@ public final class JavaFontResolver {
     }
 
     public JavaFontResolver(JavaResourcePack resources, List<Pattern> excludedFonts, FontOptions options) throws IOException {
-        this(new JavaFontSources(resources), excludedFonts, options);
-    }
-
-    private JavaFontResolver(JavaFontSources sources, List<Pattern> excludedFonts, FontOptions options) {
-        this.sources = sources;
+        this.sources = new JavaFontSources(resources);
         this.options = options;
         this.excludedFonts = excludedFonts;
-    }
-
-    JavaFontResolver excluding(List<Pattern> excludedFonts) {
-        return excludedFonts.isEmpty() ? this : new JavaFontResolver(this.sources, excludedFonts, this.options);
     }
 
     public float advance(Key font, int codepoint, boolean bold) throws IOException {
@@ -97,7 +89,7 @@ public final class JavaFontResolver {
         return this.sources.fonts.keySet();
     }
 
-    private boolean isExcluded(Key font) {
+    boolean isExcluded(Key font) {
         String id = font.asString();
         for (Pattern pattern : this.excludedFonts) {
             if (pattern.matcher(id).matches()) {
@@ -108,17 +100,16 @@ public final class JavaFontResolver {
     }
 
     public Int2ObjectMap<Glyph> resolve(Key font) throws IOException {
+        boolean nativeRendering = this.isExcluded(font);
         if (this.options.uniform() && !this.sources.pack.version().isAtOrAbove(MinecraftVersion.V1_20_5) && DEFAULT_FONT.equals(font)) {
             font = UNIFORM_FONT;
+            nativeRendering |= this.isExcluded(font);
         }
-        return this.resolveDefinition(font, 0);
+        return this.resolveDefinition(font, 0, nativeRendering);
     }
 
-    private Int2ObjectMap<Glyph> resolveDefinition(Key font, int inheritedFilters) throws IOException {
-        if (this.isExcluded(font)) {
-            return Int2ObjectMaps.emptyMap();
-        }
-        Lookup lookup = new Lookup(font, inheritedFilters);
+    private Int2ObjectMap<Glyph> resolveDefinition(Key font, int inheritedFilters, boolean nativeRendering) throws IOException {
+        Lookup lookup = new Lookup(font, inheritedFilters, nativeRendering);
         Int2ObjectMap<Glyph> cached = this.resolved.get(lookup);
         if (cached != null) {
             return cached;
@@ -147,6 +138,12 @@ public final class JavaFontResolver {
                                 Objects.toString(exception.getLocalizedMessage(), exception.getClass().getSimpleName())
                         );
                     }
+                }
+            }
+            // 先让 Java provider 决定每个码点的字形，再只去掉这个字体的贴图。引用者仍按原优先级取字形。
+            if (nativeRendering) {
+                for (Int2ObjectMap.Entry<Glyph> entry : Int2ObjectMaps.fastIterable(glyphs)) {
+                    entry.setValue(entry.getValue().forNativeRendering());
                 }
             }
             // 跳过循环引用后，结果依赖本次引用路径，不能复用到其他字体。
@@ -184,9 +181,6 @@ public final class JavaFontResolver {
             case "bitmap" -> mergeGlyphs(destination, this.bitmap(provider, custom));
             case "reference" -> {
                 Key target = Key.of(provider.get("id").getAsString());
-                if (this.isExcluded(target)) {
-                    return;
-                }
                 if (!this.sources.fonts.containsKey(target)) {
                     throw new IOException(TranslationManager.message("resource_pack.bedrock.font.missing_ref", target.asString()));
                 }
@@ -194,7 +188,7 @@ public final class JavaFontResolver {
                     this.circularReferences++;
                     throw new IOException(TranslationManager.message("resource_pack.bedrock.font.cycle", target.asString()));
                 }
-                mergeGlyphs(destination, this.resolveDefinition(target, inheritedFilters));
+                mergeGlyphs(destination, this.resolveDefinition(target, inheritedFilters, this.isExcluded(target)));
             }
             case "space" -> {
                 Int2ObjectMap<Glyph> spaces = new Int2ObjectOpenHashMap<>();

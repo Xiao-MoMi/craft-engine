@@ -50,15 +50,17 @@ public final class FontData {
         private static final Font MISSING = new Font(Int2ObjectMaps.emptyMap());
         final Int2ObjectMap<WidthPage> pages = new Int2ObjectOpenHashMap<>();
         final BitSet hudUnicode;
+        final boolean nativeFallback;
         private final Int2ObjectMap<FontGlyph> rendering;
 
         Font(Int2ObjectMap<FontGlyph> rendering) {
-            this(rendering, null);
+            this(rendering, null, false);
         }
 
-        Font(Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
+        Font(Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
             this.rendering = Int2ObjectMaps.unmodifiable(rendering);
             this.hudUnicode = hudUnicode;
+            this.nativeFallback = nativeFallback;
         }
 
         public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
@@ -68,7 +70,12 @@ public final class FontData {
 
         public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
                                   Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
-            Font font = new Font(rendering, hudUnicode);
+            return of(glyphs, advance, boldOffset, rendering, hudUnicode, false);
+        }
+
+        public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
+                                  Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
+            Font font = new Font(rendering, hudUnicode, nativeFallback);
             Int2ObjectMaps.fastForEach(glyphs, entry -> {
                 int code = entry.getIntKey();
                 WidthPage page = font.pages.computeIfAbsent(code >>> 8, (int key) -> new WidthPage());

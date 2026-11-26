@@ -30,6 +30,9 @@ final class FontDataJson extends TypeAdapter<FontData> {
                 writer.value(number);
             }
             writer.endArray();
+            if (entry.getValue().nativeFallback) {
+                writer.name("native_fallback").value(true);
+            }
             BitSet unicode = entry.getValue().hudUnicode;
             if (unicode != null) {
                 writer.name("hud_unicode_ranges").beginArray();
@@ -136,7 +139,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
         Map<String, FontData.Font> fonts = new LinkedHashMap<>();
         for (Map.Entry<String, Definition> entry : definitions.entrySet()) {
             Definition definition = entry.getValue();
-            FontData.Font font = new FontData.Font(definition.rendering, definition.hudUnicode);
+            FontData.Font font = new FontData.Font(definition.rendering, definition.hudUnicode, definition.nativeFallback);
             IntArrayList pairs = definition.pages;
             for (int i = 0; i < pairs.size(); i += 2) {
                 font.pages.put(pairs.getInt(i), pages.get(pairs.getInt(i + 1)));
@@ -150,9 +153,11 @@ final class FontDataJson extends TypeAdapter<FontData> {
         IntArrayList pages = null;
         BitSet hudUnicode = null;
         Int2ObjectMap<FontGlyph> rendering = null;
+        boolean nativeFallback = false;
         reader.beginObject();
         while (reader.hasNext()) {
             switch (reader.nextName()) {
+                case "native_fallback" -> nativeFallback = reader.nextBoolean();
                 case "hud_unicode_ranges" -> {
                     hudUnicode = new BitSet();
                     reader.beginArray();
@@ -190,7 +195,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
         if (pages == null || rendering == null) {
             throw new IllegalArgumentException("Incomplete font definition in craftengine/fonts.json");
         }
-        return new Definition(pages, rendering, hudUnicode);
+        return new Definition(pages, rendering, hudUnicode, nativeFallback);
     }
 
     private static FontGlyph readGlyph(JsonReader reader, int code) throws IOException {
@@ -210,6 +215,6 @@ final class FontDataJson extends TypeAdapter<FontData> {
         return new FontGlyph(character, advance, bearing);
     }
 
-    private record Definition(IntArrayList pages, Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
+    private record Definition(IntArrayList pages, Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
     }
 }

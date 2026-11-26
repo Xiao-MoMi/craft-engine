@@ -61,14 +61,14 @@ public final class ContainerTitleLayout {
             int baseline = fontBaselines.getOrDefault(part.font(), 0);
             boolean shadowOverride = part.shadow() == opposite;
             FontData.Font font = this.fonts.font(part.font());
-            boolean allowMissingGlyph = "minecraft:default".equals(part.font()) || fontBaselines.containsKey(part.font());
+            boolean allowMissingGlyph = font.nativeFallback || "minecraft:default".equals(part.font()) || fontBaselines.containsKey(part.font());
             int boldAdvance = (part.decorations() & 2) != 0 ? 1 : 0;
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
                 FontGlyph glyph = font.rendering().get(codepoint);
                 boolean unicode = this.hudFonts && (font.hudUnicode(codepoint) || (codepoint == ' ' && font.hudUnicode('A')));
-                // The default unihex font supplies Java advances without exporting a Bedrock bitmap.
+                // 无贴图映射的原生字符也保留 Java 度量，包括纯间距字体中穿插文字时的缺字宽度。
                 if (glyph == null && (unicode || allowMissingGlyph)) {
                     glyph = new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0);
                 }
@@ -76,7 +76,7 @@ public final class ContainerTitleLayout {
                     throw new UnsupportedOperationException("Unknown title glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
                 }
                 if (!glyph.visible()) {
-                    float advance = font.advance(codepoint, false);
+                    float advance = font.advance(codepoint, boldAdvance != 0);
                     width += advance;
                     javaCursor += advance;
                     continue;
@@ -216,6 +216,9 @@ public final class ContainerTitleLayout {
                 }
                 FontGlyph glyph = font.rendering().get(codepoint);
                 if (glyph == null) {
+                    if (font.nativeFallback) {
+                        return true;
+                    }
                     continue;
                 }
                 boolean required = switch (target) {

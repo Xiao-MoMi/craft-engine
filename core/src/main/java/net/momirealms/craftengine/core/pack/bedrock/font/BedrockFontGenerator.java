@@ -29,33 +29,31 @@ public final class BedrockFontGenerator {
     }
 
     public static void write(JavaResourcePack resources, Path root, Path fontFile) throws IOException {
-        JavaFontResolver fonts = new JavaFontResolver(resources, List.of());
-        JavaFontResolver rendering = fonts.excluding(Config.bedrockExcludedFonts());
-        write(fonts, rendering, Config.bedrockFontVerticalOffsets().keySet(), root, fontFile);
+        JavaFontResolver fonts = new JavaFontResolver(resources, Config.bedrockExcludedFonts());
+        write(fonts, Config.bedrockFontVerticalOffsets().keySet(), root, fontFile);
     }
 
-    static void write(JavaFontResolver fonts, JavaFontResolver rendering, Set<Key> nativeFonts, Path root, Path fontFile) throws IOException {
+    static void write(JavaFontResolver fonts, Set<Key> nativeFonts, Path root, Path fontFile) throws IOException {
         // 所有字体共用的位图页和码位
         GlyphAtlas atlas = new GlyphAtlas();
 
         Map<String, FontData.Font> entries = new LinkedHashMap<>();
         for (Key font : fonts.fonts()) {
             Int2ObjectMap<Glyph> glyphs = fonts.resolve(font);
-            if (glyphs.isEmpty()) {
+            boolean excluded = fonts.isExcluded(font);
+            if (glyphs.isEmpty() && !excluded) {
                 continue;
             }
-            boolean nativeFont = nativeFonts.contains(font);
-            Int2ObjectMap<Glyph> visible = nativeFont || rendering == fonts ? glyphs : rendering.resolve(font);
-            Int2ObjectMap<FontGlyph> allocated = nativeFont ? GlyphAtlas.nativeFont(glyphs) : atlas.allocateFont(font, visible);
+            Int2ObjectMap<FontGlyph> allocated = nativeFonts.contains(font) ? GlyphAtlas.nativeFont(glyphs) : atlas.allocateFont(font, glyphs);
             BitSet unicode = new BitSet();
-            Int2ObjectMaps.fastForEach(visible, entry -> {
+            Int2ObjectMaps.fastForEach(glyphs, entry -> {
                 int code = entry.getIntKey();
                 FontGlyph mapped = allocated.get(code);
                 if (entry.getValue().unicode() && (mapped == null || (mapped.character() == code && mapped.bearing() == 0))) {
                     unicode.set(code);
                 }
             });
-            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated, unicode));
+            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated, unicode, excluded));
         }
         Path directory = Files.createDirectories(root.resolve("font"));
         atlas.writePages(directory);

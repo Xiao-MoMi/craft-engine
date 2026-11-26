@@ -12,7 +12,7 @@ public record Glyph(@Nullable BufferedImage image,
                     int height,
                     int ascent,
                     float spacing,
-                    boolean nativeText, // 未覆写的原版字形，仅导出度量，保留字符交给基岩原生字体绘制
+                    boolean nativeText, // 保留原码点，交给基岩原生字体绘制
                     int actualWidth,
                     float boldOffset,
                     boolean unicode) {
@@ -44,6 +44,18 @@ public record Glyph(@Nullable BufferedImage image,
 
     static Glyph space(float advance) {
         return new Glyph(null, 0, 0, 0, 0, 0, 0, advance);
+    }
+
+    Glyph forNativeRendering() {
+        if (this.image == null) {
+            return this;
+        }
+        boolean visible = !this.advanceOnly();
+        if (this.nativeText && visible) {
+            return this;
+        }
+        // 去掉位图后用 spacing 保存已测出的 Java advance，纯间距仍然不可见。
+        return new Glyph(null, this.x, this.y, this.width, this.sourceHeight, this.height, this.ascent, this.advance(), visible, this.actualWidth, this.boldOffset, this.unicode);
     }
 
     public boolean advanceOnly() {

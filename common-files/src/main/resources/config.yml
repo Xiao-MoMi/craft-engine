@@ -828,7 +828,8 @@ bedrock:
     #     item-model: myplugin:example
     external: []
   font:
-    # Full font ID regexes excluded from Bedrock glyph conversion, including references.
+    # Fonts matching these full-ID regexes use native Bedrock glyphs, including through font references.
+    # Layout keeps Java advances, including positive and negative spacing.
     exclude: []
     # Font offsets in Java font pixels for bossbars, actionbars, container titles, titles, subtitles and text displays.
     # Negative values move glyphs down, positive values move them up

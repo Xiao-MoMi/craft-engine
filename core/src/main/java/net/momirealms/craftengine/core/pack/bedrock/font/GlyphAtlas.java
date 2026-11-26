@@ -27,8 +27,7 @@ final class GlyphAtlas {
             if (glyph.advanceOnly()) {
                 result.put(codepoint, spaceGlyph(codepoint, glyph.advance()));
             } else {
-                int advance = glyph.nativeText() && glyph.image() != null ? (int) glyph.advance() : FontGlyph.NATIVE_FALLBACK;
-                result.put(codepoint, new FontGlyph(codepoint, advance, 0));
+                result.put(codepoint, nativeGlyph(codepoint, glyph));
             }
         }
         return result;
@@ -39,11 +38,17 @@ final class GlyphAtlas {
         return new FontGlyph(ordinarySpace ? ' ' : -1, ordinarySpace ? 4 : 0, 0);
     }
 
+    private static FontGlyph nativeGlyph(int codepoint, Glyph glyph) {
+        int advance = glyph.nativeText() && glyph.image() != null ? (int) glyph.advance() : FontGlyph.NATIVE_FALLBACK;
+        return new FontGlyph(codepoint, advance, 0);
+    }
+
     Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
         IntArrayList codepoints = new IntArrayList();
         Int2ObjectMaps.fastForEach(glyphs, entry -> {
             Glyph glyph = entry.getValue();
-            if (!glyph.nativeText() || glyph.image() != null) {
+            // 原生 Unicode 字形可由字体范围标记恢复。其他原生回退须保留码点，让布局使用 Java 字宽。
+            if (!glyph.nativeText() || glyph.image() != null || !glyph.unicode()) {
                 codepoints.add(entry.getIntKey());
             }
         });
@@ -78,11 +83,10 @@ final class GlyphAtlas {
         for (int i = 0; i < codepoints.size(); i++) {
             int codepoint = codepoints.getInt(i);
             Glyph glyph = glyphs.get(codepoint);
-            float advance = glyph.advance();
             if (glyph.nativeText()) {
-                result.put(codepoint, new FontGlyph(codepoint, (int) advance, 0));
+                result.put(codepoint, nativeGlyph(codepoint, glyph));
             } else if (glyph.advanceOnly()) {
-                result.put(codepoint, spaceGlyph(codepoint, advance));
+                result.put(codepoint, spaceGlyph(codepoint, glyph.advance()));
             } else if (!allocate) {
                 FontGlyph existing = this.allocations.get(glyph);
                 result.put(codepoint, existing == null ? new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0) : existing);
