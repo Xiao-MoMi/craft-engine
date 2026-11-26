@@ -135,7 +135,9 @@ public final class BedrockGuiWriter {
         JsonObject chest = new JsonObject();
         chest.addProperty("namespace", "chest");
         chest.add("large_chest_screen", this.screen(this.routes));
-        chest.add("small_chest_screen", this.screen(this.smallRoutes));
+        JsonObject smallChest = this.screen(this.smallRoutes);
+        chest.add("small_chest_screen", smallChest);
+        chest.add("barrel_screen", smallChest);
         GsonHelper.writeJsonFile(chest, root.resolve("ui/chest_screen.json"));
         JsonArray files = new JsonArray();
         files.add("ui/ce/menus.json");
