@@ -26,6 +26,7 @@ public final class BedrockTitle {
         Files.createDirectories(path.getParent());
         JsonObject hud = Files.isRegularFile(path) ? GsonHelper.readJsonObjectFromFile(path) : new JsonObject();
         hud.addProperty("namespace", "hud");
+        BedrockActionBar.add(hud);
         JsonArray nativeBindings = children(global("#hud_title_text_string", "#ce_display"));
         bind(nativeBindings, "(not (#ce_display = '" + TitleFrame.DISPLAY + "'))", "#visible");
         hud.add("hud_title_text", createObject("bindings", nativeBindings));
@@ -132,11 +133,7 @@ public final class BedrockTitle {
         background.add("bindings", plain);
         label.add("controls", children(createObject("background", background)));
 
-        JsonObject layer = new JsonObject();
-        layer.addProperty("type", "panel");
-        layer.add("size", GsonHelper.createArray(0, 0));
-        layer.add("controls", children(createObject("text", label)));
-        hud.add(template, layer);
+        hud.add(template, BedrockTitleLayers.positionedLayer(label, "#text", subtitle ? 2 : 4, false));
         return createObject(collection, layers);
     }
 

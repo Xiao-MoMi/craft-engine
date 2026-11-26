@@ -402,12 +402,12 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
             if (!line.pieces().isEmpty()) {
                 if (shadowed) {
                     for (DisplayTextLayout.Piece piece : line.pieces()) {
-                        this.writeShape(shapeIndex++, piece.shadow(), this.plane.piecePosition(this.plane.shadow(index), piece.center()),
+                        this.writeShape(shapeIndex++, piece.shadow(), this.plane.piecePosition(this.plane.shadow(index), piece),
                                 angles, scale, this.shadowColor, TRANSPARENT, 0, true, depthTest, renderDistance);
                     }
                 }
                 for (DisplayTextLayout.Piece piece : line.pieces()) {
-                    this.writeShape(shapeIndex++, piece.text(), this.plane.piecePosition(this.plane.line(index), piece.center()),
+                    this.writeShape(shapeIndex++, piece.text(), this.plane.piecePosition(this.plane.line(index), piece),
                             angles, scale, this.foreground, TRANSPARENT, 0, true, depthTest, renderDistance);
                 }
                 continue;

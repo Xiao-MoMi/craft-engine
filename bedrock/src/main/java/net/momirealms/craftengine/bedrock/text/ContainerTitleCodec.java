@@ -1,9 +1,18 @@
 package net.momirealms.craftengine.bedrock.text;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 public final class ContainerTitleCodec {
     public static final String TITLE_MARKER = "ce:title/";
+    public static final String ACTIONBAR_MARKER = "ce:action/";
+    public static final String POSITION_MARKER = "§r~p";
+    public static final String UNICODE_MARKER = "§r~u";
+    public static final int POSITION_MARKER_BYTES = 5;
+    public static final int X_BYTES = 6;
+    public static final int X_BIAS = 500000;
+    public static final int Y_BYTES = 11;
     public static final int FORMAT_BYTES = 7;
     public static final int ENTRY_BYTES = FORMAT_BYTES * 2;
     public static final int COUNT_BYTES = 6;
@@ -16,12 +25,45 @@ public final class ContainerTitleCodec {
         return encode(ContainerTitleLayout.MARKER + rows + '/', layers);
     }
 
+    public static String positioned(String marker, ContainerTitleLayout.MeasuredLayout layout, boolean centered,
+                                    Function<List<ContainerTitleLayout.Run>, String> serialize) {
+        return encode(marker, positionedLayers(layout, centered, serialize));
+    }
+
+    public static List<String> positionedLayers(ContainerTitleLayout.MeasuredLayout layout, boolean centered,
+                                                Function<List<ContainerTitleLayout.Run>, String> serialize) {
+        List<String> result = new ArrayList<>(layout.layers().size());
+        for (int i = 0; i < layout.layers().size(); i++) {
+            List<ContainerTitleLayout.Run> runs = layout.layers().get(i);
+            if (runs.isEmpty()) {
+                result.add("");
+                continue;
+            }
+            long x = X_BIAS + (long) layout.halfLeft()[i] - (centered ? layout.width() : 0);
+            if (x < 0 || x >= 1000000) {
+                throw new UnsupportedOperationException("Layer exceeds horizontal coordinate range");
+            }
+            int y = layout.baselines() == null ? 0 : layout.baselines()[i];
+            String magnitude = Long.toString(Math.abs((long) y));
+            StringBuilder line = new StringBuilder(layout.unicode(i) ? UNICODE_MARKER : POSITION_MARKER);
+            appendNumber(line, (int) x, 100000);
+            line.append(y < 0 ? '-' : '+').append("0".repeat(Y_BYTES - 1 - magnitude.length())).append(magnitude);
+            line.append(serialize.apply(runs));
+            result.add(line.toString());
+        }
+        return result;
+    }
+
     public static String encode(String marker, List<String> layers) {
+        return encode(marker, layers, layers.size());
+    }
+
+    static String encode(String marker, List<String> layers, int visibleEntries) {
         if (layers.size() > MAX_BYTES / ENTRY_BYTES) {
             throw new UnsupportedOperationException("Title table exceeds protocol capacity");
         }
         StringBuilder countBuilder = new StringBuilder(COUNT_BYTES).append('N');
-        appendNumber(countBuilder, layers.size());
+        appendNumber(countBuilder, visibleEntries);
         String count = countBuilder.append(':').toString();
         int headerBytes = ENTRY_BYTES * layers.size();
         // 索引表是 ASCII，每层两个 %.0000s 分别记录正文的 UTF-8 字节偏移和长度。
@@ -56,7 +98,7 @@ public final class ContainerTitleCodec {
         return encoded;
     }
 
-    static int utf8Length(String layer, int start) {
+    static int utf8Length(CharSequence layer, int start) {
         // 只统计长度，不创建 UTF-8 字节数组；孤立代理字符按 Java 编码器的 '?' 替换计一字节。
         int bytes = 0;
         for (int i = start, length = layer.length(); i < length; i++) {

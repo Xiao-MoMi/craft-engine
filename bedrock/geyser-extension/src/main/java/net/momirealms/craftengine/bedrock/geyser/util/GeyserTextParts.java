@@ -28,6 +28,10 @@ public final class GeyserTextParts {
     }
 
     public static String serializeLayer(List<ContainerTitleLayout.Run> layer, List<GuiTitlePart> parts, String locale) {
+        if (layer.size() == 1) {
+            ContainerTitleLayout.Run run = layer.getFirst();
+            return run.part() < 0 ? "§r" + run.text() : serializePart(parts.get(run.part()), run.text(), locale);
+        }
         StringBuilder text = new StringBuilder();
         for (ContainerTitleLayout.Run run : layer) {
             if (run.part() < 0) {
@@ -65,6 +69,9 @@ public final class GeyserTextParts {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         Object component = proxy.color(proxy.text(text), AdventureTextColorProxy.INSTANCE.color(part.color()));
         component = proxy.font(component, font);
+        if (part.decorations() == 0) {
+            return component;
+        }
         // 将片段的装饰位标记还原为 Adventure 样式，再交给 Geyser 序列化
         for (Object decoration : AdventureTextDecorationProxy.VALUES) {
             int flag = switch (((Enum<?>) decoration).name()) {
@@ -89,7 +96,7 @@ public final class GeyserTextParts {
                                        List<GuiTitlePart> parts,
                                        String locale) {
         GuiTitlePart.Builder builder = new GuiTitlePart.Builder(parts);
-        boolean complete = collectParts(component, inheritedFont, inheritedColor, inheritedDecorations, builder::append, locale);
+        boolean complete = collectParts(component, inheritedFont, inheritedColor, inheritedDecorations, builder::appendFormatted, locale, true);
         builder.finish();
         return complete;
     }
@@ -97,7 +104,7 @@ public final class GeyserTextParts {
     public static boolean collectDisplayParts(Object component, List<GuiTitlePart> parts, String locale) {
         // Java 在每个组件起点恢复其样式。先保留边界，避免 § 格式延续到相邻组件。
         return collectParts(component, "minecraft:default", 0xffffff, 0,
-                (font, text, color, decorations) -> parts.add(new GuiTitlePart(font, text, color, decorations)), locale);
+                (font, text, color, decorations) -> parts.add(new GuiTitlePart(font, text, color, decorations)), locale, false);
     }
 
     @FunctionalInterface
@@ -110,7 +117,7 @@ public final class GeyserTextParts {
                                         int inheritedColor,
                                         int inheritedDecorations,
                                         PartSink parts,
-                                        String locale) {
+                                        String locale, boolean translateArguments) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         // 当前组件显式设置的样式覆盖父级；未设置的样式继续继承
         Object ownFont = proxy.font(component);
@@ -125,13 +132,12 @@ public final class GeyserTextParts {
                 parts.append(font, content, color, decorations);
             }
         } else if (AdventureTranslatableComponentProxy.CLASS.isInstance(component)) {
-            // 暂不展开带参数的翻译组件，避免丢失参数内部的样式和布局信息
-            if (!AdventureTranslatableComponentProxy.INSTANCE.arguments(component).isEmpty()) {
+            if (!translateArguments && !AdventureTranslatableComponentProxy.INSTANCE.arguments(component).isEmpty()) {
                 return false;
             }
             // 只翻译当前节点，子组件留到下方逐个检查，避免绕过带参数翻译的限制
             Object translated = AdventureTranslationRendererProxy.INSTANCE.render(MessageTranslatorProxy.INSTANCE.renderer(), proxy.children(component, List.of()), locale);
-            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, parts, locale)) {
+            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, parts, locale, translateArguments)) {
                 return false;
             }
         } else {
@@ -141,7 +147,7 @@ public final class GeyserTextParts {
         List<?> children = proxy.children(component);
         for (int i = 0, size = children.size(); i < size; i++) {
             Object child = children.get(i);
-            if (!collectParts(child, font, color, decorations, parts, locale)) {
+            if (!collectParts(child, font, color, decorations, parts, locale, translateArguments)) {
                 return false;
             }
         }

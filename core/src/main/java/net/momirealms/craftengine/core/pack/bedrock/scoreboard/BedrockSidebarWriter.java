@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.SidebarCodec;
+import net.momirealms.craftengine.core.pack.bedrock.gui.BedrockTitleLayers;
 import net.momirealms.craftengine.core.util.GsonHelper;
 
 import java.io.IOException;
@@ -24,8 +25,9 @@ public final class BedrockSidebarWriter {
     }
 
     public void write(Path root) throws IOException {
-        this.controls.add("ce_sidebar_title_layer", this.layer(true));
-        this.controls.add("ce_sidebar_player_layer", this.layer(false));
+        this.controls.add("ce_sidebar_title_layer", this.layer(true, false));
+        this.controls.add("ce_sidebar_player_layer", this.layer(false, false));
+        this.controls.add("ce_sidebar_score_layer", this.layer(false, true));
         this.controls.add("scoreboard_sidebar_player", this.line(false));
         this.controls.add("scoreboard_sidebar_score", this.number());
         this.controls.add("scoreboard_sidebar/main/displayed_objective", this.line(true));
@@ -146,6 +148,18 @@ public final class BedrockSidebarWriter {
         measureBindings.add(fromSibling("sidebar_layers", "#ce_encoded", "#visible"));
         measure.add("bindings", measureBindings);
         children.add(GsonHelper.createObject("measure", measure));
+        JsonObject layers = layers(title ? "ce_sidebar_title_layer" : "ce_sidebar_player_layer", "ce_sidebar_layers");
+        JsonArray bindings = source(input, collection);
+        bind(bindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #ce_raw)", "#ce_native");
+        measure(bindings);
+        bind(bindings, "(#ce_row_layers * #ce_encoded)", "#collection_length");
+        layers.add("bindings", bindings);
+        children.add(GsonHelper.createObject("sidebar_layers", layers));
+        panel.add("controls", children);
+        return panel;
+    }
+
+    private static JsonObject layers(String template, String collection) {
         JsonObject layers = new JsonObject();
         layers.addProperty("type", "stack_panel");
         layers.addProperty("orientation", "horizontal");
@@ -153,21 +167,23 @@ public final class BedrockSidebarWriter {
         layers.addProperty("anchor_to", "top_left");
         layers.add("offset", GsonHelper.createArray(-ContainerTitleLayout.ORIGIN, 0));
         layers.add("size", GsonHelper.createArray(0, 0));
-        layers.addProperty("collection_name", "ce_sidebar_layers");
+        layers.addProperty("collection_name", collection);
         JsonObject factory = new JsonObject();
-        factory.addProperty("name", "ce_sidebar_layers_factory");
-        factory.addProperty("control_name", title ? "scoreboard.ce_sidebar_title_layer" : "scoreboard.ce_sidebar_player_layer");
+        factory.addProperty("name", collection + "_factory");
+        factory.addProperty("control_name", "scoreboard." + template);
         factory.addProperty("max_children_size", ContainerTitleCodec.MAX_BYTES / ContainerTitleCodec.ENTRY_BYTES);
         layers.add("factory", factory);
-        JsonArray bindings = source(input, collection);
-        bind(bindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #ce_raw)", "#ce_native");
-        decode(bindings, null, "'%.7s'", "#ce_measure");
+        return layers;
+    }
+
+    private static void measure(JsonArray bindings) {
+        decode(bindings, null, "'%.7s'", "#ce_measure_wire");
+        bind(bindings, "(('%.5s' * #ce_measure_wire) = '" + SidebarCodec.SCORE_LAYERS + "')", "#ce_number_positioned");
+        bind(bindings, "(('%.' + (#ce_number_positioned * " + SidebarCodec.SCORE_HEADER_BYTES + ") + 's') * #ce_measure_wire)", "#ce_score_header");
+        bind(bindings, "(#ce_score_header - '" + SidebarCodec.SCORE_LAYERS + "' - ':' + 0)", "#ce_score_layers");
+        bind(bindings, "(#ce_measure_wire - #ce_score_header)", "#ce_measure");
         bind(bindings, "(#ce_header - ('%." + SidebarCodec.PREFIX_BYTES + "s' * #ce_header))", "#ce_count");
-        bind(bindings, "((#ce_count - 'N' - ':' + 0 - 2) * #ce_encoded)", "#collection_length");
-        layers.add("bindings", bindings);
-        children.add(GsonHelper.createObject("sidebar_layers", layers));
-        panel.add("controls", children);
-        return panel;
+        bind(bindings, "(#ce_count - 'N' - ':' + 0 - 2)", "#ce_row_layers");
     }
 
     private JsonObject number() {
@@ -194,32 +210,36 @@ public final class BedrockSidebarWriter {
         bind(bindings, "#ce_encoded", "#visible");
         formatted.add("bindings", bindings);
         children.add(GsonHelper.createObject("formatted_score", formatted));
+        JsonObject score = layers("ce_sidebar_score_layer", "ce_sidebar_score_layers");
+        JsonArray scoreBindings = source("#player_name_sidebar", "scoreboard_players");
+        measure(scoreBindings);
+        bind(scoreBindings, "#ce_score_layers", "#collection_length");
+        score.add("bindings", scoreBindings);
+        children.add(GsonHelper.createObject("score_layers", score));
         panel.add("controls", children);
         return panel;
     }
 
-    private JsonObject layer(boolean title) {
-        JsonObject item = new JsonObject();
-        item.addProperty("type", "panel");
-        item.add("size", GsonHelper.createArray(0, 0));
+    private JsonObject layer(boolean title, boolean score) {
         JsonObject text = label();
         text.addProperty("text", "#ce_slice");
         JsonArray bindings = new JsonArray();
         JsonObject details = new JsonObject();
         details.addProperty("binding_type", "collection_details");
-        details.addProperty("binding_collection_name", "ce_sidebar_layers");
+        details.addProperty("binding_collection_name", score ? "ce_sidebar_score_layers" : "ce_sidebar_layers");
         details.addProperty("binding_collection_prefix", "ce");
         bindings.add(details);
         // A factory entry must read its own scoreboard row; named controls can resolve to a different row.
-        bindings.add(this.input(title ? "#objective_sidebar_name" : "#player_name_sidebar", title ? "" : "scoreboard_players", "#ce_raw"));
-        bind(bindings, "(#ce_raw - ('%." + HEADER_BYTES + "s' * #ce_raw))", "#ce_payload");
-        String offset = "((#ce_collection_index + 2) * " + ContainerTitleCodec.ENTRY_BYTES + ")";
+        bindings.addAll(source(title ? "#objective_sidebar_name" : "#player_name_sidebar", title ? "" : "scoreboard_players"));
+        String index = "#ce_collection_index";
+        if (score) {
+            measure(bindings);
+            index = "(#ce_row_layers + #ce_collection_index)";
+        }
+        String offset = "((" + index + " + 2) * " + ContainerTitleCodec.ENTRY_BYTES + ")";
         decode(bindings, "('%.' + " + offset + " + 's')", "('%.' + (" + offset + " + " + ContainerTitleCodec.FORMAT_BYTES + ") + 's')", "#ce_slice");
         text.add("bindings", bindings);
-        JsonArray children = new JsonArray();
-        children.add(GsonHelper.createObject("text", text));
-        item.add("controls", children);
-        return item;
+        return BedrockTitleLayers.positionedLayer(text, "#ce_slice", 1, true);
     }
 
     private JsonArray source(String input, String collection) {
@@ -244,9 +264,11 @@ public final class BedrockSidebarWriter {
 
     private static void decode(JsonArray bindings, String start, String middle, String target) {
         String entry = start == null ? "#ce_payload" : "(#ce_payload - (" + start + " * #ce_payload))";
-        bind(bindings, "('%.7s' * " + entry + ")", "#ce_skip");
-        bind(bindings, "('%.7s' * (#ce_payload - (" + middle + " * #ce_payload)))", "#ce_take");
-        bind(bindings, "(#ce_take * (#ce_payload - (#ce_skip * #ce_payload)))", target);
+        String skip = target + "_skip";
+        String take = target + "_take";
+        bind(bindings, "('%.7s' * " + entry + ")", skip);
+        bind(bindings, "('%.7s' * (#ce_payload - (" + middle + " * #ce_payload)))", take);
+        bind(bindings, "(" + take + " * (#ce_payload - (" + skip + " * #ce_payload)))", target);
     }
 
     private static JsonObject fromSibling(String control, String source, String target) {

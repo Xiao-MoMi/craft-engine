@@ -23,6 +23,27 @@ final class GlyphAtlas {
     private final Set<Glyph> unsupported = new HashSet<>();
     private final List<GlyphPage> pages = new ArrayList<>();
 
+    static Int2ObjectMap<FontGlyph> nativeFont(Int2ObjectMap<Glyph> glyphs) {
+        int[] codepoints = glyphs.keySet().toIntArray();
+        IntArrays.quickSort(codepoints);
+        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
+        for (int codepoint : codepoints) {
+            Glyph glyph = glyphs.get(codepoint);
+            if (glyph.advanceOnly()) {
+                result.put(codepoint, spaceGlyph(codepoint, glyph.advance()));
+            } else {
+                int advance = glyph.nativeText() && glyph.image() != null ? (int) glyph.advance() : FontGlyph.NATIVE_FALLBACK;
+                result.put(codepoint, new FontGlyph(codepoint, advance, 0));
+            }
+        }
+        return result;
+    }
+
+    private static FontGlyph spaceGlyph(int codepoint, float advance) {
+        boolean ordinarySpace = codepoint == ' ' && advance == 4;
+        return new FontGlyph(ordinarySpace ? ' ' : -1, ordinarySpace ? 4 : 0, 0);
+    }
+
     Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
         IntArrayList codepoints = new IntArrayList();
         Int2ObjectMaps.fastForEach(glyphs, entry -> {
@@ -66,8 +87,7 @@ final class GlyphAtlas {
             if (glyph.nativeText()) {
                 result.put(codepoint, new FontGlyph(codepoint, (int) advance, 0));
             } else if (glyph.advanceOnly()) {
-                boolean ordinarySpace = codepoint == ' ' && advance == 4;
-                result.put(codepoint, new FontGlyph(ordinarySpace ? ' ' : -1, ordinarySpace ? 4 : 0, 0));
+                result.put(codepoint, spaceGlyph(codepoint, advance));
             } else if (!allocate) {
                 FontGlyph existing = this.allocations.get(glyph);
                 result.put(codepoint, existing == null ? new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0) : existing);

@@ -67,6 +67,9 @@ public final class BedrockPackGenerator {
             BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
             BedrockTitle.write(pack, Config.bedrockTitleLayer());
             JsonObject title = new JsonObject();
+            JsonObject offsets = new JsonObject();
+            Config.bedrockFontVerticalOffsets().forEach((font, offset) -> offsets.addProperty(font.asString(), offset));
+            title.add(BedrockPackLayout.TEXT_VERTICAL_OFFSETS, offsets);
             title.addProperty(BedrockPackLayout.FORCE_JAVA_LAYOUT, Config.bedrockTitleForceJavaLayout());
             GsonHelper.writeJsonFile(title, data.resolve(BedrockPackLayout.TITLE));
             NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockEntities()::dye);

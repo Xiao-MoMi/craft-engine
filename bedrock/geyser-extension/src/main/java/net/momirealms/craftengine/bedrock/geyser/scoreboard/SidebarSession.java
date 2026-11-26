@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bedrock.geyser.proxy.scoreboard.*;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
 import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
+import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.SidebarCodec;
 import org.cloudburstmc.protocol.bedrock.data.ScoreInfo;
 import org.cloudburstmc.protocol.bedrock.packet.RemoveObjectivePacket;
@@ -32,11 +33,13 @@ import org.geysermc.mcprotocollib.protocol.data.game.scoreboard.TeamAction;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
 
 import java.util.*;
+import java.util.function.Function;
 
 public final class SidebarSession {
     private final GeyserSession session;
     private final ContainerTitleLayout layout;
     private final SidebarProfiles profiles;
+    private final Map<String, Integer> offsets;
     private final Map<String, ObjectiveText> objectives = new HashMap<>();
     private final Map<String, TeamText> teams = new HashMap<>();
     private final Map<String, Map<String, String>> titles = new MapMaker().weakKeys().makeMap();
@@ -46,9 +49,14 @@ public final class SidebarSession {
     private Scoreboard scoreboard;
 
     public SidebarSession(GeyserSession session, ContainerTitleLayout layout, SidebarProfiles profiles) {
+        this(session, layout, profiles, Map.of());
+    }
+
+    public SidebarSession(GeyserSession session, ContainerTitleLayout layout, SidebarProfiles profiles, Map<String, Integer> offsets) {
         this.session = session;
         this.layout = layout;
         this.profiles = profiles;
+        this.offsets = offsets;
     }
 
     public void translate(ClientboundSetObjectivePacket packet, PacketTranslator<ClientboundSetObjectivePacket> original) {
@@ -111,7 +119,7 @@ public final class SidebarSession {
             return;
         }
         int profile = this.profiles.match(objective.getObjectiveName(), plain(parts));
-        String title = this.encode(parts, profile, null, "");
+        String title = this.encode(parts, profile, null, SidebarCodec.ScoreColumn.plain(""));
         if (title != null) {
             // Geyser 将槽位 ID 和标题字符串原样交给出站包。弱身份键随槽位和最后一个排队的包一起释放。
             for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
@@ -383,9 +391,9 @@ public final class SidebarSession {
         }
     }
 
-    private String number(NumberFormat format, int value) {
+    private SidebarCodec.ScoreColumn number(NumberFormat format, int value) {
         if (format instanceof BlankFormat) {
-            return "";
+            return SidebarCodec.ScoreColumn.plain("");
         }
         Object component;
         if (format instanceof FixedFormat fixed) {
@@ -393,13 +401,34 @@ public final class SidebarSession {
         } else if (format instanceof StyledFormat styled) {
             component = MessageTranslatorProxy.INSTANCE.componentFromNbtTag(styled.getStyle().toBuilder().putString("text", Integer.toString(value)).build());
         } else {
-            return "§r§c" + value;
+            return SidebarCodec.ScoreColumn.plain("§r§c" + value);
         }
-        return MessageTranslatorProxy.INSTANCE.convertMessage(component, this.session.locale());
+        String locale = this.session.locale();
+        if (this.layout.supportsHudFonts()) {
+            List<GuiTitlePart> parts = new ArrayList<>();
+            if (this.collect(component, 0xffffff, parts)) {
+                try {
+                    ContainerTitleLayout.MeasuredLayout score = this.layout.positioned(parts, this.offsets, false);
+                    if (!score.layers().isEmpty()) {
+                        return SidebarCodec.ScoreColumn.positioned(score.width(), ContainerTitleCodec.positionedLayers(score, false,
+                                layer -> GeyserTextParts.serializeLayer(layer, parts, locale)));
+                    }
+                } catch (UnsupportedOperationException ignored) {
+                    // Keep the original formatted score if its layout exceeds the wire limits.
+                }
+            }
+        }
+        return SidebarCodec.ScoreColumn.plain(MessageTranslatorProxy.INSTANCE.convertMessage(component, locale));
     }
 
-    private String encode(List<GuiTitlePart> parts, int profile, String order, String number) {
+    private String encode(List<GuiTitlePart> parts, int profile, String order, SidebarCodec.ScoreColumn number) {
         try {
+            if (this.layout.supportsHudFonts()) {
+                ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, true);
+                List<String> layers = ContainerTitleCodec.positionedLayers(measured, false,
+                        layer -> GeyserTextParts.serializeLayer(layer, parts, this.session.locale()));
+                return SidebarCodec.encode(profile, order, measured.width(), number, layers, Function.identity());
+            }
             ContainerTitleLayout.MeasuredLayout measured = this.layout.layoutWithWidth(parts);
             return SidebarCodec.encode(profile, order, measured.width(), number, measured.layers(),
                     layer -> GeyserTextParts.serializeLayer(layer, parts, this.session.locale()));

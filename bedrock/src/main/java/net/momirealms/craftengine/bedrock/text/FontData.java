@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import java.io.IOException;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,15 +52,26 @@ public final class FontData {
     public static final class Font {
         private static final Font MISSING = new Font(Int2ObjectMaps.emptyMap());
         final Int2ObjectMap<WidthPage> pages = new Int2ObjectOpenHashMap<>();
+        final BitSet hudUnicode;
         private final Int2ObjectMap<FontGlyph> rendering;
 
         Font(Int2ObjectMap<FontGlyph> rendering) {
+            this(rendering, null);
+        }
+
+        Font(Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
             this.rendering = Int2ObjectMaps.unmodifiable(rendering);
+            this.hudUnicode = hudUnicode;
         }
 
         public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
                                   Int2ObjectMap<FontGlyph> rendering) {
-            Font font = new Font(rendering);
+            return of(glyphs, advance, boldOffset, rendering, null);
+        }
+
+        public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
+                                  Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
+            Font font = new Font(rendering, hudUnicode);
             Int2ObjectMaps.fastForEach(glyphs, entry -> {
                 int code = entry.getIntKey();
                 WidthPage page = font.pages.computeIfAbsent(code >>> 8, (int key) -> new WidthPage());
@@ -80,6 +92,10 @@ public final class FontData {
 
         public Int2ObjectMap<FontGlyph> rendering() {
             return this.rendering;
+        }
+
+        public boolean hudUnicode(int codepoint) {
+            return this.hudUnicode != null && this.hudUnicode.get(codepoint);
         }
     }
 

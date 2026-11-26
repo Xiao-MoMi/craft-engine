@@ -123,14 +123,7 @@ public final class BedrockGuiWriter {
         label.addProperty("text_alignment", "left");
         label.addProperty("shadow", false);
         BedrockTitleLayers.bindLayer(label, "ce_title_layers", "title_layers");
-        JsonArray children = new JsonArray();
-        children.add(GsonHelper.createObject("text", label));
-        // Zero-width siblings share the title origin; equal child layers preserve factory drawing order.
-        JsonObject item = this.position(0, 0, 0, 0);
-        item.addProperty("type", "panel");
-        item.addProperty("layer", 0);
-        item.add("controls", children);
-        this.controls.add("title_layer", item);
+        this.controls.add("title_layer", BedrockTitleLayers.positionedLayer(label, "#ce_layer", 1, true));
     }
 
     public void write(Path root) throws IOException {

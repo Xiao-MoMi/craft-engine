@@ -96,7 +96,7 @@ public final class CraftEngineGeyserExtension implements Extension {
         this.sounds.install(this.extensionData.soundMappings());
         this.entityManager.initialize(this.glyphManager.glyphs());
         if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
-            this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard());
+            this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard(), this.extensionData.verticalOffsets());
         }
         this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
         this.itemManager.init();

@@ -11,11 +11,17 @@ import java.util.Map;
 public final class GeyserGlyphData {
     public static final GeyserGlyphData EMPTY = new GeyserGlyphData(FontData.EMPTY);
     private final FontData data;
+    private final Map<String, Integer> verticalOffsets;
     private final Map<String, Int2IntMap> replacements = new HashMap<>();
     private final ContainerTitleLayout layout;
 
     public GeyserGlyphData(FontData data) {
+        this(data, Map.of());
+    }
+
+    public GeyserGlyphData(FontData data, Map<String, Integer> verticalOffsets) {
         this.data = data;
+        this.verticalOffsets = verticalOffsets;
         boolean hasRendering = false;
         for (Map.Entry<String, FontData.Font> font : data.fonts().entrySet()) {
             Int2ObjectMap<FontGlyph> glyphs = font.getValue().rendering();
@@ -44,5 +50,9 @@ public final class GeyserGlyphData {
 
     public FontData.Font font(String id) {
         return this.data.font(id);
+    }
+
+    public int verticalOffset(String id) {
+        return this.verticalOffsets.getOrDefault(id, 0);
     }
 }

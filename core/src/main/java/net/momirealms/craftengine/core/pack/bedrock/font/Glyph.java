@@ -14,19 +14,28 @@ public record Glyph(@Nullable BufferedImage image,
                     float spacing,
                     boolean nativeText, // 未覆写的原版字形，仅导出度量，保留字符交给基岩原生字体绘制
                     int actualWidth,
-                    float boldOffset) {
+                    float boldOffset,
+                    boolean unicode) {
+
+    public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText, int actualWidth, float boldOffset) {
+        this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText, actualWidth, boldOffset, false);
+    }
 
     public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText, int actualWidth) {
-        this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText, actualWidth, 1);
+        this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText, actualWidth, 1, false);
     }
 
     static Glyph unihex(int width) {
-        return new Glyph(null, 0, 0, width, 16, 8, 7, width / 2 + 1, true, width, 0.5f);
+        return new Glyph(null, 0, 0, width, 16, 8, 7, width / 2 + 1, true, width, 0.5f, true);
     }
 
     public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText) {
+        this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText, false);
+    }
+
+    Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing, boolean nativeText, boolean unicode) {
         this(image, x, y, width, sourceHeight, height, ascent, spacing, nativeText,
-                image == null ? 0 : measureWidth(image, x, y, width, sourceHeight));
+                image == null ? 0 : measureWidth(image, x, y, width, sourceHeight), 1, unicode);
     }
 
     public Glyph(@Nullable BufferedImage image, int x, int y, int width, int sourceHeight, int height, int ascent, float spacing) {

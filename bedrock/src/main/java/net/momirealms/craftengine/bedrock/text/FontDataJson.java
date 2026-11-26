@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,16 @@ final class FontDataJson extends TypeAdapter<FontData> {
                 writer.value(number);
             }
             writer.endArray();
+            BitSet unicode = entry.getValue().hudUnicode;
+            if (unicode != null) {
+                writer.name("hud_unicode_ranges").beginArray();
+                for (int start = unicode.nextSetBit(0); start >= 0;) {
+                    int end = unicode.nextClearBit(start);
+                    writer.value(start).value(end);
+                    start = unicode.nextSetBit(end);
+                }
+                writer.endArray();
+            }
             writer.name("rendering");
             writeRendering(writer, entry.getValue().rendering());
             writer.endObject();
@@ -129,7 +140,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
         Map<String, FontData.Font> fonts = new LinkedHashMap<>();
         for (Map.Entry<String, Definition> entry : definitions.entrySet()) {
             Definition definition = entry.getValue();
-            FontData.Font font = new FontData.Font(definition.rendering);
+            FontData.Font font = new FontData.Font(definition.rendering, definition.hudUnicode);
             IntArrayList pairs = definition.pages;
             for (int i = 0; i < pairs.size(); i += 2) {
                 font.pages.put(pairs.getInt(i), pages.get(pairs.getInt(i + 1)));
@@ -141,10 +152,24 @@ final class FontDataJson extends TypeAdapter<FontData> {
 
     private static Definition readDefinition(JsonReader reader) throws IOException {
         IntArrayList pages = null;
+        BitSet hudUnicode = null;
         Int2ObjectMap<FontGlyph> rendering = null;
         reader.beginObject();
         while (reader.hasNext()) {
             switch (reader.nextName()) {
+                case "hud_unicode_ranges" -> {
+                    hudUnicode = new BitSet();
+                    reader.beginArray();
+                    while (reader.hasNext()) {
+                        int start = reader.nextInt();
+                        int end = reader.nextInt();
+                        if (start < 0 || end < start || end > Character.MAX_CODE_POINT + 1) {
+                            throw new IllegalArgumentException("Invalid HUD font range");
+                        }
+                        hudUnicode.set(start, end);
+                    }
+                    reader.endArray();
+                }
                 case "pages" -> {
                     pages = new IntArrayList();
                     reader.beginArray();
@@ -169,7 +194,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
         if (pages == null || rendering == null) {
             throw new IllegalArgumentException("Incomplete font definition in craftengine/fonts.json");
         }
-        return new Definition(pages, rendering);
+        return new Definition(pages, rendering, hudUnicode);
     }
 
     private static FontGlyph readGlyph(JsonReader reader, int code) throws IOException {
@@ -189,6 +214,6 @@ final class FontDataJson extends TypeAdapter<FontData> {
         return new FontGlyph(character, advance, bearing);
     }
 
-    private record Definition(IntArrayList pages, Int2ObjectMap<FontGlyph> rendering) {
+    private record Definition(IntArrayList pages, Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
     }
 }

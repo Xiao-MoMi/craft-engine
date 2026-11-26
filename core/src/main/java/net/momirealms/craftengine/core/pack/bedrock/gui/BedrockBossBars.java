@@ -6,6 +6,8 @@ import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
 import net.momirealms.craftengine.bedrock.text.BossBarTitleCodec;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ClientPngReader;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.ImageUtils;
@@ -15,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,14 +77,25 @@ public final class BedrockBossBars {
             }
         }
         boolean hasStyles = !styles.isEmpty();
-        styles.addProperty(BedrockPackLayout.BOSS_BAR_TITLE_LAYOUT, BossBarTitleCodec.LEFT_ANCHORED_VERSION);
+        Map<Key, Integer> offsets = Config.bedrockFontVerticalOffsets();
+        List<Integer> baselines = offsets.values().stream().filter(value -> value != 0).distinct().sorted().toList();
+        JsonObject fontBaselines = new JsonObject();
+        for (Map.Entry<Key, Integer> entry : offsets.entrySet()) {
+            if (entry.getValue() != 0) {
+                fontBaselines.addProperty(entry.getKey().asString(), 1 + Collections.binarySearch(baselines, entry.getValue()));
+            }
+        }
+        if (!fontBaselines.isEmpty()) {
+            styles.add(BedrockPackLayout.BOSS_BAR_FONT_BASELINES, fontBaselines);
+        }
+        styles.addProperty(BedrockPackLayout.BOSS_BAR_TITLE_LAYOUT, BossBarTitleCodec.COMPACT_POSITION_VERSION);
         GsonHelper.writeJsonFile(styles, data);
         Path hudPath = pack.resolve("ui/hud_screen.json");
         Files.createDirectories(hudPath.getParent());
         JsonObject hud = Files.exists(hudPath) ? GsonHelper.readJsonObjectFromFile(hudPath) : new JsonObject();
         hud.addProperty("namespace", "hud");
         JsonArray modifications = new JsonArray();
-        modifications.add(replaceControl("boss_name", "boss_name", BedrockBossBarTitle.panel(hud)));
+        modifications.add(replaceControl("boss_name", "boss_name", BedrockBossBarTitle.panel(hud, baselines)));
         if (hasStyles) {
             JsonObject nativeBar = new JsonObject();
             nativeBar.add("offset", GsonHelper.createArray(0, 10));

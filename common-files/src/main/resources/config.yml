@@ -830,6 +830,16 @@ bedrock:
   font:
     # Full font ID regexes excluded from Bedrock glyph conversion, including references.
     exclude: []
+    # Font offsets in Java font pixels for BossBars, ActionBars, classic container titles, titles, subtitles and text displays.
+    # Titles and subtitles scale the offsets with their text (4x and 2x).
+    # Text displays apply the offset along the text plane's local vertical axis before scaling and rotation.
+    # Negative values move glyphs down, positive values move them up.
+    # Every listed font, including a zero offset, uses native Bedrock glyphs with Java advances.
+    # Fonts explicitly selected by nested text components use their own settings.
+    vertical-offsets:
+      "nameplates:shift_0": 0
+      "nameplates:shift_1": -4
+      "nameplates:shift_2": -22
   custom-entity:
     # Available values:
     #  - disabled

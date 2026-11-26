@@ -13,22 +13,26 @@ import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<ClientboundOpenScreenPacket> {
     private static final String DEFAULT_FONT = "minecraft:default";
     private static final int DEFAULT_TITLE_COLOR = 0x404040;
     private final ContainerTitleLayout layout;
+    @Nullable private final Map<String, Integer> offsets;
 
-    public GeyserGuiMenus(ContainerTitleLayout layout) {
+    public GeyserGuiMenus(ContainerTitleLayout layout, @Nullable Map<String, Integer> offsets) {
         this.layout = layout;
+        this.offsets = offsets;
     }
 
     @Override
     public void translate(GeyserPlayer player, ClientboundOpenScreenPacket packet, PacketTranslator<ClientboundOpenScreenPacket> original) {
         // 资源包的容器布局仅适配经典 UI，Pocket 布局沿用原生处理。
-        if (player.uiProfile() == UiProfile.CLASSIC) {
+        if (player.clientPackLoaded() && player.uiProfile() == UiProfile.CLASSIC) {
             packet = this.rewrite(packet, player.locale());
         }
         original.translate(player.session(), packet);
@@ -65,6 +69,15 @@ public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<Clien
     }
 
     private Object createTitle(List<GuiTitlePart> parts, int rows, String locale) {
+        if (this.offsets != null) {
+            ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, false);
+            if (measured.layers().isEmpty()) {
+                return null;
+            }
+            String marker = ContainerTitleLayout.MARKER + rows + "/";
+            return GeyserTextParts.resolvedText(ContainerTitleCodec.positioned(marker, measured, false,
+                    runs -> GeyserTextParts.serializeLayer(runs, parts, locale)));
+        }
         List<List<ContainerTitleLayout.Run>> layers = this.layout.layout(parts);
         // 空列表表示无需使用自定义布局，并不表示应清空标题
         if (layers.isEmpty()) {

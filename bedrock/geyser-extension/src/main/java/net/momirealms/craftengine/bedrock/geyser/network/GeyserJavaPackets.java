@@ -26,6 +26,8 @@ import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.Clie
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.level.ClientboundLevelEventPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.scoreboard.*;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.title.ClientboundSetActionBarTextPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.title.ClientboundSetSubtitleTextPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.title.ClientboundSetTitleTextPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.inventory.ServerboundContainerClickPacket;
@@ -68,8 +70,13 @@ public final class GeyserJavaPackets {
         this.intercept(ClientboundCustomPayloadPacket.class, extension.customPayloads());
         ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
         if (layout != null) {
-            this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout));
-            GeyserTitle titles = new GeyserTitle(layout, extension.extensionData().forceJavaTitleLayout());
+            Map<String, Integer> offsets = extension.extensionData().verticalOffsets();
+            this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout, offsets));
+            GeyserTitle titles = new GeyserTitle(layout, extension.extensionData().forceJavaTitleLayout(), offsets);
+            if (offsets != null) {
+                this.intercept(ClientboundSetActionBarTextPacket.class, titles::actionBar);
+                this.intercept(ClientboundSystemChatPacket.class, titles::systemChat);
+            }
             this.intercept(ClientboundSetTitleTextPacket.class, titles::title);
             this.intercept(ClientboundSetSubtitleTextPacket.class, titles::subtitle);
         }

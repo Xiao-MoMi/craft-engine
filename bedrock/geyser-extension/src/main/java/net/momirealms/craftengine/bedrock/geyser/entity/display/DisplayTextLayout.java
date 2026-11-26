@@ -77,7 +77,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         List<GuiTitlePart> parts = formatted.parts();
         if (parts.size() == 1) {
             GuiTitlePart part = parts.getFirst();
-            if (part.font().equals(DEFAULT_FONT) && part.color() == 0xffffff && part.decorations() == 0) {
+            if (part.font().equals(DEFAULT_FONT) && glyphs.verticalOffset(DEFAULT_FONT) == 0 && part.color() == 0xffffff && part.decorations() == 0) {
                 FontData.Font font = glyphs.font(DEFAULT_FONT);
                 if (isPlainText(part.text(), font.rendering())) {
                     return splitPlain(part.text(), maxWidth, font, formatted.trailingFormat());
@@ -92,13 +92,15 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         }
         float[] advances = new float[text.length()];
         boolean plain = true;
-        boolean negativeAdvance = false;
+        boolean needsPositioning = false;
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
             FontData.Font font = glyphs.font(part.font());
             Int2ObjectMap<FontGlyph> rendering = font.rendering();
             boolean bold = (part.decorations() & 2) != 0;
-            plain &= part.font().equals(DEFAULT_FONT) && part.color() == 0xFFFFFF && part.decorations() == 0;
+            boolean shifted = glyphs.verticalOffset(part.font()) != 0;
+            needsPositioning |= shifted;
+            plain &= !shifted && part.font().equals(DEFAULT_FONT) && part.color() == 0xFFFFFF && part.decorations() == 0;
             for (int index = partStarts[partIndex]; index < partStarts[partIndex + 1];) {
                 int codepoint = part.text().codePointAt(index - partStarts[partIndex]);
                 if (codepoint >= Character.MIN_SURROGATE && codepoint <= Character.MAX_SURROGATE) {
@@ -107,7 +109,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 }
                 if (codepoint != '\n') {
                     advances[index] = font.advance(codepoint, bold);
-                    negativeAdvance |= advances[index] < 0;
+                    needsPositioning |= advances[index] < 0;
                     plain = plain && isPlainGlyph(codepoint, rendering);
                 }
                 index += Character.charCount(codepoint);
@@ -115,7 +117,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         }
 
         boolean plainText = plain;
-        boolean hasNegativeAdvance = negativeAdvance;
+        boolean positionLines = needsPositioning;
         return split(text, (index, codepoint) -> advances[index], maxWidth, formatted.trailingFormat(), new LineText() {
             private int firstPart;
 
@@ -127,7 +129,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 while (this.firstPart < parts.size() && partStarts[this.firstPart + 1] <= start) {
                     this.firstPart++;
                 }
-                return serializeLine(parts, partStarts, this.firstPart, start, end, width, locale, glyphs, hasNegativeAdvance);
+                return serializeLine(parts, partStarts, this.firstPart, start, end, width, locale, glyphs, positionLines);
             }
         });
     }
@@ -221,7 +223,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                                       int width,
                                       String locale,
                                       GeyserGlyphData fonts,
-                                      boolean hasNegativeAdvance) {
+                                      boolean positionLines) {
         GuiTitlePart.Builder line = new GuiTitlePart.Builder(new ArrayList<>());
         for (int index = first; index < parts.size() && starts[index] < end; index++) {
             GuiTitlePart part = parts.get(index);
@@ -229,7 +231,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             line.append(part.font(), text, part.color(), part.decorations());
         }
         List<GuiTitlePart> contents = line.finish();
-        List<Piece> pieces = hasNegativeAdvance ? positionedPieces(contents, fonts, locale) : List.of();
+        List<Piece> pieces = positionLines ? positionedPieces(contents, fonts, locale) : List.of();
         String text = GeyserTextParts.serializeParts(inlineSpacing(contents, fonts), locale);
         return new Line(text, width, Line.hasVisibleText(text), pieces);
     }
@@ -290,10 +292,12 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         float width = 0;
         float gap = 0;
         boolean backtracks = false;
+        boolean shifted = false;
         boolean onlyImages = true;
         for (GuiTitlePart part : parts) {
             FontData.Font font = fonts.font(part.font());
             boolean bold = (part.decorations() & 2) != 0;
+            int offset = fonts.verticalOffset(part.font());
             for (int i = 0; i < part.text().length();) {
                 int code = part.text().codePointAt(i);
                 i += Character.charCount(code);
@@ -303,13 +307,14 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 if (glyph != null && !glyph.visible()) {
                     gap += advance;
                 } else {
+                    shifted |= offset != 0;
                     backtracks |= gap < 0;
                     onlyImages &= glyph != null && glyph.bearing() != 0;
                     gap = 0;
                 }
             }
         }
-        if (!backtracks && gap >= 0) {
+        if (!shifted && !backtracks && gap >= 0) {
             return List.of();
         }
 
@@ -319,9 +324,11 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         float cursor = -Math.max(0, width) * 0.5f;
         float start = cursor;
         float rendered = 0;
+        int baseline = 0;
         gap = 0;
         for (GuiTitlePart part : parts) {
             FontData.Font font = fonts.font(part.font());
+            int offset = fonts.verticalOffset(part.font());
             boolean bold = (part.decorations() & 2) != 0;
             String text = part.text();
             int slice = 0;
@@ -335,10 +342,11 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                     slice = next;
                     gap += advance;
                 } else {
-                    if (onlyImages || gap < 0) {
-                        flushPiece(run, pieces, start, rendered, locale);
+                    if (onlyImages || gap < 0 || offset != baseline) {
+                        flushPiece(run, pieces, start, rendered, baseline, locale);
                         start = cursor;
                         rendered = 0;
+                        baseline = offset;
                     } else if (gap > 0) {
                         rendered += appendInlineGap(run, gap);
                     }
@@ -355,15 +363,15 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             }
             run.append(part.font(), text.substring(slice), part.color(), part.decorations());
         }
-        flushPiece(run, pieces, start, rendered, locale);
+        flushPiece(run, pieces, start, rendered, baseline, locale);
         return pieces;
     }
 
-    private static void flushPiece(GuiTitlePart.Builder run, List<Piece> pieces, float start, float width, String locale) {
+    private static void flushPiece(GuiTitlePart.Builder run, List<Piece> pieces, float start, float width, int baseline, String locale) {
         List<GuiTitlePart> contents = run.finish();
         if (!contents.isEmpty()) {
             String text = GeyserTextParts.serializeParts(contents, locale);
-            pieces.add(new Piece(text, GeyserTextDisplayEntity.withoutTextColors(text), start + width * 0.5f));
+            pieces.add(new Piece(text, GeyserTextDisplayEntity.withoutTextColors(text), start + width * 0.5f, baseline));
             contents.clear();
         }
     }
@@ -443,7 +451,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
     private record FormatChange(int visibleIndex, int skipped, String format) {
     }
 
-    record Piece(String text, String shadow, float center) {
+    record Piece(String text, String shadow, float center, int verticalOffset) {
     }
 
     record Line(String text, int width, boolean visible, List<Piece> pieces) {

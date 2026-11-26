@@ -28,6 +28,7 @@ public final class JavaFontResolver {
 
     private static final int UNIFORM = 1;
     private static final int JAPANESE_VARIANTS = 2;
+    private static final Pattern UNICODE_PAGE = Pattern.compile("font/unicode_page_[0-9a-fA-F]{2}\\.png");
     private static final Key DEFAULT_FONT = Key.of("minecraft:default");
     private static final Key UNIFORM_FONT = Key.of("minecraft:uniform");
     private static final Glyph MISSING = Glyph.space(FontData.MISSING_ADVANCE);
@@ -247,6 +248,7 @@ public final class JavaFontResolver {
         }
         Int2ObjectMap<Glyph> glyphs = new Int2ObjectOpenHashMap<>();
         boolean convert = custom || this.sources.pack.hasCustomResource(path);
+        boolean unicode = texture.namespace().equals("minecraft") && UNICODE_PAGE.matcher(texture.value()).matches();
         BufferedImage image = this.sources.image(path);
         int width = image.getWidth() / characters[0].length;
         int cellHeight = image.getHeight() / characters.length;
@@ -260,7 +262,7 @@ public final class JavaFontResolver {
             for (int x = 0; x < characters[y].length; x++) {
                 int codepoint = characters[y][x];
                 if (codepoint != 0) {
-                    glyphs.put(codepoint, new Glyph(image, x * width, y * cellHeight, width, cellHeight, height, ascent, Float.NaN, !convert));
+                    glyphs.put(codepoint, new Glyph(image, x * width, y * cellHeight, width, cellHeight, height, ascent, Float.NaN, !convert, unicode));
                 }
             }
         }

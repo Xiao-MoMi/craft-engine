@@ -6,6 +6,11 @@ import java.util.Map;
 public record GuiTitlePart(String font, String text, int color, int decorations) {
 
     public static final class Builder {
+        private static final String LEGACY_FORMATS = "0123456789abcdefklmnor";
+        private static final int[] LEGACY_COLORS = {
+                0, 0x0000aa, 0x00aa00, 0x00aaaa, 0xaa0000, 0xaa00aa, 0xffaa00, 0xaaaaaa,
+                0x555555, 0x5555ff, 0x55ff55, 0x55ffff, 0xff5555, 0xff55ff, 0xffff55, 0xffffff
+        };
         private final List<GuiTitlePart> parts;
         private StringBuilder joined;
 
@@ -28,6 +33,30 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
                 }
             }
             this.addComponent(new GuiTitlePart(font, text, color, decorations));
+        }
+
+        public void appendFormatted(String font, String text, int color, int decorations) {
+            int start = 0;
+            int currentColor = color;
+            int currentDecorations = decorations;
+            for (int marker = text.indexOf('§'); marker >= 0; marker = text.indexOf('§', start)) {
+                this.append(font, text.substring(start, marker), currentColor, currentDecorations);
+                start = marker + 1;
+                if (start == text.length()) {
+                    return;
+                }
+                int code = LEGACY_FORMATS.indexOf(Character.toLowerCase(text.charAt(start++)));
+                if (code >= 0 && code < 16) {
+                    currentColor = LEGACY_COLORS[code];
+                    currentDecorations = 0;
+                } else if (code >= 16 && code < 21) {
+                    currentDecorations |= 1 << (code - 16);
+                } else if (code == 21) {
+                    currentColor = color;
+                    currentDecorations = decorations;
+                }
+            }
+            this.append(font, start == 0 ? text : text.substring(start), currentColor, currentDecorations);
         }
 
         public void addComponent(GuiTitlePart part) {

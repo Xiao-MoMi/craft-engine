@@ -154,7 +154,7 @@ public final class GeyserPlayer {
 
     @Nullable
     public synchronized SidebarSession sidebar() {
-        if (this.closed || this.extension.sidebarManager() == null) {
+        if (this.closed || !this.clientPackLoaded || this.extension.sidebarManager() == null) {
             return null;
         }
         if (this.sidebar == null) {

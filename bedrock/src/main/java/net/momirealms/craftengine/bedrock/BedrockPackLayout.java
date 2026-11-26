@@ -9,6 +9,7 @@ public final class BedrockPackLayout {
 
     public static final String BOSS_BARS = "craftengine/boss_bars.json";
     public static final String BOSS_BAR_TITLE_LAYOUT = "title_layout";
+    public static final String BOSS_BAR_FONT_BASELINES = "font_baselines";
     public static final String SOUND_MAPPINGS = "craftengine/sounds.json";
     public static final String MODEL_DISPLAYS = "craftengine/model_displays.json";
     public static final String ELYTRA_VARIANTS = "craftengine/elytra_variants.json";
@@ -17,6 +18,7 @@ public final class BedrockPackLayout {
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
     public static final String TITLE = "craftengine/title.json";
     public static final String FORCE_JAVA_LAYOUT = "force_java_layout";
+    public static final String TEXT_VERTICAL_OFFSETS = "vertical_offsets";
     public static final String FONTS = "craftengine/fonts.json";
     public static final String CRAFTENGINE_TEXTURES = "textures/" + NAMESPACE;
     public static final String NATIVE_MODEL_TEXTURES = CRAFTENGINE_TEXTURES + "/native";

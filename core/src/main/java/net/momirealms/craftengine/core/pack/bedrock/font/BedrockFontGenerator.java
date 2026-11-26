@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
@@ -16,8 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class BedrockFontGenerator {
     private static final int SPACER_PAGE = ContainerTitleLayout.SPACER_FIRST >>> 8;
@@ -32,10 +35,10 @@ public final class BedrockFontGenerator {
     public static void write(JavaResourcePack resources, Path root, Path fontFile) throws IOException {
         JavaFontResolver fonts = new JavaFontResolver(resources, List.of());
         JavaFontResolver rendering = fonts.excluding(Config.bedrockExcludedFonts());
-        write(fonts, rendering, root, fontFile);
+        write(fonts, rendering, Config.bedrockFontVerticalOffsets().keySet(), root, fontFile);
     }
 
-    static void write(JavaFontResolver fonts, JavaFontResolver rendering, Path root, Path fontFile) throws IOException {
+    static void write(JavaFontResolver fonts, JavaFontResolver rendering, Set<Key> nativeFonts, Path root, Path fontFile) throws IOException {
         // 所有字体共用的位图页和码位
         GlyphAtlas atlas = new GlyphAtlas();
 
@@ -45,8 +48,18 @@ public final class BedrockFontGenerator {
             if (glyphs.isEmpty()) {
                 continue;
             }
-            Int2ObjectMap<FontGlyph> allocated = atlas.allocateFont(font, rendering == fonts ? glyphs : rendering.resolve(font));
-            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated));
+            boolean nativeFont = nativeFonts.contains(font);
+            Int2ObjectMap<Glyph> visible = nativeFont || rendering == fonts ? glyphs : rendering.resolve(font);
+            Int2ObjectMap<FontGlyph> allocated = nativeFont ? GlyphAtlas.nativeFont(glyphs) : atlas.allocateFont(font, visible);
+            BitSet unicode = new BitSet();
+            Int2ObjectMaps.fastForEach(visible, entry -> {
+                int code = entry.getIntKey();
+                FontGlyph mapped = allocated.get(code);
+                if (entry.getValue().unicode() && (mapped == null || (mapped.character() == code && mapped.bearing() == 0))) {
+                    unicode.set(code);
+                }
+            });
+            entries.put(font.asString(), FontData.Font.of(glyphs, Glyph::advance, Glyph::boldOffset, allocated, unicode));
         }
         Path directory = Files.createDirectories(root.resolve("font"));
         atlas.writePages(directory);

@@ -210,7 +210,7 @@ public final class TitleSession {
         this.frame = null;
     }
 
-    private static SetTitlePacket packet(SetTitlePacket.Type type, String text) {
+    static SetTitlePacket packet(SetTitlePacket.Type type, String text) {
         SetTitlePacket packet = new SetTitlePacket();
         packet.setType(type);
         packet.setText(text);

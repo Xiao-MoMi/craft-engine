@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -32,12 +34,13 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
             null, null, null, null,
-            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false,
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, null,
             null, null, null, null
     );
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final boolean forceJavaTitleLayout;
+    @Nullable private final Map<String, Integer> verticalOffsets;
     private final JsonObject items;
     private final JsonObject blocks;
     private final JsonObject modelDisplays;
@@ -56,6 +59,7 @@ public final class GeyserExtensionData {
                                 GeyserLanguageData languages,
                                 SidebarProfiles scoreboard,
                                 boolean forceJavaTitleLayout,
+                                @Nullable Map<String, Integer> verticalOffsets,
                                 @Nullable JsonObject nativeModels,
                                 @Nullable JsonObject soundMappings,
                                 @Nullable JsonObject bossBars,
@@ -65,6 +69,7 @@ public final class GeyserExtensionData {
         this.clientPack = clientPack;
         this.scoreboard = scoreboard;
         this.forceJavaTitleLayout = forceJavaTitleLayout;
+        this.verticalOffsets = verticalOffsets;
         this.nativeModels = nativeModels;
         this.items = items;
         this.blocks = blocks;
@@ -84,12 +89,13 @@ public final class GeyserExtensionData {
             JsonObject sounds = readJson(archive, BedrockPackLayout.SOUND_MAPPINGS);
             JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
-            GeyserGlyphData glyphs = readFonts(archive);
+            Map<String, Integer> verticalOffsets = readVerticalOffsets(title);
+            GeyserGlyphData glyphs = readFonts(archive, verticalOffsets == null ? Map.of() : verticalOffsets);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
                     readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
                     glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
-                    forceJavaTitleLayout,
+                    forceJavaTitleLayout, verticalOffsets,
                     readJson(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     readJson(archive, BedrockPackLayout.BOSS_BARS),
                     extractClientPack(archive, cacheDirectory));
@@ -127,7 +133,7 @@ public final class GeyserExtensionData {
         return this.clientPack;
     }
 
-    private static GeyserGlyphData readFonts(ZipFile archive) throws IOException {
+    private static GeyserGlyphData readFonts(ZipFile archive, Map<String, Integer> verticalOffsets) throws IOException {
         ZipEntry entry = archive.getEntry(BedrockPackLayout.FONTS);
         if (entry == null) {
             throw new IOException("Missing " + BedrockPackLayout.FONTS + "; regenerate the Bedrock pack");
@@ -138,7 +144,7 @@ public final class GeyserExtensionData {
             if (reader.peek() != JsonToken.END_DOCUMENT) {
                 throw new IOException("Unexpected trailing data in " + entry.getName());
             }
-            return new GeyserGlyphData(fonts);
+            return new GeyserGlyphData(fonts, verticalOffsets);
         }
     }
 
@@ -189,6 +195,21 @@ public final class GeyserExtensionData {
 
     public SidebarProfiles scoreboard() {
         return this.scoreboard;
+    }
+
+    @Nullable
+    private static Map<String, Integer> readVerticalOffsets(@Nullable JsonObject title) {
+        if (title == null || !title.has(BedrockPackLayout.TEXT_VERTICAL_OFFSETS)) {
+            return null;
+        }
+        Map<String, Integer> offsets = new HashMap<>();
+        title.getAsJsonObject(BedrockPackLayout.TEXT_VERTICAL_OFFSETS).asMap().forEach((font, value) -> offsets.put(font, value.getAsInt()));
+        return Map.copyOf(offsets);
+    }
+
+    @Nullable
+    public Map<String, Integer> verticalOffsets() {
+        return this.verticalOffsets;
     }
 
     public boolean forceJavaTitleLayout() {
