@@ -126,8 +126,6 @@ public final class BedrockSidebarWriter {
     }
 
     private JsonObject line(boolean title) {
-        String input = title ? "#objective_sidebar_name" : "#player_name_sidebar";
-        String collection = title ? "" : "scoreboard_players";
         JsonObject panel = new JsonObject();
         panel.addProperty("type", "panel");
         panel.add("size", size("100%cm", 10));
@@ -151,7 +149,7 @@ public final class BedrockSidebarWriter {
         measure.add("bindings", measureBindings);
         children.add(GsonHelper.createObject("measure", measure));
         JsonObject layers = layers(title ? "ce_sidebar_title_layer" : "ce_sidebar_player_layer", "ce_sidebar_layers");
-        JsonArray bindings = source(input, collection);
+        JsonArray bindings = source(this.textInput(title));
         bind(bindings, "(('%.' + ((not #ce_encoded) * 10032) + 's') * #ce_raw)", "#ce_native");
         bindScoreHeader(bindings);
         bind(bindings, "(#ce_measure_wire - #ce_score_header)", "#ce_measure");
@@ -209,14 +207,14 @@ public final class BedrockSidebarWriter {
         original.add("bindings", bindings);
         children.add(GsonHelper.createObject("native_score", original));
         JsonObject formatted = label();
-        bindings = source("#player_name_sidebar", "scoreboard_players");
+        bindings = source(this.textInput(false));
         decode(bindings, "'%.14s'", "'%.21s'", "#ce_score");
         formatted.addProperty("text", "#ce_score");
         bind(bindings, "#ce_encoded", "#visible");
         formatted.add("bindings", bindings);
         children.add(GsonHelper.createObject("formatted_score", formatted));
         JsonObject score = layers("ce_sidebar_score_layer", "ce_sidebar_score_layers");
-        JsonArray scoreBindings = source("#player_name_sidebar", "scoreboard_players");
+        JsonArray scoreBindings = source(this.textInput(false));
         bindScoreHeader(scoreBindings);
         bind(scoreBindings, "(#ce_score_header - '" + SidebarCodec.SCORE_LAYERS + "' - ':' + 0)", "#collection_length");
         score.add("bindings", scoreBindings);
@@ -234,7 +232,12 @@ public final class BedrockSidebarWriter {
         details.addProperty("binding_collection_prefix", "ce");
         bindings.add(details);
         // A factory entry must read its own scoreboard row; named controls can resolve to a different row.
-        bindings.addAll(source(title ? "#objective_sidebar_name" : "#player_name_sidebar", title ? "" : "scoreboard_players"));
+        JsonObject textInput = this.textInput(title);
+        if (!title) {
+            // Keep the outer row binding active when F1 hides the nested layer factory.
+            textInput.addProperty("binding_condition", "always");
+        }
+        bindings.addAll(source(textInput));
         String index = "#ce_collection_index";
         if (score) {
             bindRowCount(bindings);
@@ -245,9 +248,13 @@ public final class BedrockSidebarWriter {
         return BedrockTitleLayers.positionedLayer(text, bindings, true);
     }
 
-    private JsonArray source(String input, String collection) {
+    private JsonObject textInput(boolean title) {
+        return title ? this.input("#objective_sidebar_name", "", "#ce_raw") : this.input("#player_name_sidebar", "scoreboard_players", "#ce_raw");
+    }
+
+    private static JsonArray source(JsonObject textInput) {
         JsonArray bindings = new JsonArray();
-        bindings.add(this.input(input, collection, "#ce_raw"));
+        bindings.add(textInput);
         bind(bindings, "(('%.6s' * #ce_raw) = '" + SidebarCodec.MARKER + "')", "#ce_encoded");
         bind(bindings, "('%." + HEADER_BYTES + "s' * #ce_raw)", "#ce_header");
         bind(bindings, "((('%.' + (#ce_encoded * 10032) + 's') * #ce_raw) - #ce_header)", "#ce_payload");
