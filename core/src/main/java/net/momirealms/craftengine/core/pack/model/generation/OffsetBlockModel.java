@@ -5,21 +5,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
-import net.momirealms.craftengine.core.util.FileUtils;
-import net.momirealms.craftengine.core.util.Key;
-import net.momirealms.craftengine.core.util.ModelUtils;
-import net.momirealms.craftengine.core.util.ResourcePackJsonUtils;
-import net.momirealms.craftengine.core.util.ResourcePackUtils;
+import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 import static net.momirealms.craftengine.core.pack.model.ModelJsonKeys.ELEMENTS;
 import static net.momirealms.craftengine.core.pack.model.ModelJsonKeys.PARENT;

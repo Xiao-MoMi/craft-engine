@@ -24,19 +24,19 @@ items:
           auto_state: sugar_cane
           models:
             - path: minecraft:block/custom/reed
-              weight: 3
+              weight: 2
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [2, 0, 0]
+              offset: [4, -4, 0]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [-2, 0, 0]
+              offset: [-4, -2, 0]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [0, 0, 2]
+              offset: [0, -4, 4]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [0, 0, 2]
+              offset: [0, -2, 4]
 recipes:
   default:paper_from_reed:
     type: shaped

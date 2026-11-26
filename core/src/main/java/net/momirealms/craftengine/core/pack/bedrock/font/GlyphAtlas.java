@@ -1,13 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrays;
-import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
+import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.io.IOException;

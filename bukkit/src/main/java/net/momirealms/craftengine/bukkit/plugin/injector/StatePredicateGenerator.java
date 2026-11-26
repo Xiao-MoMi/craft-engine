@@ -5,16 +5,7 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.core.util.VersionHelper;
-import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.BlockGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockBehaviourProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.level.block.state.BlockStateProxy;
-import net.momirealms.sparrow.reflection.clazz.SparrowClass;
-import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
-
-import java.lang.reflect.Method;
-
-import static java.util.Objects.requireNonNull;
 
 public final class StatePredicateGenerator {
     private static Object alwaysTrue;

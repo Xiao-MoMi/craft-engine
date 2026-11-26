@@ -20,13 +20,7 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponen
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class GeyserCreativeCatalog {
     private static final int CATEGORY_COUNT = CreativeItemCategory.values().length;

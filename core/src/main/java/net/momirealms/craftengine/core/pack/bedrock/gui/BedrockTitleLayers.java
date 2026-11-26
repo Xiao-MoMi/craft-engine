@@ -1,13 +1,18 @@
 package net.momirealms.craftengine.core.pack.bedrock.gui;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 public final class BedrockTitleLayers {
+    static final String LAYER_DATA = "ce_layer_data";
+
     private BedrockTitleLayers() {
     }
 
@@ -83,8 +88,8 @@ public final class BedrockTitleLayers {
             plain.addProperty("anchor_to", "center");
             plain.addProperty("text", "#text");
             JsonArray plainBindings = new JsonArray(2);
-            plainBindings.add(fromSibling("ce_layer_data", "#ce_line", "#text"));
-            plainBindings.add(fromSibling("ce_layer_data", "(not #ce_positioned)", "#visible"));
+            plainBindings.add(fromSibling(LAYER_DATA, "#ce_line", "#text"));
+            plainBindings.add(fromSibling(LAYER_DATA, "(not #ce_positioned)", "#visible"));
             plain.add("bindings", plainBindings);
             controls.add(GsonHelper.createObject("plain_text", plain));
         }
@@ -108,15 +113,24 @@ public final class BedrockTitleLayers {
     }
 
     static JsonArray faceControls(JsonObject data, JsonObject label, boolean verticalOffset) {
+        JsonObject templates = faceTemplates(data, label, verticalOffset, LAYER_DATA);
+        JsonArray controls = new JsonArray(templates.size());
+        for (Map.Entry<String, JsonElement> template : templates.entrySet()) {
+            controls.add(GsonHelper.createObject(template.getKey(), template.getValue()));
+        }
+        return controls;
+    }
+
+    static JsonObject faceTemplates(JsonObject data, JsonObject label, boolean verticalOffset, String sourceControl) {
         // 控件名称会在每个工厂项内重复。只从同级数据控件取值，避免读到其他图层或计分板行。
-        JsonArray controls = new JsonArray(5);
+        JsonObject controls = new JsonObject();
         JsonObject offsets = new JsonObject();
         offsets.addProperty("#ce_offset_x", 0.0);
         if (verticalOffset) {
             offsets.addProperty("#ce_offset_y", 0.0);
         }
         data.add("property_bag", offsets);
-        controls.add(GsonHelper.createObject("ce_layer_data", data));
+        controls.add(LAYER_DATA, data);
         label.addProperty("text", "#text");
         label.addProperty("use_anchored_offset", true);
         JsonObject properties = new JsonObject();
@@ -124,26 +138,26 @@ public final class BedrockTitleLayers {
         properties.addProperty("#anchored_offset_value_y", verticalOffset ? 1.0 : 0.0);
         label.add("property_bag", properties);
         JsonArray bindings = new JsonArray(4);
-        bindings.add(fromSibling("ce_layer_data", "#ce_offset_x", "#anchored_offset_value_x"));
+        bindings.add(fromSibling(sourceControl, "#ce_offset_x", "#anchored_offset_value_x"));
         if (verticalOffset) {
-            bindings.add(fromSibling("ce_layer_data", "#ce_offset_y", "#anchored_offset_value_y"));
+            bindings.add(fromSibling(sourceControl, "#ce_offset_y", "#anchored_offset_value_y"));
         }
-        bindings.add(fromSibling("ce_layer_data", "#ce_ink_text", "#text"));
+        bindings.add(fromSibling(sourceControl, "#ce_ink_text", "#text"));
         label.add("bindings", bindings);
         boolean defaultShadow = label.get("shadow").getAsBoolean();
-        addLabel(controls, label, "text", "default", defaultShadow, "((not #ce_unicode) and (not #ce_shadow_override))");
-        addLabel(controls, label, "unicode_text", "unicode", defaultShadow, "(#ce_unicode and (not #ce_shadow_override))");
-        addLabel(controls, label, "shadow_override_text", "default", !defaultShadow, "((not #ce_unicode) and #ce_shadow_override)");
-        addLabel(controls, label, "unicode_shadow_override_text", "unicode", !defaultShadow, "(#ce_unicode and #ce_shadow_override)");
+        addLabel(controls, label, sourceControl, "text", "default", defaultShadow, "((not #ce_unicode) and (not #ce_shadow_override))");
+        addLabel(controls, label, sourceControl, "unicode_text", "unicode", defaultShadow, "(#ce_unicode and (not #ce_shadow_override))");
+        addLabel(controls, label, sourceControl, "shadow_override_text", "default", !defaultShadow, "((not #ce_unicode) and #ce_shadow_override)");
+        addLabel(controls, label, sourceControl, "unicode_shadow_override_text", "unicode", !defaultShadow, "(#ce_unicode and #ce_shadow_override)");
         return controls;
     }
 
-    private static void addLabel(JsonArray controls, JsonObject template, String name, String font, boolean shadow, String visible) {
+    private static void addLabel(JsonObject controls, JsonObject template, String sourceControl, String name, String font, boolean shadow, String visible) {
         JsonObject label = template.deepCopy();
         label.addProperty("font_type", font);
         label.addProperty("shadow", shadow);
-        label.getAsJsonArray("bindings").add(fromSibling("ce_layer_data", "(#ce_positioned and " + visible + ")", "#visible"));
-        controls.add(GsonHelper.createObject(name, label));
+        label.getAsJsonArray("bindings").add(fromSibling(sourceControl, "(#ce_positioned and " + visible + ")", "#visible"));
+        controls.add(name, label);
     }
 
     public static JsonObject fromSibling(String control, String source, String target) {

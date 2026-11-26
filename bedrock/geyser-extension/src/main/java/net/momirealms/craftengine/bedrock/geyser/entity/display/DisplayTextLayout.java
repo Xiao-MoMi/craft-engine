@@ -2,9 +2,9 @@ package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
-import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
+import net.momirealms.craftengine.bedrock.geyser.util.GeyserTextParts;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;

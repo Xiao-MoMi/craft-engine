@@ -1,80 +1,85 @@
 package net.momirealms.craftengine.core.pack.bedrock.gui;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
 import net.momirealms.craftengine.bedrock.text.BossBarTitleCodec;
 
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
 
-import static net.momirealms.craftengine.core.pack.bedrock.gui.BedrockTitleLayers.bind;
+import static net.momirealms.craftengine.core.pack.bedrock.gui.BedrockTitleLayers.*;
 import static net.momirealms.craftengine.core.util.GsonHelper.createArray;
 import static net.momirealms.craftengine.core.util.GsonHelper.createObject;
 
 final class BedrockBossBarTitle {
-    private static final String TEMPLATE = "ce_boss_name_layer";
+    private static final String HEADER = "ce_boss_header";
+    private static final String ORIGIN = "ce_boss_origin";
+    private static final String TEMPLATE = "ce_boss_name_";
 
     private BedrockBossBarTitle() {
     }
 
     static JsonObject panel(JsonObject hud, List<Integer> offsets) {
         int entryBytes = BossBarTitleCodec.entryBytes(offsets.size() + 1);
-        hud.add(TEMPLATE, layer(offsets, entryBytes));
-        JsonObject nativeName = new JsonObject();
-        nativeName.add("bindings", visibilityBindings("(not #ce_encoded)"));
+        JsonObject templates = layerTemplates(offsets, entryBytes);
+        for (Map.Entry<String, JsonElement> template : templates.entrySet()) {
+            hud.add(TEMPLATE + template.getKey(), template.getValue());
+        }
 
-        JsonObject layers = topPanel(0, 0);
-        // BossBar 翻页时可能增加图层。在同一行预建协议允许的槽位，由当前页的层数控制显示。
         int compactEntryBytes = entryBytes - BossBarTitleCodec.POSITION_BYTES + BossBarTitleCodec.COMPACT_POSITION_BYTES;
         int maxLayers = (BossBarTitleCodec.MAX_NAME - 2 - BossBarTitleCodec.MARKER.length() - BossBarTitleCodec.COUNT_BYTES) / (compactEntryBytes + 1);
-        JsonArray slots = new JsonArray(maxLayers);
+        JsonArray siblings = new JsonArray(1 + maxLayers * templates.size());
+        JsonObject header = topPanel(0, 0);
+        header.add("bindings", headerBindings(entryBytes));
+        siblings.add(createObject(HEADER, header));
+        // 每一行共用一个 1px 原点。逐层插入数据控件和标签，重叠文字按原顺序绘制。
         for (int index = 0; index < maxLayers; index++) {
-            JsonObject slot = new JsonObject();
-            slot.addProperty("$ce_entry_expression", "(#ce_table + (" + index + " * #ce_entry_bytes))");
-            slot.addProperty("$ce_visible_expression", "(#ce_count > " + index + ")");
-            slots.add(createObject("layer_" + index + "@hud." + TEMPLATE, slot));
+            JsonObject data = new JsonObject();
+            data.addProperty("$ce_index", index);
+            data.addProperty("$ce_has_previous", index == 0 ? 0 : 1);
+            JsonObject face = new JsonObject();
+            face.addProperty("$ce_boss_data", LAYER_DATA + "_" + index);
+            for (String name : templates.keySet()) {
+                siblings.add(createObject(name + "_" + index + "@hud." + TEMPLATE + name, name.equals(LAYER_DATA) ? data : face));
+            }
         }
-        layers.add("controls", slots);
-        layers.add("bindings", visibilityBindings("#ce_encoded"));
+        JsonObject origin = topPanel(1, 1);
+        origin.add("controls", siblings);
+        // 原点从本行的表头子控件取可见性，原生标题再从同级原点取反。
+        JsonArray mode = new JsonArray(1);
+        mode.add(fromSibling(HEADER, "#ce_encoded", "#visible"));
+        origin.add("bindings", mode);
 
-        JsonArray controls = new JsonArray();
+        JsonObject nativeName = new JsonObject();
+        JsonArray nativeVisibility = new JsonArray(1);
+        nativeVisibility.add(fromSibling(ORIGIN, "(not #visible)", "#visible"));
+        nativeName.add("bindings", nativeVisibility);
+        JsonArray controls = new JsonArray(2);
+        controls.add(createObject(ORIGIN, origin));
         controls.add(createObject("native_name@hud.boss_name_panel", nativeName));
-        controls.add(createObject("layers", layers));
         JsonObject panel = new JsonObject();
         panel.addProperty("type", "panel");
         panel.add("controls", controls);
         return panel;
     }
 
-    private static JsonArray visibilityBindings(String visible) {
-        JsonArray bindings = markerBindings();
-        bind(bindings, "(#ce_compact or (#ce_marker = '" + BossBarTitleCodec.MARKER + "'))", "#ce_encoded");
-        bind(bindings, visible, "#visible");
-        return bindings;
-    }
-
-    private static JsonArray entryBindings(int entryBytes) {
-        JsonArray bindings = markerBindings();
-        bind(bindings, "(#ce_count_start + " + BossBarTitleCodec.COUNT_BYTES + ")", "#ce_table");
-        bind(bindings, "(" + slice("#ce_count_start", "#ce_table") + " + 0)", "#ce_count");
-        int difference = BossBarTitleCodec.POSITION_BYTES - BossBarTitleCodec.COMPACT_POSITION_BYTES;
-        bind(bindings, "(#ce_compact * " + difference + ")", "#ce_saved");
-        bind(bindings, "(" + entryBytes + " - #ce_saved)", "#ce_entry_bytes");
-        bind(bindings, "$ce_entry_expression", "#ce_entry");
-        bind(bindings, "(#ce_entry + " + BossBarTitleCodec.POSITION_BYTES + " - #ce_saved)", "#ce_middle");
-        return bindings;
-    }
-
-    private static JsonObject layer(List<Integer> offsets, int entryBytes) {
+    private static JsonObject layerTemplates(List<Integer> offsets, int entryBytes) {
         int baselineCount = offsets.size() + 1;
         JsonObject data = topPanel(0, 0);
         data.addProperty("$ce_half", 0.5);
-        JsonArray bindings = entryBindings(entryBytes);
-        bind(bindings, "$ce_visible_expression", "#ce_positioned");
+        JsonArray bindings = new JsonArray();
+        bindings.add(fromSibling(HEADER, "#bossName", "#bossName"));
+        bindings.add(fromSibling(HEADER, "#ce_entry_bytes", "#ce_entry_bytes"));
+        bindings.add(fromSibling(HEADER, "#ce_bias", "#ce_bias"));
+        bindings.add(fromSibling(HEADER, "#ce_body", "#ce_body"));
+        bindings.add(fromSibling(HEADER, "(#ce_table + ($ce_index * #ce_entry_bytes))", "#ce_entry"));
+        bindings.add(fromSibling(HEADER, "(#ce_count > $ce_index)", "#ce_positioned"));
+        int trailerBytes = entryBytes - BossBarTitleCodec.POSITION_BYTES;
+        bind(bindings, "(#ce_entry + #ce_entry_bytes - " + trailerBytes + ")", "#ce_middle");
         bind(bindings, "(" + slice("#ce_entry", "#ce_middle") + " + 0)", "#ce_x");
-        int biasDifference = BossBarTitleCodec.POSITION_BIAS - BossBarTitleCodec.COMPACT_POSITION_BIAS;
-        bind(bindings, "(" + BossBarTitleCodec.POSITION_BIAS + " - (#ce_compact * " + biasDifference + "))", "#ce_bias");
         bind(bindings, "($ce_half * (#ce_x - #ce_bias))", "#ce_offset_x");
         bindTag(bindings, baselineCount);
         if (!offsets.isEmpty()) {
@@ -90,12 +95,10 @@ final class BedrockBossBarTitle {
         }
         bind(bindings, "(" + slice("#ce_end_start", "(#ce_entry + #ce_entry_bytes)") + " + 0)", "#ce_end_code");
         // 第零层从正文开头开始。后续层的起点取前一项的结束位置。
-        bind(bindings, "(#ce_entry > #ce_table)", "#ce_has_previous");
-        bind(bindings, "(#ce_end_start - (#ce_has_previous * #ce_entry_bytes))", "#ce_previous_start");
+        bind(bindings, "(#ce_end_start - ($ce_has_previous * #ce_entry_bytes))", "#ce_previous_start");
         bind(bindings, "(#ce_previous_start + 3)", "#ce_previous_end");
         bind(bindings, "(" + slice("#ce_previous_start", "#ce_previous_end") + " + 0)", "#ce_previous_value");
-        bind(bindings, "(#ce_has_previous * #ce_previous_value)", "#ce_previous_code");
-        bind(bindings, "(#ce_table + (#ce_count * #ce_entry_bytes))", "#ce_body");
+        bind(bindings, "($ce_has_previous * #ce_previous_value)", "#ce_previous_code");
         bind(bindings, "(#ce_body + #ce_previous_code)", "#ce_from");
         bind(bindings, "(#ce_body + #ce_end_code - (#ce_percent * 1))", "#ce_to");
         bind(bindings, "(('§r§f' + " + slice("#ce_from", "#ce_to") + ") + (('%.' + (#ce_percent * 1) + 's') * '%'))", "#ce_ink_text");
@@ -111,14 +114,7 @@ final class BedrockBossBarTitle {
         label.addProperty("enable_profanity_filter", true);
         label.addProperty("localize", false);
 
-        // 零宽容器让各层重叠，1px 的父控件把相对偏移转换为 HUD 像素。
-        JsonObject origin = topPanel(1, 1);
-        origin.add("controls", BedrockTitleLayers.faceControls(data, label, !offsets.isEmpty()));
-        JsonObject item = topPanel(0, 0);
-        JsonArray originControls = new JsonArray(1);
-        originControls.add(createObject("origin", origin));
-        item.add("controls", originControls);
-        return item;
+        return BedrockTitleLayers.faceTemplates(data, label, !offsets.isEmpty(), "$ce_boss_data");
     }
 
     private static void bindTag(JsonArray bindings, int baselineCount) {
@@ -132,7 +128,7 @@ final class BedrockBossBarTitle {
         bind(bindings, "(#ce_style > " + (baselineCount - 1) + ")", "#ce_unicode");
     }
 
-    private static JsonArray markerBindings() {
+    private static JsonArray headerBindings(int entryBytes) {
         JsonArray bindings = new JsonArray();
         bindings.add(BedrockBossBars.collection("#bossName"));
         int plain = BossBarTitleCodec.PLAIN_PREFIX_BYTES;
@@ -141,6 +137,14 @@ final class BedrockBossBarTitle {
         bind(bindings, "(#ce_prefix + " + BossBarTitleCodec.MARKER_BYTES + ")", "#ce_count_start");
         bind(bindings, slice("#ce_prefix", "#ce_count_start"), "#ce_marker");
         bind(bindings, "(#ce_marker = '" + BossBarTitleCodec.COMPACT_MARKER + "')", "#ce_compact");
+        bind(bindings, "(#ce_compact or (#ce_marker = '" + BossBarTitleCodec.MARKER + "'))", "#ce_encoded");
+        bind(bindings, "(#ce_count_start + " + BossBarTitleCodec.COUNT_BYTES + ")", "#ce_table");
+        bind(bindings, "(" + slice("#ce_count_start", "#ce_table") + " + 0)", "#ce_count");
+        int widthDifference = BossBarTitleCodec.POSITION_BYTES - BossBarTitleCodec.COMPACT_POSITION_BYTES;
+        int biasDifference = BossBarTitleCodec.POSITION_BIAS - BossBarTitleCodec.COMPACT_POSITION_BIAS;
+        bind(bindings, "(" + entryBytes + " - (#ce_compact * " + widthDifference + "))", "#ce_entry_bytes");
+        bind(bindings, "(" + BossBarTitleCodec.POSITION_BIAS + " - (#ce_compact * " + biasDifference + "))", "#ce_bias");
+        bind(bindings, "(#ce_table + (#ce_count * #ce_entry_bytes))", "#ce_body");
         return bindings;
     }
 

@@ -3,10 +3,10 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 import com.google.gson.stream.JsonWriter;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
-import net.momirealms.craftengine.bedrock.text.FontData;
-import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
+import net.momirealms.craftengine.bedrock.text.FontData;
+import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
@@ -16,11 +16,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.LinkedHashMap;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public final class BedrockFontGenerator {
     private static final int SPACER_PAGE = ContainerTitleLayout.SPACER_FIRST >>> 8;

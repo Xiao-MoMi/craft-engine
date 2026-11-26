@@ -3,11 +3,7 @@ package net.momirealms.craftengine.bedrock.text;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 import net.momirealms.craftengine.bedrock.GuiTitlePart.Shadow;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ContainerTitleLayout {
     public static final int ORIGIN = 256;
