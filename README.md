@@ -6,13 +6,6 @@ CraftEngine is a Minecraft server plugin for creating custom items, blocks, furn
 
 [Download Community Edition](https://modrinth.com/plugin/craftengine) · [User manual](https://xiao-momi.github.io/craft-engine-wiki/) · [Ask DeepWiki](https://deepwiki.com/Xiao-MoMi/craft-engine)
 
-## Features
-
-- **Items and recipes** — Give items custom models and behaviors, and define recipes that use or produce them.
-- **Blocks and furniture** — Configure how blocks and furniture look, where players can place them, and how players interact with them.
-- **Resource packs** — Merge assets from multiple content packs into a resource pack and distribute it to players.
-- **Bedrock Edition** — Use the CraftEngine Geyser extension to display custom items, blocks, furniture, and fonts for Bedrock players.
-
 ## Requirements
 
 - Paper, Folia, or a compatible fork running a supported Minecraft version from 1.20 through 26.3.

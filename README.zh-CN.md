@@ -6,13 +6,6 @@ CraftEngine 是一款 Minecraft 服务端插件。你可以用 YAML 定义物品
 
 [下载社区版](https://modrinth.com/plugin/craftengine) · [使用手册](https://xiao-momi.github.io/craft-engine-wiki/zh-Hans/) · [Ask DeepWiki](https://deepwiki.com/Xiao-MoMi/craft-engine)
 
-## 功能
-
-- **物品与配方** — 自定义物品的模型和行为，并将物品用作配方原料或产物。
-- **方块与家具** — 自定义方块和家具的外观、放置规则以及玩家与它们的交互方式。
-- **资源包** — 将多个内容包的素材合并为资源包并分发给玩家。
-- **基岩版支持** — 通过 CraftEngine 的 Geyser 扩展，让基岩版玩家也能看到自定义物品、方块、家具和字体。
-
 ## 运行要求
 
 - Paper、Folia 或其兼容分支，Minecraft 版本在 1.20 至 26.3 的支持范围内。
