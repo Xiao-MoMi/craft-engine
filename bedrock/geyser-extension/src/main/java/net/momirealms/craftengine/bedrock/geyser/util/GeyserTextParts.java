@@ -149,6 +149,12 @@ public final class GeyserTextParts {
             if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, shadow, parts, locale, hud)) {
                 return false;
             }
+        } else if (hud && AdventureScoreComponentProxy.CLASS.isInstance(component)) {
+            // 空 score 可以包住整条 HUD。它的子组件继承这里的字体、颜色和阴影。
+            String value = AdventureScoreComponentProxy.INSTANCE.value(component);
+            if (value != null && !value.isEmpty()) {
+                return false;
+            }
         } else {
             return false;
         }
