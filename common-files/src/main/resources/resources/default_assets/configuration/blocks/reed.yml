@@ -27,16 +27,16 @@ items:
               weight: 3
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [0.25, 0, 0]
+              offset: [2, 0, 0]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [-0.25, 0, 0]
+              offset: [-2, 0, 0]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [0, 0, 0.25]
+              offset: [0, 0, 2]
             - path: minecraft:block/custom/reed
               weight: 1
-              offset: [0, 0, 0.25]
+              offset: [0, 0, 2]
 recipes:
   default:paper_from_reed:
     type: shaped
