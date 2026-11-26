@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.geyser.util;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.GuiTitlePart.Shadow;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
 import net.momirealms.craftengine.bedrock.geyser.proxy.text.*;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
@@ -17,14 +18,6 @@ public final class GeyserTextParts {
     public static Object resolvedText(String text) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         return proxy.font(proxy.text(text), RESOLVED_FONT);
-    }
-
-    public static List<String> serializeLayers(List<List<ContainerTitleLayout.Run>> layers, List<GuiTitlePart> parts, String locale) {
-        List<String> layerTexts = new ArrayList<>(layers.size());
-        for (List<ContainerTitleLayout.Run> layer : layers) {
-            layerTexts.add(serializeLayer(layer, parts, locale));
-        }
-        return layerTexts;
     }
 
     public static String serializeLayer(List<ContainerTitleLayout.Run> layer, List<GuiTitlePart> parts, String locale) {
@@ -96,28 +89,37 @@ public final class GeyserTextParts {
                                        List<GuiTitlePart> parts,
                                        String locale) {
         GuiTitlePart.Builder builder = new GuiTitlePart.Builder(parts);
-        boolean complete = collectParts(component, inheritedFont, inheritedColor, inheritedDecorations, builder::appendFormatted, locale, true);
+        boolean complete = collectParts(component, inheritedFont, inheritedColor, inheritedDecorations, Shadow.DEFAULT, builder::appendFormatted, locale, true);
         builder.finish();
         return complete;
     }
 
     public static boolean collectDisplayParts(Object component, List<GuiTitlePart> parts, String locale) {
         // Java 在每个组件起点恢复其样式。先保留边界，避免 § 格式延续到相邻组件。
-        return collectParts(component, "minecraft:default", 0xffffff, 0,
-                (font, text, color, decorations) -> parts.add(new GuiTitlePart(font, text, color, decorations)), locale, false);
+        return collectParts(
+                component,
+                "minecraft:default",
+                0xffffff,
+                0,
+                Shadow.DEFAULT,
+                (font, text, color, decorations, shadow) -> parts.add(new GuiTitlePart(font, text, color, decorations, shadow)),
+                locale,
+                false
+        );
     }
 
     @FunctionalInterface
     private interface PartSink {
-        void append(String font, String text, int color, int decorations);
+        void append(String font, String text, int color, int decorations, Shadow shadow);
     }
 
     private static boolean collectParts(Object component,
                                         String inheritedFont,
                                         int inheritedColor,
                                         int inheritedDecorations,
+                                        Shadow inheritedShadow,
                                         PartSink parts,
-                                        String locale, boolean translateArguments) {
+                                        String locale, boolean hud) {
         AdventureComponentProxy proxy = AdventureComponentProxy.INSTANCE;
         // 当前组件显式设置的样式覆盖父级；未设置的样式继续继承
         Object ownFont = proxy.font(component);
@@ -126,18 +128,25 @@ public final class GeyserTextParts {
         Object ownColor = AdventureStyleProxy.INSTANCE.color(style);
         int color = ownColor == null ? inheritedColor : AdventureTextColorProxy.INSTANCE.value(ownColor);
         int decorations = GuiTitlePart.decorations(inheritedDecorations, AdventureStyleProxy.INSTANCE.decorations(style));
+        Shadow shadow = inheritedShadow;
+        if (hud) {
+            Object ownShadow = AdventureStyleProxy.INSTANCE.shadowColor(style);
+            if (ownShadow != null) {
+                shadow = AdventureShadowColorProxy.INSTANCE.value(ownShadow) == 0 ? Shadow.OFF : Shadow.ON;
+            }
+        }
         if (AdventureTextComponentProxy.CLASS.isInstance(component)) {
             String content = AdventureTextComponentProxy.INSTANCE.content(component);
             if (!content.isEmpty()) {
-                parts.append(font, content, color, decorations);
+                parts.append(font, content, color, decorations, shadow);
             }
         } else if (AdventureTranslatableComponentProxy.CLASS.isInstance(component)) {
-            if (!translateArguments && !AdventureTranslatableComponentProxy.INSTANCE.arguments(component).isEmpty()) {
+            if (!hud && !AdventureTranslatableComponentProxy.INSTANCE.arguments(component).isEmpty()) {
                 return false;
             }
             // 只翻译当前节点，子组件留到下方逐个检查，避免绕过带参数翻译的限制
             Object translated = AdventureTranslationRendererProxy.INSTANCE.render(MessageTranslatorProxy.INSTANCE.renderer(), proxy.children(component, List.of()), locale);
-            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, parts, locale, translateArguments)) {
+            if (!AdventureTextComponentProxy.CLASS.isInstance(translated) || !collectParts(translated, font, color, decorations, shadow, parts, locale, hud)) {
                 return false;
             }
         } else {
@@ -147,7 +156,7 @@ public final class GeyserTextParts {
         List<?> children = proxy.children(component);
         for (int i = 0, size = children.size(); i < size; i++) {
             Object child = children.get(i);
-            if (!collectParts(child, font, color, decorations, parts, locale, translateArguments)) {
+            if (!collectParts(child, font, color, decorations, shadow, parts, locale, hud)) {
                 return false;
             }
         }

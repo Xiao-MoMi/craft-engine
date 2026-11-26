@@ -4,31 +4,30 @@ import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public final class GeyserGlyphData {
-    public static final GeyserGlyphData EMPTY = new GeyserGlyphData(FontData.EMPTY);
+    public static final GeyserGlyphData EMPTY = new GeyserGlyphData();
     private final FontData data;
     private final Map<String, Integer> verticalOffsets;
     private final Map<String, Int2IntMap> replacements = new HashMap<>();
-    private final ContainerTitleLayout layout;
+    @Nullable private final ContainerTitleLayout layout;
 
-    public GeyserGlyphData(FontData data) {
-        this(data, Map.of());
+    private GeyserGlyphData() {
+        this.data = FontData.EMPTY;
+        this.verticalOffsets = Map.of();
+        this.layout = null;
     }
 
     public GeyserGlyphData(FontData data, Map<String, Integer> verticalOffsets) {
         this.data = data;
         this.verticalOffsets = verticalOffsets;
-        boolean hasRendering = false;
+        this.layout = new ContainerTitleLayout(data);
         for (Map.Entry<String, FontData.Font> font : data.fonts().entrySet()) {
             Int2ObjectMap<FontGlyph> glyphs = font.getValue().rendering();
-            if (glyphs.isEmpty()) {
-                continue;
-            }
-            hasRendering = true;
             for (Int2ObjectMap.Entry<FontGlyph> entry : Int2ObjectMaps.fastIterable(glyphs)) {
                 int code = entry.getIntKey();
                 FontGlyph glyph = entry.getValue();
@@ -37,13 +36,13 @@ public final class GeyserGlyphData {
                 }
             }
         }
-        this.layout = hasRendering ? new ContainerTitleLayout(data) : null;
     }
 
     public Map<String, Int2IntMap> replacements() {
         return this.replacements;
     }
 
+    @Nullable
     public ContainerTitleLayout layout() {
         return this.layout;
     }

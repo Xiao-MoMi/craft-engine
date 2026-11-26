@@ -26,9 +26,9 @@ import java.util.Map;
 public final class GeyserTitle {
     private final ContainerTitleLayout layout;
     private final boolean forceJavaLayout;
-    @Nullable private final Map<String, Integer> offsets;
+    private final Map<String, Integer> offsets;
 
-    public GeyserTitle(ContainerTitleLayout layout, boolean forceJavaLayout, @Nullable Map<String, Integer> offsets) {
+    public GeyserTitle(ContainerTitleLayout layout, boolean forceJavaLayout, Map<String, Integer> offsets) {
         this.layout = layout;
         this.forceJavaLayout = forceJavaLayout;
         this.offsets = offsets;
@@ -85,20 +85,13 @@ public final class GeyserTitle {
             if (!GeyserTextParts.collectParts(component, "minecraft:default", 0xffffff, 0, parts, locale)) {
                 return null;
             }
-            if (this.offsets != null) {
-                ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, !actionBar && this.forceJavaLayout);
-                if (measured.layers().isEmpty()) {
-                    return null;
-                }
-                String marker = actionBar ? ContainerTitleCodec.ACTIONBAR_MARKER : ContainerTitleCodec.TITLE_MARKER;
-                return ContainerTitleCodec.positioned(marker, measured, true,
-                        runs -> GeyserTextParts.serializeLayer(runs, parts, locale));
-            }
-            List<List<ContainerTitleLayout.Run>> layers = this.layout.layoutTitle(parts, this.forceJavaLayout);
-            if (layers.isEmpty()) {
+            ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, !actionBar && this.forceJavaLayout);
+            if (measured.layers().isEmpty()) {
                 return null;
             }
-            return ContainerTitleCodec.encode(ContainerTitleCodec.TITLE_MARKER, GeyserTextParts.serializeLayers(layers, parts, locale));
+            String marker = actionBar ? ContainerTitleCodec.ACTIONBAR_MARKER : ContainerTitleCodec.TITLE_MARKER;
+            return ContainerTitleCodec.positioned(marker, measured, true,
+                    runs -> GeyserTextParts.serializeLayer(runs, parts, locale));
         } catch (RuntimeException exception) {
             if (GeyserConfig.debug()) {
                 CraftEngineGeyserExtension.instance().logger().error("Failed to lay out title", exception);

@@ -3,7 +3,15 @@ package net.momirealms.craftengine.bedrock;
 import java.util.List;
 import java.util.Map;
 
-public record GuiTitlePart(String font, String text, int color, int decorations) {
+public record GuiTitlePart(String font, String text, int color, int decorations, Shadow shadow) {
+
+    public enum Shadow {
+        DEFAULT, OFF, ON
+    }
+
+    public GuiTitlePart(String font, String text, int color, int decorations) {
+        this(font, text, color, decorations, Shadow.DEFAULT);
+    }
 
     public static final class Builder {
         private static final String LEGACY_FORMATS = "0123456789abcdefklmnor";
@@ -19,12 +27,16 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
         }
 
         public void append(String font, String text, int color, int decorations) {
+            this.append(font, text, color, decorations, Shadow.DEFAULT);
+        }
+
+        private void append(String font, String text, int color, int decorations, Shadow shadow) {
             if (text.isEmpty()) {
                 return;
             }
             if (!this.parts.isEmpty()) {
                 GuiTitlePart previous = this.parts.getLast();
-                if (previous.sameStyle(font, color, decorations)) {
+                if (previous.sameStyle(font, color, decorations, shadow)) {
                     if (this.joined == null) {
                         this.joined = new StringBuilder(previous.text);
                     }
@@ -32,15 +44,19 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
                     return;
                 }
             }
-            this.addComponent(new GuiTitlePart(font, text, color, decorations));
+            this.addComponent(new GuiTitlePart(font, text, color, decorations, shadow));
         }
 
         public void appendFormatted(String font, String text, int color, int decorations) {
+            this.appendFormatted(font, text, color, decorations, Shadow.DEFAULT);
+        }
+
+        public void appendFormatted(String font, String text, int color, int decorations, Shadow shadow) {
             int start = 0;
             int currentColor = color;
             int currentDecorations = decorations;
             for (int marker = text.indexOf('§'); marker >= 0; marker = text.indexOf('§', start)) {
-                this.append(font, text.substring(start, marker), currentColor, currentDecorations);
+                this.append(font, text.substring(start, marker), currentColor, currentDecorations, shadow);
                 start = marker + 1;
                 if (start == text.length()) {
                     return;
@@ -56,7 +72,7 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
                     currentDecorations = decorations;
                 }
             }
-            this.append(font, start == 0 ? text : text.substring(start), currentColor, currentDecorations);
+            this.append(font, start == 0 ? text : text.substring(start), currentColor, currentDecorations, shadow);
         }
 
         public void addComponent(GuiTitlePart part) {
@@ -67,7 +83,7 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
         public List<GuiTitlePart> finish() {
             if (this.joined != null) {
                 GuiTitlePart previous = this.parts.getLast();
-                this.parts.set(this.parts.size() - 1, new GuiTitlePart(previous.font, this.joined.toString(), previous.color, previous.decorations));
+                this.parts.set(this.parts.size() - 1, previous.withText(this.joined.toString()));
                 this.joined = null;
             }
             return this.parts;
@@ -80,16 +96,20 @@ public record GuiTitlePart(String font, String text, int color, int decorations)
         }
         if (!parts.isEmpty()) {
             GuiTitlePart previous = parts.getLast();
-            if (previous.sameStyle(font, color, decorations)) {
-                parts.set(parts.size() - 1, new GuiTitlePart(font, previous.text + text, color, decorations));
+            if (previous.sameStyle(font, color, decorations, Shadow.DEFAULT)) {
+                parts.set(parts.size() - 1, previous.withText(previous.text + text));
                 return;
             }
         }
         parts.add(new GuiTitlePart(font, text, color, decorations));
     }
 
-    private boolean sameStyle(String font, int color, int decorations) {
-        return this.font.equals(font) && this.color == color && this.decorations == decorations;
+    private GuiTitlePart withText(String text) {
+        return new GuiTitlePart(this.font, text, this.color, this.decorations, this.shadow);
+    }
+
+    private boolean sameStyle(String font, int color, int decorations, Shadow shadow) {
+        return this.font.equals(font) && this.color == color && this.decorations == decorations && this.shadow == shadow;
     }
 
     public static int decorations(int inherited, Map<?, ?> states) {

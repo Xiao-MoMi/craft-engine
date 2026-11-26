@@ -28,23 +28,16 @@ import java.util.*;
 public final class GeyserBossBars implements GeyserJavaPackets.Interceptor<ClientboundBossEventPacket> {
     private final String[][] markers = new String[BossBarColor.values().length][BossBarDivision.values().length];
     private final Map<BossBar, Title> titles = Collections.synchronizedMap(new WeakHashMap<>());
-    @Nullable private final ContainerTitleLayout layout;
-    private final boolean leftAnchored;
-    private final boolean fontFaces;
-    private final boolean compactPositions;
+    private final ContainerTitleLayout layout;
     private final Map<String, Integer> fontBaselines;
     private final int baselineCount;
 
-    public GeyserBossBars(JsonObject styles, @Nullable ContainerTitleLayout layout) {
-        JsonElement titleLayout = styles.get(BedrockPackLayout.BOSS_BAR_TITLE_LAYOUT);
-        int version = titleLayout != null && titleLayout.getAsJsonPrimitive().isNumber() ? titleLayout.getAsInt() : 0;
-        this.compactPositions = version == BossBarTitleCodec.COMPACT_POSITION_VERSION;
-        this.fontFaces = this.compactPositions || version == BossBarTitleCodec.FONT_FACE_VERSION;
-        this.leftAnchored = this.fontFaces || version == BossBarTitleCodec.LEFT_ANCHORED_VERSION || version == BossBarTitleCodec.VERTICAL_OFFSET_VERSION;
+    public GeyserBossBars(JsonObject styles, ContainerTitleLayout layout) {
+        this.layout = layout;
         Map<String, Integer> baselines = new HashMap<>();
         int highest = 0;
-        if ((this.fontFaces || version == BossBarTitleCodec.VERTICAL_OFFSET_VERSION) && styles.has(BedrockPackLayout.BOSS_BAR_FONT_BASELINES)) {
-            JsonObject mapping = styles.getAsJsonObject(BedrockPackLayout.BOSS_BAR_FONT_BASELINES);
+        JsonObject mapping = styles.getAsJsonObject(BedrockPackLayout.BOSS_BAR_FONT_BASELINES);
+        if (mapping != null) {
             for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {
                 int id = entry.getValue().getAsInt();
                 baselines.put(entry.getKey(), id);
@@ -53,7 +46,6 @@ public final class GeyserBossBars implements GeyserJavaPackets.Interceptor<Clien
         }
         this.fontBaselines = Map.copyOf(baselines);
         this.baselineCount = highest + 1;
-        this.layout = this.leftAnchored || (titleLayout != null && titleLayout.getAsBoolean()) ? layout : null;
         // 将封包里的颜色和分段枚举转换成资源包生成的键，例如 blue/notched_6
         for (BossBarColor color : BossBarColor.values()) {
             String name = switch (color) {
@@ -124,7 +116,7 @@ public final class GeyserBossBars implements GeyserJavaPackets.Interceptor<Clien
     private Title title(GeyserPlayer player, ClientboundBossEventPacket packet, @Nullable String marker) {
         Object component = BossEventPacketProxy.INSTANCE.title(packet);
         String encoded = null;
-        if (this.layout != null && player.clientPackLoaded()) {
+        if (player.clientPackLoaded()) {
             encoded = this.encode(component, player.locale());
         }
         return new Title(component, encoded, marker);
@@ -137,14 +129,8 @@ public final class GeyserBossBars implements GeyserJavaPackets.Interceptor<Clien
             if (!GeyserTextParts.collectParts(component, "minecraft:default", 0xffffff, 0, parts, locale)) {
                 return null;
             }
-            ContainerTitleLayout.MeasuredLayout measured = this.layout.layoutBossBar(parts, this.leftAnchored, this.fontBaselines);
-            if (measured.layers().isEmpty()) {
-                return null;
-            }
-            if (this.compactPositions) {
-                return BossBarTitleCodec.encodePositioned(measured, this.baselineCount, layer -> GeyserTextParts.serializeLayer(layer, parts, locale));
-            }
-            return BossBarTitleCodec.encode(measured, this.leftAnchored, this.baselineCount, this.fontFaces, layer -> GeyserTextParts.serializeLayer(layer, parts, locale));
+            ContainerTitleLayout.MeasuredLayout measured = this.layout.layoutBossBar(parts, this.fontBaselines);
+            return BossBarTitleCodec.encodePositioned(measured, this.baselineCount, layer -> GeyserTextParts.serializeLayer(layer, parts, locale));
         } catch (UnsupportedOperationException ignored) {
             return null;
         } catch (RuntimeException exception) {

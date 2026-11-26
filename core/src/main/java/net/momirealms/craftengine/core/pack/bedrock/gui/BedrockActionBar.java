@@ -77,7 +77,7 @@ final class BedrockActionBar {
         label.addProperty("localize", false);
         label.addProperty("enable_profanity_filter", true);
         label.addProperty("alpha", "@hud.anim_actionbar_text_alpha_out");
-        BedrockTitleLayers.bindLayer(label, COLLECTION, COLLECTION);
-        hud.add("ce_action_layer", BedrockTitleLayers.positionedLayer(label, "#ce_layer", 1, false));
+        JsonArray layerBindings = BedrockTitleLayers.layerBindings(COLLECTION, COLLECTION);
+        hud.add("ce_action_layer", BedrockTitleLayers.positionedLayer(label, layerBindings, false));
     }
 }

@@ -13,7 +13,6 @@ import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import org.geysermc.floodgate.util.UiProfile;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.inventory.ClientboundOpenScreenPacket;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -22,9 +21,9 @@ public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<Clien
     private static final String DEFAULT_FONT = "minecraft:default";
     private static final int DEFAULT_TITLE_COLOR = 0x404040;
     private final ContainerTitleLayout layout;
-    @Nullable private final Map<String, Integer> offsets;
+    private final Map<String, Integer> offsets;
 
-    public GeyserGuiMenus(ContainerTitleLayout layout, @Nullable Map<String, Integer> offsets) {
+    public GeyserGuiMenus(ContainerTitleLayout layout, Map<String, Integer> offsets) {
         this.layout = layout;
         this.offsets = offsets;
     }
@@ -69,22 +68,12 @@ public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<Clien
     }
 
     private Object createTitle(List<GuiTitlePart> parts, int rows, String locale) {
-        if (this.offsets != null) {
-            ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, false);
-            if (measured.layers().isEmpty()) {
-                return null;
-            }
-            String marker = ContainerTitleLayout.MARKER + rows + "/";
-            return GeyserTextParts.resolvedText(ContainerTitleCodec.positioned(marker, measured, false,
-                    runs -> GeyserTextParts.serializeLayer(runs, parts, locale)));
-        }
-        List<List<ContainerTitleLayout.Run>> layers = this.layout.layout(parts);
-        // 空列表表示无需使用自定义布局，并不表示应清空标题
-        if (layers.isEmpty()) {
+        ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, false, false);
+        if (measured.layers().isEmpty()) {
             return null;
         }
-        // 将各图层及其切片信息写入标题，由资源包 UI 拆分并叠加显示
-        String title = ContainerTitleCodec.encode(rows, GeyserTextParts.serializeLayers(layers, parts, locale));
-        return GeyserTextParts.resolvedText(title);
+        String marker = ContainerTitleLayout.MARKER + rows + "/";
+        return GeyserTextParts.resolvedText(ContainerTitleCodec.positioned(marker, measured, false,
+                runs -> GeyserTextParts.serializeLayer(runs, parts, locale)));
     }
 }

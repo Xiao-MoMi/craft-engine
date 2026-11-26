@@ -9,6 +9,8 @@ public final class ContainerTitleCodec {
     public static final String ACTIONBAR_MARKER = "ce:action/";
     public static final String POSITION_MARKER = "§r~p";
     public static final String UNICODE_MARKER = "§r~u";
+    public static final String SHADOW_OVERRIDE_MARKER = "§r~q";
+    public static final String UNICODE_SHADOW_OVERRIDE_MARKER = "§r~v";
     public static final int POSITION_MARKER_BYTES = 5;
     public static final int X_BYTES = 6;
     public static final int X_BIAS = 500000;
@@ -19,10 +21,6 @@ public final class ContainerTitleCodec {
     public static final int MAX_BYTES = 9999;
 
     private ContainerTitleCodec() {
-    }
-
-    public static String encode(int rows, List<String> layers) {
-        return encode(ContainerTitleLayout.MARKER + rows + '/', layers);
     }
 
     public static String positioned(String marker, ContainerTitleLayout.MeasuredLayout layout, boolean centered,
@@ -45,7 +43,11 @@ public final class ContainerTitleCodec {
             }
             int y = layout.baselines() == null ? 0 : layout.baselines()[i];
             String magnitude = Long.toString(Math.abs((long) y));
-            StringBuilder line = new StringBuilder(layout.unicode(i) ? UNICODE_MARKER : POSITION_MARKER);
+            String marker = layout.unicode(i) ? UNICODE_MARKER : POSITION_MARKER;
+            if (layout.shadowOverride(i)) {
+                marker = layout.unicode(i) ? UNICODE_SHADOW_OVERRIDE_MARKER : SHADOW_OVERRIDE_MARKER;
+            }
+            StringBuilder line = new StringBuilder(marker);
             appendNumber(line, (int) x, 100000);
             line.append(y < 0 ? '-' : '+').append("0".repeat(Y_BYTES - 1 - magnitude.length())).append(magnitude);
             line.append(serialize.apply(runs));

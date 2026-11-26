@@ -122,8 +122,8 @@ public final class BedrockGuiWriter {
         label.addProperty("localize", false);
         label.addProperty("text_alignment", "left");
         label.addProperty("shadow", false);
-        BedrockTitleLayers.bindLayer(label, "ce_title_layers", "title_layers");
-        this.controls.add("title_layer", BedrockTitleLayers.positionedLayer(label, "#ce_layer", 1, true));
+        JsonArray bindings = BedrockTitleLayers.layerBindings("ce_title_layers", "title_layers");
+        this.controls.add("title_layer", BedrockTitleLayers.positionedLayer(label, bindings, true));
     }
 
     public void write(Path root) throws IOException {

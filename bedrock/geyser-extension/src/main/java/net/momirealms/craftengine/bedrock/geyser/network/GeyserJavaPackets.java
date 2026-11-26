@@ -73,20 +73,18 @@ public final class GeyserJavaPackets {
             Map<String, Integer> offsets = extension.extensionData().verticalOffsets();
             this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout, offsets));
             GeyserTitle titles = new GeyserTitle(layout, extension.extensionData().forceJavaTitleLayout(), offsets);
-            if (offsets != null) {
-                this.intercept(ClientboundSetActionBarTextPacket.class, titles::actionBar);
-                this.intercept(ClientboundSystemChatPacket.class, titles::systemChat);
-            }
+            this.intercept(ClientboundSetActionBarTextPacket.class, titles::actionBar);
+            this.intercept(ClientboundSystemChatPacket.class, titles::systemChat);
             this.intercept(ClientboundSetTitleTextPacket.class, titles::title);
             this.intercept(ClientboundSetSubtitleTextPacket.class, titles::subtitle);
+            JsonObject styles = extension.extensionData().bossBars();
+            if (styles != null) {
+                this.intercept(ClientboundBossEventPacket.class, new GeyserBossBars(styles, layout));
+            }
         }
         GeyserWorldBlocks blocks = extension.blockManager().worldBlocks();
         if (!blocks.isEmpty()) {
             this.intercept(ClientboundLevelEventPacket.class, new GeyserBlockBreakEffects(blocks));
-        }
-        JsonObject styles = extension.extensionData().bossBars();
-        if (styles != null && !styles.isEmpty()) {
-            this.intercept(ClientboundBossEventPacket.class, new GeyserBossBars(styles, layout));
         }
         if (extension.sidebarManager() != null) {
             this.interceptSidebar(ClientboundSetObjectivePacket.class, SidebarSession::translate);

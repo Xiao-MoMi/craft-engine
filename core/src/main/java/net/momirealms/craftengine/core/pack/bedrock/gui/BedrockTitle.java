@@ -106,17 +106,15 @@ public final class BedrockTitle {
         bind(bindings, "(#ce_end_prefix - #ce_middle_prefix)", "#ce_to");
         bind(bindings, "(#ce_from * #ce_frame)", "#ce_before");
         bind(bindings, "(#ce_to * #ce_frame)", "#ce_through");
-        bind(bindings, "(('^' + #ce_through) - ('^' + #ce_before))", "#text");
+        bind(bindings, "(('^' + #ce_through) - ('^' + #ce_before))", "#ce_line");
 
         JsonObject label = new JsonObject();
         label.addProperty("type", "label");
-        label.addProperty("text", "#text");
         label.addProperty("localize", false);
         label.addProperty("text_alignment", "center");
         label.addProperty("font_size", subtitle ? "large" : "extra_large");
         label.addProperty("color", "$title_command_text_color");
         label.addProperty("shadow", true);
-        label.add("bindings", bindings);
 
         JsonObject background = new JsonObject();
         background.addProperty("type", "image");
@@ -131,9 +129,7 @@ public final class BedrockTitle {
         plain.add(fromControl(HOST, subtitle ? "#ce_subtitle_background" : "#ce_title_background", "#ce_plain"));
         bind(plain, "(#ce_plain and (#ce_collection_index = 0))", "#visible");
         background.add("bindings", plain);
-        label.add("controls", children(createObject("background", background)));
-
-        hud.add(template, BedrockTitleLayers.positionedLayer(label, "#text", subtitle ? 2 : 4, false));
+        hud.add(template, BedrockTitleLayers.titleLayer(label, bindings, subtitle ? 2 : 4, background));
         return createObject(collection, layers);
     }
 

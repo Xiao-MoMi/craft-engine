@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bedrock.text;
 
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
+import net.momirealms.craftengine.bedrock.GuiTitlePart.Shadow;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,61 +34,27 @@ public final class ContainerTitleLayout {
         this.hudFonts = fonts.fonts().values().stream().anyMatch(font -> font.hudUnicode != null);
     }
 
-    public boolean supportsHudFonts() {
-        return this.hudFonts;
-    }
-
-    public List<List<Run>> layout(List<GuiTitlePart> parts) {
-        return this.layout(parts, false);
-    }
-
-    public List<List<Run>> layout(List<GuiTitlePart> parts, boolean force) {
-        // 没有需要映射的自定义字形时，交给原生标题渲染。
-        if (!force && !this.requiresLayout(parts, Target.CONTAINER, Map.of())) {
-            return List.of();
-        }
-        return this.layoutWithWidth(parts).layers();
-    }
-
-    public MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts) {
-        return this.layoutWithWidth(parts, Target.CONTAINER);
-    }
-
-    public List<List<Run>> layoutTitle(List<GuiTitlePart> parts, boolean force) {
-        if (parts.isEmpty() || (!force && !this.requiresLayout(parts, Target.TITLE, Map.of()))) {
-            return List.of();
-        }
-        return this.layoutWithWidth(parts, Target.TITLE).layers();
-    }
-
-    public MeasuredLayout layoutBossBar(List<GuiTitlePart> parts, boolean leftAnchored) {
-        return this.layoutBossBar(parts, leftAnchored, Map.of());
-    }
-
     public MeasuredLayout positioned(List<GuiTitlePart> parts, Map<String, Integer> offsets, boolean force) {
-        if (parts.isEmpty() || (!force && !this.requiresLayout(parts, Target.POSITIONED, offsets))) {
+        return this.positioned(parts, offsets, force, true);
+    }
+
+    public MeasuredLayout positioned(List<GuiTitlePart> parts, Map<String, Integer> offsets, boolean force, boolean defaultShadow) {
+        Shadow opposite = defaultShadow ? Shadow.OFF : Shadow.ON;
+        if (parts.isEmpty() || (!force && !this.requiresLayout(parts, Target.POSITIONED, offsets, opposite))) {
             return NO_LAYOUT;
         }
-        return this.layoutWithWidth(parts, Target.POSITIONED, offsets);
+        return this.layoutWithWidth(parts, Target.POSITIONED, offsets, opposite);
     }
 
-    public MeasuredLayout layoutBossBar(List<GuiTitlePart> parts, boolean leftAnchored, Map<String, Integer> fontBaselines) {
-        Target target = leftAnchored ? Target.BOSS_BAR_LEFT : Target.BOSS_BAR;
-        if (!this.requiresLayout(parts, target, fontBaselines)) {
+    public MeasuredLayout layoutBossBar(List<GuiTitlePart> parts, Map<String, Integer> fontBaselines) {
+        if (!this.requiresLayout(parts, Target.BOSS_BAR, fontBaselines, Shadow.OFF)) {
             return NO_LAYOUT;
         }
-        return this.layoutWithWidth(parts, target, fontBaselines);
+        return this.layoutWithWidth(parts, Target.BOSS_BAR, fontBaselines, Shadow.OFF);
     }
 
-    private MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts, Target target) {
-        return this.layoutWithWidth(parts, target, Map.of());
-    }
-
-    private MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts, Target target, Map<String, Integer> fontBaselines) {
+    private MeasuredLayout layoutWithWidth(List<GuiTitlePart> parts, Target target, Map<String, Integer> fontBaselines, Shadow opposite) {
         List<Layer> layers = new ArrayList<>();
-        boolean nativeFallbackAllowed = target == Target.POSITIONED || target == Target.BOSS_BAR_LEFT;
-        boolean faces = this.hudFonts && nativeFallbackAllowed;
-        boolean absolute = target == Target.POSITIONED || faces;
         FontData.Font defaultFont = this.fonts.font("minecraft:default");
         int remainingBytes = ContainerTitleCodec.MAX_BYTES;
         // Java 光标允许负间距回退；每个基岩图层的光标只能通过间距字符向右移动。
@@ -96,15 +63,17 @@ public final class ContainerTitleLayout {
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
             int baseline = fontBaselines.getOrDefault(part.font(), 0);
+            boolean shadowOverride = part.shadow() == opposite;
             FontData.Font font = this.fonts.font(part.font());
+            boolean allowMissingGlyph = "minecraft:default".equals(part.font()) || fontBaselines.containsKey(part.font());
             int boldAdvance = (part.decorations() & 2) != 0 ? 1 : 0;
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
                 FontGlyph glyph = font.rendering().get(codepoint);
-                boolean unicode = faces && (font.hudUnicode(codepoint) || (codepoint == ' ' && font.hudUnicode('A')));
+                boolean unicode = this.hudFonts && (font.hudUnicode(codepoint) || (codepoint == ' ' && font.hudUnicode('A')));
                 // The default unihex font supplies Java advances without exporting a Bedrock bitmap.
-                if (glyph == null && (unicode || (target == Target.POSITIONED && ("minecraft:default".equals(part.font()) || fontBaselines.containsKey(part.font()))))) {
+                if (glyph == null && (unicode || allowMissingGlyph)) {
                     glyph = new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0);
                 }
                 if (glyph == null || codepoint == '\n' || codepoint == '§') {
@@ -116,7 +85,7 @@ public final class ContainerTitleLayout {
                     javaCursor += advance;
                     continue;
                 }
-                boolean nativeFallback = nativeFallbackAllowed && glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
+                boolean nativeFallback = glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
                 if (nativeFallback && !unicode) {
                     FontGlyph ordinary = defaultFont.rendering().get(codepoint);
                     if (ordinary != null && ordinary.character() == codepoint && ordinary.renderedAdvance() >= 0) {
@@ -129,18 +98,15 @@ public final class ContainerTitleLayout {
                     throw new UnsupportedOperationException("Unknown Bedrock title glyph width: " + part.font() + "/" + Integer.toHexString(codepoint));
                 }
                 // 用 bearing 修正落笔位置，使两端字形的可见部分对齐。
-                double position = (faces ? Math.rint(2 * javaCursor) * 0.5 : Math.rint(javaCursor)) - glyph.bearing();
+                double position = (this.hudFonts ? Math.rint(2 * javaCursor) * 0.5 : Math.rint(javaCursor)) - glyph.bearing();
                 double advance = unknownWidth ? 0 : renderedAdvance;
-                Face face = !faces ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.bearing() != 0 || glyph.character() != codepoint ? Face.ATLAS : Face.DEFAULT));
+                Face face = !this.hudFonts ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.bearing() != 0 || glyph.character() != codepoint ? Face.ATLAS : Face.DEFAULT));
                 double inkStart = position + glyph.bearing();
                 // 实际原生字宽未知时，以当前字符结束本层。之后的字符仍按各自的 Java 光标定位。
                 double inkEnd = unknownWidth ? Double.POSITIVE_INFINITY : inkStart + advance - 1;
-                Layer selected = unknownWidth ? null : findLayer(layers, inkStart, inkEnd, position, baseline, face);
+                Layer selected = unknownWidth ? null : findLayer(layers, inkStart, inkEnd, position, baseline, face, shadowOverride);
                 if (selected == null) {
-                    if (!absolute && (position < 0 || position == 1)) {
-                        throw new UnsupportedOperationException("Title exceeds left margin");
-                    }
-                    selected = new Layer(baseline, absolute ? position : 0, face, inkStart, inkEnd);
+                    selected = new Layer(baseline, position, face, shadowOverride, inkStart, inkEnd);
                     layers.add(selected);
                     remainingBytes -= ContainerTitleCodec.ENTRY_BYTES;
                 } else {
@@ -159,77 +125,44 @@ public final class ContainerTitleLayout {
                 }
                 selected.appendGlyph(partIndex, glyph.character());
                 // Geyser 会展开 BossBar 名称里的 %。将它留在图层末尾，由 HUD 补回原字符。
-                selected.closed = unknownWidth || ((target == Target.BOSS_BAR || target == Target.BOSS_BAR_LEFT) && glyph.character() == '%');
+                selected.closed = unknownWidth || (target == Target.BOSS_BAR && glyph.character() == '%');
                 selected.cursor = position + advance;
-                float javaAdvance = faces || nativeFallback ? font.advance(codepoint, boldAdvance != 0) : font.advance(codepoint, false) + boldAdvance;
+                float javaAdvance = this.hudFonts || nativeFallback ? font.advance(codepoint, boldAdvance != 0) : font.advance(codepoint, false) + boldAdvance;
                 javaCursor += javaAdvance;
                 width += javaAdvance;
             }
         }
         // 有自定义字形但没有可见内容时，保留一个空图层，区别于无需转换的空结果。
         int pixelWidth = (int) Math.ceil(width);
-        if (target != Target.BOSS_BAR_LEFT && target != Target.POSITIONED) {
-            pixelWidth = Math.max(0, pixelWidth);
-        }
         if (layers.isEmpty()) {
             return new MeasuredLayout(List.of(List.of()), pixelWidth);
         }
-        if (target == Target.TITLE || target == Target.BOSS_BAR) {
-            // 给每层补到相同的宽度，让 HUD 用原生居中对齐叠在同一条基线上。
-            double centeredWidth = 2 * ORIGIN + Math.ceil(width);
-            for (Layer layer : layers) {
-                double padding = centeredWidth - layer.cursor;
-                if (padding < 0 || padding == 1 || padding > ContainerTitleCodec.MAX_BYTES / SPACER_BYTES * MAX_SPACER) {
-                    throw new UnsupportedOperationException("Title cannot be centered within the layout margin");
-                }
-                int gap = (int) padding;
-                remainingBytes -= spacingBytes(gap);
-                if (remainingBytes < 0) {
-                    throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
-                }
-                if (gap > 0) {
-                    layer.appendSpacing(gap);
-                }
-            }
-        }
         List<List<Run>> result = new ArrayList<>(layers.size());
         int[] baselines = fontBaselines.isEmpty() ? null : new int[layers.size()];
-        int[] halfLeft = absolute ? new int[layers.size()] : null;
+        int[] halfLeft = new int[layers.size()];
         BitSet unicodeLayers = new BitSet();
+        BitSet shadowOverrides = null;
         for (Layer layer : layers) {
             layer.flushRun();
-            if (halfLeft != null) {
-                halfLeft[result.size()] = (int) ((layer.start - ORIGIN) * 2);
-            }
+            halfLeft[result.size()] = (int) ((layer.start - ORIGIN) * 2);
             if (layer.face == Face.UNICODE) {
                 unicodeLayers.set(result.size());
+            }
+            if (layer.shadowOverride) {
+                if (shadowOverrides == null) {
+                    shadowOverrides = new BitSet();
+                }
+                shadowOverrides.set(result.size());
             }
             if (baselines != null) {
                 baselines[result.size()] = layer.baseline;
             }
             result.add(layer.runs);
         }
-        return new MeasuredLayout(result, pixelWidth, baselines, halfLeft, unicodeLayers);
+        return new MeasuredLayout(result, pixelWidth, baselines, halfLeft, unicodeLayers, shadowOverrides);
     }
 
-    public int width(List<GuiTitlePart> parts) {
-        double width = 0;
-        for (GuiTitlePart part : parts) {
-            FontData.Font font = this.fonts.font(part.font());
-            for (int offset = 0; offset < part.text().length();) {
-                int codepoint = part.text().codePointAt(offset);
-                offset += Character.charCount(codepoint);
-                FontGlyph glyph = font.rendering().get(codepoint);
-                if (glyph == null) {
-                    throw new UnsupportedOperationException("Unknown glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
-                }
-                width += font.advance(codepoint, false) + (glyph.visible() && (part.decorations() & 2) != 0 ? 1 : 0);
-            }
-        }
-        return Math.max(0, (int) Math.ceil(width));
-    }
-
-    private static Layer findLayer(List<Layer> layers, double inkStart, double inkEnd, double position, int baseline, Face face) {
+    private static Layer findLayer(List<Layer> layers, double inkStart, double inkEnd, double position, int baseline, Face face, boolean shadowOverride) {
         // 从顶层向下找到最低的可用层。遇到相交字形就停止，保持负间距回退时的遮盖顺序。
         Layer candidate = null;
         // 原生文字标签混入私用区间距字符可能切换整层字体。
@@ -239,7 +172,7 @@ public final class ContainerTitleLayout {
             if (layer.intersects(inkStart, inkEnd)) {
                 break;
             }
-            if (layer.closed || layer.face != face || layer.baseline != baseline) {
+            if (layer.closed || layer.face != face || layer.baseline != baseline || layer.shadowOverride != shadowOverride) {
                 continue;
             }
             double gap = position - layer.cursor;
@@ -270,20 +203,19 @@ public final class ContainerTitleLayout {
         return codepoint >= ' ' && codepoint <= '~' ? (UNICODE_ASCII_HALF_ADVANCES[codepoint - ' '] + bold) * 0.5 : -1;
     }
 
-    private boolean requiresLayout(List<GuiTitlePart> parts, Target target, Map<String, Integer> fontBaselines) {
-        boolean faces = this.hudFonts && (target == Target.POSITIONED || target == Target.BOSS_BAR_LEFT);
+    private boolean requiresLayout(List<GuiTitlePart> parts, Target target, Map<String, Integer> fontBaselines, Shadow opposite) {
         for (GuiTitlePart part : parts) {
-            if (!fontBaselines.isEmpty() && !part.text().isEmpty() && fontBaselines.containsKey(part.font())) {
+            if (!part.text().isEmpty() && (part.shadow() == opposite || fontBaselines.containsKey(part.font()))) {
                 return true;
             }
             FontData.Font font = this.fonts.font(part.font());
-            if (!faces && font.rendering().isEmpty()) {
+            if (!this.hudFonts && font.rendering().isEmpty()) {
                 continue;
             }
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                if (faces && font.hudUnicode(codepoint)) {
+                if (this.hudFonts && font.hudUnicode(codepoint)) {
                     return true;
                 }
                 FontGlyph glyph = font.rendering().get(codepoint);
@@ -292,12 +224,10 @@ public final class ContainerTitleLayout {
                 }
                 boolean required = switch (target) {
                     case POSITIONED -> glyph.character() != codepoint || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
-                    case CONTAINER -> glyph.character() != codepoint;
-                    case TITLE -> font.advance(codepoint, false) < 0;
-                    case BOSS_BAR, BOSS_BAR_LEFT -> {
+                    case BOSS_BAR -> {
                         float advance = font.advance(codepoint, false);
-                        yield (faces && glyph.character() != codepoint) || advance < 0 || (!glyph.visible() && advance > 0)
-                                || (target == Target.BOSS_BAR_LEFT && glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK);
+                        yield (this.hudFonts && glyph.character() != codepoint) || advance < 0 || (!glyph.visible() && advance > 0)
+                                || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
                     }
                 };
                 if (required) {
@@ -308,25 +238,17 @@ public final class ContainerTitleLayout {
         return false;
     }
 
-    public record MeasuredLayout(List<List<Run>> layers, int width, int[] baselines, int[] halfLeft, BitSet unicodeLayers) {
-        public MeasuredLayout(List<List<Run>> layers, int width, int[] baselines, int[] left) {
-            this(layers, width, baselines, left == null ? null : Arrays.stream(left).map(pixel -> pixel * 2).toArray(), null);
-        }
-
-        public int[] left() {
-            return this.halfLeft == null ? null : Arrays.stream(this.halfLeft).map(value -> Math.floorDiv(value, 2)).toArray();
+    public record MeasuredLayout(List<List<Run>> layers, int width, int[] baselines, int[] halfLeft, BitSet unicodeLayers, BitSet shadowOverrides) {
+        private MeasuredLayout(List<List<Run>> layers, int width) {
+            this(layers, width, null, null, null, null);
         }
 
         public boolean unicode(int layer) {
             return this.unicodeLayers != null && this.unicodeLayers.get(layer);
         }
 
-        public MeasuredLayout(List<List<Run>> layers, int width, int[] baselines) {
-            this(layers, width, baselines, null, null);
-        }
-
-        public MeasuredLayout(List<List<Run>> layers, int width) {
-            this(layers, width, null);
+        public boolean shadowOverride(int layer) {
+            return this.shadowOverrides != null && this.shadowOverrides.get(layer);
         }
     }
 
@@ -335,7 +257,7 @@ public final class ContainerTitleLayout {
     }
 
     private enum Target {
-        CONTAINER, TITLE, BOSS_BAR, BOSS_BAR_LEFT, POSITIONED
+        POSITIONED, BOSS_BAR
     }
 
     private enum Face {
@@ -346,6 +268,7 @@ public final class ContainerTitleLayout {
         private final int baseline;
         private final double start;
         private final Face face;
+        private final boolean shadowOverride;
         private final List<Run> runs = new ArrayList<>(2);
         private double[] spans;
         private int spanSize;
@@ -356,10 +279,11 @@ public final class ContainerTitleLayout {
         private double cursor;
         private boolean closed;
 
-        private Layer(int baseline, double start, Face face, double inkStart, double inkEnd) {
+        private Layer(int baseline, double start, Face face, boolean shadowOverride, double inkStart, double inkEnd) {
             this.baseline = baseline;
             this.start = start;
             this.face = face;
+            this.shadowOverride = shadowOverride;
             this.cursor = start;
             this.minimumInkStart = inkStart;
             this.maximumInkEnd = inkEnd;

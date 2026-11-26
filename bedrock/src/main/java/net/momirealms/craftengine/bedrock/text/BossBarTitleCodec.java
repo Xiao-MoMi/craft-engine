@@ -4,10 +4,6 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class BossBarTitleCodec {
-    public static final int LEFT_ANCHORED_VERSION = 2;
-    public static final int VERTICAL_OFFSET_VERSION = 3;
-    public static final int FONT_FACE_VERSION = 4;
-    public static final int COMPACT_POSITION_VERSION = 5;
     public static final String MARKER = "§o§rce:b/";
     public static final String COMPACT_MARKER = "§o§rce:c/";
     public static final int MARKER_BYTES = ContainerTitleCodec.utf8Length(MARKER, 0);
@@ -17,23 +13,17 @@ public final class BossBarTitleCodec {
     public static final int POSITION_BIAS = 50000;
     public static final int COMPACT_POSITION_BYTES = 3;
     public static final int COMPACT_POSITION_BIAS = 500;
-    public static final int PERCENT_FLAG = 1000;
     public static final int MAX_NAME = 256;
-    public static final int MAX_LAYERS = (MAX_NAME - 2 - MARKER.length() - COUNT_BYTES) / ENTRY_BYTES;
     public static final int PLAIN_PREFIX_BYTES = ContainerTitleCodec.utf8Length("§r", 0);
     public static final int STYLE_PREFIX_BYTES = ContainerTitleCodec.utf8Length("§r" + BossBarStyle.marker(0) + "§r", 0);
 
     private BossBarTitleCodec() {
     }
 
-    public static String encode(ContainerTitleLayout.MeasuredLayout layout, boolean leftAnchored,
-                                Function<List<ContainerTitleLayout.Run>, String> serialize) {
-        return encode(layout, leftAnchored, 1, serialize);
-    }
-
-    public static int entryBytes(int styleCount) {
+    public static int entryBytes(int baselineCount) {
         int bytes = ENTRY_BYTES;
-        for (long tag = 2L * styleCount - 1; tag >= 10; tag /= 10) {
+        // 每条基线有两种字体、两种百分号状态和两种阴影状态。
+        for (long tag = 8L * baselineCount - 1; tag >= 10; tag /= 10) {
             bytes++;
         }
         return bytes;
@@ -41,34 +31,6 @@ public final class BossBarTitleCodec {
 
     public static String encodePositioned(ContainerTitleLayout.MeasuredLayout layout, int baselineCount,
                                           Function<List<ContainerTitleLayout.Run>, String> serialize) {
-        return encode(layout, true, baselineCount, true, fitsCompactCoordinates(layout), serialize);
-    }
-
-    private static boolean fitsCompactCoordinates(ContainerTitleLayout.MeasuredLayout layout) {
-        if (layout.halfLeft() == null) {
-            return false;
-        }
-        for (int halfLeft : layout.halfLeft()) {
-            long offset = (long) halfLeft - layout.width();
-            if (offset < -COMPACT_POSITION_BIAS || offset >= COMPACT_POSITION_BIAS) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public static String encode(ContainerTitleLayout.MeasuredLayout layout, boolean leftAnchored, int baselineCount,
-                                Function<List<ContainerTitleLayout.Run>, String> serialize) {
-        return encode(layout, leftAnchored, baselineCount, false, serialize);
-    }
-
-    public static String encode(ContainerTitleLayout.MeasuredLayout layout, boolean leftAnchored, int baselineCount, boolean fontFaces,
-                                Function<List<ContainerTitleLayout.Run>, String> serialize) {
-        return encode(layout, leftAnchored, baselineCount, fontFaces, false, serialize);
-    }
-
-    private static String encode(ContainerTitleLayout.MeasuredLayout layout, boolean leftAnchored, int baselineCount, boolean fontFaces,
-                                 boolean compact, Function<List<ContainerTitleLayout.Run>, String> serialize) {
         List<List<ContainerTitleLayout.Run>> layers = layout.layers();
         if (layers.isEmpty()) {
             return null;
@@ -76,10 +38,11 @@ public final class BossBarTitleCodec {
         if (layers.size() == 1 && layers.getFirst().isEmpty()) {
             return "";
         }
+        boolean compact = fitsCompactCoordinates(layout);
         String marker = compact ? COMPACT_MARKER : MARKER;
         int bias = compact ? COMPACT_POSITION_BIAS : POSITION_BIAS;
-        int styles = fontFaces ? baselineCount * 2 : baselineCount;
-        int entryBytes = entryBytes(styles);
+        int styles = baselineCount * 2;
+        int entryBytes = entryBytes(baselineCount);
         int tagDivisor = 1;
         for (int i = ENTRY_BYTES; i < entryBytes; i++) {
             tagDivisor *= 10;
@@ -94,18 +57,13 @@ public final class BossBarTitleCodec {
         int endBytes = 0;
         for (int index = 0; index < layers.size(); index++) {
             List<ContainerTitleLayout.Run> layer = layers.get(index);
-            int first = !layer.isEmpty() && layer.getFirst().part() < 0 ? 1 : 0;
-            int end = layer.size();
-            if (first < end && layer.getLast().part() < 0) {
-                end--;
-            }
-            long position = bias + layerOffset(layout, index, first, end, leftAnchored);
+            long position = (long) bias + layout.halfLeft()[index] - layout.width();
             if (position < 0 || position >= 2 * bias) {
                 return null;
             }
-            String text = serialize.apply(first == 0 && end == layer.size() ? layer : layer.subList(first, end));
-            int textLength = leftAnchored ? compactTextLength(text) : text.length();
-            if (leftAnchored && textLength == 0) {
+            String text = serialize.apply(layer);
+            int textLength = compactTextLength(text);
+            if (textLength == 0) {
                 continue;
             }
             if (textLength > MAX_NAME - 2 - header.length() - entryBytes - body.length()) {
@@ -124,10 +82,14 @@ public final class BossBarTitleCodec {
             }
             count++;
             ContainerTitleCodec.appendNumber(header, (int) position, bias / 5);
-            // 名称最多 256 个 UTF-16 单元，累计 UTF-8 长度只需三位。前一位同时容纳基线和百分号标志。
+            // 标签记录基线、字体、百分号和阴影，随后的三位记录正文的累计 UTF-8 字节数。
             int baseline = layout.baselines() == null ? 0 : layout.baselines()[index];
-            int style = baseline + (fontFaces && layout.unicode(index) ? baselineCount : 0);
-            ContainerTitleCodec.appendNumber(header, style + (percent < 0 ? 0 : styles), tagDivisor);
+            int style = baseline + (layout.unicode(index) ? baselineCount : 0);
+            int tag = style + (percent < 0 ? 0 : styles);
+            if (layout.shadowOverride(index)) {
+                tag += 2 * styles;
+            }
+            ContainerTitleCodec.appendNumber(header, tag, tagDivisor);
             ContainerTitleCodec.appendNumber(header, endBytes, 100);
         }
         if (count == 0) {
@@ -138,22 +100,18 @@ public final class BossBarTitleCodec {
         return header.append(body).toString();
     }
 
-    private static long layerOffset(ContainerTitleLayout.MeasuredLayout layout, int index, int first, int end, boolean leftAnchored) {
-        if (leftAnchored && layout.halfLeft() != null) {
-            return (long) layout.halfLeft()[index] - layout.width();
+    private static boolean fitsCompactCoordinates(ContainerTitleLayout.MeasuredLayout layout) {
+        for (int halfLeft : layout.halfLeft()) {
+            long offset = (long) halfLeft - layout.width();
+            if (offset < -COMPACT_POSITION_BIAS || offset >= COMPACT_POSITION_BIAS) {
+                return false;
+            }
         }
-        // 旧布局把位置信息放在正文两端的间距段中。
-        List<ContainerTitleLayout.Run> layer = layout.layers().get(index);
-        int leading = first == 0 ? 0 : spacingWidth(layer.getFirst().text());
-        if (leftAnchored) {
-            return 2 * (leading - ContainerTitleLayout.ORIGIN) - (long) layout.width();
-        }
-        int trailing = end == layer.size() ? 0 : spacingWidth(layer.getLast().text());
-        return leading - trailing;
+        return true;
     }
 
     private static int compactTextLength(String text) {
-        // 每个新版 HUD 标签从白色开始。含其他颜色或装饰的层保留原样。
+        // 每个 HUD 标签从白色开始。含其他颜色或装饰的层保留原样。
         boolean ink = false;
         int length = text.length();
         for (int i = 0; i < text.length(); i++) {
@@ -187,13 +145,5 @@ public final class BossBarTitleCodec {
     public static boolean fits(String encoded, String style) {
         int prefix = style == null ? 2 : style.length() + 4;
         return prefix + encoded.length() <= MAX_NAME;
-    }
-
-    private static int spacingWidth(String spacers) {
-        int width = 0;
-        for (int i = 0; i < spacers.length(); i++) {
-            width += spacers.charAt(i) - ContainerTitleLayout.SPACER_FIRST + 2;
-        }
-        return width;
     }
 }

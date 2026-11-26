@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
-import net.momirealms.craftengine.bedrock.text.BossBarTitleCodec;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
@@ -88,7 +87,6 @@ public final class BedrockBossBars {
         if (!fontBaselines.isEmpty()) {
             styles.add(BedrockPackLayout.BOSS_BAR_FONT_BASELINES, fontBaselines);
         }
-        styles.addProperty(BedrockPackLayout.BOSS_BAR_TITLE_LAYOUT, BossBarTitleCodec.COMPACT_POSITION_VERSION);
         GsonHelper.writeJsonFile(styles, data);
         Path hudPath = pack.resolve("ui/hud_screen.json");
         Files.createDirectories(hudPath.getParent());

@@ -34,13 +34,13 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
             null, null, null, null,
-            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, null,
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, Map.of(),
             null, null, null, null
     );
     private final JsonObject bossBars;
     private final SidebarProfiles scoreboard;
     private final boolean forceJavaTitleLayout;
-    @Nullable private final Map<String, Integer> verticalOffsets;
+    private final Map<String, Integer> verticalOffsets;
     private final JsonObject items;
     private final JsonObject blocks;
     private final JsonObject modelDisplays;
@@ -59,7 +59,7 @@ public final class GeyserExtensionData {
                                 GeyserLanguageData languages,
                                 SidebarProfiles scoreboard,
                                 boolean forceJavaTitleLayout,
-                                @Nullable Map<String, Integer> verticalOffsets,
+                                Map<String, Integer> verticalOffsets,
                                 @Nullable JsonObject nativeModels,
                                 @Nullable JsonObject soundMappings,
                                 @Nullable JsonObject bossBars,
@@ -90,7 +90,7 @@ public final class GeyserExtensionData {
             JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
             Map<String, Integer> verticalOffsets = readVerticalOffsets(title);
-            GeyserGlyphData glyphs = readFonts(archive, verticalOffsets == null ? Map.of() : verticalOffsets);
+            GeyserGlyphData glyphs = readFonts(archive, verticalOffsets);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
                     readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
@@ -197,17 +197,15 @@ public final class GeyserExtensionData {
         return this.scoreboard;
     }
 
-    @Nullable
     private static Map<String, Integer> readVerticalOffsets(@Nullable JsonObject title) {
         if (title == null || !title.has(BedrockPackLayout.TEXT_VERTICAL_OFFSETS)) {
-            return null;
+            return Map.of();
         }
         Map<String, Integer> offsets = new HashMap<>();
         title.getAsJsonObject(BedrockPackLayout.TEXT_VERTICAL_OFFSETS).asMap().forEach((font, value) -> offsets.put(font, value.getAsInt()));
         return Map.copyOf(offsets);
     }
 
-    @Nullable
     public Map<String, Integer> verticalOffsets() {
         return this.verticalOffsets;
     }

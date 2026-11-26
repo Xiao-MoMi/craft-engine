@@ -19,7 +19,7 @@ final class BedrockBossBarTitle {
     }
 
     static JsonObject panel(JsonObject hud, List<Integer> offsets) {
-        int entryBytes = BossBarTitleCodec.entryBytes(2 * (offsets.size() + 1));
+        int entryBytes = BossBarTitleCodec.entryBytes(offsets.size() + 1);
         hud.add(TEMPLATE, layer(offsets, entryBytes));
         JsonObject nativeName = new JsonObject();
         nativeName.add("bindings", visibilityBindings("(not #ce_encoded)"));
@@ -66,9 +66,28 @@ final class BedrockBossBarTitle {
         return bindings;
     }
 
-    private static JsonObject textLabel(int entryBytes, int baselineCount) {
+    private static JsonObject layer(List<Integer> offsets, int entryBytes) {
+        int baselineCount = offsets.size() + 1;
+        JsonObject data = topPanel(0, 0);
+        data.addProperty("$ce_half", 0.5);
         JsonArray bindings = entryBindings(entryBytes);
+        bind(bindings, "$ce_visible_expression", "#ce_positioned");
+        bind(bindings, "(" + slice("#ce_entry", "#ce_middle") + " + 0)", "#ce_x");
+        int biasDifference = BossBarTitleCodec.POSITION_BIAS - BossBarTitleCodec.COMPACT_POSITION_BIAS;
+        bind(bindings, "(" + BossBarTitleCodec.POSITION_BIAS + " - (#ce_compact * " + biasDifference + "))", "#ce_bias");
+        bind(bindings, "($ce_half * (#ce_x - #ce_bias))", "#ce_offset_x");
         bindTag(bindings, baselineCount);
+        if (!offsets.isEmpty()) {
+            bind(bindings, "(#ce_style - (#ce_unicode * " + baselineCount + "))", "#ce_baseline");
+            StringJoiner offsetY = new StringJoiner(" + ");
+            for (int i = 0; i < offsets.size(); i++) {
+                int id = i + 1;
+                String variable = "$ce_y_" + id;
+                data.addProperty(variable, -(double) offsets.get(i));
+                offsetY.add("(" + variable + " * (#ce_baseline = " + id + "))");
+            }
+            bind(bindings, offsets.size() == 1 ? offsetY.toString() : "(" + offsetY + ")", "#ce_offset_y");
+        }
         bind(bindings, "(" + slice("#ce_end_start", "(#ce_entry + #ce_entry_bytes)") + " + 0)", "#ce_end_code");
         // 第零层从正文开头开始。后续层的起点取前一项的结束位置。
         bind(bindings, "(#ce_entry > #ce_table)", "#ce_has_previous");
@@ -79,61 +98,22 @@ final class BedrockBossBarTitle {
         bind(bindings, "(#ce_table + (#ce_count * #ce_entry_bytes))", "#ce_body");
         bind(bindings, "(#ce_body + #ce_previous_code)", "#ce_from");
         bind(bindings, "(#ce_body + #ce_end_code - (#ce_percent * 1))", "#ce_to");
-        bind(bindings, "(('§r§f' + " + slice("#ce_from", "#ce_to") + ") + (('%.' + (#ce_percent * 1) + 's') * '%'))", "#text");
+        bind(bindings, "(('§r§f' + " + slice("#ce_from", "#ce_to") + ") + (('%.' + (#ce_percent * 1) + 's') * '%'))", "#ce_ink_text");
+        data.add("bindings", bindings);
 
         JsonObject label = new JsonObject();
         label.addProperty("type", "label");
         label.addProperty("anchor_from", "top_left");
         label.addProperty("anchor_to", "top_left");
-        label.addProperty("text", "#text");
         label.addProperty("text_alignment", "left");
         label.addProperty("color", "$boss_name_text_color");
         label.addProperty("shadow", true);
         label.addProperty("enable_profanity_filter", true);
         label.addProperty("localize", false);
-        label.add("bindings", bindings);
-        return label;
-    }
-
-    private static JsonObject layer(List<Integer> offsets, int entryBytes) {
-        int baselineCount = offsets.size() + 1;
-        JsonObject position = topPanel(1, 1);
-        position.addProperty("anchor_from", "top_left");
-        position.addProperty("anchor_to", "top_left");
-        position.addProperty("use_anchored_offset", true);
-        position.addProperty("$ce_half", 0.5);
-        JsonObject properties = new JsonObject();
-        properties.addProperty("#anchored_offset_value_x", 1.0);
-        properties.addProperty("#anchored_offset_value_y", offsets.isEmpty() ? 0.0 : 1.0);
-        position.add("property_bag", properties);
-        JsonArray positionBindings = entryBindings(entryBytes);
-        bind(positionBindings, "$ce_visible_expression", "#visible");
-        bind(positionBindings, "(" + slice("#ce_entry", "#ce_middle") + " + 0)", "#ce_x");
-        int biasDifference = BossBarTitleCodec.POSITION_BIAS - BossBarTitleCodec.COMPACT_POSITION_BIAS;
-        bind(positionBindings, "(" + BossBarTitleCodec.POSITION_BIAS + " - (#ce_compact * " + biasDifference + "))", "#ce_bias");
-        bind(positionBindings, "($ce_half * (#ce_x - #ce_bias))", "#anchored_offset_value_x");
-        if (!offsets.isEmpty()) {
-            bindTag(positionBindings, baselineCount);
-            bind(positionBindings, "(#ce_style - (#ce_unicode * " + baselineCount + "))", "#ce_baseline");
-            StringJoiner offsetY = new StringJoiner(" + ");
-            for (int i = 0; i < offsets.size(); i++) {
-                int id = i + 1;
-                String variable = "$ce_y_" + id;
-                position.addProperty(variable, -(double) offsets.get(i));
-                offsetY.add("(" + variable + " * (#ce_baseline = " + id + "))");
-            }
-            bind(positionBindings, offsets.size() == 1 ? offsetY.toString() : "(" + offsetY + ")", "#anchored_offset_value_y");
-        }
-        position.add("bindings", positionBindings);
 
         // 零宽容器让各层重叠，1px 的父控件把相对偏移转换为 HUD 像素。
         JsonObject origin = topPanel(1, 1);
-        JsonArray labelControls = new JsonArray(2);
-        BedrockTitleLayers.addFaceLabels(labelControls, textLabel(entryBytes, baselineCount));
-        position.add("controls", labelControls);
-        JsonArray positionControls = new JsonArray(1);
-        positionControls.add(createObject("position", position));
-        origin.add("controls", positionControls);
+        origin.add("controls", BedrockTitleLayers.faceControls(data, label, !offsets.isEmpty()));
         JsonObject item = topPanel(0, 0);
         JsonArray originControls = new JsonArray(1);
         originControls.add(createObject("origin", origin));
@@ -145,8 +125,10 @@ final class BedrockBossBarTitle {
         bind(bindings, "(#ce_entry + #ce_entry_bytes - 3)", "#ce_end_start");
         bind(bindings, "(" + slice("#ce_middle", "#ce_end_start") + " + 0)", "#ce_tag");
         int styles = baselineCount * 2;
-        bind(bindings, "(#ce_tag > " + (styles - 1) + ")", "#ce_percent");
-        bind(bindings, "(#ce_tag - (#ce_percent * " + styles + "))", "#ce_style");
+        bind(bindings, "(#ce_tag > " + (2 * styles - 1) + ")", "#ce_shadow_override");
+        bind(bindings, "(#ce_tag - (#ce_shadow_override * " + (2 * styles) + "))", "#ce_text_tag");
+        bind(bindings, "(#ce_text_tag > " + (styles - 1) + ")", "#ce_percent");
+        bind(bindings, "(#ce_text_tag - (#ce_percent * " + styles + "))", "#ce_style");
         bind(bindings, "(#ce_style > " + (baselineCount - 1) + ")", "#ce_unicode");
     }
 

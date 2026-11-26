@@ -2,7 +2,6 @@ package net.momirealms.craftengine.bedrock.text;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 public final class SidebarCodec {
     public static final String MARKER = "ce:sb/";
@@ -13,15 +12,7 @@ public final class SidebarCodec {
     private SidebarCodec() {
     }
 
-    public static String encode(int profile, String order, int width, String number, List<String> layers) {
-        return encode(profile, order, width, number, layers, Function.identity());
-    }
-
-    public static <T> String encode(int profile, String order, int width, String number, List<T> layers, Function<T, String> serializeLayer) {
-        return encode(profile, order, width, ScoreColumn.plain(number), layers, serializeLayer);
-    }
-
-    public static <T> String encode(int profile, String order, int width, ScoreColumn number, List<T> layers, Function<T, String> serializeLayer) {
+    public static String encode(int profile, String order, int width, ScoreColumn number, List<String> layers) {
         if (profile < 0 || profile > 9999 || width > 4096) {
             throw new UnsupportedOperationException("Sidebar exceeds layout capacity");
         }
@@ -34,9 +25,7 @@ public final class SidebarCodec {
         }
         contents.add(measure);
         contents.add(number.text.isEmpty() ? "§r" : number.text);
-        for (T layer : layers) {
-            contents.add(serializeLayer.apply(layer));
-        }
+        contents.addAll(layers);
         contents.addAll(number.layers);
         int rowEntries = layers.size() + 2;
         if (profile == 0 && order == null) {

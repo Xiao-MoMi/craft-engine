@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleCodec;
 import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import org.jetbrains.annotations.Nullable;
 
 public final class BedrockTitleLayers {
     private BedrockTitleLayers() {
@@ -18,8 +19,7 @@ public final class BedrockTitleLayers {
         bindings.add(binding);
     }
 
-    static void bindLayer(JsonObject label, String collection, String sourceControl) {
-        label.addProperty("text", "#ce_layer");
+    static JsonArray layerBindings(String collection, String sourceControl) {
         JsonArray bindings = collectionBindings(collection);
         bindings.add(fromControl(sourceControl, "#ce_payload", "#ce_payload"));
         bind(bindings, "(#ce_collection_index * " + ContainerTitleCodec.ENTRY_BYTES + ")", "#ce_entry_start");
@@ -29,8 +29,8 @@ public final class BedrockTitleLayers {
         bind(bindings, "(('^' + " + throughEntry + ") - ('^' + " + beforeEntry + "))", "#ce_entry");
         bind(bindings, "('%." + ContainerTitleCodec.FORMAT_BYTES + "s' * #ce_entry)", "#ce_skip");
         bind(bindings, "(('^' + #ce_entry) - ('^' + #ce_skip))", "#ce_take");
-        bind(bindings, "(#ce_take * (#ce_payload - (#ce_skip * #ce_payload)))", "#ce_layer");
-        label.add("bindings", bindings);
+        bind(bindings, "(#ce_take * (#ce_payload - (#ce_skip * #ce_payload)))", "#ce_line");
+        return bindings;
     }
 
     static JsonObject fromControl(String control, String source, String target) {
@@ -42,45 +42,52 @@ public final class BedrockTitleLayers {
         return binding;
     }
 
-    public static JsonObject positionedLayer(JsonObject label, String raw, int scale, boolean container) {
-        JsonArray input = label.getAsJsonArray("bindings");
-        input.get(input.size() - 1).getAsJsonObject().addProperty("target_property_name", "#ce_line");
+    public static JsonObject positionedLayer(JsonObject label, JsonArray bindings, boolean container) {
+        return positionedLayer(label, bindings, 1, container, null);
+    }
+
+    static JsonObject titleLayer(JsonObject label, JsonArray bindings, int scale, JsonObject background) {
+        JsonObject plain = label.deepCopy();
+        JsonArray children = new JsonArray(1);
+        children.add(GsonHelper.createObject("background", background));
+        plain.add("controls", children);
+        return positionedLayer(label, bindings, scale, false, plain);
+    }
+
+    private static JsonObject positionedLayer(JsonObject label, JsonArray bindings, int scale, boolean container, @Nullable JsonObject plain) {
         int markerEnd = ContainerTitleCodec.POSITION_MARKER_BYTES;
         int xEnd = markerEnd + ContainerTitleCodec.X_BYTES;
         int yEnd = xEnd + ContainerTitleCodec.Y_BYTES;
-        bind(input, "(" + prefix(markerEnd) + " = '" + ContainerTitleCodec.UNICODE_MARKER + "')", "#ce_unicode");
-        bind(input, "(#ce_unicode or (" + prefix(markerEnd) + " = '" + ContainerTitleCodec.POSITION_MARKER + "'))", "#ce_positioned");
+        bind(bindings, prefix(markerEnd), "#ce_line_marker");
+        String unicodeOverride = "(#ce_line_marker = '" + ContainerTitleCodec.UNICODE_SHADOW_OVERRIDE_MARKER + "')";
+        bind(bindings, "((#ce_line_marker = '" + ContainerTitleCodec.UNICODE_MARKER + "') or " + unicodeOverride + ")", "#ce_unicode");
+        bind(bindings, "((#ce_line_marker = '" + ContainerTitleCodec.SHADOW_OVERRIDE_MARKER + "') or " + unicodeOverride + ")", "#ce_shadow_override");
+        bind(bindings, "(#ce_unicode or (#ce_shadow_override or (#ce_line_marker = '" + ContainerTitleCodec.POSITION_MARKER + "')))", "#ce_positioned");
+        bind(bindings, "(" + prefix(xEnd) + " - " + prefix(markerEnd) + " + 0)", "#ce_x");
+        bind(bindings, "($ce_half_scale * (#ce_x - " + ContainerTitleCodec.X_BIAS + "))", "#ce_offset_x");
+        bind(bindings, "(" + prefix(yEnd) + " - " + prefix(xEnd) + " + 0)", "#ce_y");
+        bind(bindings, "($ce_y_scale * #ce_y)", "#ce_offset_y");
+        bind(bindings, "(('^' + #ce_line) - ('^' + " + prefix(yEnd) + "))", "#ce_ink_text");
 
-        JsonObject ink = label.deepCopy();
-        ink.remove("controls");
-        ink.addProperty("text", raw);
-        ink.addProperty("anchor_from", "top_left");
-        ink.addProperty("anchor_to", container ? "top_left" : "left_middle");
-        ink.addProperty("text_alignment", "left");
-        JsonArray inkBindings = ink.getAsJsonArray("bindings");
-        bind(inkBindings, "(('^' + #ce_line) - ('^' + " + prefix(yEnd) + "))", raw);
-
-        JsonArray positionBindings = input.deepCopy();
-        bind(positionBindings, "#ce_positioned", "#visible");
-        bind(positionBindings, "(" + prefix(xEnd) + " - " + prefix(markerEnd) + " + 0)", "#ce_x");
-        bind(positionBindings, "($ce_half_scale * (#ce_x - " + ContainerTitleCodec.X_BIAS + "))", "#anchored_offset_value_x");
-        bind(positionBindings, "(" + prefix(yEnd) + " - " + prefix(xEnd) + " + 0)", "#ce_y");
-        bind(positionBindings, "($ce_y_scale * #ce_y)", "#anchored_offset_value_y");
-
-        JsonObject position = panel(1);
-        position.addProperty("anchor_from", "top_left");
-        position.addProperty("anchor_to", "top_left");
-        position.addProperty("use_anchored_offset", true);
-        position.addProperty("$ce_half_scale", scale * 0.5);
-        position.addProperty("$ce_y_scale", -(double) scale);
-        JsonObject properties = new JsonObject();
-        properties.addProperty("#anchored_offset_value_x", 1.0);
-        properties.addProperty("#anchored_offset_value_y", 1.0);
-        position.add("property_bag", properties);
-        position.add("bindings", positionBindings);
-        JsonArray inkControls = new JsonArray();
-        addFaceLabels(inkControls, ink);
-        position.add("controls", inkControls);
+        JsonObject data = panel(0);
+        data.addProperty("$ce_half_scale", scale * 0.5);
+        data.addProperty("$ce_y_scale", -(double) scale);
+        data.add("bindings", bindings);
+        label.addProperty("anchor_from", "top_left");
+        label.addProperty("anchor_to", container ? "top_left" : "left_middle");
+        label.addProperty("text_alignment", "left");
+        JsonArray controls = faceControls(data, label, true);
+        if (plain != null) {
+            // Title 和 Subtitle 可以在同一帧中混用原生文字和定位图层。原生标签从零宽工厂项的原点居中。
+            plain.addProperty("anchor_from", "top_left");
+            plain.addProperty("anchor_to", "center");
+            plain.addProperty("text", "#text");
+            JsonArray plainBindings = new JsonArray(2);
+            plainBindings.add(fromSibling("ce_layer_data", "#ce_line", "#text"));
+            plainBindings.add(fromSibling("ce_layer_data", "(not #ce_positioned)", "#visible"));
+            plain.add("bindings", plainBindings);
+            controls.add(GsonHelper.createObject("plain_text", plain));
+        }
 
         JsonObject origin = panel(1);
         origin.addProperty("anchor_from", "top_left");
@@ -88,13 +95,8 @@ public final class BedrockTitleLayers {
         if (container) {
             origin.add("offset", GsonHelper.createArray(ContainerTitleLayout.ORIGIN, 0));
         }
-        JsonArray positioned = new JsonArray();
-        positioned.add(GsonHelper.createObject("position", position));
-        origin.add("controls", positioned);
-        bind(input, "#ce_line", raw);
-        bind(input, "(not #ce_positioned)", "#visible");
-        JsonArray children = new JsonArray();
-        children.add(GsonHelper.createObject("legacy", label));
+        origin.add("controls", controls);
+        JsonArray children = new JsonArray(1);
         children.add(GsonHelper.createObject("origin", origin));
         JsonObject item = panel(0);
         item.add("controls", children);
@@ -105,14 +107,49 @@ public final class BedrockTitleLayers {
         return "('%." + bytes + "s' * #ce_line)";
     }
 
-    static void addFaceLabels(JsonArray controls, JsonObject label) {
-        JsonObject unicode = label.deepCopy();
-        unicode.addProperty("font_type", "unicode");
-        bind(unicode.getAsJsonArray("bindings"), "#ce_unicode", "#visible");
-        label.addProperty("font_type", "default");
-        bind(label.getAsJsonArray("bindings"), "(not #ce_unicode)", "#visible");
-        controls.add(GsonHelper.createObject("text", label));
-        controls.add(GsonHelper.createObject("unicode_text", unicode));
+    static JsonArray faceControls(JsonObject data, JsonObject label, boolean verticalOffset) {
+        // 控件名称会在每个工厂项内重复。只从同级数据控件取值，避免读到其他图层或计分板行。
+        JsonArray controls = new JsonArray(5);
+        JsonObject offsets = new JsonObject();
+        offsets.addProperty("#ce_offset_x", 0.0);
+        if (verticalOffset) {
+            offsets.addProperty("#ce_offset_y", 0.0);
+        }
+        data.add("property_bag", offsets);
+        controls.add(GsonHelper.createObject("ce_layer_data", data));
+        label.addProperty("text", "#text");
+        label.addProperty("use_anchored_offset", true);
+        JsonObject properties = new JsonObject();
+        properties.addProperty("#anchored_offset_value_x", 1.0);
+        properties.addProperty("#anchored_offset_value_y", verticalOffset ? 1.0 : 0.0);
+        label.add("property_bag", properties);
+        JsonArray bindings = new JsonArray(4);
+        bindings.add(fromSibling("ce_layer_data", "#ce_offset_x", "#anchored_offset_value_x"));
+        if (verticalOffset) {
+            bindings.add(fromSibling("ce_layer_data", "#ce_offset_y", "#anchored_offset_value_y"));
+        }
+        bindings.add(fromSibling("ce_layer_data", "#ce_ink_text", "#text"));
+        label.add("bindings", bindings);
+        boolean defaultShadow = label.get("shadow").getAsBoolean();
+        addLabel(controls, label, "text", "default", defaultShadow, "((not #ce_unicode) and (not #ce_shadow_override))");
+        addLabel(controls, label, "unicode_text", "unicode", defaultShadow, "(#ce_unicode and (not #ce_shadow_override))");
+        addLabel(controls, label, "shadow_override_text", "default", !defaultShadow, "((not #ce_unicode) and #ce_shadow_override)");
+        addLabel(controls, label, "unicode_shadow_override_text", "unicode", !defaultShadow, "(#ce_unicode and #ce_shadow_override)");
+        return controls;
+    }
+
+    private static void addLabel(JsonArray controls, JsonObject template, String name, String font, boolean shadow, String visible) {
+        JsonObject label = template.deepCopy();
+        label.addProperty("font_type", font);
+        label.addProperty("shadow", shadow);
+        label.getAsJsonArray("bindings").add(fromSibling("ce_layer_data", "(#ce_positioned and " + visible + ")", "#visible"));
+        controls.add(GsonHelper.createObject(name, label));
+    }
+
+    public static JsonObject fromSibling(String control, String source, String target) {
+        JsonObject binding = fromControl(control, source, target);
+        binding.addProperty("resolve_sibling_scope", true);
+        return binding;
     }
 
     private static JsonObject panel(int size) {
