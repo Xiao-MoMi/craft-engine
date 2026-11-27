@@ -40,6 +40,7 @@ final class BedrockActionBar {
         layers.addProperty("orientation", "horizontal");
         layers.addProperty("ignored", "(not $ce_managed)");
         layers.add("size", GsonHelper.createArray(0, 0));
+        layers.add("offset", GsonHelper.createArray(0, -6));
         layers.addProperty("collection_name", COLLECTION);
         JsonObject factory = new JsonObject();
         factory.addProperty("name", COLLECTION + "_factory");

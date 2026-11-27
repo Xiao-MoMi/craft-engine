@@ -83,7 +83,7 @@ public final class BedrockTitle {
         layers.addProperty("type", "stack_panel");
         layers.addProperty("orientation", "horizontal");
         layers.add("size", GsonHelper.createArray(0, 0));
-        layers.add("offset", GsonHelper.createArray(subtitle ? 1 : 0, subtitle ? 7 : -29));
+        layers.add("offset", GsonHelper.createArray(subtitle ? 1 : 0, subtitle ? 9 : -41));
         layers.addProperty("collection_name", collection);
         layers.add("factory", factory);
         layers.add("bindings", children(fromControl(HOST, subtitle ? "#ce_subtitle_capacity" : "#ce_title_capacity", "#collection_length")));
