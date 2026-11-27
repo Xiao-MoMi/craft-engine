@@ -11,12 +11,14 @@ import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.HashUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +80,7 @@ public final class BedrockItemResourceGenerator {
                 }
             }
         }
+        shareDyedIconTextures(root, icons);
         JsonObject atlas = new JsonObject();
         atlas.addProperty("resource_pack_name", NAMESPACE);
         atlas.addProperty("texture_name", "atlas.items");
@@ -85,6 +88,35 @@ public final class BedrockItemResourceGenerator {
         Path output = root.resolve(BedrockPackLayout.ITEM_TEXTURE_ATLAS);
         Files.createDirectories(output.getParent());
         GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(atlas), output);
+    }
+
+    private static void shareDyedIconTextures(Path root, JsonObject icons) throws IOException {
+        Map<String, String> pathsByHash = new HashMap<>();
+        Map<String, String> resolvedPaths = new HashMap<>();
+        byte[] buffer = new byte[8192];
+        for (String key : icons.keySet()) {
+            if (!key.startsWith(BedrockPackLayout.DYED_ICON_PREFIX)) {
+                continue;
+            }
+            JsonObject icon = icons.getAsJsonObject(key);
+            String texture = icon.get("textures").getAsString();
+            String shared = resolvedPaths.get(texture);
+            if (shared == null) {
+                Path file = root.resolve(texture);
+                String existing = pathsByHash.putIfAbsent(HashUtils.sha1(file, buffer), texture);
+                shared = existing != null && Files.mismatch(file, root.resolve(existing)) == -1 ? existing : texture;
+                resolvedPaths.put(texture, shared);
+            }
+            if (!texture.equals(shared)) {
+                icon.addProperty("textures", shared);
+            }
+        }
+        // 场景别名可能指向同一个文件，等所有图标键都已重定向后再移除重复纹理。
+        for (Map.Entry<String, String> entry : resolvedPaths.entrySet()) {
+            if (!entry.getKey().equals(entry.getValue())) {
+                Files.delete(root.resolve(entry.getKey()));
+            }
+        }
     }
 
     public record Result(Map<Key, List<GeneratedItemVariant>> variants, Map<Key, Integer> elytraVariants) {
