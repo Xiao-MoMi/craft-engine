@@ -16,6 +16,7 @@ public final class BukkitItemRegistrationReader implements ItemRegistrationReade
     private static final Set<Key> EFFECTIVE_COMPONENTS = Set.of(
             DataComponentKeys.CUSTOM_NAME,
             DataComponentKeys.ITEM_NAME,
+            DataComponentKeys.FOOD,
             DataComponentKeys.EQUIPPABLE,
             DataComponentKeys.KINETIC_WEAPON);
     private static final List<Key> COMPONENTS = List.of(

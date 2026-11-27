@@ -54,6 +54,7 @@ public final class GeyserItemComponentPatches {
         if (behavior != null && behavior.has(TRIMMABLE_ARMOR) && behavior.get(TRIMMABLE_ARMOR).getAsBoolean()) {
             patch = combine(patch, GeyserItemComponents.armorTrim(itemType));
         }
+        patch = combine(patch, GeyserConsumableComponents.nativeFood(itemType, !components.has("minecraft:food")));
         return combine(patch, GeyserItemInteraction.read(behavior, components));
     }
 
