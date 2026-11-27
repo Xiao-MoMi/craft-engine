@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class TextPassengerSeats {
+    private static final String RESOURCE = "/internal/passenger_seats.json";
     private static final float PLAYER_PASSENGER_Y_OFFSET = 0.15f;
     private static final float BEDROCK_SNEAK_ROOT_DROP = 0.2f;
     private final Map<EntityType, Vector3f[]> adults;
@@ -34,14 +35,14 @@ public final class TextPassengerSeats {
     }
 
     public static TextPassengerSeats load() {
-        try (InputStream stream = TextPassengerSeats.class.getResourceAsStream("/passenger_seats.json")) {
+        try (InputStream stream = TextPassengerSeats.class.getResourceAsStream(RESOURCE)) {
             if (stream == null) {
-                throw new IllegalStateException("Missing passenger_seats.json");
+                throw new IllegalStateException("Missing " + RESOURCE);
             }
             JsonObject data = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
             return new TextPassengerSeats(read(data.getAsJsonObject("default")), read(data.getAsJsonObject("baby")));
         } catch (IOException exception) {
-            throw new IllegalStateException("Reading passenger_seats.json", exception);
+            throw new IllegalStateException("Reading " + RESOURCE, exception);
         }
     }
 
