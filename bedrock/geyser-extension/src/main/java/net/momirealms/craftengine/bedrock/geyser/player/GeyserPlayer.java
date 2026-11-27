@@ -73,7 +73,7 @@ public final class GeyserPlayer {
         this.componentPatcher = this.extension.itemManager().createComponentPatcher(this);
         this.items = this.extension.itemManager().initPlayer(this);
         this.creativeInventory = this.extension.itemManager().initCreativeInventory(this);
-        this.placement = this.extension.blockManager().initPlayer(this);
+        this.placement = this.extension.blockManager().initPlayer(this, this.extension.itemManager());
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
 
         this.packetHandler = new GeyserPacketHandler(this, this.extension.bedrockPackets(), GeyserConfig.containerCloseHandlerEnabled());

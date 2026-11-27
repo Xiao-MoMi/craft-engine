@@ -1332,9 +1332,6 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
             this.setGameEdition(GameEdition.BEDROCK);
         }
         this.bedrockProtocol = version;
-        if (version >= 0) {
-            this.plugin.logger().info("Enabled Bedrock extension protocol " + version + " for " + this.name());
-        }
     }
 
     /**
