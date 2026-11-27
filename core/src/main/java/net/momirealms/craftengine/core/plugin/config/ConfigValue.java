@@ -382,13 +382,13 @@ public final class ConfigValue {
     public ConfigSection getAsSection() {
         if (this.value instanceof Map<?, ?> map) {
             return ConfigSection.of(this.path, (Map<String, Object>) map);
-        } else if (this.value instanceof List<?> list) {
+        } else if (this.value instanceof List<?> list && !list.isEmpty()) {
             Object first = list.getFirst();
             if (first instanceof Map<?, ?> map) {
                 return ConfigSection.of(assemblePath(0), (Map<String, Object>) map);
             }
         }
-        throw new KnownResourceException(ConfigConstants.PARSE_SECTION_FAILED, this.path, this.value.getClass().getSimpleName());
+        throw new KnownResourceException(ConfigConstants.PARSE_SECTION_FAILED, this.path, this.value == null ? "null" : this.value.getClass().getSimpleName());
     }
 
     @SuppressWarnings("unchecked")

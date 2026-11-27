@@ -9,7 +9,7 @@ public final class ItemPacketSource {
     public static final ItemPacketSource DIALOG = builder("dialog").build();
     public static final ItemPacketSource BLOCK_ENTITY = builder("block_entity").skipLore().build();
     public static final ItemPacketSource PARTICLE = builder("particle").skipLore().skipName().build();
-    public static final ItemPacketSource MERCHANT_OFFER = builder("merchant_offer").build();
+    public static final ItemPacketSource MERCHANT_OFFER = builder("merchant_offer").requireNetworkTag().build();
     public static final ItemPacketSource RECIPE = builder("recipe").build();
     public static final ItemPacketSource ADVANCEMENT = builder("advancement").build();
 

@@ -5,9 +5,6 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.BlockEntityController;
 import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTicker;
-import net.momirealms.craftengine.core.plugin.context.Context;
-import net.momirealms.craftengine.core.plugin.context.ContextHolder;
-import net.momirealms.craftengine.core.plugin.context.SimpleContext;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
@@ -17,7 +14,6 @@ import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 
 public final class WallTorchParticleBlockEntityController extends BlockEntityController {
     private final WallTorchParticleBlockBehavior behavior;
-    private final Context context = SimpleContext.of(ContextHolder.empty());
     private int tickCount;
 
     public WallTorchParticleBlockEntityController(BlockEntity blockEntity, WallTorchParticleBlockBehavior behavior) {
@@ -36,20 +32,19 @@ public final class WallTorchParticleBlockEntityController extends BlockEntityCon
         Direction opposite = direction.opposite();
         for (ParticleConfig particle : this.behavior.particles) {
             Vec3d location = new Vec3d(
-                    center.x() + particle.x.getDouble(context) * opposite.stepX(),
-                    center.y() + particle.y.getDouble(context),
-                    center.z() + particle.z.getDouble(context) * opposite.stepZ()
+                    center.x() + particle.x.getDouble() * opposite.stepX(),
+                    center.y() + particle.y.getDouble(),
+                    center.z() + particle.z.getDouble() * opposite.stepZ()
             );
             level.spawnParticle(
                     location,
                     particle.particleType,
-                    particle.count.getInt(context),
-                    particle.xOffset.getDouble(context),
-                    particle.yOffset.getDouble(context),
-                    particle.zOffset.getDouble(context),
-                    particle.speed.getDouble(context),
-                    particle.particleData,
-                    context
+                    particle.count.getInt(),
+                    particle.xOffset.getDouble(),
+                    particle.yOffset.getDouble(),
+                    particle.zOffset.getDouble(),
+                    particle.speed.getDouble(),
+                    particle.particleData
             );
         }
     }

@@ -15,6 +15,7 @@ import net.momirealms.craftengine.bukkit.item.recipe.BukkitRecipeManager;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.*;
+import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.*;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
@@ -99,6 +100,7 @@ public final class BukkitItemManager extends AbstractItemManager {
         this.slotChangeListener = VersionHelper.isOrAbove1_20_3 && VersionHelper.hasPaperPatch ? new PaperSlotChangeListener(this) : null;
         this.paperItemEventListener = VersionHelper.hasPaperPatch ? new PaperItemEventListener() : null;
         this.networkItemHandler = VersionHelper.isOrAbove1_20_5 ? new ModernNetworkItemHandler(this) : new LegacyNetworkItemHandler();
+        this.registerGlobalNetworkItemProcessor(Key.ce("common"), 0, VersionHelper.isOrAbove1_20_5 ? new ModernCommonGlobalItemProcessor() : new LegacyCommonGlobalItemProcessor());
         this.registerAllVanillaItems();
         this.bedrockItemHolder = Objects.requireNonNull(RegistryUtils.getHolder(BuiltInRegistriesProxy.ITEM, ResourceKeyProxy.INSTANCE.create(RegistriesProxy.ITEM, KeyUtils.toIdentifier(Key.of("minecraft:bedrock")))));
         this.registerCustomTrimMaterial();
@@ -123,7 +125,7 @@ public final class BukkitItemManager extends AbstractItemManager {
                 player.sendCustomPackets(ClientboundCreativeModeTabItemsPacket.create(player));
             }
         }
-        for (ItemDefinition itemDefinition : this.itemDefinitionById.values()) {
+        for (ItemDefinition itemDefinition : loadedItems().values()) {
             if (itemDefinition instanceof BukkitItemDefinition bukkitItemDefinition) {
                 bukkitItemDefinition.initConstantItem();
             }
@@ -537,13 +539,14 @@ public final class BukkitItemManager extends AbstractItemManager {
     @Deprecated
     @Override
     public BukkitItem createCustomWrappedItem(Key id, Player player) {
-        return Optional.ofNullable(itemDefinitionById.get(id)).map(it -> (BukkitItem) it.buildItem(player)).orElse(null);
+        ItemDefinition definition = getItemDefinitionOrNull(id);
+        return definition != null ? (BukkitItem) definition.buildItem(player) : null;
     }
 
     @Deprecated
     @Override
     public BukkitItem createWrappedItem(Key id, @Nullable Player player) {
-        ItemDefinition itemDefinition = this.itemDefinitionById.get(id);
+        ItemDefinition itemDefinition = getItemDefinitionOrNull(id);
         if (itemDefinition != null) {
             return (BukkitItem) itemDefinition.buildItem(player);
         }
@@ -569,17 +572,30 @@ public final class BukkitItemManager extends AbstractItemManager {
         return new BukkitItem((ItemFactory<BukkitItemWrapper>) this.factory, this.factory.wrap(itemStack));
     }
 
+    @Nullable
+    public Key customId(@NotNull ItemStack itemStack) {
+        return this.factory.customIdFromMinecraft(ItemStackUtils.unwrap(itemStack));
+    }
+
     public boolean isBrokenItem(@Nullable ItemStack itemStack) {
-        if (ItemStackUtils.isEmpty(itemStack)) return false;
-        return isBrokenItem(wrap(itemStack));
+        if (ItemStackUtils.isEmpty(itemStack)) {
+            return false;
+        }
+        return this.isBrokenItem(this.wrap(itemStack));
     }
 
     public boolean isBrokenItem(Item item) {
-        Optional<ItemDefinition> optionalCustomItem = item.getDefinition();
-        if (optionalCustomItem.isEmpty()) return false;
-        if (!optionalCustomItem.get().settings().preventBreak()) return false;
+        return this.isBrokenItem(item, item.getDefinitionOrNull());
+    }
+
+    public boolean isBrokenItem(Item item, @Nullable ItemDefinition definition) {
+        if (definition == null || !definition.settings().preventBreak()) {
+            return false;
+        }
         int maxDamage = item.maxDamage();
-        if (maxDamage <= 0) return false;
+        if (maxDamage <= 0) {
+            return false;
+        }
         return item.damage().orElse(0) >= maxDamage - 1;
     }
 
@@ -677,10 +693,9 @@ public final class BukkitItemManager extends AbstractItemManager {
         if (recipes.isEmpty()) return;
         List<NamespacedKey> recipesToUnlock = new ArrayList<>(4);
         for (IngredientUnlockable recipe : recipes) {
-            NamespacedKey recipeBukkitId = KeyUtils.toNamespacedKey(recipe.id());
-            if (!player.hasDiscoveredRecipe(recipeBukkitId)) {
+            if (!serverPlayer.hasDiscoveredRecipe(recipe.id())) {
                 if (recipe.canUnlock(serverPlayer, serverPlayer.obtainedItems())) {
-                    recipesToUnlock.add(recipeBukkitId);
+                    recipesToUnlock.add(KeyUtils.toNamespacedKey(recipe.id()));
                 }
             }
         }

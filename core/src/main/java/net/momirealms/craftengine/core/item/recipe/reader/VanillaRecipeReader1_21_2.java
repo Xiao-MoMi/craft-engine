@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.item.recipe.reader;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -10,6 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 public class VanillaRecipeReader1_21_2 extends VanillaRecipeReader1_20_5 {
+
+    @Override
+    public @Nullable String ingredientType(JsonObject json) {
+        return json.has("neoforge:ingredient_type") ? json.get("neoforge:ingredient_type").getAsString() : null;
+    }
 
     @Override
     public List<String> singleIngredient(JsonElement json) {

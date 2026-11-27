@@ -115,6 +115,10 @@ public class CEChunk {
         this.chunkAccess = chunkAccess;
     }
 
+    public boolean isBlockTicking() {
+        return this.isEntitiesLoaded;
+    }
+
     public void spawnBlockEntities(Player player) {
         try {
             this.renderLock.readLock().lock();
@@ -506,29 +510,38 @@ public class CEChunk {
 
     public void activateAllBlockEntities() {
         if (this.activated) return;
-        // onLoad may query neighbors. Restore all cached entities before a lookup
-        // can mistake a not-yet-activated neighbor for an invalid entity and remove it.
-        for (BlockEntity blockEntity : this.blockEntities.values()) {
-            blockEntity.setValid(true);
+        if (!this.blockEntities.isEmpty()) {
+            // onLoad may query neighbors. Restore all cached entities before a lookup
+            // can mistake a not-yet-activated neighbor for an invalid entity and remove it.
+            for (BlockEntity blockEntity : this.blockEntities.values()) {
+                blockEntity.setValid(true);
+            }
+            for (BlockEntity blockEntity : this.blockEntities.values()) {
+                this.createDynamicBlockEntityRenderer(blockEntity);
+                try {
+                    blockEntity.controller.onLoad();
+                } catch (Throwable t) {
+                    CraftEngine.instance().logger().warn("Failed to load block entity " + blockEntity.blockState + " at " + world.name() + " " + blockEntity.pos, t);
+                }
+            }
         }
-        for (BlockEntity blockEntity : this.blockEntities.values()) {
-            this.replaceOrCreateTickingBlockEntity(blockEntity);
-            this.createDynamicBlockEntityRenderer(blockEntity);
+        // Renderer maps are only mutated by the owning region thread.
+        if (!this.constantBlockEntityRenderers.isEmpty()) {
             try {
-                blockEntity.controller.onLoad();
-            } catch (Throwable t) {
-                CraftEngine.instance().logger().warn("Failed to load block entity " + blockEntity.blockState + " at " + world.name() + " " + blockEntity.pos, t);
+                this.renderLock.readLock().lock();
+                for (ConstantBlockEntityRenderer renderer : this.constantBlockEntityRenderers.values()) {
+                    renderer.activate();
+                }
+            } finally {
+                this.renderLock.readLock().unlock();
             }
-        }
-        try {
-            this.renderLock.readLock().lock();
-            for (ConstantBlockEntityRenderer renderer : this.constantBlockEntityRenderers.values()) {
-                renderer.activate();
-            }
-        } finally {
-            this.renderLock.readLock().unlock();
         }
         this.activated = true;
+        // Publish tickers only after every controller has finished onLoad.
+        for (BlockEntity blockEntity : this.blockEntities.values()) {
+            this.replaceOrCreateTickingBlockEntity(blockEntity);
+        }
+        this.world.chunkLoadSubscriptions().onChunkLoad(this.chunkPos.longKey);
     }
 
     public void deactivateAllBlockEntities() {
@@ -562,9 +575,11 @@ public class CEChunk {
         this.tickingAsyncBlockEntitiesByPos.values().forEach((ticker) -> ticker.setTicker(DummyTickingBlockEntity.INSTANCE));
         this.tickingAsyncBlockEntitiesByPos.clear();
         this.activated = false;
+        this.world.chunkLoadSubscriptions().onChunkUnload(this.chunkPos.longKey);
     }
 
     public void replaceOrCreateTickingBlockEntity(BlockEntity blockEntity) {
+        if (!this.activated) return;
         ImmutableBlockState blockState = blockEntity.blockState();
         BlockEntityController controller = blockEntity.controller;
         BlockEntityTicker<BlockEntityController> syncTicker = controller.createBlockEntityTicker(this.world, blockState);
@@ -580,7 +595,7 @@ public class CEChunk {
                     return replaceableTicker;
                 }
             }));
-        } else {
+        } else if (!this.tickingSyncBlockEntitiesByPos.isEmpty()) {
             this.removeSyncBlockEntityTicker(blockEntity.pos());
         }
         BlockEntityTicker<BlockEntityController> asyncTicker = controller.createAsyncBlockEntityTicker(this.world, blockState);
@@ -596,7 +611,7 @@ public class CEChunk {
                     return replaceableTicker;
                 }
             }));
-        } else {
+        } else if (!this.tickingAsyncBlockEntitiesByPos.isEmpty()) {
             this.removeAsyncBlockEntityTicker(blockEntity.pos());
         }
     }
@@ -649,9 +664,21 @@ public class CEChunk {
                     }
                 }
             }
-        } else {
+        } else if (!this.dynamicBlockEntityRenderers.isEmpty()) {
             this.removeDynamicBlockEntityRenderer(blockEntity.pos());
         }
+    }
+
+    @Nullable
+    public Boolean isSyncBlockEntitySleeping(BlockPos pos) {
+        ReplaceableTickingBlockEntity ticker = this.tickingSyncBlockEntitiesByPos.get(pos);
+        return ticker == null ? null : ticker.isSleeping();
+    }
+
+    @Nullable
+    public Boolean isAsyncBlockEntitySleeping(BlockPos pos) {
+        ReplaceableTickingBlockEntity ticker = this.tickingAsyncBlockEntitiesByPos.get(pos);
+        return ticker == null ? null : ticker.isSleeping();
     }
 
     protected void removeSyncBlockEntityTicker(BlockPos pos) {

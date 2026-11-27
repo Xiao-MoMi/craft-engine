@@ -111,7 +111,7 @@ public final class SurfaceSpreadingBlockBehavior extends BukkitBlockBehavior imp
 
     private static boolean canPropagate(Object state, Object level, Object pos) {
         Object blockPos = BlockPosProxy.INSTANCE.relative(pos, DirectionProxy.UP);
-        return canBeGrass(state, level, pos) && !FluidStateProxy.INSTANCE.is$0(BlockGetterProxy.INSTANCE.getFluidState(level, blockPos), FluidTagsProxy.WATER);
+        return canBeGrass(state, level, pos) && !FluidStateProxy.INSTANCE.is$1(BlockGetterProxy.INSTANCE.getFluidState(level, blockPos), FluidTagsProxy.WATER);
     }
 
     private static class Factory implements BlockBehaviorFactory<SurfaceSpreadingBlockBehavior> {

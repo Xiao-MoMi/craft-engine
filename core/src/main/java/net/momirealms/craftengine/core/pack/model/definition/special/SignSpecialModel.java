@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class SignSpecialModel implements SpecialModel {
@@ -60,6 +61,28 @@ public final class SignSpecialModel implements SpecialModel {
             json.addProperty("texture", texture);
         }
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof SignSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.type, that.type)
+                && Objects.equals(this.attachment, that.attachment)
+                && Objects.equals(this.woodType, that.woodType)
+                && Objects.equals(this.texture, that.texture);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.type);
+        result = 31 * result + Objects.hashCode(this.attachment);
+        result = 31 * result + Objects.hashCode(this.woodType);
+        return 31 * result + Objects.hashCode(this.texture);
     }
 
     private static class Factory implements SpecialModelFactory<SignSpecialModel> {

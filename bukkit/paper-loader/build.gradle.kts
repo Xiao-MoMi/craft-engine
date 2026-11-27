@@ -37,7 +37,6 @@ dependencies {
 
     implementation(libs.sparrow.minimessage)
     implementation(libs.sparrow.util)
-    implementation(libs.nms.helper.mojmap)
     implementation(libs.itembridge)
     implementation(libs.levelerbridge)
     implementation(files("${rootProject.rootDir}/libs/jni-internal-lookup-${versionOf("jni-internal-lookup")}.jar"))
@@ -106,6 +105,7 @@ paper {
         register("AdvancedItems") { required = false }
         register("AzureFlow") { required = false }
         register("Baikiruto") { required = false }
+        register("BreweryX") { required = false }
         register("CrazyVouchers") { required = false }
         register("CustomCrafting") { required = false }
         register("CustomFishing") { required = false }
@@ -134,6 +134,7 @@ paper {
         register("PxRpg") { required = false }
         register("Ratziel") { required = false }
         register("Reforges") { required = false }
+        register("RPGItems") { required = false }
         register("Sertraline") { required = false }
         register("Slimefun") { required = false }
         register("StatTrackers") { required = false }

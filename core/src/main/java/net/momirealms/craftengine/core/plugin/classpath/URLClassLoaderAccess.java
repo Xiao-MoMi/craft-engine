@@ -3,12 +3,10 @@ package net.momirealms.craftengine.core.plugin.classpath;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collection;
 
 public abstract class URLClassLoaderAccess {
 
@@ -71,58 +69,32 @@ public abstract class URLClassLoaderAccess {
     }
 
     private static class Lookup extends URLClassLoaderAccess {
-        private static final MethodHandles.Lookup LOOKUP;
+        private static final MethodHandle ADD_URL_METHOD;
 
         static {
-            MethodHandles.Lookup lookup;
+            MethodHandle addUrlMethod;
             try {
-                lookup = ReflectionUtils.LOOKUP;
+                addUrlMethod = ReflectionUtils.LOOKUP.unreflect(URLClassLoader.class.getDeclaredMethod("addURL", URL.class));
             } catch (Throwable t) {
-                lookup = null;
+                addUrlMethod = null;
             }
-            LOOKUP = lookup;
+            ADD_URL_METHOD = addUrlMethod;
         }
 
         private static boolean isSupported() {
-            return LOOKUP != null;
+            return ADD_URL_METHOD != null;
         }
 
-        private final Collection<URL> unopenedURLs;
-        private final Collection<URL> pathURLs;
-
-        @SuppressWarnings("unchecked")
         Lookup(URLClassLoader classLoader) {
             super(classLoader);
-
-            Collection<URL> unopenedURLs;
-            Collection<URL> pathURLs;
-            try {
-                Object ucp = fetchField(URLClassLoader.class, classLoader, "ucp");
-                unopenedURLs = (Collection<URL>) fetchField(ucp.getClass(), ucp, "unopenedUrls");
-                pathURLs = (Collection<URL>) fetchField(ucp.getClass(), ucp, "path");
-            } catch (Throwable e) {
-                unopenedURLs = null;
-                pathURLs = null;
-            }
-
-            this.unopenedURLs = unopenedURLs;
-            this.pathURLs = pathURLs;
-        }
-
-        private static Object fetchField(final Class<?> clazz, final Object object, final String name) throws Throwable {
-            Field field = clazz.getDeclaredField(name);
-            return LOOKUP.unreflectGetter(field).invoke(object);
         }
 
         @Override
         public void addURL(@NotNull URL url) {
-            if (this.unopenedURLs == null || this.pathURLs == null) {
-                URLClassLoaderAccess.throwError(new NullPointerException("unopenedURLs or pathURLs"));
-            }
-
-            synchronized (this.unopenedURLs)  {
-                this.unopenedURLs.add(url);
-                this.pathURLs.add(url);
+            try {
+                ADD_URL_METHOD.invokeExact(super.classLoader, url);
+            } catch (Throwable e) {
+                URLClassLoaderAccess.throwError(e);
             }
         }
     }

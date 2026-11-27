@@ -4,25 +4,15 @@ import net.momirealms.craftengine.bukkit.world.FoliaCEWorld;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.BlockEntityController;
-import net.momirealms.craftengine.core.block.entity.tick.BlockEntityTicker;
-import net.momirealms.craftengine.core.block.entity.tick.DefaultTickingBlockEntity;
-import net.momirealms.craftengine.core.block.entity.tick.ReplaceableTickingBlockEntity;
-import net.momirealms.craftengine.core.block.entity.tick.TickingBlockEntity;
-import net.momirealms.craftengine.core.util.TickersList;
-import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.block.entity.tick.*;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.chunk.CESection;
 import net.momirealms.sparrow.nbt.ListTag;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class FoliaCEChunk extends BukkitCEChunk {
-    private final TickersList<TickingBlockEntity> tickingBlockEntities = VersionHelper.hasFoliaPatch ? new TickersList<>() : null;
-    private final List<TickingBlockEntity> pendingTickingBlockEntities = VersionHelper.hasFoliaPatch ? new ArrayList<>() : null;
-    private volatile boolean isTickingBlockEntities = false;
+    private final BlockEntityTickerScheduler tickingBlockEntities = new BlockEntityTickerScheduler();
 
     public FoliaCEChunk(CEWorld world, ChunkPos chunkPos) {
         super(world, chunkPos);
@@ -35,12 +25,13 @@ public final class FoliaCEChunk extends BukkitCEChunk {
     // folia 同步 ticker 在区域线程执行，异步 ticker 交给世界异步 tick 列表
     @Override
     public void replaceOrCreateTickingBlockEntity(BlockEntity blockEntity) {
+        if (!this.activated) return;
         ImmutableBlockState blockState = blockEntity.blockState();
         BlockEntityController controller = blockEntity.controller;
         BlockEntityTicker<BlockEntityController> syncTicker = controller.createBlockEntityTicker(this.world, blockState);
         if (syncTicker != null) {
             super.tickingSyncBlockEntitiesByPos.compute(blockEntity.pos(), ((pos, previousTicker) -> {
-                TickingBlockEntity newTicker = new DefaultTickingBlockEntity<>(this, blockEntity, syncTicker);
+                TickingBlockEntity newTicker = new DefaultTickingBlockEntity<>(this, blockEntity, syncTicker, false);
                 if (previousTicker != null) {
                     previousTicker.setTicker(newTicker);
                     return previousTicker;
@@ -73,33 +64,11 @@ public final class FoliaCEChunk extends BukkitCEChunk {
         }
     }
 
-    @SuppressWarnings("DuplicatedCode")
     public void tickBlockEntities() {
-        this.isTickingBlockEntities = true;
-        if (!this.pendingTickingBlockEntities.isEmpty()) {
-            this.tickingBlockEntities.addAll(this.pendingTickingBlockEntities);
-            this.pendingTickingBlockEntities.clear();
-        }
-        if (!this.tickingBlockEntities.isEmpty()) {
-            Object[] entities = this.tickingBlockEntities.elements();
-            for (int i = 0, size = this.tickingBlockEntities.size(); i < size; i++) {
-                TickingBlockEntity entity = (TickingBlockEntity) entities[i];
-                if (entity.isValid()) {
-                    entity.tick();
-                } else {
-                    this.tickingBlockEntities.markAsRemoved(i);
-                }
-            }
-            this.tickingBlockEntities.removeMarkedEntries();
-        }
-        this.isTickingBlockEntities = false;
+        if (this.isBlockTicking()) this.tickingBlockEntities.tick();
     }
 
     private void addBlockEntityTicker(TickingBlockEntity ticker) {
-        if (this.isTickingBlockEntities) {
-            this.pendingTickingBlockEntities.add(ticker);
-        } else {
-            this.tickingBlockEntities.add(ticker);
-        }
+        this.tickingBlockEntities.add(ticker);
     }
 }

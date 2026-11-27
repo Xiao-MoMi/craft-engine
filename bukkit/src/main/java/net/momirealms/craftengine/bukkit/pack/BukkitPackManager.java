@@ -1,21 +1,34 @@
 package net.momirealms.craftengine.bukkit.pack;
 
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
+import net.momirealms.craftengine.bukkit.api.event.AsyncExternalItemModelsCollectEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackCacheEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackGenerateEvent;
 import net.momirealms.craftengine.bukkit.api.event.AsyncResourcePackPrepareEvent;
+import net.momirealms.craftengine.bukkit.pack.bedrock.block.BukkitWorldBlockSources;
+import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemBehaviorReader;
+import net.momirealms.craftengine.bukkit.pack.bedrock.item.BukkitItemRegistrationReader;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.pack.AbstractPackManager;
+import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.PackCacheData;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockPackPlan;
+import net.momirealms.craftengine.core.pack.bedrock.block.WorldBlockPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlan;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRegistrationPlanGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.model.NativeModelSource;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
-import net.momirealms.craftengine.core.pack.obfuscation.ObfA;
+import net.momirealms.craftengine.core.plugin.compatibility.ModelProvider;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.Base64Utils;
+import net.momirealms.craftengine.core.util.MagicNumbers;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -24,10 +37,13 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public final class BukkitPackManager extends AbstractPackManager implements Listener {
@@ -39,8 +55,46 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     }
 
     @Override
+    protected BedrockPackPlan prepareBedrockPack(JavaModelResources resources) throws IOException {
+        ItemRegistrationPlan items = this.planItems(resources);
+        WorldBlockPlan blocks = BukkitWorldBlockSources.plan(this.plugin, resources.blockModels());
+        return new BedrockPackPlan(items, blocks, this.collectNativeModels(), this.plugin.blockManager().soundReplacements());
+    }
+
+    private ItemRegistrationPlan planItems(JavaModelResources resources) throws IOException {
+        AsyncExternalItemModelsCollectEvent event = new AsyncExternalItemModelsCollectEvent(resources.pack().version());
+        EventUtils.fireAndForget(event);
+        Map<String, List<ExternalItemModel>> externalModels = event.freeze();
+        List<ExternalItemModel> configuredModels = Config.bedrockExternalItemModels();
+        if (!configuredModels.isEmpty()) {
+            externalModels = new HashMap<>(externalModels);
+            externalModels.put("config.yml:bedrock.item.external", configuredModels);
+        }
+        return ItemRegistrationPlanGenerator.generate(
+                resources,
+                this.plugin.itemManager().loadedItems().values(),
+                this.plugin.itemManager().vanillaItems(),
+                new BukkitItemBehaviorReader(),
+                new BukkitItemRegistrationReader(),
+                externalModels,
+                key -> this.plugin.itemManager().getVanillaItem(key).map(item -> item.buildItem(ItemBuildContext.empty(), 1)).orElse(null)
+        );
+    }
+
+    @Override
     protected void dispatchCacheEvent(PackCacheData cacheData) {
         EventUtils.fireAndForget(new AsyncResourcePackCacheEvent(cacheData));
+    }
+
+    private List<NativeModelSource> collectNativeModels() throws IOException {
+        List<NativeModelSource> sources = new ArrayList<>();
+        for (String name : List.of("better_model", "model_engine")) {
+            ModelProvider provider = this.plugin.compatibilityManager().getModelProvider(name);
+            if (provider != null) {
+                sources.addAll(provider.bedrockModels());
+            }
+        }
+        return sources;
     }
 
     @Override
@@ -86,7 +140,7 @@ public final class BukkitPackManager extends AbstractPackManager implements List
     @Override
     public void sendResourcePack(Player player) {
         sendResourcePackAsync(player).exceptionally(t -> {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("host.get_url_failed", player.name()), t);
+            this.plugin.logger().warn(TranslationManager.message("host.get_url_failed", player.name()), t);
             return null;
         });
     }
@@ -128,6 +182,6 @@ public final class BukkitPackManager extends AbstractPackManager implements List
 
     @Override
     public String toString() {
-        return new String(Base64Utils.decode(ObfA.VALUES, Integer.parseInt(String.valueOf(ObfA.VALUES[71]).substring(0, 1))), StandardCharsets.UTF_8);
+        return new String(Base64Utils.decode(MagicNumbers.VALUES, Integer.parseInt(String.valueOf(MagicNumbers.VALUES[71]).substring(0, 1))), StandardCharsets.UTF_8);
     }
 }

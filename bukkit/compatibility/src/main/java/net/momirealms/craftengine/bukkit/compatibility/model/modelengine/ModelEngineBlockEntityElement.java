@@ -4,6 +4,7 @@ import com.ticxo.modelengine.api.ModelEngineAPI;
 import com.ticxo.modelengine.api.entity.Dummy;
 import com.ticxo.modelengine.api.model.ActiveModel;
 import com.ticxo.modelengine.api.model.ModeledEntity;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.AbstractConstantBlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.world.BlockPos;
@@ -21,7 +22,16 @@ public final class ModelEngineBlockEntityElement extends AbstractConstantBlockEn
         super(config.predicate, config.hasCondition);
         this.config = config;
         Vector3f position = config.position();
-        this.location = new Location((org.bukkit.World) world.platformWorld(), pos.x() + (double) position.x, pos.y() + (double) position.y, pos.z() + (double) position.z, config.yaw(), config.pitch());
+        double x = pos.x() + (double) position.x;
+        double y = pos.y() + (double) position.y;
+        double z = pos.z() + (double) position.z;
+        if (config.offset.type() != BlockEntityRenderOffset.Type.NONE) {
+            long offsetSeed = config.offset.seed(pos);
+            x += config.offset.x(offsetSeed);
+            y += config.offset.y(offsetSeed);
+            z += config.offset.z(offsetSeed);
+        }
+        this.location = new Location((org.bukkit.World) world.platformWorld(), x, y, z, config.yaw(), config.pitch());
         this.dummy = createDummy();
     }
 

@@ -45,6 +45,7 @@ public abstract class AbstractFontManager implements FontManager {
     private final Map<Key, BitmapImage> bitmapImages = new ConcurrentHashMap<>();
     private final Map<Key, Image> images = new ConcurrentHashMap<>();
     private final Map<String, Image> imagesByValue = new ConcurrentHashMap<>();
+    private final Map<Key, Image> bedrockUiImages = new ConcurrentHashMap<>();
     private final Set<Integer> illegalChars = new HashSet<>();
     private final ConfigParser imageParser;
     private final ConfigParser emojiParser;
@@ -115,6 +116,20 @@ public abstract class AbstractFontManager implements FontManager {
     }
 
     @Override
+    public Map<Key, Image> bedrockUiImages() {
+        return Collections.unmodifiableMap(this.bedrockUiImages);
+    }
+
+    private void registerImage(Key id, Image image, boolean bedrockUiImage) {
+        this.images.put(id, image);
+        this.imagesByValue.put(id.value(), image);
+        this.cachedImagesSuggestions.add(Suggestion.suggestion(id.asString()));
+        if (bedrockUiImage) {
+            this.bedrockUiImages.put(id, image);
+        }
+    }
+
+    @Override
     public Map<Key, Emoji> emojis() {
         return Collections.unmodifiableMap(this.emojis);
     }
@@ -125,6 +140,7 @@ public abstract class AbstractFontManager implements FontManager {
         this.bitmapImages.clear();
         this.images.clear();
         this.imagesByValue.clear();
+        this.bedrockUiImages.clear();
         this.cachedImagesSuggestions.clear();
         this.illegalChars.clear();
         this.emojis.clear();
@@ -530,9 +546,12 @@ public abstract class AbstractFontManager implements FontManager {
         private static final String[] HEIGHT = ConfigKeys.of("height|scale|scale_ratio");
         private static final String[] ASCENT = ConfigKeys.of("ascent|y_position");
         private static final String[] GRID_SIZE = ConfigKeys.of("grid_size");
+        private static final String[] UI_IMAGE = ConfigKeys.of("ui_image");
 
         @Override
         public void parseSection(@NotNull Pack pack, @NotNull Path path, @NotNull Key id, @NotNull ConfigSection section) {
+            ConfigSection bedrock = section.getSection("bedrock");
+            boolean uiImage = bedrock != null && bedrock.getBoolean(UI_IMAGE);
             // 引用类型的
             boolean special = false; // 只填了个id没填命名空间的傻缺
             String ref = section.getString("ref");
@@ -584,9 +603,7 @@ public abstract class AbstractFontManager implements FontManager {
                     }), refId, row, col);
                 }
 
-                AbstractFontManager.this.images.put(id, referenceImage);
-                AbstractFontManager.this.imagesByValue.put(id.value(), referenceImage);
-                AbstractFontManager.this.cachedImagesSuggestions.add(Suggestion.suggestion(id.asString()));
+                AbstractFontManager.this.registerImage(id, referenceImage, uiImage);
                 return;
             }
 
@@ -759,9 +776,7 @@ public abstract class AbstractFontManager implements FontManager {
                     }
 
                     AbstractFontManager.this.bitmapImages.put(id, bitmapImage);
-                    AbstractFontManager.this.images.put(id, bitmapImage);
-                    AbstractFontManager.this.imagesByValue.put(id.value(), bitmapImage);
-                    AbstractFontManager.this.cachedImagesSuggestions.add(Suggestion.suggestion(id.asString()));
+                    AbstractFontManager.this.registerImage(id, bitmapImage, uiImage);
 
                 }, super.errorHandler);
             }, AbstractFontManager.this.plugin.scheduler().async()));

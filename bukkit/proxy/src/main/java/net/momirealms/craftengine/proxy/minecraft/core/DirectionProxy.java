@@ -29,6 +29,15 @@ public interface DirectionProxy {
     @MethodInvoker(name = "getOpposite")
     Object getOpposite(Object target);
 
+    @MethodInvoker(name = "getStepX")
+    int getStepX(Object target);
+
+    @MethodInvoker(name = "getStepY")
+    int getStepY(Object target);
+
+    @MethodInvoker(name = "getStepZ")
+    int getStepZ(Object target);
+
     @MethodInvoker(name = "orderedByNearest", isStatic = true)
     Enum<?>[] orderedByNearest(@Type(clazz = EntityProxy.class) Object entity);
 }

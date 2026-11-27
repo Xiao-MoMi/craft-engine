@@ -5,8 +5,10 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.item.processor.ItemProcessorFactory;
-import net.momirealms.craftengine.core.item.processor.SimpleNetworkItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -27,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
+public sealed interface LoreProcessor extends NetworkItemProcessor
         permits LoreProcessor.EmptyLoreProcessor, LoreProcessor.CompositeLoreProcessor, LoreProcessor.DoubleLoreProcessor, LoreProcessor.SingleLoreProcessor {
     ItemProcessorFactory<LoreProcessor> FACTORY = new LoreFactory();
     Object[] NBT_PATH = new Object[]{"display", "Lore"};
@@ -124,6 +126,11 @@ public sealed interface LoreProcessor extends SimpleNetworkItemProcessor
     }
 
     non-sealed class EmptyLoreProcessor implements LoreProcessor {
+
+        @Override
+        public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+            return false;
+        }
 
         @Override
         public void apply(ItemBuildContext context) {

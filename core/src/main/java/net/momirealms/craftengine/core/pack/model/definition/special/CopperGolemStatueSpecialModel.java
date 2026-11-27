@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.pack.model.definition.special;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import java.util.Objects;
 
 public final class CopperGolemStatueSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<CopperGolemStatueSpecialModel> FACTORY = new Factory();
@@ -30,6 +31,24 @@ public final class CopperGolemStatueSpecialModel implements SpecialModel {
         json.addProperty("pose", this.pose);
         json.addProperty("texture", this.texture);
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof CopperGolemStatueSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.pose, that.pose)
+                && Objects.equals(this.texture, that.texture);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.pose);
+        return 31 * result + Objects.hashCode(this.texture);
     }
 
     private static class Factory implements SpecialModelFactory<CopperGolemStatueSpecialModel> {

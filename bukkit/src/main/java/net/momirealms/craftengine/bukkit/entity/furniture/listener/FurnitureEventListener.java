@@ -115,6 +115,7 @@ public final class FurnitureEventListener implements Listener {
     // 非持久化的 Collider 不应依赖原版实体存档/卸载流程替我们销毁。
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onEntitiesUnload(EntitiesUnloadEvent event) {
+        Chunk chunk = event.getChunk();
         List<Entity> entities = event.getEntities();
         for (int i = 0, size = entities.size(); i < size; i++) {
             Entity entity = entities.get(i);
@@ -124,6 +125,12 @@ public final class FurnitureEventListener implements Listener {
                 this.manager.unregisterColliderEntity(entity);
                 entity.remove();
             }
+        }
+        CEWorld world = this.worldManager.getStorageWorld(event.getWorld());
+        if (world == null) return;
+        CEChunk ceChunk = world.getChunkAtIfLoaded(chunk.getX(), chunk.getZ());
+        if (ceChunk != null) {
+            ceChunk.setEntitiesLoaded(false);
         }
     }
 

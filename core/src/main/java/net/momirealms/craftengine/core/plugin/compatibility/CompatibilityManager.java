@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ClientboundItemRewriter;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.util.Direction;
 import net.momirealms.craftengine.core.world.WorldPosition;
@@ -39,6 +40,9 @@ public interface CompatibilityManager {
     String parse(Player player1, Player player2, String text);
 
     int getViaVersionProtocolVersion(NetWorkUser user);
+
+    @Nullable
+    ClientboundItemRewriter getViaVersionClientboundItemRewriter(NetWorkUser user, int serverProtocol, int clientProtocol);
 
     TagResolver[] createExternalTagResolvers();
 

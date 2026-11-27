@@ -12,9 +12,15 @@ public final class HashUtils {
     private HashUtils() {}
 
     public static String sha1(Path filePath) {
+        return sha1(filePath, new byte[8192]);
+    }
+
+    public static String sha1(Path filePath, byte[] buffer) {
+        if (buffer.length == 0) {
+            throw new IllegalArgumentException("Hash buffer must not be empty");
+        }
         try (InputStream is = Files.newInputStream(filePath)) {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] buffer = new byte[8192];
             int len;
             while ((len = is.read(buffer)) != -1) {
                 md.update(buffer, 0, len);

@@ -1,0 +1,154 @@
+package net.momirealms.craftengine.bedrock.geyser.item.predicate;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import org.geysermc.geyser.api.predicate.MinecraftPredicate;
+import org.geysermc.geyser.api.predicate.context.item.ChargedProjectile;
+import org.geysermc.geyser.api.predicate.context.item.ItemPredicateContext;
+import org.geysermc.geyser.api.predicate.item.ItemConditionPredicate;
+import org.geysermc.geyser.api.predicate.item.ItemMatchPredicate;
+import org.geysermc.geyser.api.util.Identifier;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+import java.util.function.ToDoubleFunction;
+
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+
+public final class GeyserItemPredicates {
+
+    private GeyserItemPredicates() {
+    }
+
+    public static String property(JsonObject condition) {
+        String property = condition.get(PROPERTY).getAsString();
+        return property.startsWith("minecraft:") ? property.substring(10) : property;
+    }
+
+    public static MinecraftPredicate<ItemPredicateContext> read(JsonObject condition) {
+        String property = property(condition);
+        // condition
+        if (condition.has(EXPECTED)) {
+            return readBoolean(condition, property);
+        }
+        // select
+        if (condition.has(VALUES)) {
+            return readSelect(condition, property);
+        }
+        // range_dispatch
+        return readRange(condition, property);
+    }
+
+    private static MinecraftPredicate<ItemPredicateContext> readBoolean(JsonObject condition, String property) {
+        if (property.equals("selected")) {
+            return new Selected(condition.get(EXPECTED).getAsBoolean());
+        }
+        MinecraftPredicate<ItemPredicateContext> predicate = switch (property) {
+            case "custom_model_data" -> {
+                int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                yield context -> context.customModelDataFlag(index);
+            }
+            case "broken" -> ItemConditionPredicate.BROKEN;
+            case "damaged" -> context -> !context.unbreakable() && context.maxDamage() > 0 && context.damage() > 0;
+            case "fishing_rod/cast" -> ItemConditionPredicate.FISHING_ROD_CAST;
+            case "has_component" -> {
+                if (condition.has("ignore_default") && condition.get("ignore_default").getAsBoolean()) {
+                    throw new UnsupportedOperationException(GeyserTranslationManager.message("item.reason.default_components"));
+                }
+                yield ItemConditionPredicate.hasComponent(Identifier.of(condition.get("component").getAsString()));
+            }
+            default -> throw unsupported(property);
+        };
+        return condition.get(EXPECTED).getAsBoolean() ? predicate : predicate.negate();
+    }
+
+    private static MinecraftPredicate<ItemPredicateContext> readSelect(JsonObject condition, String property) {
+        JsonElement negatedValue = condition.get(NEGATED);
+        boolean negated = negatedValue != null && negatedValue.getAsBoolean();
+        if (property.equals("context_dimension")) {
+            List<String> dimensions = new ArrayList<>();
+            for (JsonElement value : condition.getAsJsonArray(VALUES)) {
+                dimensions.add(Identifier.of(value.getAsString()).toString());
+            }
+            return new Dimension(List.copyOf(dimensions), negated);
+        }
+        List<MinecraftPredicate<ItemPredicateContext>> predicates = new ArrayList<>();
+        for (JsonElement value : condition.getAsJsonArray(VALUES)) {
+            MinecraftPredicate<ItemPredicateContext> predicate = switch (property) {
+                case "custom_model_data" -> {
+                    int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                    String expected = value.getAsString();
+                    yield context -> expected.equals(context.customModelDataString(index));
+                }
+                case "trim_material" -> ItemMatchPredicate.trimMaterial(Identifier.of(value.getAsString()));
+                case "charge_type" -> ItemMatchPredicate.chargeType(ChargedProjectile.ChargeType.valueOf(value.getAsString().toUpperCase(Locale.ROOT)));
+                default -> throw unsupported(property);
+            };
+            predicates.add(predicate);
+        }
+        return context -> {
+            for (MinecraftPredicate<ItemPredicateContext> predicate : predicates) {
+                if (predicate.test(context)) {
+                    return !negated;
+                }
+            }
+            return negated;
+        };
+    }
+
+    private static MinecraftPredicate<ItemPredicateContext> readRange(JsonObject condition, String property) {
+        ToDoubleFunction<ItemPredicateContext> value = switch (property) {
+            case "custom_model_data" -> {
+                int index = condition.has("index") ? condition.get("index").getAsInt() : 0;
+                yield context -> context.customModelDataFloat(index);
+            }
+            case "damage" -> {
+                boolean normalize = !condition.has("normalize") || condition.get("normalize").getAsBoolean();
+                yield context -> normalize ? (float) context.damage() / Math.max(1, context.maxDamage()) : context.damage();
+            }
+            case "count" -> {
+                boolean normalize = !condition.has("normalize") || condition.get("normalize").getAsBoolean();
+                yield context -> normalize ? (float) context.count() / context.maxStackSize() : context.count();
+            }
+            case "bundle/fullness" -> ItemPredicateContext::bundleFullness;
+            default -> throw unsupported(property);
+        };
+        JsonElement scaleValue = condition.get(SCALE);
+        float scale = scaleValue == null ? 1.0f : scaleValue.getAsFloat();
+        JsonElement minimum = condition.get(MIN_INCLUSIVE);
+        JsonElement maximum = condition.get(MAX_EXCLUSIVE);
+        Float min = minimum == null ? null : minimum.getAsFloat();
+        Float max = maximum == null ? null : maximum.getAsFloat();
+        return context -> {
+            float scaled = (float) value.applyAsDouble(context) * scale;
+            return (min == null || scaled >= min) && (max == null || !(scaled >= max));
+        };
+    }
+
+    private static UnsupportedOperationException unsupported(String property) {
+        return new UnsupportedOperationException(GeyserTranslationManager.message("item.reason.condition", property));
+    }
+
+    public static boolean requiresSession(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof SessionPredicate;
+    }
+
+    public static boolean usesSelection(MinecraftPredicate<? super ItemPredicateContext> predicate) {
+        return predicate instanceof SelectionPredicate;
+    }
+
+    public static MinecraftPredicate<? super ItemPredicateContext> bind(
+            MinecraftPredicate<? super ItemPredicateContext> predicate,
+            Supplier<String> dimension,
+            BooleanSupplier selected
+    ) {
+        if (predicate instanceof SessionPredicate sessionPredicate) {
+            return sessionPredicate.bind(dimension, selected);
+        }
+        return predicate;
+    }
+}

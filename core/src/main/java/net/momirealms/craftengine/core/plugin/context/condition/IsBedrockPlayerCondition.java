@@ -5,7 +5,6 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.context.Condition;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.parameter.DirectContextParameters;
-import net.momirealms.craftengine.core.util.GameEdition;
 
 public final class IsBedrockPlayerCondition<CTX extends Context> implements Condition<CTX> {
     public static final IsBedrockPlayerCondition<Context> INSTANCE = new IsBedrockPlayerCondition<>();
@@ -15,8 +14,7 @@ public final class IsBedrockPlayerCondition<CTX extends Context> implements Cond
     @Override
     public boolean test(CTX ctx) {
         return ctx.getOptionalParameter(DirectContextParameters.PLAYER)
-                .map(Player::gameEdition)
-                .map(edition -> edition == GameEdition.BEDROCK)
+                .map(Player::isBedrockPlayer)
                 .orElse(false);
     }
 

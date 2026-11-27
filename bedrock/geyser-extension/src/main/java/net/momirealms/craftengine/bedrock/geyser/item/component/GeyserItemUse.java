@@ -1,0 +1,107 @@
+package net.momirealms.craftengine.bedrock.geyser.item.component;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import org.cloudburstmc.nbt.NbtMap;
+import org.cloudburstmc.nbt.NbtMapBuilder;
+import org.cloudburstmc.nbt.NbtType;
+import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+
+final class GeyserItemUse {
+    private static final Set<String> SPEAR_ITEMS = Set.of(
+            "minecraft:wooden_spear",
+            "minecraft:stone_spear",
+            "minecraft:copper_spear",
+            "minecraft:iron_spear",
+            "minecraft:golden_spear",
+            "minecraft:diamond_spear",
+            "minecraft:netherite_spear"
+    );
+
+    private GeyserItemUse() {
+    }
+
+    @Nullable
+    static GeyserItemComponentPatch read(@Nullable JsonObject behavior, JsonObject components, String itemType) {
+        if (behavior == null) {
+            return null;
+        }
+        JsonObject use = behavior.getAsJsonObject(USE);
+        String animation = use.get(ANIMATION).getAsString();
+        int ticks = maximumDurationTicks(use);
+        int chargeTicks = chargeDurationTicks(use);
+        boolean using = !animation.equals("NONE") || ticks > 0 || use.get(NATIVE_USE_ON_RELEASE).getAsBoolean();
+        boolean spearUse = animation.equals("SPEAR");
+        boolean spearPose = spearUse || SPEAR_ITEMS.contains(itemType);
+        JsonElement kinetic = components.get("minecraft:kinetic_weapon");
+        Boolean kineticEnabled = kinetic == null ? null : !kinetic.isJsonNull();
+        return (data, mappings) -> {
+            NbtMap original = data.getCompound("components");
+            NbtMapBuilder converted = original.toBuilder();
+            NbtMapBuilder properties = original.getCompound("item_properties").toBuilder();
+            // 标签决定玩家姿态；移除持续攻击组件不应连带移除原版长矛的持握姿态。
+            List<String> tags = original.getList("item_tags", NbtType.STRING);
+            if (spearPose && !tags.contains("minecraft:is_spear")) {
+                List<String> updatedTags = new ArrayList<>(tags);
+                updatedTags.add("minecraft:is_spear");
+                converted.putList("item_tags", NbtType.STRING, updatedTags);
+            }
+            if (!using) {
+                converted.remove("minecraft:use_modifiers");
+                properties.remove("use_duration");
+            } else if (animation.equals("TRIDENT") && itemType.equals("minecraft:trident")) {
+                GeyserConsumableComponents.tridentUse(converted, properties, ticks);
+            } else {
+                NbtMapBuilder modifiers = NbtMap.builder();
+                boolean hasKinetic = kineticEnabled != null ? kineticEnabled : original.containsKey("minecraft:kinetic_weapon");
+                if (spearUse && hasKinetic) {
+                    // 仅借用当前协议的使用入口，武器阶段数据只由 kinetic_weapon 转换器生成。
+                    String templateType = SPEAR_ITEMS.contains(itemType) ? itemType : "minecraft:iron_spear";
+                    ItemDefinition template = mappings.getDefinition(templateType);
+                    if (template != null) {
+                        modifiers.putAll(template.getComponentData().getCompound("components").getCompound("minecraft:use_modifiers"));
+                    }
+                }
+                modifiers.putAll(original.getCompound("minecraft:use_modifiers"));
+                if (!modifiers.isEmpty()) {
+                    // 由 shooter 决定能否开始使用，避免无弹药时 use_modifiers 仍启动拉弓。
+                    if (original.containsKey("minecraft:shooter")) {
+                        modifiers.putString("start_using", "if_first");
+                        NbtMap shooter = original.getCompound("minecraft:shooter");
+                        // 弩的装填时长必须为正，客户端才会阻止无弹药时继续启动 use_modifiers。
+                        if (shooter.getBoolean("charge_on_draw") && chargeTicks > 0) {
+                            converted.putCompound("minecraft:shooter", shooter.toBuilder()
+                                    .putFloat("max_draw_duration", chargeTicks / 20f).build());
+                        }
+                    }
+                    modifiers.putFloat("use_duration", ticks / 20f);
+                    converted.putCompound("minecraft:use_modifiers", modifiers.build());
+                    properties.putInt("use_duration", ticks);
+                }
+            }
+            converted.putCompound("item_properties", properties.build());
+            return data.toBuilder().putCompound("components", converted.build()).build();
+        };
+    }
+
+    static int maximumDurationTicks(JsonObject use) {
+        JsonElement ticks = use.get(MAX_DURATION_TICKS);
+        return ticks != null ? ticks.getAsInt() : use.getAsJsonObject("maximumDuration").get("value").getAsInt();
+    }
+
+    private static int chargeDurationTicks(JsonObject use) {
+        JsonElement ticks = use.get(CHARGE_DURATION_TICKS);
+        if (ticks != null) {
+            return ticks.getAsInt();
+        }
+        JsonObject chargeDuration = use.getAsJsonObject("chargeDuration");
+        return chargeDuration == null ? 0 : chargeDuration.get("value").getAsInt();
+    }
+}

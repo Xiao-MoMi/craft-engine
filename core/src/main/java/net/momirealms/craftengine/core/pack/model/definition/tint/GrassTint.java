@@ -32,6 +32,24 @@ public final class GrassTint implements Tint {
         return json;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof GrassTint that)) {
+            return false;
+        }
+        return Float.compare(this.temperature, that.temperature) == 0
+                && Float.compare(this.downfall, that.downfall) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Float.hashCode(this.temperature);
+        return 31 * result + Float.hashCode(this.downfall);
+    }
+
     private static class Factory implements TintFactory<GrassTint> {
 
         @Override

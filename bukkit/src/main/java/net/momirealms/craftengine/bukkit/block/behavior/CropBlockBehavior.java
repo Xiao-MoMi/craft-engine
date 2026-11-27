@@ -35,6 +35,7 @@ import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.context.UseOnContext;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.event.CraftEventFactoryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.Vec3iProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.BlockAndLightGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.LevelProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.WorldGenRegionProxy;
@@ -235,7 +236,7 @@ public final class CropBlockBehavior extends BukkitBlockBehavior implements Bone
                 success = CraftEventFactoryProxy.INSTANCE.handleBlockGrowEvent(level, pos, customState.with(this.ageProperty, after).customBlockState().minecraftState());
             }
             if (sendParticles && success) {
-                world.spawnParticle(ParticleUtils.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25);
+                ParticleUtils.broadcastParticles(level, ParticleTypesProxy.HAPPY_VILLAGER, x + 0.5, y + 0.5, z + 0.5, 15, 0.25, 0.25, 0.25, 1);
             }
         }
     }

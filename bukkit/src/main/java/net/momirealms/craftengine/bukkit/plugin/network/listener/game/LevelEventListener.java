@@ -5,6 +5,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import net.momirealms.craftengine.bukkit.block.BukkitBlockManager;
 import net.momirealms.craftengine.bukkit.util.BlockStateUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
+import net.momirealms.craftengine.bukkit.util.ParticleUtils;
+import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
@@ -16,6 +18,7 @@ import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.core.world.chunk.client.ClientChunk;
+import net.momirealms.craftengine.core.world.particle.ParticleConfig;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.ClientboundSoundPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.sounds.SoundEventProxy;
@@ -27,10 +30,14 @@ import org.bukkit.Location;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class LevelEventListener implements ByteBufferPacketListener {
     private static final Cache<WorldBlockPos, Integer> IGNORED_EVENTS = Caffeine.newBuilder()
             .expireAfterWrite(Duration.ofSeconds(1))
+            .build();
+    private static final Cache<PlayerBreakEffect, AtomicInteger> PLAYER_BREAK_EFFECTS = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofSeconds(1))
             .build();
     private final int[] blockStateMapper;
     private final int[] modBlockStateMapper;
@@ -86,6 +93,24 @@ public final class LevelEventListener implements ByteBufferPacketListener {
                         RandomUtils.generateRandomLong()
                 );
                 user.sendPacket(packet, true);
+                ImmutableBlockState customState = BlockStateUtils.getNullableCustomBlockState(blockState);
+                if (customState != null) {
+                    ParticleConfig particle = customState.settings().particles().breakParticle();
+                    if (particle != null) {
+                        PlayerBreakEffect playerBreak = new PlayerBreakEffect(user.clientSideWorld().uuid(), blockPos, state, user.uuid());
+                        AtomicInteger pending = PLAYER_BREAK_EFFECTS.getIfPresent(playerBreak);
+                        if (pending != null && pending.getAndUpdate(count -> count > 0 ? count - 1 : 0) > 0) {
+                            event.setCancelled(true);
+                            return;
+                        }
+                        Object particles = ParticleUtils.createParticlePacket(particle, blockPos.x(), blockPos.y(), blockPos.z());
+                        if (particles != null) {
+                            user.sendPacket(particles, true);
+                            event.setCancelled(true);
+                            return;
+                        }
+                    }
+                }
             }
             if (newState == state) {
                 return;
@@ -109,6 +134,13 @@ public final class LevelEventListener implements ByteBufferPacketListener {
 
     public static void addTempIgnoredEvent(Location location, int eventId) {
         IGNORED_EVENTS.put(WorldBlockPos.fromLocation(location), eventId);
+    }
+
+    public static void markPlayerBreakEffect(UUID worldId, BlockPos pos, int stateId, UUID viewerId) {
+        PLAYER_BREAK_EFFECTS.get(new PlayerBreakEffect(worldId, pos, stateId, viewerId), ignored -> new AtomicInteger()).incrementAndGet();
+    }
+
+    private record PlayerBreakEffect(UUID worldId, BlockPos pos, int stateId, UUID viewerId) {
     }
 
     public record WorldBlockPos(UUID uuid, BlockPos blockPos) {

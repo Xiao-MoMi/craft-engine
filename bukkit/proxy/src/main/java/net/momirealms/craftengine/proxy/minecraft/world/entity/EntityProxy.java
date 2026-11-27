@@ -1,11 +1,13 @@
 package net.momirealms.craftengine.proxy.minecraft.world.entity;
 
 import net.momirealms.craftengine.proxy.minecraft.world.damagesource.DamageSourceProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.Vec3Proxy;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
 import org.bukkit.entity.Entity;
+import org.bukkit.projectiles.ProjectileSource;
 
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,6 +89,15 @@ public interface EntityProxy {
     @MethodInvoker(name = "getOnPos")
     Object getOnPos(Object target);
 
+    @MethodInvoker(name = "getOnPosLegacy")
+    Object getOnPosLegacy(Object target);
+
+    @FieldGetter(name = "fallDistance", activeIf = "max_version=1.21.4")
+    float getFallDistance$legacy(Object target);
+
+    @FieldGetter(name = "fallDistance", activeIf = "min_version=1.21.5")
+    double getFallDistance(Object target);
+
     @MethodInvoker(name = "getPassengerRidingPosition", activeIf = "min_version=1.20.2")
     Object getPassengerRidingPosition(Object target, @Type(clazz = EntityProxy.class) Object passenger);
 
@@ -117,6 +128,9 @@ public interface EntityProxy {
     @MethodInvoker(name = "isSpectator")
     boolean isSpectator(Object target);
 
+    @MethodInvoker(name = "canSpawnSprintParticle")
+    boolean canSpawnSprintParticle(Object target);
+
     @MethodInvoker(name = "isShiftKeyDown")
     boolean isShiftKeyDown(Object target);
 
@@ -134,6 +148,9 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getDeltaMovement")
     Object getDeltaMovement(Object target);
+
+    @MethodInvoker(name = "getBbWidth")
+    float getBbWidth(Object target);
 
     @MethodInvoker(name = "getSharedFlag")
     boolean getSharedFlag(Object target, int flag);
@@ -156,6 +173,9 @@ public interface EntityProxy {
     @MethodInvoker(name = "getBukkitEntity")
     Entity getBukkitEntity(Object target);
 
+    @FieldSetter(name = "projectileSource")
+    void setProjectileSource(Object target, ProjectileSource source);
+
     @MethodInvoker(name = "isRemoved")
     boolean isRemoved(Object target);
 
@@ -167,6 +187,27 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getBoundingBox")
     Object getBoundingBox(Object target);
+
+    @MethodInvoker(name = "setBoundingBox")
+    void setBoundingBox(Object target, @Type(clazz = AABBProxy.class) Object box);
+
+    @MethodInvoker(name = "setInvisible")
+    void setInvisible(Object target, boolean invisible);
+
+    @MethodInvoker(name = "setSilent")
+    void setSilent(Object target, boolean silent);
+
+    @MethodInvoker(name = "setInvulnerable", activeIf = "max_version=26.2")
+    void setInvulnerable(Object target, boolean invulnerable);
+
+    @MethodInvoker(name = "setPermanentlyInvulnerable", activeIf = "min_version=26.3")
+    void setPermanentlyInvulnerable(Object target, boolean invulnerable);
+
+    @FieldSetter(name = "noPhysics")
+    void setNoPhysics(Object target, boolean noPhysics);
+
+    @MethodInvoker(name = "getEncodeId")
+    String getEncodeId(Object target);
 
     @MethodInvoker(name = "level")
     Object getLevel(Object target);
@@ -200,4 +241,19 @@ public interface EntityProxy {
 
     @MethodInvoker(name = "getPose")
     Object getPose(Object target);
+
+    @ReflectionProxy(name = "net.minecraft.world.entity.Entity$RemovalReason")
+    interface RemovalReasonProxy {
+        RemovalReasonProxy INSTANCE = ASMProxyFactory.create(RemovalReasonProxy.class);
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.Entity$RemovalReason");
+        Object DISCARDED = INSTANCE.getDiscarded();
+
+        @FieldGetter(name = "DISCARDED", isStatic = true)
+        Object getDiscarded();
+    }
+
+    @ReflectionProxy(name = "net.minecraft.world.entity.Entity$MoveFunction")
+    interface MoveFunctionProxy {
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.entity.Entity$MoveFunction");
+    }
 }

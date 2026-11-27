@@ -14,61 +14,85 @@ images:
     ascent: 18
     font: minecraft:gui
     file: minecraft:font/gui/custom/item_browser.png
+    bedrock:
+      ui_image: true
   internal:category:
     height: 140
     ascent: 18
     font: minecraft:gui
     file: minecraft:font/gui/custom/category.png
+    bedrock:
+      ui_image: true
   internal:crafting_recipe:
     height: 142
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/crafting_recipe.png
+    bedrock:
+      ui_image: true
   internal:cooking_recipe:
     height: 138
     ascent: 16
     font: minecraft:gui
     file: minecraft:font/gui/custom/cooking_recipe.png
+    bedrock:
+      ui_image: true
   internal:smelting:
     height: 23
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/smelting.png
+    bedrock:
+      ui_image: true
   internal:smoking:
     height: 23
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/smoking.png
+    bedrock:
+      ui_image: true
   internal:blasting:
     height: 23
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/blasting.png
+    bedrock:
+      ui_image: true
   internal:campfire:
     height: 23
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/campfire.png
+    bedrock:
+      ui_image: true
   internal:stonecutting_recipe:
     height: 142
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/stonecutting_recipe.png
+    bedrock:
+      ui_image: true
   internal:smithing_transform_recipe:
     height: 142
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/smithing_transform_recipe.png
+    bedrock:
+      ui_image: true
   internal:brewing_recipe:
     height: 142
     ascent: 20
     font: minecraft:gui
     file: minecraft:font/gui/custom/brewing_recipe.png
+    bedrock:
+      ui_image: true
   internal:no_recipe:
     height: 140
     ascent: 18
     font: minecraft:gui
     file: minecraft:font/gui/custom/no_recipe.png
+    bedrock:
+      ui_image: true
 templates:
   internal:icon/2d:
     material: arrow

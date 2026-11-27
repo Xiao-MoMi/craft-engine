@@ -11,6 +11,7 @@ import net.momirealms.craftengine.core.plugin.network.event.NMSPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.NMSPacketListener;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPushPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerCommonPacketListenerProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerboundResourcePackPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.network.ServerConfigurationPacketListenerImplProxy;
@@ -25,7 +26,23 @@ public final class NMSResourcePackListener implements NMSPacketListener {
     private NMSResourcePackListener() {}
 
     @Override
+    public void onPacketSend(NetWorkUser user, NMSPacketEvent event, Object packet) {
+        Debugger.RESOURCE_PACK.debug(() -> {
+            UUID id = VersionHelper.isOrAbove1_20_3 ? ClientboundResourcePackPushPacketProxy.INSTANCE.getId(packet) : null;
+            return "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText()
+                    + " PACK_PUSH id=" + id + " state=" + user.encoderState()
+                    + " ceOwned=" + (id == null ? "unknown" : user.isResourcePackLoading(id));
+        });
+    }
+
+    @Override
     public void onPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
+        Debugger.RESOURCE_PACK.debug(() -> {
+            UUID id = VersionHelper.isOrAbove1_20_3 ? ServerboundResourcePackPacketProxy.INSTANCE.getId(packet) : null;
+            return "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText()
+                    + " PACK_STATUS_IN id=" + id + " action=" + ServerboundResourcePackPacketProxy.INSTANCE.getAction(packet).name()
+                    + " state=" + user.decoderState() + " ceOwned=" + (id == null ? "unknown" : user.isResourcePackLoading(id));
+        });
         UUID packId = null;
         if (VersionHelper.isOrAbove1_20_3) {
             UUID uuid = ServerboundResourcePackPacketProxy.INSTANCE.getId(packet);
@@ -41,15 +58,29 @@ public final class NMSResourcePackListener implements NMSPacketListener {
         // 1.20/1.20.1 没有配置监听器类，先短路判断，避免访问不存在的 CLASS。
         Object configurationTask = configurationListener != null && ServerConfigurationPacketListenerImplProxy.CLASS.isInstance(configurationListener) ? ServerConfigurationPacketListenerImplProxy.INSTANCE.getCurrentTask(configurationListener) : null;
         ResourcePackConfigurationTask batch = ResourcePackConfigurationTask.from(configurationTask);
+        UUID responseId = packId;
+        Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText()
+                + " RESPONSE_DISPATCH id=" + responseId + " action=" + action + " batch=" + (batch != null)
+                + " configuration=" + (configurationListener != null && ServerConfigurationPacketListenerImplProxy.CLASS.isInstance(configurationListener)));
         if (batch != null) {
             // 必须在调度到平台线程之前取消原包，防止原版配置监听器按单包终态结束整个任务。
             event.setCancelled(true);
-            if (!batch.isPending(packId)) return;
+            if (!batch.isPending(packId)) {
+                Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText() + " RESPONSE_IGNORED not-pending id=" + responseId + " action=" + action);
+                return;
+            }
             UUID responsePackId = packId;
+            long scheduledAt = Config.debugResourcePack() ? System.nanoTime() : 0;
             // 父类响应处理要求服务端线程；配置队列的推进也统一放到平台线程执行。
             CraftEngine.instance().scheduler().platform().run(() -> {
+                Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText()
+                        + " RESPONSE_TASK id=" + responsePackId + " action=" + action
+                        + " queueMs=" + (scheduledAt == 0 ? -1 : java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - scheduledAt)));
                 // 等待平台线程执行期间可能已切换监听器或配置任务，旧响应不能推进新任务。
-                if (ConnectionProxy.INSTANCE.getPacketListener(user.connection()) != configurationListener || ServerConfigurationPacketListenerImplProxy.INSTANCE.getCurrentTask(configurationListener) != configurationTask || !batch.isPending(responsePackId)) return;
+                if (ConnectionProxy.INSTANCE.getPacketListener(user.connection()) != configurationListener || ServerConfigurationPacketListenerImplProxy.INSTANCE.getCurrentTask(configurationListener) != configurationTask || !batch.isPending(responsePackId)) {
+                    Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText() + " RESPONSE_IGNORED stale-task id=" + responsePackId);
+                    return;
+                }
                 try {
                     ResourcePackConfigurationTask.handleResponse(configurationListener, packet);
                     // 父类不更新 Paper 的连接状态，原本由配置监听器的覆写负责，需在此补齐。
@@ -60,14 +91,18 @@ public final class NMSResourcePackListener implements NMSPacketListener {
                     if (action.intermediate()) return;
                     // 拒绝和失败是否断开连接由配置决定；未知响应不放行。
                     if (action == ResourcePackResponseAction.UNKNOWN || action.shouldDisconnect(Config.kickOnDeclined(), Config.kickOnFailedApply())) {
+                        Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText()
+                                + " PACK_REJECTED id=" + responsePackId + " action=" + action);
                         batch.fail();
                         user.kick(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                         return;
                     }
                     // 成功或配置允许的拒绝/失败都结束当前包的等待，整批结束后才放行。
                     if (batch.markCompleted(responsePackId)) {
+                        Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText() + " BATCH_COMPLETE");
                         // finishCurrentTask 自带 startNextTask，只调用一次；队尾 JoinWorldTask 随后放行。
                         ServerConfigurationPacketListenerImplProxy.INSTANCE.finishCurrentTask(configurationListener, ServerResourcePackConfigurationTaskProxy.TYPE);
+                        Debugger.RESOURCE_PACK.debug(() -> "[RP-TRACE] player=" + user.name() + " connection=" + user.nettyChannel().id().asShortText() + " CONFIGURATION_ADVANCED");
                     }
                 } catch (Throwable e) {
                     batch.fail();

@@ -1,0 +1,11 @@
+{
+  "materials": {
+    "version": "1.0.0",
+    "ce_hand_dyed:entity_alphatest_change_color": {
+      "-states": ["DisableCulling"]
+    },
+    "ce_hand_dyed_glint:entity_alphatest_change_color_glint": {
+      "-states": ["DisableCulling"]
+    }
+  }
+}

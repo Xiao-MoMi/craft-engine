@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.core.attribute;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.attribute.base.BaseValueSource;
 import net.momirealms.craftengine.core.attribute.base.BaseValueSources;
 import net.momirealms.craftengine.core.attribute.base.ConstantBaseValueSource;
@@ -61,6 +62,7 @@ public abstract class AbstractAttributeManager implements AttributeManager {
     protected volatile List<ItemAttributeModifiersProvider> sortedItemModifiersProviders = List.of();
     // API配置合并
     protected Map<Key, Attribute> mergedAttributes = Map.of();
+    private Map<String, List<Attribute>> attributesByValue = Map.of();
     // 按实体类型分桶的受限属性
     protected List<Attribute> globalAttributes = List.of();
     protected Map<Key, List<Attribute>> attributesByEntityType = Map.of();
@@ -72,9 +74,9 @@ public abstract class AbstractAttributeManager implements AttributeManager {
         this.apiOperations.put(AttributeOperations.ADD_MULTIPLIED_BASE_ID, AttributeOperations.ADD_MULTIPLIED_BASE);
         this.apiOperations.put(AttributeOperations.ADD_MULTIPLIED_TOTAL_ID, AttributeOperations.ADD_MULTIPLIED_TOTAL);
         registerItemModifiersProvider(Key.ce("settings"), ItemAttributeModifiersProvider.PRIORITY_SETTINGS, item -> {
-            Optional<ItemDefinition> definition = item.getDefinition();
-            if (definition.isEmpty()) return List.of();
-            AttributeModifiers modifiers = definition.get().settings().attributeModifiers();
+            ItemDefinition definition = item.getDefinitionOrNull();
+            if (definition == null) return List.of();
+            AttributeModifiers modifiers = definition.settings().attributeModifiers();
             return modifiers == null ? List.of() : modifiers.modifiers();
         });
         registerItemModifiersProvider(Key.ce("persistent"), ItemAttributeModifiersProvider.PRIORITY_PERSISTENT, item -> {
@@ -153,6 +155,11 @@ public abstract class AbstractAttributeManager implements AttributeManager {
     @Override
     public Collection<Attribute> getAttributes() {
         return this.mergedAttributes.values();
+    }
+
+    @Override
+    public List<Attribute> getAttributesByValue(String value) {
+        return this.attributesByValue.getOrDefault(value, List.of());
     }
 
     @Override
@@ -386,7 +393,9 @@ public abstract class AbstractAttributeManager implements AttributeManager {
             AbstractAttributeManager.this.mergedAttributes = attributes;
             List<Attribute> global = new ArrayList<>();
             Map<Key, List<Attribute>> byType = new HashMap<>();
+            Map<String, List<Attribute>> byValue = new HashMap<>();
             for (Attribute attribute : attributes.values()) {
+                byValue.computeIfAbsent(attribute.id().value(), value -> new ObjectArrayList<>(1)).add(attribute);
                 if (attribute.applicableEntityTypes == null) {
                     global.add(attribute);
                 } else {
@@ -395,6 +404,8 @@ public abstract class AbstractAttributeManager implements AttributeManager {
                     }
                 }
             }
+            byValue.replaceAll((value, matches) -> List.copyOf(matches));
+            AbstractAttributeManager.this.attributesByValue = Map.copyOf(byValue);
             AbstractAttributeManager.this.globalAttributes = List.copyOf(global);
             Map<Key, List<Attribute>> byTypeImmutable = new HashMap<>();
             byType.forEach((type, list) -> {

@@ -1,0 +1,147 @@
+package net.momirealms.craftengine.core.pack.bedrock.item.render;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.entity.display.ItemDisplayContext;
+import net.momirealms.craftengine.core.item.component.DataComponentKeys;
+import net.momirealms.craftengine.core.pack.bedrock.item.BedrockItemGenerationContext;
+import net.momirealms.craftengine.core.pack.bedrock.item.GeneratedItemVariant;
+import net.momirealms.craftengine.core.pack.bedrock.item.animation.BedrockPlayerAnimations;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBehaviorDescription;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.item.plan.ResolvedItemBinding;
+import net.momirealms.craftengine.core.pack.bedrock.item.visual.BedrockItemIconRenderer;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
+import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTexture;
+import net.momirealms.craftengine.core.util.GsonHelper;
+import net.momirealms.craftengine.core.util.ImageUtils;
+import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.VectorUtils;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+final class BedrockSpearRenderStrategy extends BedrockItemRenderStrategy {
+    static final BedrockSpearRenderStrategy INSTANCE = new BedrockSpearRenderStrategy();
+
+    private BedrockSpearRenderStrategy() {
+    }
+
+    @Override
+    GeneratedItemVariant tryWriteSpecialized(BedrockItemPresentation plan,
+                                             JavaModelResources resources,
+                                             BedrockItemIconRenderer renderer,
+                                             BedrockItemGenerationContext context) throws IOException {
+        ItemBindingRule inventory = plan.idleRules().get(ItemDisplayContext.GUI);
+        if (!inventory.transformations().isEmpty() || !(inventory.target() instanceof ItemRenderTarget.Model target)) {
+            return null;
+        }
+        BedrockTexture icon = renderer.render(target);
+        if (icon == null) {
+            return null;
+        }
+        Map<ItemBindingRule, StringBuilder> hands = new LinkedHashMap<>();
+        for (ItemDisplayContext view : List.of(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemDisplayContext.THIRD_PERSON_LEFT_HAND)) {
+            for (ItemBindingRule rule : plan.rulesByContext().get(view)) {
+                if (rule.target() == ItemRenderTarget.Builtin.EMPTY) {
+                    continue;
+                }
+                if (!(rule.target() instanceof ItemRenderTarget.Model) || !rule.transformations().isEmpty()) {
+                    return null;
+                }
+                StringBuilder views = hands.computeIfAbsent(rule, ignored -> new StringBuilder());
+                if (!views.isEmpty()) {
+                    views.append(" || ");
+                }
+                views.append('(').append(BedrockItemContextWriter.equippedView(view).condition).append(')');
+            }
+        }
+        if (hands.isEmpty()) {
+            return null;
+        }
+        List<BufferedImage> stages = new ArrayList<>(hands.size());
+        List<String> conditions = new ArrayList<>(hands.size());
+        for (Map.Entry<ItemBindingRule, StringBuilder> hand : hands.entrySet()) {
+            BedrockTexture image = renderer.render((ItemRenderTarget.Model) hand.getKey().target());
+            if (image == null) {
+                return null;
+            }
+            stages.add(image.image());
+            conditions.add("(" + hand.getValue() + ") && (" + this.stageCondition(hand.getKey()) + ")");
+        }
+        String path = "textures/" + plan.id().namespace() + '/' + plan.id().value() + "/icon";
+        ImageUtils.writePng(icon.image(), context.root().resolve(path + ".png"));
+        BedrockSpear2DAttachables.write(plan, conditions, stages, context.root());
+        return GeneratedItemVariant.icon(plan.id(), plan.conditions(), path, true);
+    }
+
+    @Override
+    BedrockAttachablePose pose(ResolvedItemBinding entry) throws IOException {
+        ItemBehaviorDescription behavior = entry.clientBehavior();
+        JsonArray scripts = useScripts(behavior.use());
+        // 挥手进度属于玩家实体，attachable 需从持有者读取。
+        scripts.add("variable.attack_time = context.owning_entity->variable.attack_time;");
+        poseScripts(entry).forEach(scripts::add);
+        scripts.add("variable.ce_spear_side = context.item_slot == 'off_hand' ? -1 : 1;");
+        scripts.add("variable.ce_spear_time = variable.ce_spear_use ? math.max(0, variable.ce_use_ticks + query.frame_alpha - (context.is_first_person ? 1 : 0)) : 0;");
+        scripts.add("variable.ce_spear_hit_ticks = context.owning_entity->query.ticks_since_last_kinetic_weapon_hit;");
+        // Java 缓动公式在资源中显式计算，不能假定 Molang 同名函数与 Java 等价。
+        JsonObject source = PoseTemplate.SPEAR;
+        scripts.addAll(source.getAsJsonArray("pre_animation"));
+        JsonArray animate = source.getAsJsonArray("animate");
+        return new BedrockAttachablePose(scripts, PoseTemplate.BONES, source.getAsJsonObject("animations"), animate, BedrockAttachablePose.HANDS);
+    }
+
+    @Override
+    void registerHandModel(BedrockPlayerAnimations animations, Key id, ResolvedItemBinding entry) {
+        animations.registerSpearUsingJavaPose(id, poseScripts(entry));
+    }
+
+    private static final class PoseTemplate {
+        private static final JsonObject SPEAR = GsonHelper.readJsonFromResource("/bedrock/item/spear/handheld.pose.json").getAsJsonObject();
+        private static final JsonArray BONES = createBones();
+
+        private static JsonArray createBones() {
+            List<String> names = List.of("stab_move", "stab_xp", "stab_x", "stab_xu", "stab_feedback", "move", "xp", "x", "xu", "yp", "y", "yu", "feedback");
+            JsonArray bones = new JsonArray(names.size());
+            String parent = "ce_slot";
+            // Java 第三人称先应用突刺，再应用使用姿态；两组独立骨骼允许动作同时存在
+            for (String name : names) {
+                String boneName = "ce_spear_" + name;
+                JsonObject bone = new JsonObject();
+                bone.addProperty("name", boneName);
+                bone.addProperty("parent", parent);
+                bone.add("pivot", VectorUtils.toJson(0, 8, 0));
+                bones.add(bone);
+                parent = boneName;
+            }
+            return bones;
+        }
+    }
+
+    private static List<String> poseScripts(ResolvedItemBinding entry) {
+        List<String> scripts = new ArrayList<>(7);
+        ItemBehaviorDescription behavior = entry.clientBehavior();
+        JsonElement component = entry.clientProperties().components().get(DataComponentKeys.KINETIC_WEAPON);
+        JsonObject kinetic = component == null || component.isJsonNull() ? null : component.getAsJsonObject();
+        scripts.add("variable.ce_spear_delay = " + (kinetic == null || !kinetic.has("delay_ticks") ? 0 : kinetic.get("delay_ticks").getAsInt()) + ";");
+        for (String phase : List.of("dismount", "knockback", "damage")) {
+            int duration = 0;
+            if (kinetic != null && kinetic.has(phase + "_conditions")) {
+                duration = kinetic.getAsJsonObject(phase + "_conditions").get("max_duration_ticks").getAsInt();
+            }
+            scripts.add("variable.ce_spear_" + phase + " = " + duration + ";");
+        }
+        scripts.add("variable.ce_spear_forward = " + (kinetic == null || !kinetic.has("forward_movement") ? 0 : kinetic.get("forward_movement").getAsFloat()) + ";");
+        scripts.add("variable.ce_spear_use = " + (kinetic != null && behavior.use().animation() == ItemBehaviorDescription.UseAnimation.SPEAR ? "variable.ce_using_item" : "0") + ";");
+        scripts.add("variable.ce_spear_attack = " + (behavior.attack().animation() == ItemBehaviorDescription.SwingAnimation.STAB ? "variable.attack_time > 0" : "0") + ";");
+        return scripts;
+    }
+}

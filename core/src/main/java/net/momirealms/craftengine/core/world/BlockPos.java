@@ -27,7 +27,19 @@ public class BlockPos extends Vec3i {
     }
 
     public static BlockPos of(long packedPos) {
-        return new BlockPos((int) (packedPos >> 38), (int) ((packedPos << 52) >> 52), (int) ((packedPos << 26) >> 38));
+        return new BlockPos(unpackX(packedPos), unpackY(packedPos), unpackZ(packedPos));
+    }
+
+    public static int unpackX(long packedPos) {
+        return (int) (packedPos >> 38);
+    }
+
+    public static int unpackY(long packedPos) {
+        return (int) (packedPos << 52 >> 52);
+    }
+
+    public static int unpackZ(long packedPos) {
+        return (int) (packedPos << 26 >> 38);
     }
 
     public BlockPos relative(Direction direction, int i) {

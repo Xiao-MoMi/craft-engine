@@ -15,6 +15,7 @@ import net.momirealms.craftengine.core.block.behavior.WorldlyContainerHolder;
 import net.momirealms.craftengine.core.block.entity.BlockEntity;
 import net.momirealms.craftengine.core.block.entity.BlockEntityController;
 import net.momirealms.craftengine.core.block.property.Property;
+import net.momirealms.craftengine.core.entity.player.InteractionHand;
 import net.momirealms.craftengine.core.entity.player.InteractionResult;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -89,6 +90,9 @@ public final class SimpleStorageBlockBehavior extends BukkitBlockBehavior implem
         if (player == null) {
             return InteractionResult.SUCCESS_AND_CANCEL;
         }
+        if (context.getHand() != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
+        }
         BlockPos blockPos = context.getClickedPos();
         World bukkitWorld = (World) context.getLevel().platformWorld();
         Location location = new Location(bukkitWorld, blockPos.x(), blockPos.y(), blockPos.z());
@@ -98,6 +102,7 @@ public final class SimpleStorageBlockBehavior extends BukkitBlockBehavior implem
         }
         BlockEntity blockEntity = world.getBlockEntityAtIfLoaded(blockPos);
         if (blockEntity == null) return InteractionResult.FAIL;
+        player.swingHand(InteractionHand.MAIN_HAND);
         blockEntity.controller.let(SimpleStorageBlockEntityController.class, this.controllerId, c -> {
             c.onPlayerOpen(player);
             new BukkitInventory(c.inventory()).open(player, AdventureHelper.deserialize(this.containerTitle, PlayerOptionalContext.of(player)));

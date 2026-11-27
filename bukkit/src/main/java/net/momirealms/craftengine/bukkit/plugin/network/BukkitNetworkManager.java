@@ -52,6 +52,7 @@ import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProx
 import net.momirealms.craftengine.proxy.minecraft.network.ConnectionProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.PacketSendListenerProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.BundlePacketProxy;
+import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ClientboundResourcePackPushPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.common.ServerboundResourcePackPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.configuration.ClientboundFinishConfigurationPacketProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.game.*;
@@ -418,6 +419,12 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 newMappingsMOD,
                 occlusionPredicate
         ), PACKET_IDS.clientboundBlockUpdatePacket(), "ClientboundBlockUpdatePacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        if (VersionHelper.isOrAbove26_3) {
+            registerByteBufferPacketListener(new AddTransientBlockListener(
+                    newMappings,
+                    newMappingsMOD
+            ), PACKET_IDS.clientboundAddTransientBlockPacket(), "ClientboundAddTransientBlockPacket", ConnectionState.PLAY, PacketFlow.CLIENTBOUND);
+        }
         registerByteBufferPacketListener(new LevelParticleListener(
                 newMappings,
                 newMappingsMOD
@@ -446,6 +453,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         registerNMSPacketConsumer(NMSContainerClickListener.INSTANCE, ServerboundContainerClickPacketProxy.CLASS);
         registerNMSPacketConsumer(NMSFinishConfigurationListener.INSTANCE, ClientboundFinishConfigurationPacketProxy.CLASS);
         registerNMSPacketConsumer(NMSResourcePackListener.INSTANCE, ServerboundResourcePackPacketProxy.CLASS);
+        registerNMSPacketConsumer(NMSResourcePackListener.INSTANCE, ClientboundResourcePackPushPacketProxy.CLASS);
 
         if (Config.nettyPerformanceModeEntity()) {
             registerNMSPacketConsumer(NMSSetEntityDataListener.INSTANCE, ClientboundSetEntityDataPacketProxy.CLASS);
@@ -540,6 +548,7 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         BukkitServerPlayer user = (BukkitServerPlayer) getUser(player);
         if (user != null) {
             user.setPlayer(player);
+            user.offerBedrockHandshake();
             // 玩家自身实体的包处理器（血量 metadata 缩放等）
             user.entityViews().put(user.entityId(), SelfPlayerPacketHandler.INSTANCE);
             this.onlineUsers.put(player.getUniqueId(), user);
@@ -566,10 +575,14 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                     plugin.logger().warn("Please uninstall AntiPopup or disable the 'disable-chat-report' option.");
                 }
             }
+            // 补发 recipes
+            if (VersionHelper.isOrAbove1_21_2) {
+                user.resendSkippedRecipeBook();
+            }
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         BukkitServerPlayer serverPlayer = this.onlineUsers.remove(player.getUniqueId());
@@ -769,7 +782,8 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         setUser(channel, user);
     }
 
-    private void onNMSPacketReceive(NetWorkUser user, NMSPacketEvent event, Object packet) {
+    @Nullable
+    private NMSPacketEvent onNMSPacketReceive(NetWorkUser user, Object packet) {
         if (VersionHelper.IS_RUNNING_IN_DEV) {
             Debugger.PACKET.debug(() -> {
                 if (Config.isPacketIgnored(packet.getClass())) {
@@ -778,14 +792,25 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                 return "[C->S]" + packet.getClass();
             });
         }
-        handleReceiveNMSPacket(user, event, packet);
+        NMSPacketListener listener = nmsPacketListeners.get(packet.getClass());
+        if (listener == null) {
+            return null;
+        }
+        NMSPacketEvent event = new NMSPacketEvent(packet);
+        try {
+            listener.onPacketReceive(user, event, packet);
+        } catch (Throwable t) {
+            this.plugin.logger().warn("An error occurred when handling packet " + packet.getClass(), t);
+        }
+        return event;
     }
 
-    private void onNMSPacketSend(NetWorkUser player, NMSPacketEvent event, Object packet) {
+    @Nullable
+    private NMSPacketEvent onNMSPacketSend(NetWorkUser player, @Nullable NMSPacketEvent event, Object originalPacket, Object packet) {
         if (ClientboundBundlePacketProxy.CLASS.isInstance(packet)) {
             Iterable<Object> packets = BundlePacketProxy.INSTANCE.getPackets(packet);
-            for (Object p : packets) {
-                onNMSPacketSend(player, event, p);
+            for (Object child : packets) {
+                event = this.onNMSPacketSend(player, event, originalPacket, child);
             }
         } else {
             if (VersionHelper.IS_RUNNING_IN_DEV) {
@@ -796,78 +821,76 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
                     return "[S->C]" + packet.getClass();
                 });
             }
-            handleSendNMSPacket(player, event, packet);
-        }
-    }
-
-    private void handleReceiveNMSPacket(NetWorkUser user, NMSPacketEvent event, Object packet) {
-        NMSPacketListener nmsPacketListener = nmsPacketListeners.get(packet.getClass());
-        if (nmsPacketListener != null) {
-            try {
-                nmsPacketListener.onPacketReceive(user, event, packet);
-            } catch (Throwable t) {
-                this.plugin.logger().warn("An error occurred when handling packet " + packet.getClass(), t);
+            NMSPacketListener listener = nmsPacketListeners.get(packet.getClass());
+            if (listener != null) {
+                if (event == null) {
+                    event = new NMSPacketEvent(originalPacket);
+                }
+                try {
+                    listener.onPacketSend(player, event, packet);
+                } catch (Throwable t) {
+                    this.plugin.logger().warn("An error occurred when handling packet " + packet.getClass(), t);
+                }
             }
         }
-    }
-
-    private void handleSendNMSPacket(NetWorkUser user, NMSPacketEvent event, Object packet) {
-        NMSPacketListener nmsPacketListener = nmsPacketListeners.get(packet.getClass());
-        if (nmsPacketListener != null) {
-            try {
-                nmsPacketListener.onPacketSend(user, event, packet);
-            } catch (Throwable t) {
-                this.plugin.logger().warn("An error occurred when handling packet " + packet.getClass(), t);
-            }
-        }
+        return event;
     }
 
     // outbound(encode|s2c)
-    private void handleS2CByteBufPacket(NetWorkUser user, ByteBufPacketEvent event) {
-        int packetID = event.packetID();
+    @Nullable
+    private ByteBufPacketEvent handleS2CByteBufPacket(NetWorkUser user, int packetID, ByteBuf buffer, int preIndex) {
         ByteBufferPacketListenerHolder[] listener = s2cPacketListeners[user.encoderState().ordinal()];
         if (packetID >= listener.length) {
             Debugger.PACKET.debug(() -> "Failed to convert the packet " + packetID + " for player " + user.name() +
                     ". Packet Flow: S->C, Encoder State: " + user.decoderState() + ", " +
-                    "Server version: " + VersionHelper.MINECRAFT_VERSION.version() + ", Bytes: " + Arrays.toString(event.getBuffer().array()));
-            return;
+                    "Server version: " + VersionHelper.MINECRAFT_VERSION.version() + ", Bytes: " + Arrays.toString(buffer.array()));
+            return null;
         }
         ByteBufferPacketListenerHolder holder = listener[packetID];
-        if (holder != null) {
-            try {
-                holder.listener().onPacketSend(user, event);
-            } catch (Throwable t) {
-                this.plugin.logger().warn("An error occurred when handling packet " + holder.id(), t);
-            }
+        if (holder == null) {
+            return null;
         }
+        ByteBufPacketEvent event = new ByteBufPacketEvent(packetID, new FriendlyByteBuf(buffer), preIndex);
+        try {
+            holder.listener().onPacketSend(user, event);
+        } catch (Throwable t) {
+            this.plugin.logger().warn("An error occurred when handling packet " + holder.id(), t);
+        }
+        return event;
     }
 
     // inbound(decode|c2s)
-    private void handleC2SByteBufPacket(NetWorkUser user, ByteBufPacketEvent event) {
-        int packetID = event.packetID();
+    @Nullable
+    private ByteBufPacketEvent handleC2SByteBufPacket(NetWorkUser user, int packetID, ByteBuf buffer, int preIndex) {
         ByteBufferPacketListenerHolder[] listener = c2sPacketListeners[user.decoderState().ordinal()];
         if (packetID >= listener.length || packetID < 0) {
             Debugger.PACKET.debug(() -> "Failed to convert the packet " + packetID + " for player " + user.name() +
                     ". Packet Flow: C->S, Decoder State: " + user.decoderState() + ", " +
-                    "Server version: " + VersionHelper.MINECRAFT_VERSION.version() + ", Bytes: " + event.getBuffer());
-            return;
+                    "Server version: " + VersionHelper.MINECRAFT_VERSION.version() + ", Bytes: " + buffer);
+            return null;
         }
         ByteBufferPacketListenerHolder holder = listener[packetID];
-        if (holder != null) {
-            try {
-                holder.listener().onPacketReceive(user, event);
-            } catch (Throwable t) {
-                this.plugin.logger().warn("An error occurred when handling packet " + holder.id(), t);
-            }
+        if (holder == null) {
+            return null;
         }
+        ByteBufPacketEvent event = new ByteBufPacketEvent(packetID, new FriendlyByteBuf(buffer), preIndex);
+        try {
+            holder.listener().onPacketReceive(user, event);
+        } catch (Throwable t) {
+            this.plugin.logger().warn("An error occurred when handling packet " + holder.id(), t);
+        }
+        return event;
     }
 
     public class ServerChannelHandler extends ChannelInboundHandlerAdapter {
 
         @Override
         public void channelRead(@NotNull ChannelHandlerContext context, @NotNull Object c) throws Exception {
-            Channel channel = (Channel) c;
-            channel.pipeline().addLast(SERVER_CHANNEL_HANDLER_NAME, new PreChannelInitializer());
+            // channels 列表里不止有 acceptor channel：Sable 之类的 mod 会把 UDP channel 也注册进去，
+            // 那里读上来的是 DatagramPacket，只有 Channel 才需要注入子连接处理器
+            if (c instanceof Channel channel) {
+                channel.pipeline().addLast(SERVER_CHANNEL_HANDLER_NAME, new PreChannelInitializer());
+            }
             super.channelRead(context, c);
         }
     }
@@ -909,10 +932,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
         @Override
         public void write(ChannelHandlerContext context, Object packet, ChannelPromise channelPromise) throws Exception {
             try {
-                NMSPacketEvent event = new NMSPacketEvent(packet);
-                onNMSPacketSend(player, event, packet);
-                if (event.isCancelled()) return;
-                if (event.isUsingNewPacket()) {
+                NMSPacketEvent event = BukkitNetworkManager.this.onNMSPacketSend(this.player, null, packet, packet);
+                if (event != null && event.isCancelled()) {
+                    return;
+                }
+                if (event != null && event.isUsingNewPacket()) {
                     super.write(context, event.optionalNewPacket(), channelPromise);
                 } else {
                     super.write(context, packet, channelPromise);
@@ -925,10 +949,11 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
 
         @Override
         public void channelRead(@NotNull ChannelHandlerContext context, @NotNull Object packet) throws Exception {
-            NMSPacketEvent event = new NMSPacketEvent(packet);
-            onNMSPacketReceive(player, event, packet);
-            if (event.isCancelled()) return;
-            if (event.isUsingNewPacket()) {
+            NMSPacketEvent event = BukkitNetworkManager.this.onNMSPacketReceive(this.player, packet);
+            if (event != null && event.isCancelled()) {
+                return;
+            }
+            if (event != null && event.isUsingNewPacket()) {
                 super.channelRead(context, event.optionalNewPacket());
             } else {
                 super.channelRead(context, packet);
@@ -996,21 +1021,19 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (buffer.readableBytes() == 0) {
                 return;
             }
-            FriendlyByteBuf buf = new FriendlyByteBuf(buffer);
-            int preProcessIndex = buf.readerIndex();
-            int packetId = buf.readVarInt();
-            int preIndex = buf.readerIndex();
+            int preProcessIndex = buffer.readerIndex();
+            int packetId = FriendlyByteBuf.readVarIntFromBuffer(buffer);
+            int preIndex = buffer.readerIndex();
             try {
-                ByteBufPacketEvent event = new ByteBufPacketEvent(packetId, buf, preIndex);
-                BukkitNetworkManager.this.handleS2CByteBufPacket(this.player, event);
-                if (event.isCancelled()) {
-                    buf.clear();
-                } else if (!event.changed()) {
-                    buf.readerIndex(preProcessIndex);
+                ByteBufPacketEvent event = BukkitNetworkManager.this.handleS2CByteBufPacket(this.player, packetId, buffer, preIndex);
+                if (event != null && event.isCancelled()) {
+                    buffer.clear();
+                } else if (event == null || !event.changed()) {
+                    buffer.readerIndex(preProcessIndex);
                 }
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("An error occurred when writing packet " + packetId, e);
-                buf.readerIndex(preProcessIndex);
+                buffer.readerIndex(preProcessIndex);
             }
         }
     }
@@ -1036,21 +1059,19 @@ public final class BukkitNetworkManager extends AbstractNetworkManager implement
             if (buffer.readableBytes() == 0) {
                 return;
             }
-            FriendlyByteBuf buf = new FriendlyByteBuf(buffer);
-            int preProcessIndex = buf.readerIndex();
-            int packetId = buf.readVarInt();
-            int preIndex = buf.readerIndex();
+            int preProcessIndex = buffer.readerIndex();
+            int packetId = FriendlyByteBuf.readVarIntFromBuffer(buffer);
+            int preIndex = buffer.readerIndex();
             try {
-                ByteBufPacketEvent event = new ByteBufPacketEvent(packetId, buf, preIndex);
-                BukkitNetworkManager.this.handleC2SByteBufPacket(this.player, event);
-                if (event.isCancelled()) {
-                    buf.clear();
-                } else if (!event.changed()) {
-                    buf.readerIndex(preProcessIndex);
+                ByteBufPacketEvent event = BukkitNetworkManager.this.handleC2SByteBufPacket(this.player, packetId, buffer, preIndex);
+                if (event != null && event.isCancelled()) {
+                    buffer.clear();
+                } else if (event == null || !event.changed()) {
+                    buffer.readerIndex(preProcessIndex);
                 }
             } catch (Throwable e) {
                 CraftEngine.instance().logger().warn("An error occurred when reading packet " + packetId, e);
-                buf.readerIndex(preProcessIndex);
+                buffer.readerIndex(preProcessIndex);
             }
         }
     }

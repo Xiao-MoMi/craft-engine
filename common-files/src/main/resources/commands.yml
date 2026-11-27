@@ -225,6 +225,13 @@ set_damage_visibility:
     - /craftengine feature damage-visibility set
     - /ce feature damage-visibility set
 
+loot:
+  enable: true
+  permission: ce.command.admin.loot
+  usage:
+    - /craftengine feature loot
+    - /ce feature loot
+
 place_feature:
   enable: true
   permission: ce.command.admin.place_feature
@@ -457,13 +464,6 @@ debug_image:
   usage:
     - /craftengine debug image
     - /ce debug image
-
-debug_generate_internal_assets:
-  enable: false
-  permission: ce.command.debug.generate_internal_assets
-  usage:
-    - /craftengine debug generate-internal-assets
-    - /ce debug generate-internal-assets
 
 debug_furniture:
   enable: true

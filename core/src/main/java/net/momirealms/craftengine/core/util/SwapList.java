@@ -26,8 +26,7 @@ public final class SwapList<T extends SwapList.Indexed> extends ObjectArrayList<
 
     @Override
     public T set(int index, T t) {
-        T old = this.a[index];
-        super.set(index, t);
+        T old = super.set(index, t);
         old.index(-1);
         t.index(index);
         return old;

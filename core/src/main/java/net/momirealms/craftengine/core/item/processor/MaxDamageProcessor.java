@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.plugin.context.number.NumberProvider;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class MaxDamageProcessor implements SimpleNetworkItemProcessor {
+public final class MaxDamageProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<MaxDamageProcessor> FACTORY = new Factory();
     private final NumberProvider argument;
 

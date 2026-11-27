@@ -14,13 +14,10 @@ import net.momirealms.craftengine.bukkit.compatibility.entity.MythicMobsEntityPr
 import net.momirealms.craftengine.bukkit.compatibility.item.ItemBridgeSource;
 import net.momirealms.craftengine.bukkit.compatibility.legacy.slimeworld.LegacySlimeFormatStorageAdaptor;
 import net.momirealms.craftengine.bukkit.compatibility.leveler.LevelerBridgeLeveler;
-import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelBlockEntityElementConfig;
-import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelFurnitureElementConfig;
-import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.BetterModelProvider;
-import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineBlockEntityElementConfig;
-import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineFurnitureElementConfig;
-import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.ModelEngineProvider;
+import net.momirealms.craftengine.bukkit.compatibility.model.bettermodel.*;
+import net.momirealms.craftengine.bukkit.compatibility.model.modelengine.*;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicItemDropListener;
+import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMechanicListener;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsSkillFunction;
 import net.momirealms.craftengine.bukkit.compatibility.mythicmobs.MythicMobsSpawnFunction;
 import net.momirealms.craftengine.bukkit.compatibility.nameplates.CustomNameplateHatSettings;
@@ -49,6 +46,7 @@ import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.furniture.ExternalModel;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.network.ClientboundItemRewriter;
 import net.momirealms.craftengine.core.plugin.compatibility.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.CommonConditions;
@@ -92,6 +90,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     private boolean hasGeyser;
     private boolean hasFloodgate;
     private boolean hasLuckPerms;
+    private boolean hasViaVersion;
 
     public BukkitCompatibilityManager(BukkitCraftEngine plugin) {
         this.plugin = plugin;
@@ -214,6 +213,8 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
                 BukkitBlockEntityElementConfigs.register(Key.ce("better_model"), new BetterModelBlockEntityElementConfig.Factory());
                 BukkitFurnitureElementConfigs.register(Key.ce("better_model"), BetterModelFurnitureElementConfig.FACTORY);
                 registerModelProvider(new BetterModelProvider());
+                Bukkit.getPluginManager().registerEvents(new BetterModelItemModels(Bukkit.getPluginManager().getPlugin("BetterModel")), this.plugin.javaPlugin());
+                new BetterModelNativeBridge(this.plugin, Bukkit.getPluginManager().getPlugin("BetterModel")).start();
             }, "BetterModel");
         }
         if (this.hasPlugin("ModelEngine")) {
@@ -221,6 +222,8 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
                 BukkitBlockEntityElementConfigs.register(Key.ce("model_engine"), new ModelEngineBlockEntityElementConfig.Factory());
                 BukkitFurnitureElementConfigs.register(Key.ce("model_engine"), ModelEngineFurnitureElementConfig.FACTORY);
                 registerModelProvider(new ModelEngineProvider());
+                Bukkit.getPluginManager().registerEvents(new ModelEngineItemModels(Bukkit.getPluginManager().getPlugin("ModelEngine")), this.plugin.javaPlugin());
+                new ModelEngineNativeBridge(this.plugin, Bukkit.getPluginManager().getPlugin("ModelEngine")).start();
             }, "ModelEngine");
         }
         if (this.hasPlugin("CustomNameplates")) {
@@ -242,6 +245,9 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
         }
         if (this.hasPlugin("floodgate")) {
             this.hasFloodgate = true;
+        }
+        if (this.hasPlugin("MythicMobs")) {
+            runCatchingHook(() -> new MythicMechanicListener(this.plugin), "MythicMobs");
         }
         // 对安装了 FreedomChat 的用户告警
         if (Bukkit.getPluginManager().getPlugin("FreedomChat") != null) {
@@ -271,6 +277,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     @Override
     public void onDelayedEnable() {
+        this.hasViaVersion = this.isPluginEnabled("ViaVersion");
         if (this.isPluginEnabled("CoreProtect")) {
             runCatchingHook(() -> registerProtectionLogger(new CoreProtectProtectionLogger()), "CoreProtect");
         }
@@ -322,7 +329,13 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
             runCatchingHook(() -> WrappedBlockStateHelper.register(null), "packetevents");
         }
         if (this.isPluginEnabled("GrimAC") && Config.injectPacketEvents()) {
-            runCatchingHook(() -> WrappedBlockStateHelper.register("ac{}grim{}grimac{}shaded{}com{}github{}retrooper{}packetevents"), "GrimAC");
+            try {
+                if (WrappedBlockStateHelper.registerGrim()) {
+                    logHook("GrimAC");
+                }
+            } catch (Throwable e) {
+                this.plugin.logger().warn("Failed to hook GrimAC", e);
+            }
         }
         BukkitLevelerBridge levelerBridge = BukkitLevelerBridge.builder()
                 .detectSupportedPlugins(
@@ -382,7 +395,7 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
 
     private void logHook(String plugin) {
         if (!this.loggedPlugins.add(plugin)) return;
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("plugin.compatibility", plugin));
+        TranslationManager.info("plugin.compatibility", plugin);
     }
 
     @Override
@@ -523,6 +536,12 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     }
 
     @Override
+    @Nullable
+    public ClientboundItemRewriter getViaVersionClientboundItemRewriter(NetWorkUser user, int serverProtocol, int clientProtocol) {
+        return this.hasViaVersion ? ViaVersionUtils.getClientboundItemRewriter(user, serverProtocol, clientProtocol) : null;
+    }
+
+    @Override
     public TagResolver[] createExternalTagResolvers() {
         if (this.tagResolverProviderArray == null) return null;
         int length = this.tagResolverProviderArray.length;
@@ -536,13 +555,17 @@ public final class BukkitCompatibilityManager implements CompatibilityManager {
     @Override
     public boolean isBedrockPlayer(Player player) {
         UUID uuid = player.uuid();
-        if (this.hasFloodgate) {
-            return FloodgateUtils.isFloodgatePlayer(uuid);
+        if (this.hasFloodgate && FloodgateUtils.isFloodgatePlayer(uuid)) {
+            return true;
         }
-        if (this.hasGeyser) {
-            return GeyserUtils.isGeyserPlayer(uuid);
+        if (this.hasGeyser && GeyserUtils.isGeyserPlayer(uuid)) {
+            return true;
         }
-        return uuid.version() == 0;
+        String namePrefix = Config.bedrockIdentificationNamePrefix();
+        if (!namePrefix.isEmpty() && player.name().startsWith(namePrefix)) {
+            return true;
+        }
+        return Config.identifyBedrockByFloodgateUuid() && uuid.getMostSignificantBits() == 0;
     }
 
     @Override

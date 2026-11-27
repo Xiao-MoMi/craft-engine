@@ -1,7 +1,7 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import com.google.common.collect.Lists;
-import net.momirealms.craftengine.bukkit.nms.DelegatingContainer;
+import net.momirealms.craftengine.bukkit.world.DelegatingContainer;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftInventoryProxy;
 import org.bukkit.entity.HumanEntity;

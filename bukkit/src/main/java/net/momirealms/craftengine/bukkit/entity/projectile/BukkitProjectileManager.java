@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileManager;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.entity.projectile.ProjectileSounds;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.enchantment.EnchantmentKeys;
 import net.momirealms.craftengine.core.plugin.scheduler.SchedulerTask;
 import net.momirealms.craftengine.core.sound.SoundData;
@@ -23,6 +24,7 @@ import net.momirealms.craftengine.core.util.Tristate;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldEvents;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.entity.CraftEntityProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.particles.ParticleTypesProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ChunkMapProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerChunkCacheProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerEntityProxy;
@@ -193,8 +195,9 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
         if (projectileItem == null) return;
         Item wrapped = this.plugin.itemManager().wrap(projectileItem);
         if (ItemUtils.isEmpty(wrapped)) return;
-        wrapped.getDefinition().ifPresent(it -> {
-            ProjectileMeta meta = it.settings().projectileMeta();
+        ItemDefinition definition = wrapped.getDefinitionOrNull();
+        if (definition != null) {
+            ProjectileMeta meta = definition.settings().projectileMeta();
             if (meta != null) {
                 BukkitCustomProjectile customProjectile = new BukkitCustomProjectile(meta, projectile, wrapped);
                 this.projectiles.put(projectile.getEntityId(), customProjectile);
@@ -242,7 +245,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     }
                 }
             }
-        });
+        }
     }
 
     public class ProjectileInjectTask implements Runnable {
@@ -290,7 +293,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
             } else if (!this.checkInGround) {
                 updateProjectileUpdateInterval(1);
                 if (EntityProxy.INSTANCE.isWasTouchingWater(nmsEntity)) {
-                    this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
+                    this.spawnBubbleParticles(nmsEntity);
                 }
             } else {
                 boolean inGround;
@@ -300,7 +303,7 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     inGround = AbstractArrowProxy.INSTANCE.isInGround$1(nmsEntity);
                 }
                 if (canSpawnParticle(nmsEntity, inGround)) {
-                    this.projectile.getWorld().spawnParticle(ParticleUtils.BUBBLE, this.projectile.getLocation(), 3, 0.1, 0.1, 0.1, 0);
+                    this.spawnBubbleParticles(nmsEntity);
                 }
                 if (inGround) {
                     updateProjectileUpdateInterval(Integer.MAX_VALUE);
@@ -308,6 +311,10 @@ public final class BukkitProjectileManager implements Listener, ProjectileManage
                     updateProjectileUpdateInterval(1);
                 }
             }
+        }
+
+        private void spawnBubbleParticles(Object entity) {
+            ParticleUtils.broadcastParticles(EntityProxy.INSTANCE.getLevel(entity), ParticleTypesProxy.BUBBLE, EntityProxy.INSTANCE.getX(entity), EntityProxy.INSTANCE.getY(entity), EntityProxy.INSTANCE.getZ(entity), 3, 0.1, 0.1, 0.1, 0);
         }
 
         private void updateProjectileUpdateInterval(int updateInterval) {

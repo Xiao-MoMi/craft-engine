@@ -29,6 +29,15 @@ public interface ItemProxy {
     @MethodInvoker(name = "canBeDepleted", activeIf = "max_version=1.20.4")
     boolean canBeDepleted(Object target);
 
+    @MethodInvoker(name = "getCraftingRemainingItem", activeIf = "max_version=1.21.1")
+    Object getCraftingRemainingItem(Object target);
+
+    @MethodInvoker(name = "getCraftingRemainder", activeIf = "min_version=1.21.2 && max_version=1.21.11")
+    Object getCraftingRemainder(Object target);
+
+    @MethodInvoker(name = "getCraftingRemainder", activeIf = "min_version=26.1")
+    Object getCraftingRemainderTemplate(Object target);
+
     @MethodInvoker(name = "components", activeIf = "min_version=1.20.5")
     Iterable<Object> components(Object target);
 

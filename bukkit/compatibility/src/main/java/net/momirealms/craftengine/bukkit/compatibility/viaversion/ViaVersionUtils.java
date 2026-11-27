@@ -1,9 +1,15 @@
 package net.momirealms.craftengine.bukkit.compatibility.viaversion;
 
 import com.viaversion.viaversion.api.Via;
+import com.viaversion.viaversion.api.connection.ProtocolInfo;
 import com.viaversion.viaversion.api.connection.UserConnection;
+import com.viaversion.viaversion.api.minecraft.item.Item;
+import com.viaversion.viaversion.api.protocol.Protocol;
+import com.viaversion.viaversion.api.rewriter.ItemRewriter;
+import com.viaversion.viaversion.api.type.Type;
 import com.viaversion.viaversion.bukkit.handlers.BukkitEncodeHandler;
 import io.netty.channel.ChannelHandler;
+import net.momirealms.craftengine.core.item.network.ClientboundItemRewriter;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
 import net.momirealms.craftengine.core.util.ReflectionUtils;
@@ -13,6 +19,8 @@ import net.momirealms.sparrow.reflection.field.SField;
 import net.momirealms.sparrow.reflection.field.matcher.FieldMatcher;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public final class ViaVersionUtils {
@@ -38,6 +46,61 @@ public final class ViaVersionUtils {
         } else {
             return -1;
         }
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Nullable
+    public static ClientboundItemRewriter getClientboundItemRewriter(NetWorkUser user, int serverProtocol, int clientProtocol) {
+        UserConnection connection = getMatchingServerConnection(user, serverProtocol, clientProtocol);
+        if (connection == null) {
+            return null;
+        }
+
+        List<Protocol> protocols = connection.getProtocolInfo().getPipeline().reversedPipes();
+        List<ItemRewriter<?>> rewriters = new ArrayList<>(protocols.size());
+        for (Protocol<?, ?, ?, ?> protocol : protocols) {
+            ItemRewriter<?> rewriter = protocol.getItemRewriter();
+            if (rewriter != null) {
+                rewriters.add(rewriter);
+            }
+        }
+        if (rewriters.isEmpty()) {
+            return null;
+        }
+        Type<Item> sourceType = rewriters.getFirst().itemType();
+        Type<Item> targetType = rewriters.getLast().mappedItemType();
+        if (sourceType == null || targetType == null) {
+            return null;
+        }
+        return (source, target) -> {
+            Item item = sourceType.read(source);
+            if (source.isReadable()) {
+                throw new IllegalArgumentException("ViaVersion did not consume the complete creative item stack");
+            }
+            for (int i = 0, size = rewriters.size(); i < size; i++) {
+                item = rewriters.get(i).handleItemToClient(connection, item);
+            }
+            if (!Item.isEmpty(item)) {
+                targetType.write(target, item);
+            }
+        };
+    }
+
+    @Nullable
+    private static UserConnection getMatchingServerConnection(NetWorkUser user, int serverProtocol, int clientProtocol) {
+        UUID uuid = user.uuid();
+        if (!Via.isLoaded() || uuid == null) {
+            return null;
+        }
+        UserConnection connection = Via.getManager().getConnectionManager().getServerConnection(uuid);
+        if (connection == null || !connection.isActive() || connection.getChannel() != user.nettyChannel()) {
+            return null;
+        }
+        ProtocolInfo info = connection.getProtocolInfo();
+        if (info.serverProtocolVersion().getVersion() != serverProtocol || info.protocolVersion().getVersion() != clientProtocol) {
+            return null;
+        }
+        return connection;
     }
 
     @Nullable

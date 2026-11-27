@@ -26,6 +26,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Registry;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -108,13 +109,13 @@ public final class UniversalItemFactory extends BukkitItemFactory<LegacyItemWrap
     }
 
     @Override
-    protected Optional<Key> customId(LegacyItemWrapper item) {
-        Object nmsStack = item.minecraftItem();
+    @Nullable
+    public Key customIdFromMinecraft(Object nmsStack) {
         Object tag = ItemStackProxy.INSTANCE.getTag(nmsStack);
-        if (tag == null) return Optional.empty();
+        if (tag == null) return null;
         Object stringTag = CompoundTagProxy.INSTANCE.get(tag, IdProcessor.CRAFT_ENGINE_ID);
-        if (stringTag == null) return Optional.empty();
-        return Optional.of(Key.of(StringTagProxy.INSTANCE.getData(stringTag)));
+        if (stringTag == null) return null;
+        return Key.ofCached(StringTagProxy.INSTANCE.getData(stringTag));
     }
 
     @Override

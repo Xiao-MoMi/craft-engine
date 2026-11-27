@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.item.recipe;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemSelector;
 import net.momirealms.craftengine.core.item.recipe.predicate.DataComponentPredicate;
 import net.momirealms.craftengine.core.util.UniqueKey;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ import java.util.StringJoiner;
 import java.util.function.Predicate;
 
 public final class Ingredient implements Predicate<UniqueIdItem>, StackedContents.IngredientInfo<UniqueIdItem> {
-    public final List<IngredientElement> elements;
+    public final List<ItemSelector> elements;
     // 自定义物品与原版物品混合的列表
     public final List<UniqueKey> items;
     // 自定义物品原版材质与原版物品混合的列表
@@ -23,7 +24,7 @@ public final class Ingredient implements Predicate<UniqueIdItem>, StackedContent
     @Nullable
     public final DataComponentPredicate predicate;
 
-    private Ingredient(List<IngredientElement> elements,
+    private Ingredient(List<ItemSelector> elements,
                        List<UniqueKey> items,
                        List<UniqueKey> vanillaItems,
                        boolean hasCustomItem,
@@ -53,7 +54,7 @@ public final class Ingredient implements Predicate<UniqueIdItem>, StackedContent
         return item;
     }
 
-    public List<IngredientElement> elements() {
+    public List<ItemSelector> elements() {
         return this.elements;
     }
 
@@ -74,11 +75,11 @@ public final class Ingredient implements Predicate<UniqueIdItem>, StackedContent
                 .orElseGet(stack::isEmpty);
     }
 
-    public static Ingredient of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem, int count, DataComponentPredicate predicate) {
+    public static Ingredient of(List<ItemSelector> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem, int count, DataComponentPredicate predicate) {
         return new Ingredient(elements, List.copyOf(items), List.copyOf(minecraftItems), hasCustomItem, count, predicate);
     }
 
-    public static Ingredient of(List<IngredientElement> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem) {
+    public static Ingredient of(List<ItemSelector> elements, Set<UniqueKey> items, Set<UniqueKey> minecraftItems, boolean hasCustomItem) {
         return new Ingredient(elements, List.copyOf(items), List.copyOf(minecraftItems), hasCustomItem, 1, null);
     }
 

@@ -14,6 +14,7 @@ import net.momirealms.craftengine.core.util.LazyReference;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public final class ResetOperation implements ItemUpdater {
     public static final ItemUpdaterFactory<ResetOperation> FACTORY = new Factory();
@@ -54,7 +55,11 @@ public final class ResetOperation implements ItemUpdater {
         @Override
         public ResetOperation create(Key item, ConfigSection section) {
             return new ResetOperation(
-                    LazyReference.untilNotNull(() -> CraftEngine.instance().itemManager().getItemDefinition(item).orElseThrow()),
+                    LazyReference.untilNotNull(() -> {
+                        ItemDefinition definition = CraftEngine.instance().itemManager().getItemDefinitionOrNull(item);
+                        if (definition == null) throw new NoSuchElementException("No value present");
+                        return definition;
+                    }),
                     section.getList(KEEP_COMPONENTS, ConfigValue::getAsIdentifier),
                     section.getList(KEEP_TAGS, v -> v.getAsString().split("\\."))
             );

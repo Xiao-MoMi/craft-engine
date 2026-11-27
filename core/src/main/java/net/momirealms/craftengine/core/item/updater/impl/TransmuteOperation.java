@@ -2,8 +2,11 @@ package net.momirealms.craftengine.core.item.updater.impl;
 
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.ItemDefinition;
+import net.momirealms.craftengine.core.item.processor.ItemProcessor;
 import net.momirealms.craftengine.core.item.updater.ItemUpdater;
 import net.momirealms.craftengine.core.item.updater.ItemUpdaterFactory;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -18,7 +21,16 @@ public final class TransmuteOperation implements ItemUpdater {
     @Override
     public void update(ItemBuildContext context) {
         Item item = context.item();
-        context.setItem(item.transmuteCopy(this.newMaterial, item.count()));
+        ItemDefinition definition = CraftEngine.instance().itemManager().getItemDefinitionOrNull(this.newMaterial);
+        if (definition == null || definition.isVanillaItem()) {
+            context.setItem(item.transmuteCopy(this.newMaterial, item.count()));
+            return;
+        }
+        int count = item.count();
+        context.setItem(item.transmuteCopy(definition.material(), count));
+        for (ItemProcessor processor : definition.processors()) {
+            processor.apply(context);
+        }
     }
 
     private static class Factory implements ItemUpdaterFactory<TransmuteOperation> {

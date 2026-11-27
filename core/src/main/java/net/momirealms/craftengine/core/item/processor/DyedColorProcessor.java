@@ -7,7 +7,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Color;
 import net.momirealms.craftengine.core.util.Key;
 
-public final class DyedColorProcessor implements SimpleNetworkItemProcessor {
+public final class DyedColorProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<DyedColorProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"display", "color"};
     private final Color color;

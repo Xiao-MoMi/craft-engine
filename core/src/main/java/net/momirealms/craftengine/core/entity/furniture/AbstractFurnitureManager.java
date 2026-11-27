@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBox;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfig;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigs;
+import net.momirealms.craftengine.core.entity.furniture.setting.CustomFurnitureSettingType;
 import net.momirealms.craftengine.core.entity.furniture.setting.FurnitureSettings;
 import net.momirealms.craftengine.core.entity.furniture.tick.TickingFurniture;
 import net.momirealms.craftengine.core.loot.Loot;
@@ -35,11 +36,13 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public abstract class AbstractFurnitureManager implements FurnitureManager {
     private static final EventTriggerResolver EVENT_TRIGGER_RESOLVER = EventTriggerResolver.withAlias("break", EventTrigger.FURNITURE_BREAK);
     protected final Map<Key, FurnitureDefinition> byId = new ConcurrentHashMap<>();
+    private volatile Map<Key, FurnitureDefinition> loadedFurniture = Map.of();
     protected final CraftEngine plugin;
     protected final IdSectionConfigParser furnitureParser;
     // Cached command suggestions
@@ -52,6 +55,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     protected final TickersList<TickingFurniture> asyncTickingFurniture = new TickersList<>();
     protected final Queue<TickingFurniture> pendingAsyncTickingFurniture = new ConcurrentLinkedQueue<>();
     private boolean isTickingSyncFurniture = false;
+    private final AtomicBoolean asyncTickRunning = new AtomicBoolean();
 
     protected SchedulerTask syncTickTask;
     protected SchedulerTask asyncTickTask;
@@ -74,7 +78,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     @Override
     public void initSuggestions() {
         this.cachedSuggestions.clear();
-        for (Key key : this.byId.keySet()) {
+        for (Key key : this.loadedFurniture.keySet()) {
             this.cachedSuggestions.add(Suggestion.suggestion(key.toString()));
         }
     }
@@ -91,7 +95,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
 
     @Override
     public Map<Key, FurnitureDefinition> loadedFurniture() {
-        return Collections.unmodifiableMap(this.byId);
+        return this.loadedFurniture;
     }
 
     private void syncTick() {
@@ -156,8 +160,18 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             if (this.syncTickTask == null || this.syncTickTask.cancelled())
                 this.syncTickTask = CraftEngine.instance().scheduler().platform().runRepeating(this::syncTick, 1, 1);
         }
-        if (this.asyncTickTask == null || this.asyncTickTask.cancelled())
-            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runAsyncRepeating(this::asyncTick, 1, 1);
+        if (this.asyncTickTask == null || this.asyncTickTask.cancelled()) {
+            this.asyncTickTask = CraftEngine.instance().scheduler().platform().runAsyncRepeating(() -> {
+                if (!this.asyncTickRunning.compareAndSet(false, true)) {
+                    return;
+                }
+                try {
+                    this.asyncTick();
+                } finally {
+                    this.asyncTickRunning.set(false);
+                }
+            }, 1, 1);
+        }
     }
 
     @Override
@@ -171,12 +185,20 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
     @Override
     public void unload() {
         this.byId.clear();
+        this.loadedFurniture = Map.of();
     }
 
     protected abstract FurnitureHitBoxConfig<?> defaultHitBox();
 
     private final class FurnitureParser extends IdSectionConfigParser {
         public static final String[] CONFIG_SECTION_NAME = ConfigKeys.of("furniture");
+        private final Map<Key, FurnitureDefinition> pendingAliases = new ConcurrentHashMap<>();
+
+        @Override
+        public void preProcess() {
+            CustomFurnitureSettingType.freeze();
+            this.pendingAliases.clear();
+        }
 
         @Override
         public Key type() {
@@ -190,7 +212,7 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
 
         @Override
         public int count() {
-            return AbstractFurnitureManager.this.byId.size();
+            return AbstractFurnitureManager.this.loadedFurniture.size();
         }
 
         @Override
@@ -206,6 +228,13 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
         @Override
         public List<LoadingStage> dependencies() {
             return List.of(LoadingStages.ITEM);
+        }
+
+        @Override
+        public void postProcess() {
+            AbstractFurnitureManager.this.loadedFurniture = Map.copyOf(AbstractFurnitureManager.this.byId);
+            this.pendingAliases.forEach(AbstractFurnitureManager.this.byId::putIfAbsent);
+            this.pendingAliases.clear();
         }
 
         private static final String[] VARIANT = ConfigKeys.of("variant(s)|placement");
@@ -293,10 +322,21 @@ public abstract class AbstractFurnitureManager implements FurnitureManager {
             // 家具行为
             ConfigValue value = section.getValue(BEHAVIORS);
             if (value != null) {
-                List<FurnitureBehaviorTemplate> furnitureBehaviorTemplates = value.getAsList(v -> FurnitureBehaviors.fromConfig(furniture, v.getAsSection()));
-                ((FurnitureDefinitionImpl) furniture).setBehaviors(furnitureBehaviorTemplates);
+                try {
+                    List<FurnitureBehaviorTemplate> furnitureBehaviorTemplates = value.getAsList(v -> FurnitureBehaviors.fromConfig(furniture, v.getAsSection()));
+                    ((FurnitureDefinitionImpl) furniture).setBehaviors(furnitureBehaviorTemplates);
+                } catch (KnownResourceException e) {
+                    error(e, path);
+                }
             }
             AbstractFurnitureManager.this.byId.put(id, furniture);
+            // 别名
+            List<Key> aliases = section.getList("alias", ConfigValue::getAsIdentifier);
+            if (!aliases.isEmpty()) {
+                for (int i = 0, size = aliases.size(); i < size; i++) {
+                    this.pendingAliases.putIfAbsent(aliases.get(i), furniture);
+                }
+            }
         }
 
         private CullingData parseCullingData(@Nullable ConfigValue value) {

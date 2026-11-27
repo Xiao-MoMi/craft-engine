@@ -20,6 +20,7 @@ items:
             support_shape: cobweb
             destroy_stages:
               template: internal:destroy_stages
+            particle: default:table_lamp
         behaviors:
           - type: toggleable_lamp_block
             can_toggle_with_hand: true

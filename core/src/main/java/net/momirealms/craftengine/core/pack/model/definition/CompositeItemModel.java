@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class CompositeItemModel implements ItemModel {
@@ -68,18 +69,29 @@ public final class CompositeItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        for (ItemModel model : this.models) {
-            model.prepareModelGeneration(consumer);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
         }
+        if (!(object instanceof CompositeItemModel that)) {
+            return false;
+        }
+        return Objects.equals(this.models, that.models)
+                && Objects.equals(this.transformation, that.transformation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.models);
+        return 31 * result + Objects.hashCode(this.transformation);
     }
 
     private static class Factory implements ItemModelFactory<CompositeItemModel> {
 
         @Override
-        public CompositeItemModel create(Pack pack, Path path, ConfigSection section) {
+        public CompositeItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             return new CompositeItemModel(
-                    section.getList("models", v -> ItemModels.fromConfig(pack, path, v)),
+                    section.getList("models", v -> ItemModels.fromConfig(pack, path, v, generations)),
                     section.getValue("transformation", Transformation::fromConfig)
             );
         }

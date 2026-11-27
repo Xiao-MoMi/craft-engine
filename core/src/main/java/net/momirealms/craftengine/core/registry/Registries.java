@@ -152,8 +152,8 @@ public final class Registries {
     public static final ResourceKey<Registry<LegacyRecipe.Type<? extends LegacyRecipe>>> LEGACY_RECIPE_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("legacy_recipe_type"));
     public static final ResourceKey<Registry<PostProcessorType<? extends PostProcessor>>> RECIPE_POST_PROCESSOR_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("recipe_post_processor_type"));
     public static final ResourceKey<Registry<ItemUpdaterType<? extends ItemUpdater>>> ITEM_UPDATER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("item_updater_type"));
-    public static final ResourceKey<Registry<ClientCustomPacketType<? extends ClientCustomPacket>>> CLIENT_MOD_PACKET = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("client_mod_packet"));
-    public static final ResourceKey<Registry<ServerCustomPacketType<? extends ServerCustomPacket>>> SERVER_MOD_PACKET = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("server_mod_packet"));
+    public static final ResourceKey<Registry<ClientCustomPacketType<? extends ClientCustomPacket>>> CLIENTBOUND_CUSTOM_PACKET = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("clientbound_custom_packet"));
+    public static final ResourceKey<Registry<ServerCustomPacketType<? extends ServerCustomPacket>>> SERVERBOUND_CUSTOM_PACKET = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("serverbound_custom_packet"));
     public static final ResourceKey<Registry<BlockEntityElementConfigType<? extends BlockEntityElement>>> BLOCK_ENTITY_ELEMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("block_entity_element_type"));
     public static final ResourceKey<Registry<CraftRemainderType<? extends CraftRemainder>>> CRAFT_REMAINDER_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("craft_remainder_type"));
     public static final ResourceKey<Registry<FurnitureElementConfigType<? extends FurnitureElement>>> FURNITURE_ELEMENT_TYPE = ResourceKey.create(ROOT_REGISTRY, Key.withCraftEngineNamespace("furniture_element_type"));

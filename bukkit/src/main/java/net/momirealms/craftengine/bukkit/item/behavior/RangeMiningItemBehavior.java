@@ -2,6 +2,7 @@ package net.momirealms.craftengine.bukkit.item.behavior;
 
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
+import net.momirealms.craftengine.core.block.behavior.BlockBreakResult;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.behavior.ItemBehavior;
 import net.momirealms.craftengine.core.item.behavior.ItemBehaviorFactory;
@@ -42,16 +43,18 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
     }
 
     @Override
-    public void onBreakBlock(World world, Player player, BlockPos pos) {
+    public BlockBreakResult onBreakBlock(World world, Player player, BlockPos pos) {
         BukkitServerPlayer serverPlayer = (BukkitServerPlayer) player;
-        if (serverPlayer.isRangeMining()) return;
+        if (serverPlayer.isRangeMining()) {
+            return BlockBreakResult.PASS;
+        }
 
         BlockStateWrapper blockState = world.getBlockState(pos);
         if (!this.condition.test(PlayerOptionalContext.of(player, ContextHolder.builder(
                 DirectContextParameters.PLAYER, player,
                 DirectContextParameters.BLOCK, world.getBlock(pos)
         ).build()))) {
-            return;
+            return BlockBreakResult.PASS;
         }
 
         float destroyProgress = player.getDestroyProgress(blockState.minecraftState(), pos);
@@ -91,6 +94,7 @@ public final class RangeMiningItemBehavior extends ItemBehavior {
         } finally {
             serverPlayer.setRangeMining(false);
         }
+        return BlockBreakResult.PASS;
     }
 
     /**

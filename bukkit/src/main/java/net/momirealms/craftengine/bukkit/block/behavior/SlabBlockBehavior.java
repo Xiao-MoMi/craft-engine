@@ -42,9 +42,8 @@ public final class SlabBlockBehavior extends WaterloggedBlockBehavior implements
         SlabType type = state.get(this.typeProperty);
         Item item = context.getItem();
         if (type == SlabType.DOUBLE || ItemUtils.isEmpty(item)) return false;
-        Optional<ItemDefinition> itemInHand = item.getDefinition();
-        if (itemInHand.isEmpty()) return false;
-        ItemDefinition itemDefinition = itemInHand.get();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition == null) return false;
 
         MutableBoolean sameId = new MutableBoolean(false);
         itemDefinition.behavior().let(BlockItem.class, b -> {

@@ -67,27 +67,18 @@ public class BukkitStorageAdaptor implements StorageAdaptor {
                 return wrap(new LinearRegionFileStorage(path, VersionHelper.hasFoliaPatch ? FOLIA_FACTORY : BUKKIT_FACTORY));
             }
             case PDC -> {
-                if (Config.enableChunkCache()) {
-                    return cache(new PersistentDataContainerStorage(world, VersionHelper.hasFoliaPatch ? FOLIA_FACTORY : BUKKIT_FACTORY));
-                } else {
-                    return new PersistentDataContainerStorage(world, VersionHelper.hasFoliaPatch ? FOLIA_FACTORY : BUKKIT_FACTORY);
-                }
+                return this.cache(new PersistentDataContainerStorage(world, VersionHelper.hasFoliaPatch ? FOLIA_FACTORY : BUKKIT_FACTORY));
             }
             default -> throw new UnsupportedOperationException("Unsupported chunk storage type: " + Config.chunkStorageType());
         }
     }
 
     private @NotNull WorldDataStorage wrap(@NotNull RegionStorage regionStorage) {
-        WorldDataStorage storage = Config.enableAsyncChunkWrite() ? new AsyncStorage(regionStorage) : regionStorage;
-        if (Config.enableChunkCache()) {
-            return cache(storage);
-        } else {
-            return storage;
-        }
+        return this.cache(new AsyncStorage(regionStorage));
     }
 
     private WorldDataStorage cache(WorldDataStorage storage) {
-        if (!Config.lifecycleChunkCache() || !ChunkLifecycleAgent.installed()) {
+        if (!ChunkLifecycleAgent.installed()) {
             return new CachedStorage<>(storage);
         }
         return new LifecycleCachedStorage(storage);

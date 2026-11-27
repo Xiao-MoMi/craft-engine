@@ -58,6 +58,10 @@ public final class PlayerActionListener implements ByteBufferPacketListener {
             int stateId = BlockStateUtils.blockStateToId(blockState);
             // not a custom block
             if (BlockStateUtils.isVanillaBlock(stateId)) {
+                if (player.hasBedrockExtension() && BukkitBlockManager.instance().isSharedVanillaState(stateId) && !player.canInstabuild()) {
+                    player.startBedrockVanillaMining(pos, blockState);
+                    return;
+                }
                 if (Config.enableSoundSystem()) {
                     Object soundType = BlockBehaviourProxy.BlockStateBaseProxy.INSTANCE.getSoundType(blockState);
                     Object soundEvent = SoundTypeProxy.INSTANCE.getHitSound(soundType);

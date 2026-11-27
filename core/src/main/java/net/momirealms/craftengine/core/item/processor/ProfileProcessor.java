@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public final class ProfileProcessor implements SimpleNetworkItemProcessor {
+public final class ProfileProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<ProfileProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[] {"SkullOwner"};
     private final @Nullable TextProvider profileName;

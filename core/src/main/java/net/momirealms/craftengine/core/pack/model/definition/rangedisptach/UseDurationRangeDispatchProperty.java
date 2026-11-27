@@ -38,6 +38,22 @@ public final class UseDurationRangeDispatchProperty implements RangeDispatchProp
         return value;
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof UseDurationRangeDispatchProperty that)) {
+            return false;
+        }
+        return this.remaining == that.remaining;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(this.remaining);
+    }
+
     private static class Factory implements RangeDispatchPropertyFactory<UseDurationRangeDispatchProperty> {
         @Override
         public UseDurationRangeDispatchProperty create(ConfigSection section) {

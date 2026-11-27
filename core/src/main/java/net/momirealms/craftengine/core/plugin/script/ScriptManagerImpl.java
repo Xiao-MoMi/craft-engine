@@ -137,7 +137,7 @@ public final class ScriptManagerImpl implements ScriptManager {
         this.scripts.values().forEach(ScriptFile::warmUp);
         if (!this.scripts.isEmpty()) {
             long t2 = System.nanoTime();
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.config_loaded", "scripts", String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(this.scripts.size())));
+            TranslationManager.info("resource.config_loaded", "scripts", String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(this.scripts.size()));
         }
         // 全部脚本加载完成后统一触发 //@Enable
         for (PendingEnable pending : this.pendingEnables) {

@@ -17,7 +17,7 @@ public interface FluidStateProxy extends TypedInstanceProxy {
     int getAmount(Object target);
 
     @MethodInvoker(name = "is", activeIf = "max_version=1.21.11")
-    boolean is$0(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
+    boolean is$1(Object target, @Type(clazz = TagKeyProxy.class) Object tag);
 
     @MethodInvoker(name = "createLegacyBlock")
     Object createLegacyBlock(Object target);

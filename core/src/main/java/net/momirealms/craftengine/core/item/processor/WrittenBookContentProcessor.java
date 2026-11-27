@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public final class WrittenBookContentProcessor implements SimpleNetworkItemProcessor {
+public final class WrittenBookContentProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<WrittenBookContentProcessor> FACTORY = new Factory();
     private final FilterableText title;
     private final TextProvider author;

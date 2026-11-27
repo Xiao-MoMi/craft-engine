@@ -5,6 +5,16 @@ import java.util.function.IntConsumer;
 
 public record EmptyPaletteStorage(int size) implements PaletteStorage {
     public static final long[] EMPTY_DATA = new long[0];
+    private static final EmptyPaletteStorage BLOCKS = new EmptyPaletteStorage(4096);
+    private static final EmptyPaletteStorage BIOMES = new EmptyPaletteStorage(64);
+
+    public static EmptyPaletteStorage forSize(int size) {
+        return switch (size) {
+            case 4096 -> BLOCKS;
+            case 64 -> BIOMES;
+            default -> new EmptyPaletteStorage(size);
+        };
+    }
 
     @Override
     public int swap(int index, int value) {

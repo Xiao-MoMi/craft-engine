@@ -17,6 +17,26 @@ public interface PalettedContainerProxy {
     @FieldGetter(name = "data")
     Object getData(Object target);
 
+    @FieldGetter(name = "strategy")
+    Object getStrategy(Object target);
+
+    @FieldSetter(name = "strategy")
+    void setStrategy(Object target, Object strategy);
+
+    @FieldGetter(name = "presetValues", activeIf = "min_version=1.21.9", optional = true)
+    default Object[] getPresetValues(Object target) {
+        return null;
+    }
+
+    @FieldGetter(name = "registry", activeIf = "max_version=1.21.8")
+    Object getRegistry(Object target);
+
+    @FieldSetter(name = "registry", activeIf = "max_version=1.21.8")
+    void setRegistry(Object target, Object registry);
+
+    @MethodInvoker(name = "get")
+    Object getByIndex(Object target, int index);
+
     @MethodInvoker(name = "getAndSetUnchecked")
     Object getAndSetUnchecked(Object target, int x, int y, int z, Object state);
 
@@ -46,5 +66,10 @@ public interface PalettedContainerProxy {
 
         @FieldGetter(name = "palette")
         Object getPalette(Object target);
+    }
+
+    @ReflectionProxy(name = "net.minecraft.world.level.chunk.Strategy", activeIf = "min_version=1.21.9")
+    interface StrategyProxy {
+        Class<?> CLASS = SparrowClass.find("net.minecraft.world.level.chunk.Strategy");
     }
 }

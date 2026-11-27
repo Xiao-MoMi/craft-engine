@@ -60,9 +60,7 @@ public final class EquipmentSetClientSlotUpdater {
     private static boolean requiresClientRefresh(ItemStack stack) {
         if (ItemStackUtils.isEmpty(stack)) return false;
         BukkitItem item = ItemStackUtils.wrap(stack);
-        return item.getDefinition()
-                .filter(ItemDefinition::hasClientBoundProcessor)
-                .map(definition -> definition.settings().equipmentSetPart() != null)
-                .orElse(false);
+        ItemDefinition definition = item.getDefinitionOrNull();
+        return definition != null && definition.hasClientBoundProcessor() && definition.settings().equipmentSetPart() != null;
     }
 }

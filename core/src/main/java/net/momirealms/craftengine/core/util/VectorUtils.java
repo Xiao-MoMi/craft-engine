@@ -4,6 +4,9 @@ import com.google.gson.JsonArray;
 import org.joml.Vector3f;
 
 public final class VectorUtils {
+    public static final Vector3f ZERO = new Vector3f();
+    public static final Vector3f ONE = new Vector3f(1);
+
     private VectorUtils() {}
 
     public static Vector3f vector3f(JsonArray array) {
@@ -14,10 +17,21 @@ public final class VectorUtils {
     }
 
     public static JsonArray toJson(Vector3f vector3f) {
-        JsonArray array = new JsonArray();
-        array.add(vector3f.x());
-        array.add(vector3f.y());
-        array.add(vector3f.z());
+        return toJson(vector3f.x(), vector3f.y(), vector3f.z());
+    }
+
+    public static JsonArray toJson(float x, float y) {
+        JsonArray array = new JsonArray(2);
+        array.add(x);
+        array.add(y);
+        return array;
+    }
+
+    public static JsonArray toJson(float x, float y, float z) {
+        JsonArray array = new JsonArray(3);
+        array.add(x);
+        array.add(y);
+        array.add(z);
         return array;
     }
 }

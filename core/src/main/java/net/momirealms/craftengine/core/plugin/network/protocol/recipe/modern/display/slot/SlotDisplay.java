@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.slot;
 
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.UnknownDisplayTypeException;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
@@ -16,7 +17,12 @@ public interface SlotDisplay {
     }
 
     static SlotDisplay read(FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
-        return buf.readById(BuiltInRegistries.SLOT_DISPLAY_TYPE).read(buf, reader);
+        int id = buf.readVarInt();
+        Type<? extends SlotDisplay> type = BuiltInRegistries.SLOT_DISPLAY_TYPE.getValue(id);
+        if (type == null) {
+            throw new UnknownDisplayTypeException("Unknown slot display type: " + id);
+        }
+        return type.read(buf, reader);
     }
 
     record Type<T extends SlotDisplay>(Key id, BiFunction<FriendlyByteBuf, FriendlyByteBuf.Reader<Item>, T> reader) {

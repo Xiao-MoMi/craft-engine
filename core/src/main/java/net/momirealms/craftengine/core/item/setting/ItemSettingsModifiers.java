@@ -76,6 +76,17 @@ public final class ItemSettingsModifiers {
         });
         return settings -> settings.repairItems(anvilRepairItemList);
     }));
+    public static final ItemSettingsModifierType<ItemSettingsModifier> ANVIL_REPAIR_MATERIAL = register(Key.ce("anvil_repair_material"), (value -> {
+        List<AnvilRepairItem> materials = value.getAsList(it -> {
+            ConfigSection section = it.getAsSection();
+            return new AnvilRepairItem(
+                    section.getStringList("material"),
+                    section.getValue("amount", NumberProviders::fromConfig, NumberProviders.direct(0)),
+                    section.getValue("percent", NumberProviders::fromConfig, NumberProviders.direct(0))
+            );
+        });
+        return settings -> settings.repairMaterials(materials);
+    }));
     public static final ItemSettingsModifierType<ItemSettingsModifier> DRAG_REPAIR_ITEM = register(Key.ce("drag_repair_item"), (value -> {
         List<DragRepairItem> dragRepairItemList = value.getAsList(it -> {
             ConfigSection section = it.getAsSection();
@@ -87,6 +98,18 @@ public final class ItemSettingsModifiers {
             );
         });
         return settings -> settings.dragRepairItems(dragRepairItemList);
+    }));
+    public static final ItemSettingsModifierType<ItemSettingsModifier> DRAG_REPAIR_MATERIAL = register(Key.ce("drag_repair_material"), (value -> {
+        List<DragRepairItem> materials = value.getAsList(it -> {
+            ConfigSection section = it.getAsSection();
+            return new DragRepairItem(
+                    section.getStringList("material"),
+                    section.getValue("amount", NumberProviders::fromConfig, NumberProviders.direct(0)),
+                    section.getValue("percent", NumberProviders::fromConfig, NumberProviders.direct(0)),
+                    section.getValue("sound", v -> SoundData.fromConfig(v, SoundData.SoundValue.FIXED_1, SoundData.SoundValue.FIXED_1), (SoundData) null)
+            );
+        });
+        return settings -> settings.dragRepairMaterials(materials);
     }));
     public static final ItemSettingsModifierType<ItemSettingsModifier> FUEL_TIME = register(Key.ce("fuel_time"), (value -> {
         int fuelTime = value.getAsInt();

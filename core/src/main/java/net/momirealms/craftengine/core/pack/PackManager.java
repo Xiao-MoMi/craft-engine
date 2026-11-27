@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.util.Tristate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +46,8 @@ public interface PackManager extends Manageable {
     }
 
     void loadPacks();
+
+    boolean setPackEnabled(String name, boolean enabled) throws IOException;
 
     void updateCachedConfigFiles();
 

@@ -89,8 +89,7 @@ public final class BukkitCraftEngine extends CraftEngine {
     private ServerEventListener serverEventListener;
 
     BukkitCraftEngine(JavaPlugin plugin) {
-        this(new JavaPluginLogger(plugin.getLogger()), plugin.getDataFolder().toPath().toAbsolutePath(),
-                new URLClassPathAppender(Bukkit.class.getClassLoader()), new ReflectionClassPathAppender(plugin.getClass().getClassLoader()));
+        this(new JavaPluginLogger(plugin.getLogger()), plugin.getDataFolder().toPath().toAbsolutePath(), new URLClassPathAppender(Bukkit.class.getClassLoader()), new ReflectionClassPathAppender(plugin.getClass().getClassLoader()));
         this.setJavaPlugin(plugin);
     }
 
@@ -177,11 +176,6 @@ public final class BukkitCraftEngine extends CraftEngine {
             RecipeInjector.init();
         } catch (Throwable e) {
             throw new InjectionException("Error injecting recipes", e);
-        }
-        try {
-            DispenserInjector.init();
-        } catch (Throwable e) {
-            throw new InjectionException("Error injecting dispensers", e);
         }
         // 初始化一些注册表
         super.onPluginLoad();

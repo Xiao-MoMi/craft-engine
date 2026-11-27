@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.core.particles;
 
 import net.momirealms.craftengine.proxy.minecraft.network.FriendlyByteBufProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
@@ -9,6 +10,7 @@ import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 @ReflectionProxy(name = "net.minecraft.core.particles.ParticleOptions")
 public interface ParticleOptionsProxy {
     ParticleOptionsProxy INSTANCE = ASMProxyFactory.create(ParticleOptionsProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.core.particles.ParticleOptions");
 
     @MethodInvoker(name = "getType")
     Object getType(Object target);

@@ -18,6 +18,7 @@ import net.momirealms.craftengine.core.plugin.command.CraftEngineCommandManager;
 import net.momirealms.craftengine.core.plugin.command.sender.Sender;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
+import net.momirealms.craftengine.core.world.chunk.CEChunk;
 import net.momirealms.craftengine.proxy.minecraft.core.HolderProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.RegistryProxy;
 import net.momirealms.craftengine.proxy.minecraft.core.registries.BuiltInRegistriesProxy;
@@ -101,6 +102,11 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                             boolean valid = blockEntity.isValid();
                             sender.sendMessage(DebugCommandOutput.section(2, "Block Entity"));
                             sender.sendMessage(DebugCommandOutput.value(3, "Valid", DebugCommandOutput.booleanValue(valid)));
+                            CEChunk chunk = world.getChunkAtIfLoaded(blockPos);
+                            if (chunk != null) {
+                                sender.sendMessage(DebugCommandOutput.value(3, "Sync ticker", formatTickerState(chunk.isSyncBlockEntitySleeping(blockPos))));
+                                sender.sendMessage(DebugCommandOutput.value(3, "Async ticker", formatTickerState(chunk.isAsyncBlockEntitySleeping(blockPos))));
+                            }
                             BlockEntityRenderer renderer = blockEntity.dynamicRenderer();
                             if (renderer != null) {
                                 BlockEntityElement[] elements = renderer.elements();
@@ -142,6 +148,10 @@ public final class DebugTargetBlockCommand extends BukkitCommandFeature<CommandS
                         sender.sendMessage(DebugCommandOutput.status("Stored by CraftEngine", dataInCache != null && !dataInCache.isEmpty()));
                     }
                 });
+    }
+
+    private static String formatTickerState(Boolean sleeping) {
+        return sleeping == null ? "None" : sleeping ? "Sleeping" : "Awake";
     }
 
     private static String formatLocation(Location location) {

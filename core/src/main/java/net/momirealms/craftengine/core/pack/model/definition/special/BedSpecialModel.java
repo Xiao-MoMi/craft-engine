@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class BedSpecialModel implements SpecialModel {
@@ -44,6 +45,24 @@ public final class BedSpecialModel implements SpecialModel {
         }
         json.addProperty("texture", this.texture);
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof BedSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.part, that.part)
+                && Objects.equals(this.texture, that.texture);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.part);
+        return 31 * result + Objects.hashCode(this.texture);
     }
 
     private static class Factory implements SpecialModelFactory<BedSpecialModel> {

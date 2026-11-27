@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class EquipmentSetPart {
-    private final List<EquipmentSetComponent> components;
+    private final EquipmentSetComponent[] components;
 
     public EquipmentSetPart(List<EquipmentSetComponent> components) {
-        this.components = components;
+        this.components = components.toArray(new EquipmentSetComponent[0]);
     }
 
     public List<Key> getMatchingSets(EquipmentSetSlot slot) {

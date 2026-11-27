@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class EndCubeSpecialModel implements SpecialModel {
@@ -34,6 +35,22 @@ public final class EndCubeSpecialModel implements SpecialModel {
         json.addProperty("type", "end_cube");
         json.addProperty("effect", this.effect);
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof EndCubeSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.effect, that.effect);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.effect);
     }
 
     private static class Factory implements SpecialModelFactory<EndCubeSpecialModel> {

@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.entity.furniture.hitbox.AbstractFurniture
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitBoxConfigFactory;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.seat.SeatConfig;
+import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -41,6 +42,7 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
     public final DirectionalShulkerSpawner spawner;
     public final boolean invisible;
     public final List<Object> cachedShulkerValues = new ArrayList<>(6);
+    final List<Object> closedShulkerValues;
     public final AABBCreator aabbCreator;
 
     private ShulkerFurnitureHitboxConfig(SeatConfig[] seats,
@@ -63,12 +65,13 @@ public final class ShulkerFurnitureHitboxConfig extends AbstractFurnitureHitBoxC
         this.interactionEntity = interactionEntity;
         this.direction = direction;
 
-        ShulkerData.RawPeekAmount.addEntityDataIfNotDefaultValue(peek, this.cachedShulkerValues);
         ShulkerData.Color.addEntityDataIfNotDefaultValue((byte) 0, this.cachedShulkerValues);
         ShulkerData.NoGravity.addEntityDataIfNotDefaultValue(true, this.cachedShulkerValues);
         ShulkerData.Silent.addEntityDataIfNotDefaultValue(true, this.cachedShulkerValues);
         ShulkerData.MobFlags.addEntityDataIfNotDefaultValue((byte) 0x01, this.cachedShulkerValues); // NO AI
         ShulkerData.SharedFlags.addEntityDataIfNotDefaultValue((byte) 0x20, this.cachedShulkerValues); // Invisible
+        this.closedShulkerValues = Config.bedrockEnabled() ? List.copyOf(this.cachedShulkerValues) : List.of();
+        ShulkerData.RawPeekAmount.addEntityDataIfNotDefaultValue(peek, this.cachedShulkerValues);
 
         List<Object> cachedInteractionValues = new ArrayList<>();
         if (invisible) {

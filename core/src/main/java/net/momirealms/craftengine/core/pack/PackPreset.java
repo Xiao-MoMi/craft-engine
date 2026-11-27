@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack;
 
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.util.StringUtils;
 import net.momirealms.craftengine.core.util.Tristate;
 
 import java.util.Collection;
@@ -12,14 +13,14 @@ public record PackPreset(Set<String> packs) {
     public PackPreset {
         packs = Set.copyOf(packs);
         for (String pack : packs) {
-            if (!pack.matches("[A-Za-z0-9_-]{1,64}")) {
+            if (pack.length() > 64 || !StringUtils.isAsciiIdentifier(pack)) {
                 throw new IllegalArgumentException("Invalid resource pack id: " + pack);
             }
         }
     }
 
     public static PackPreset fromConfig(String name, ConfigValue value) {
-        if (!name.matches("[A-Za-z0-9_-]{1,64}")) {
+        if (name.length() > 64 || !StringUtils.isAsciiIdentifier(name)) {
             throw new IllegalArgumentException("Invalid resource pack preset name: " + name);
         }
         return new PackPreset(Set.copyOf(value.getAsStringList()));

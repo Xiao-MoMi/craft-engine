@@ -9,12 +9,14 @@ import net.momirealms.craftengine.core.pack.model.definition.condition.Condition
 import net.momirealms.craftengine.core.pack.model.definition.condition.RodCastConditionProperty;
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class ConditionItemModelReader implements SimplifiedItemModelReader {
     public static final ConditionItemModelReader FISHING_ROD = new ConditionItemModelReader(Key.of("item/fishing_rod"), RodCastConditionProperty.INSTANCE, "_cast");
@@ -31,7 +33,7 @@ public final class ConditionItemModelReader implements SimplifiedItemModelReader
     }
 
     @Override
-    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id) {
+    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id, Consumer<ModelGenerationHolder> generations) {
         List<Key> textures = textureValue.getAsFixedSizeList(2, ConfigValue::getAsAssetPath);
         List<Key> models = optionalModelValue.map(it -> it.getAsFixedSizeList(2, ConfigValue::getAsAssetPath)).orElse(null);
         return build(
@@ -44,7 +46,8 @@ public final class ConditionItemModelReader implements SimplifiedItemModelReader
                 ModelGeneration.builder()
                         .parentModelPath(this.model)
                         .texturesOverride(Map.of("layer0", textures.getLast().asMinimalString()))
-                        .build()
+                        .build(),
+                generations
         );
     }
 
@@ -64,20 +67,22 @@ public final class ConditionItemModelReader implements SimplifiedItemModelReader
     }
 
     @Override
-    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints) {
+    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints, Consumer<ModelGenerationHolder> generations) {
         BBModelConverter.Converted idle = blueprints.get(0);
         BBModelConverter.Converted special = blueprints.get(1);
         return build(
                 idle.model(), ModelGeneration.raw(idle.json(), idle.textures(), idle.textureMetadata()),
-                special.model(), ModelGeneration.raw(special.json(), special.textures(), special.textureMetadata())
+                special.model(), ModelGeneration.raw(special.json(), special.textures(), special.textureMetadata()), generations
         );
     }
 
-    private ItemModel build(Key idlePath, ModelGeneration idleGeneration, Key specialPath, ModelGeneration specialGeneration) {
+    private ItemModel build(Key idlePath, ModelGeneration idleGeneration, Key specialPath, ModelGeneration specialGeneration, Consumer<ModelGenerationHolder> generations) {
+        generations.accept(new ModelGenerationHolder(idlePath, idleGeneration));
+        generations.accept(new ModelGenerationHolder(specialPath, specialGeneration));
         return new ConditionItemModel(
                 this.property,
-                new BaseItemModel(specialPath, List.of(), specialGeneration),
-                new BaseItemModel(idlePath, List.of(), idleGeneration)
+                new BaseItemModel(specialPath),
+                new BaseItemModel(idlePath)
         );
     }
 }

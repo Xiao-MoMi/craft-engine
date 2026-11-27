@@ -1,0 +1,33 @@
+{
+  "pre_animation": [
+    "variable.ce_swing_p = math.clamp(variable.attack_time, 0, 1);",
+    "variable.ce_swing_root = math.sin(math.sqrt(variable.ce_swing_p) * 180);",
+    "variable.ce_swing_a = 45 - 20 * math.sin(variable.ce_swing_p * variable.ce_swing_p * 180);",
+    "variable.ce_swing_b = -20 * variable.ce_swing_root;",
+    "variable.ce_swing_c = -80 * variable.ce_swing_root;",
+    "variable.ce_swing_sa = math.sin(variable.ce_swing_a); variable.ce_swing_ca = math.cos(variable.ce_swing_a);",
+    "variable.ce_swing_sb = math.sin(variable.ce_swing_b); variable.ce_swing_cb = math.cos(variable.ce_swing_b);",
+    "variable.ce_swing_sc = math.sin(variable.ce_swing_c); variable.ce_swing_cc = math.cos(variable.ce_swing_c);",
+    "variable.ce_swing_j00 = math.cos(45) * (variable.ce_swing_ca * variable.ce_swing_cb + variable.ce_swing_ca * variable.ce_swing_sb * variable.ce_swing_sc + variable.ce_swing_sa * variable.ce_swing_cc);",
+    "variable.ce_swing_j01 = -variable.ce_swing_ca * variable.ce_swing_sb * variable.ce_swing_cc + variable.ce_swing_sa * variable.ce_swing_sc;",
+    "variable.ce_swing_j02 = math.cos(45) * (-variable.ce_swing_ca * variable.ce_swing_cb + variable.ce_swing_ca * variable.ce_swing_sb * variable.ce_swing_sc + variable.ce_swing_sa * variable.ce_swing_cc);",
+    "variable.ce_swing_j10 = math.cos(45) * (variable.ce_swing_sb - variable.ce_swing_cb * variable.ce_swing_sc);",
+    "variable.ce_swing_j11 = variable.ce_swing_cb * variable.ce_swing_cc;",
+    "variable.ce_swing_j12 = math.cos(45) * (-variable.ce_swing_sb - variable.ce_swing_cb * variable.ce_swing_sc);",
+    "variable.ce_swing_j20 = math.cos(45) * (-variable.ce_swing_sa * variable.ce_swing_cb - variable.ce_swing_sa * variable.ce_swing_sb * variable.ce_swing_sc + variable.ce_swing_ca * variable.ce_swing_cc);",
+    "variable.ce_swing_j21 = variable.ce_swing_sa * variable.ce_swing_sb * variable.ce_swing_cc + variable.ce_swing_ca * variable.ce_swing_sc;",
+    "variable.ce_swing_j22 = math.cos(45) * (variable.ce_swing_sa * variable.ce_swing_cb - variable.ce_swing_sa * variable.ce_swing_sb * variable.ce_swing_sc + variable.ce_swing_ca * variable.ce_swing_cc);",
+    "variable.ce_swing_j03 = -6.4 * variable.ce_swing_root;",
+    "variable.ce_swing_j13 = 3.2 * math.sin(math.sqrt(variable.ce_swing_p) * 360);",
+    "variable.ce_swing_j23 = -3.2 * math.sin(variable.ce_swing_p * 180);"
+  ],
+  "pose": [
+    "variable.ce_swing_arm_x = math.atan2(variable.ce_swing_m21, variable.ce_swing_m22);",
+    "variable.ce_swing_arm_y = math.atan2(-variable.ce_swing_m20, math.sqrt(variable.ce_swing_m00 * variable.ce_swing_m00 + variable.ce_swing_m10 * variable.ce_swing_m10));",
+    "variable.ce_swing_arm_z = math.atan2(variable.ce_swing_m10, variable.ce_swing_m00);"
+  ],
+  "rightarm": {
+    "position": ["variable.ce_swing_m03 - 8.5", "12 - variable.ce_swing_m13 + variable.short_arm_offset_right", "variable.ce_swing_m23 - 12"],
+    "rotation": ["variable.ce_swing_arm_x - 95", "variable.ce_swing_arm_y + 45", "variable.ce_swing_arm_z - 115"]
+  }
+}

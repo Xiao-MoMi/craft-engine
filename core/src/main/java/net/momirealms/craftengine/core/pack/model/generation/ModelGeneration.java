@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.pack.model.generation;
 
 import com.google.gson.JsonObject;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayMeta;
 import net.momirealms.craftengine.core.pack.model.generation.display.DisplayPosition;
 import net.momirealms.craftengine.core.plugin.config.*;
@@ -75,15 +76,15 @@ public final class ModelGeneration implements Supplier<JsonObject> {
         return this.rawTextures != null ? this.rawTextures : Map.of();
     }
 
-    private static final String[] GUI_LIGHT = ConfigKeys.of("gui_light");
-    private static final String[] AMBIENT_OCCLUSION = ConfigKeys.of("ambientocclusion|ambient_occlusion");
+    private static final String[] GUI_LIGHT = ConfigKeys.of(ModelJsonKeys.GUI_LIGHT);
+    private static final String[] AMBIENT_OCCLUSION = ConfigKeys.of(ModelJsonKeys.AMBIENT_OCCLUSION + "|ambient_occlusion");
 
     public static ModelGeneration of(ConfigSection section) {
         return builder()
-                .parentModelPath(section.getNonNullIdentifier("parent"))
+                .parentModelPath(section.getNonNullIdentifier(ModelJsonKeys.PARENT))
                 .guiLight(section.getEnum(GUI_LIGHT, GuiLight.class))
                 .ambientOcclusion(section.getValue(AMBIENT_OCCLUSION, v -> v.getAsBoolean()))
-                .displays(section.getValue("display", v -> {
+                .displays(section.getValue(ModelJsonKeys.DISPLAY, v -> {
                     Map<DisplayPosition, DisplayMeta> displays = new EnumMap<>(DisplayPosition.class);
                     ConfigSection displaySection = v.getAsSection();
                     for (String displayType : displaySection.keySet()) {
@@ -97,7 +98,7 @@ public final class ModelGeneration implements Supplier<JsonObject> {
                     }
                     return displays;
                 }))
-                .texturesOverride(section.getValue("textures", v -> {
+                .texturesOverride(section.getValue(ModelJsonKeys.TEXTURES, v -> {
                     ConfigSection texturesSection = v.getAsSection();
                     Map<String, String> texturesOverride = new LinkedHashMap<>();
                     for (String key : texturesSection.keySet()) {
@@ -153,13 +154,13 @@ public final class ModelGeneration implements Supplier<JsonObject> {
 
     private JsonObject getCachedModel() {
         JsonObject model = new JsonObject();
-        model.addProperty("parent", this.parentModelPath.asMinimalString());
+        model.addProperty(ModelJsonKeys.PARENT, this.parentModelPath.asMinimalString());
         if (this.texturesOverride != null) {
             JsonObject textures = new JsonObject();
             for (Map.Entry<String, String> entry : this.texturesOverride.entrySet()) {
                 textures.addProperty(entry.getKey(), entry.getValue());
             }
-            model.add("textures", textures);
+            model.add(ModelJsonKeys.TEXTURES, textures);
         }
         if (this.displays != null) {
             JsonObject displays = new JsonObject();
@@ -167,20 +168,20 @@ public final class ModelGeneration implements Supplier<JsonObject> {
                 JsonObject displayMetadata = new JsonObject();
                 DisplayMeta meta = entry.getValue();
                 if (meta.rotation() != null)
-                    displayMetadata.add("rotation", VectorUtils.toJson(meta.rotation()));
+                    displayMetadata.add(ModelJsonKeys.ROTATION, VectorUtils.toJson(meta.rotation()));
                 if (meta.translation() != null)
-                    displayMetadata.add("translation", VectorUtils.toJson(meta.translation()));
+                    displayMetadata.add(ModelJsonKeys.TRANSLATION, VectorUtils.toJson(meta.translation()));
                 if (meta.scale() != null)
-                    displayMetadata.add("scale", VectorUtils.toJson(meta.scale()));
+                    displayMetadata.add(ModelJsonKeys.SCALE, VectorUtils.toJson(meta.scale()));
                 displays.add(entry.getKey().name().toLowerCase(Locale.ROOT), displayMetadata);
             }
-            model.add("display", displays);
+            model.add(ModelJsonKeys.DISPLAY, displays);
         }
         if (this.guiLight != null) {
-            model.addProperty("gui_light", this.guiLight.name().toLowerCase(Locale.ROOT));
+            model.addProperty(ModelJsonKeys.GUI_LIGHT, this.guiLight.name().toLowerCase(Locale.ROOT));
         }
         if (this.ambientOcclusion != null) {
-            model.addProperty("ambientocclusion", this.ambientOcclusion);
+            model.addProperty(ModelJsonKeys.AMBIENT_OCCLUSION, this.ambientOcclusion);
         }
         return model;
     }

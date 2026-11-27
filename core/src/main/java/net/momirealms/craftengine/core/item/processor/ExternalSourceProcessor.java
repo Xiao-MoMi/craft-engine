@@ -63,6 +63,10 @@ public final class ExternalSourceProcessor implements ItemProcessor {
                 context.item().merge(another);
             }
         } catch (Throwable e) {
+            if (provider.plugin().equals("mmoitems") && e instanceof IllegalStateException && e.getMessage().contains("ItemBuildEvent")) {
+                CraftEngine.instance().logger().warn("Skipped building MMOItems item " + this.id + ". Please consider enabling recipe.force-sync-reload in config.yml, or ignore this message and restart the server to apply the new recipes.");
+                return;
+            }
             CraftEngine.instance().logger().warn("Failed to build item '" + this.id + "' from plugin '" + provider.plugin() + "'", e);
         } finally {
             buildStack.remove(dependency);

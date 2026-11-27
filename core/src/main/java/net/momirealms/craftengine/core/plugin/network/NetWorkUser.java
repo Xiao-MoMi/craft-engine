@@ -92,6 +92,14 @@ public interface NetWorkUser {
 
     void setClientModProtocol(int version);
 
+    default boolean hasBedrockExtension() {
+        return this.bedrockProtocol() != -1;
+    }
+
+    int bedrockProtocol();
+
+    void setBedrockProtocol(int version);
+
     void addResourcePackUUID(UUID uuid);
 
     boolean isResourcePackLoading(UUID uuid);

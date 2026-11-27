@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bukkit.plugin.network.id;
 
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.PacketFlow;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -9,9 +8,9 @@ import java.util.Map;
 
 public final class PacketIdHelper {
     // 1.20.5-latest
-    private static final Map<ConnectionState, Map<PacketFlow, Map<String, Integer>>> byName = VersionHelper.isOrAbove1_20_5 ? FastNMS.INSTANCE.gamePacketIdsByName() : Map.of();
+    private static final Map<ConnectionState, Map<PacketFlow, Map<String, Integer>>> byName = VersionHelper.isOrAbove1_20_5 ? PacketIdMappings.byName() : Map.of();
     // 1.20-1.20.4
-    private static final Map<ConnectionState, Map<PacketFlow, Map<Class<?>, Integer>>> byClazz = VersionHelper.isOrAbove1_20_5 ? Map.of() : FastNMS.INSTANCE.gamePacketIdsByClazz();
+    private static final Map<ConnectionState, Map<PacketFlow, Map<Class<?>, Integer>>> byClazz = VersionHelper.isOrAbove1_20_5 ? Map.of() : PacketIdMappings.byClass();
 
     private PacketIdHelper() {}
 

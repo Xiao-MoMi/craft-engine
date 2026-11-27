@@ -5,8 +5,11 @@ import net.momirealms.craftengine.core.pack.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
@@ -37,6 +40,34 @@ public final class FileUtils {
 
     public static void createDirectoriesSafe(Path path) throws IOException {
         Files.createDirectories(Files.exists(path) ? path.toRealPath() : path);
+    }
+
+    public static void copy(InputStream input, OutputStream output, byte[] buffer) throws IOException {
+        if (buffer.length == 0) {
+            throw new IllegalArgumentException("Copy buffer must not be empty");
+        }
+        int read;
+        while ((read = input.read(buffer)) != -1) {
+            output.write(buffer, 0, read);
+        }
+    }
+
+    public static boolean contentEquals(Path first, Path second, byte[] buffer) throws IOException {
+        int capacity = buffer.length / 2;
+        if (capacity == 0) {
+            throw new IllegalArgumentException("Comparison buffer needs space for both files");
+        }
+        try (InputStream left = Files.newInputStream(first); InputStream right = Files.newInputStream(second)) {
+            int length;
+            do {
+                length = left.readNBytes(buffer, 0, capacity);
+                int otherLength = right.readNBytes(buffer, capacity, capacity);
+                if (length != otherLength || !Arrays.equals(buffer, 0, length, buffer, capacity, capacity + otherLength)) {
+                    return false;
+                }
+            } while (length == capacity);
+            return true;
+        }
     }
 
     public static void deleteDirectory(Path folder) throws IOException {

@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class SpecialItemModel implements ItemModel {
@@ -26,26 +27,16 @@ public final class SpecialItemModel implements ItemModel {
     public static final ItemModelReader<SpecialItemModel> READER = new Reader();
     private final SpecialModel specialModel;
     private final Key base;
-    private final ModelGeneration modelGeneration;
     private final Transformation transformation;
 
-    public SpecialItemModel(@NotNull SpecialModel specialModel, @NotNull Key base, @Nullable ModelGeneration generation, @Nullable Transformation transformation) {
+    public SpecialItemModel(@NotNull SpecialModel specialModel, @NotNull Key base, @Nullable Transformation transformation) {
         this.specialModel = specialModel;
         this.base = base;
-        this.modelGeneration = generation;
         this.transformation = transformation;
     }
 
-    public SpecialItemModel(@NotNull SpecialModel specialModel, @NotNull Key base, @Nullable ModelGeneration generation) {
-        this(specialModel, base, generation, null);
-    }
-
-    public SpecialItemModel(@NotNull SpecialModel specialModel, @NotNull Key base, @Nullable Transformation transformation) {
-        this(specialModel, base, null, transformation);
-    }
-
     public SpecialItemModel(@NotNull SpecialModel specialModel, @NotNull Key base) {
-        this(specialModel, base, null, null);
+        this(specialModel, base, null);
     }
 
     @NotNull
@@ -56,11 +47,6 @@ public final class SpecialItemModel implements ItemModel {
     @Nullable
     public Transformation transformation() {
         return this.transformation;
-    }
-
-    @Nullable
-    public ModelGeneration modelGeneration() {
-        return this.modelGeneration;
     }
 
     @NotNull
@@ -81,13 +67,6 @@ public final class SpecialItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.modelGeneration != null) {
-            consumer.accept(new ModelGenerationHolder(this.base, this.modelGeneration));
-        }
-    }
-
-    @Override
     public void gatherRevisions(Consumer<Revision> consumer) {
         if (this.transformation != null) {
             consumer.accept(Revisions.SINCE_26_1);
@@ -95,11 +74,31 @@ public final class SpecialItemModel implements ItemModel {
         this.specialModel.collectRevision(consumer);
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof SpecialItemModel that)) {
+            return false;
+        }
+        return Objects.equals(this.specialModel, that.specialModel)
+                && Objects.equals(this.base, that.base)
+                && Objects.equals(this.transformation, that.transformation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.specialModel);
+        result = 31 * result + Objects.hashCode(this.base);
+        return 31 * result + Objects.hashCode(this.transformation);
+    }
+
     private static class Factory implements ItemModelFactory<SpecialItemModel> {
         private static final String[] BASE = ConfigKeys.of("base|path");
 
         @Override
-        public SpecialItemModel create(Pack pack, Path path, ConfigSection section) {
+        public SpecialItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             ConfigValue blueprintValue = section.getValue("blueprint");
             Key base;
             ModelGeneration modelGeneration;
@@ -116,10 +115,12 @@ public final class SpecialItemModel implements ItemModel {
                     modelGeneration = ModelGeneration.of(generation);
                 }
             }
+            if (modelGeneration != null) {
+                generations.accept(new ModelGenerationHolder(base, modelGeneration));
+            }
             return new SpecialItemModel(
                     SpecialModels.fromConfig(section.getNonNullSection("model")),
                     base,
-                    modelGeneration,
                     section.getValue("transformation", Transformation::fromConfig)
             );
         }

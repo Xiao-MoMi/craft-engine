@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Objects;
 
 public final class HeadSpecialModel implements SpecialModel {
     public static final SpecialModelFactory<HeadSpecialModel> FACTORY = new Factory();
@@ -49,6 +50,26 @@ public final class HeadSpecialModel implements SpecialModel {
             }
         }
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof HeadSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.kind, that.kind)
+                && Objects.equals(this.texture, that.texture)
+                && Float.compare(this.animation, that.animation) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.kind);
+        result = 31 * result + Objects.hashCode(this.texture);
+        return 31 * result + Float.hashCode(this.animation);
     }
 
     private static class Factory implements SpecialModelFactory<HeadSpecialModel> {

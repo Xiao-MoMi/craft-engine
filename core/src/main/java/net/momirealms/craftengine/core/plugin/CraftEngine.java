@@ -64,7 +64,6 @@ import net.momirealms.craftengine.core.world.score.TeamManager;
 import net.momirealms.craftengine.core.world.score.TeamManagerImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -199,7 +198,7 @@ public abstract class CraftEngine implements Plugin {
         try {
             this.storageManager = new StorageManager(this.scheduler.async(), StorageTypes.fromConfig(settings));
         } catch (KnownResourceException e) {
-            throw new IllegalStateException(TranslationManager.instance().plainTranslation("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
+            throw new IllegalStateException(TranslationManager.message("resource.errors_detail", "1", e.node(), e.getLocalizedMessage()), e);
         } catch (Exception e) {
             throw new IllegalStateException("Failed to initialize storage", e);
         }
@@ -330,10 +329,12 @@ public abstract class CraftEngine implements Plugin {
             asyncExecutor.execute(() -> {
                 long asyncTime = -1;
                 int issues = 0;
+                boolean syncRecipeReload;
                 try {
                     Timestamp timestamp = new Timestamp();
                     // 重载config
                     this.config.load();
+                    syncRecipeReload = reloadRecipe && Config.forceSyncRecipeReload();
                     // 重载翻译
                     this.translationManager.reload();
                     // 重载其他管理器
@@ -368,7 +369,7 @@ public abstract class CraftEngine implements Plugin {
                     }
 
                     // 执行延迟任务
-                    this.runDelayTasks(reloadRecipe);
+                    this.runDelayTasks(reloadRecipe && !syncRecipeReload);
                     // 重新发送tags，需要等待tags更新完成
                     this.networkManager.delayedLoad();
                     asyncTime = timestamp.deltaMillis();
@@ -389,6 +390,9 @@ public abstract class CraftEngine implements Plugin {
                             this.paintingManager.runDelayedSyncTasks();
                             // 同步注册配方
                             if (reloadRecipe) {
+                                if (syncRecipeReload) {
+                                    this.recipeManager.delayedLoad();
+                                }
                                 this.recipeManager.runDelayedSyncTasks();
                             }
                             // 同步修改进度
@@ -567,9 +571,9 @@ public abstract class CraftEngine implements Plugin {
             String lv = getLatestVersion();
             if (lv == null) return;
             if (compareVer(lv, pluginVersion())) {
-                this.logger.warn(TranslationManager.instance().plainTranslation("update.available", lv, link));
+                TranslationManager.warn("update.available", lv, link);
             } else {
-                this.logger.info(TranslationManager.instance().plainTranslation("update.is_latest"));
+                TranslationManager.info("update.is_latest");
             }
         } catch (Exception ignored) {
         }
@@ -939,7 +943,6 @@ public abstract class CraftEngine implements Plugin {
      *
      * @return PluginTaskRegistry
      */
-    @ApiStatus.Experimental
     public PluginTaskRegistry beforeEnableTaskRegistry() {
         return this.preEnableTaskRegistry;
     }
@@ -951,7 +954,6 @@ public abstract class CraftEngine implements Plugin {
      *
      * @return PluginTaskRegistry
      */
-    @ApiStatus.Experimental
     public PluginTaskRegistry afterEnableTaskRegistry() {
         return this.postEnableTaskRegistry;
     }

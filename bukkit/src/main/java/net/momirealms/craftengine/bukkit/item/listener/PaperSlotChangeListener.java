@@ -8,7 +8,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Optional;
 
 public final class PaperSlotChangeListener implements Listener {
     private final BukkitItemManager itemManager;
@@ -21,9 +20,8 @@ public final class PaperSlotChangeListener implements Listener {
     public void onSlotChange(final PlayerInventorySlotChangeEvent event) {
         ItemStack newItemStack = event.getNewItemStack();
         Item wrap = this.itemManager.wrap(newItemStack);
-        Optional<ItemDefinition> optionalCustomItem = wrap.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = wrap.getDefinitionOrNull();
+        if (itemDefinition != null) {
             if (!itemDefinition.settings().triggerAdvancement()) {
                 event.setShouldTriggerAdvancements(false);
             }

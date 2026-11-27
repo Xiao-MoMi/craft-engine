@@ -83,6 +83,7 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     private Set<Object> missingHitSounds = Set.of();
     private Set<Object> missingStepSounds = Set.of();
     private Set<Key> missingInteractSoundBlocks = Set.of();
+    private volatile boolean[] sharedVanillaStates = new boolean[0];
 
     public BukkitBlockManager(BukkitCraftEngine plugin) {
         super(plugin, RegistryUtils.currentBlockRegistrySize(), Config.serverSideBlocks());
@@ -145,12 +146,31 @@ public final class BukkitBlockManager extends AbstractBlockManager {
 
     @Override
     public void delayedLoad() {
+        boolean[] sharedStates = new boolean[this.vanillaBlockStateCount];
+        for (int id = this.vanillaBlockStateCount; id < this.blockStateMappings.length; id++) {
+            int appearance = this.blockStateMappings[id];
+            if (appearance >= 0 && appearance < sharedStates.length && this.blockStateMappings[appearance] == -1) {
+                sharedStates[appearance] = true;
+            }
+        }
+        this.sharedVanillaStates = sharedStates;
         this.registerBlockStatePacketListener();
         super.delayedLoad();
     }
 
+    public boolean isSharedVanillaState(int stateId) {
+        boolean[] states = this.sharedVanillaStates;
+        return stateId >= 0 && stateId < states.length && states[stateId];
+    }
+
     @Override
     public void registerBlockStatePacketListener() {
+        for (int i = 0; i < this.customBlocks.length; i++) {
+            int appearance = this.blockStateMappings[this.vanillaBlockStateCount + i];
+            Key owner = appearance < 0 ? null : BlockRegistryMirror.byId(appearance).ownerId();
+            BlockGenerator.field$CraftEngineBlock$isNoteBlock().set(this.customBlocks[i], BlockKeys.NOTE_BLOCK.equals(owner));
+            BlockGenerator.field$CraftEngineBlock$isTripwire().set(this.customBlocks[i], BlockKeys.TRIPWIRE.equals(owner));
+        }
         this.plugin.networkManager().registerBlockStatePacketListeners(this.blockStateMappings, this::isViewBlockingBlock); // 重置方块映射表
     }
 
@@ -162,6 +182,11 @@ public final class BukkitBlockManager extends AbstractBlockManager {
     @Override
     public BlockBehavior getEmptyBlockBehavior() {
         return EmptyBlockBehavior.INSTANCE;
+    }
+
+    @Override
+    public BlockSounds blockSoundsByName(String name) {
+        return SoundUtils.blockSoundsByName(name);
     }
 
     @SuppressWarnings("unchecked")
@@ -371,8 +396,6 @@ public final class BukkitBlockManager extends AbstractBlockManager {
             }
 
             Key vanillaBlockId = state.visualBlockState().ownerId();
-            BlockGenerator.field$CraftEngineBlock$isNoteBlock().set(nmsBlock, vanillaBlockId.equals(BlockKeys.NOTE_BLOCK));
-            BlockGenerator.field$CraftEngineBlock$isTripwire().set(nmsBlock, vanillaBlockId.equals(BlockKeys.TRIPWIRE));
             if (vanillaBlockId.equals(BlockKeys.BARRIER)) {
                 state.setRestoreBlockState(createBlockState("minecraft:glass"));
             } else {

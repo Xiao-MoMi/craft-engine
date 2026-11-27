@@ -15,6 +15,7 @@ repositories {
 }
 
 dependencies {
+    compileOnly(project(":bedrock"))
     compileOnly(project(":core"))
     compileOnly(project(":bukkit:legacy"))
     compileOnly(project(":bukkit:proxy"))
@@ -34,12 +35,12 @@ dependencies {
     // Util
     compileOnly(libs.sparrow.util)
     // NMS
-    compileOnly(libs.nms.helper)
     // BStats
     compileOnly(libs.bstats.bukkit)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.byte.buddy)
+    testImplementation(libs.paper.api)
     testImplementation(project(":core"))
     testCompileOnly(project(":bukkit:proxy"))
     testRuntimeOnly(libs.junit.platform.launcher)

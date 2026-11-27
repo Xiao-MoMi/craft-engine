@@ -1,5 +1,7 @@
 rootProject.name = "craft-engine"
 include(
+    ":bedrock",
+    ":bedrock:geyser-extension",
     ":core",
     ":core:adventure",
     ":common-files",

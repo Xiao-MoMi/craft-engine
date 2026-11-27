@@ -1,6 +1,8 @@
 package net.momirealms.craftengine.core.pack.workflow;
 
+import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.core.pack.host.ResourcePackHost;
+import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.nio.file.Path;
@@ -52,6 +54,17 @@ public final class PackWorkflowValidation {
         this.packed = true;
         this.protection = protection && VersionHelper.PREMIUM;
         resolvePath(path);
+    }
+
+    public void generateBedrockPack(String input, String output) {
+        Path sourcePath = this.resolvePath(input);
+        Path dataPath = this.resolvePath(output);
+        if (sourcePath.equals(dataPath)) {
+            throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.input_conflict", sourcePath.toString()));
+        }
+        if (dataPath.getParent() == null || !dataPath.equals(BedrockPackFiles.data(dataPath, dataPath.getParent()))) {
+            throw new IllegalArgumentException(TranslationManager.message("resource_pack.bedrock.workflow.data_filename", dataPath.toString()));
+        }
     }
 
     public ResourcePackHost requireHost(String pack) {

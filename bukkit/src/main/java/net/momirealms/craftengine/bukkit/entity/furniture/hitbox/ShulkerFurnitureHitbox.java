@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.bukkit.entity.furniture.hitbox;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.momirealms.craftengine.bedrock.network.HardHitboxPayload;
 import net.momirealms.craftengine.bukkit.entity.data.BaseEntityData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.PacketUtils;
@@ -8,6 +9,8 @@ import net.momirealms.craftengine.core.entity.furniture.ColliderConfig;
 import net.momirealms.craftengine.core.entity.furniture.Furniture;
 import net.momirealms.craftengine.core.entity.furniture.hitbox.FurnitureHitboxPart;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.WorldPosition;
 import net.momirealms.craftengine.core.world.collision.AABB;
@@ -27,12 +30,15 @@ import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 
 public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
+    private static final Key HITBOX_CHANNEL = Config.bedrockEnabled() ? Key.of(HardHitboxPayload.CHANNEL) : null;
     private final ShulkerFurnitureHitboxConfig config;
     private final FurnitureHitboxPart[] parts;
     public final ColliderConfig colliderConfig;
     private final Object spawnPacket;
     private final Object despawnPacket;
     private final Object culledSpawnPacket;
+    private final Object bedrockSpawnPacket;
+    private final Object bedrockCulledSpawnPacket;
     private final Object interactionSpawnPacket;
     private final Object interactionDespawnPacket;
     private final int[] entityIds;
@@ -91,6 +97,38 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
         this.interactionDespawnPacket = interactionCount == 0 ? null : ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(java.util.Arrays.copyOfRange(this.entityIds, 2, this.entityIds.length)));
         this.spawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(packets);
         this.despawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(new IntArrayList(this.entityIds));
+        if (!Config.bedrockEnabled()) {
+            this.bedrockSpawnPacket = this.spawnPacket;
+            this.bedrockCulledSpawnPacket = this.culledSpawnPacket;
+        } else if (config.direction.stepY() == 0) {
+            AABB bounds = this.colliderConfig.bounds;
+            double baseX = x + offset.x;
+            double baseZ = z - offset.z;
+            List<Object> cubes = new ArrayList<>(6 + interactionCount * 2);
+            this.addBedrockHitbox(cubes, this.entityIds[1], baseX, bounds.minY, baseZ, config.scale, config.scale);
+            if (config.peek != 0) {
+                // Mirror the base cube across the collider's center. At partial peek the cubes overlap.
+                this.addBedrockHitbox(cubes, this.entityIds[0], bounds.minX + bounds.maxX - baseX, bounds.minY, bounds.minZ + bounds.maxZ - baseZ, config.scale, config.scale);
+            }
+            this.bedrockCulledSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(cubes));
+            cubes.addAll(packets.subList(interactionStart, packets.size()));
+            this.bedrockSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(cubes);
+        } else {
+            AABB bounds = this.colliderConfig.bounds;
+            List<Object> bedrockPackets = new ArrayList<>(3 + interactionCount * 2);
+            this.addBedrockHitbox(bedrockPackets, this.entityIds[1],
+                    (bounds.minX + bounds.maxX) * 0.5, bounds.minY, (bounds.minZ + bounds.maxZ) * 0.5,
+                    config.scale, bounds.maxY - bounds.minY);
+            this.bedrockCulledSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(List.copyOf(bedrockPackets));
+            bedrockPackets.addAll(packets.subList(interactionStart, packets.size()));
+            this.bedrockSpawnPacket = ClientboundBundlePacketProxy.INSTANCE.newInstance(bedrockPackets);
+        }
+    }
+
+    private void addBedrockHitbox(List<Object> packets, int entityId, double x, double y, double z, double width, double height) {
+        packets.add(PacketUtils.createClientboundCustomPayloadPacket(HITBOX_CHANNEL, HardHitboxPayload.CODEC.encode(new HardHitboxPayload(entityId, width, height))));
+        packets.add(ClientboundAddEntityPacketProxy.INSTANCE.newInstance(entityId, UUID.randomUUID(), x, y, z, 0, 0, EntityTypesProxy.SHULKER, 0, Vec3Proxy.ZERO, 0));
+        packets.add(ClientboundSetEntityDataPacketProxy.INSTANCE.newInstance(entityId, this.config.closedShulkerValues));
     }
 
     @Override
@@ -127,12 +165,16 @@ public final class ShulkerFurnitureHitbox extends AbstractFurnitureHitBox {
 
     @Override
     public void show(Player player) {
-        player.sendPacket(this.spawnPacket, false);
+        player.sendPacket(player.isBedrockPlayer() ? this.bedrockSpawnPacket : this.spawnPacket, false);
     }
 
     @Override
     public void showCulled(Player player) {
-        player.sendPacket(this.config.invisible ? this.spawnPacket : this.culledSpawnPacket, false);
+        if (this.config.invisible) {
+            this.show(player);
+        } else {
+            player.sendPacket(player.isBedrockPlayer() ? this.bedrockCulledSpawnPacket : this.culledSpawnPacket, false);
+        }
     }
 
     @Override

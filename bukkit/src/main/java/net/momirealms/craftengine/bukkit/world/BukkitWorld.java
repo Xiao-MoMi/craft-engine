@@ -20,7 +20,6 @@ import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.*;
 import org.bukkit.Location;
-import org.bukkit.Particle;
 import org.bukkit.SoundCategory;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ExperienceOrb;
@@ -111,10 +110,7 @@ public interface BukkitWorld extends World {
 
     @Override
     default void spawnParticle(Position location, ParticleType particle, int count, double xOffset, double yOffset, double zOffset, double speed, @Nullable ParticleData extraData, @NotNull Context context) {
-        Particle particleType = (Particle) particle.platformParticle();
-        if (particleType == null) return;
-        org.bukkit.World platformWorld = bukkitWorld();
-        platformWorld.spawnParticle(particleType, location.x(), location.y(), location.z(), count, xOffset, yOffset, zOffset, speed, extraData == null ? null : ParticleUtils.toBukkitParticleData(extraData, context, platformWorld, location.x(), location.y(), location.z()));
+        ParticleUtils.broadcastParticles(this.minecraftWorld(), particle, location.x(), location.y(), location.z(), count, xOffset, yOffset, zOffset, speed, extraData, context);
     }
 
     @Override

@@ -4,8 +4,7 @@ import net.momirealms.craftengine.core.pack.PackGenerationOptions;
 import net.momirealms.craftengine.core.pack.workflow.*;
 
 public record GeneratePackWorkflow(PackGenerationOptions options) implements PackWorkflow {
-    public static final PackWorkflowFactory<GeneratePackWorkflow> FACTORY = section -> new GeneratePackWorkflow(
-            PackGenerationOptions.defaults().override(section));
+    public static final PackWorkflowFactory<GeneratePackWorkflow> FACTORY = section -> new GeneratePackWorkflow(PackGenerationOptions.defaults().override(section));
 
     @Override
     public PackWorkflowType<GeneratePackWorkflow> type() {

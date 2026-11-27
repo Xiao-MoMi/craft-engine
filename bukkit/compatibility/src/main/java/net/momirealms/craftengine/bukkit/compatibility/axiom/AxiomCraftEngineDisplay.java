@@ -31,7 +31,7 @@ public final class AxiomCraftEngineDisplay {
         if (ids.isEmpty()) return;
         for (Key id : ids) {
             if (this.itemManager.isVanillaItem(id)) continue;
-            ItemDefinition definition = this.itemManager.getItemDefinition(id).orElse(null);
+            ItemDefinition definition = this.itemManager.getItemDefinitionOrNull(id);
             if (definition == null) continue;
             this.registerItem(definition);
         }

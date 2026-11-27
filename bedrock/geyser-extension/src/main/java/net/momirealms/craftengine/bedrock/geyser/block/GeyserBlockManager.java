@@ -1,0 +1,93 @@
+package net.momirealms.craftengine.bedrock.geyser.block;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
+import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomBlocksEvent;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
+
+public final class GeyserBlockManager {
+    private final GeyserWorldBlocks worldBlocks = new GeyserWorldBlocks();
+    private final Map<String, String> displayBlocks = new HashMap<>();
+    private final Set<String> blockItems = new HashSet<>();
+    private Set<String> placementItems = Set.of();
+
+    public Map<String, String> displayBlocks() {
+        return this.displayBlocks;
+    }
+
+    public void clearBlockItems() {
+        this.blockItems.clear();
+    }
+
+    public void registerBlockItem(String identifier) {
+        this.blockItems.add(identifier);
+    }
+
+    public void registerBlocks(JsonObject plan, GeyserDefineCustomBlocksEvent event) {
+        this.displayBlocks.clear();
+        this.worldBlocks.clearPending();
+        if (plan == null) {
+            return;
+        }
+        try {
+            if (plan.has(WORLD_STATE_MAPPINGS)) {
+                this.worldBlocks.addStateMappings(plan.getAsJsonObject(WORLD_STATE_MAPPINGS));
+            }
+            this.registerEntries(plan.getAsJsonArray(ENTRIES), event, false);
+            JsonArray overrides = plan.getAsJsonArray(VANILLA_OVERRIDES);
+            if (overrides != null) {
+                this.registerEntries(overrides, event, true);
+            }
+        } catch (RuntimeException exception) {
+            GeyserTranslationManager.error("block.registration_failed", exception);
+        }
+    }
+
+    private void registerEntries(JsonArray entries, GeyserDefineCustomBlocksEvent event, boolean vanillaOverride) {
+        for (JsonElement value : entries) {
+            JsonObject display = value.getAsJsonObject();
+            String name = display.get(NAME).getAsString();
+            if (this.displayBlocks.containsKey(name)) {
+                continue;
+            }
+            try {
+                this.displayBlocks.put(name, GeyserBlockRegistrationAdapter.registerBlock(display, event, vanillaOverride));
+                if (!vanillaOverride && display.has("java_state")) {
+                    this.worldBlocks.add(display);
+                }
+            } catch (RuntimeException exception) {
+                GeyserTranslationManager.error("block.register_failed", exception, name);
+            }
+        }
+    }
+
+    public void init() {
+        this.worldBlocks.install();
+        this.placementItems = Set.copyOf(this.blockItems);
+    }
+
+    public GeyserWorldBlocks worldBlocks() {
+        return this.worldBlocks;
+    }
+
+    public GeyserBlockPlacementHandler initPlayer(GeyserPlayer player, GeyserItemManager items) {
+        if (!this.worldBlocks.isEmpty() || items.hasRegisteredItems()) {
+            player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks, items));
+        }
+        return this.placementItems.isEmpty() ? null : new GeyserBlockPlacementHandler(player.session(), this.placementItems);
+    }
+
+    public void unload() {
+        this.worldBlocks.uninstall();
+    }
+}

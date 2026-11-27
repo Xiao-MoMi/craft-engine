@@ -136,9 +136,8 @@ public final class CustomDyeRecipe extends CustomCraftingTableRecipe {
     }
 
     private Color getDyeColor(final Item dyeItem) {
-        Optional<ItemDefinition> optionalCustomItem = dyeItem.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = dyeItem.getDefinitionOrNull();
+        if (itemDefinition != null) {
             return Optional.ofNullable(itemDefinition.settings().dyeColor()).orElseGet(() -> getVanillaDyeColor(dyeItem));
         }
         return getVanillaDyeColor(dyeItem);
@@ -153,9 +152,8 @@ public final class CustomDyeRecipe extends CustomCraftingTableRecipe {
     }
 
     private boolean isDye(final UniqueIdItem item) {
-        Optional<ItemDefinition> optionalItemDefinition = item.item().getDefinition();
-        if (optionalItemDefinition.isPresent()) {
-            ItemDefinition itemDefinition = optionalItemDefinition.get();
+        ItemDefinition itemDefinition = item.item().getDefinitionOrNull();
+        if (itemDefinition != null) {
             if (itemDefinition.settings().dyeColor() != null) {
                 return true;
             }

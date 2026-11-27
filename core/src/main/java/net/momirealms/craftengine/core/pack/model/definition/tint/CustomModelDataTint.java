@@ -6,6 +6,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class CustomModelDataTint implements Tint {
     public static final TintFactory<CustomModelDataTint> FACTORY = new Factory();
@@ -34,6 +35,24 @@ public final class CustomModelDataTint implements Tint {
             json.addProperty("index", this.index);
         applyTint(json, this.value, "default");
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof CustomModelDataTint that)) {
+            return false;
+        }
+        return Objects.equals(this.value, that.value)
+                && this.index == that.index;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.value);
+        return 31 * result + Integer.hashCode(this.index);
     }
 
     private static class Factory implements TintFactory<CustomModelDataTint> {

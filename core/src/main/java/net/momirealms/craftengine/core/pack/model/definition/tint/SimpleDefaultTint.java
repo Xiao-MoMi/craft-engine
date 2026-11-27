@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.util.Key;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class SimpleDefaultTint implements Tint {
     public static final TintFactory<SimpleDefaultTint> FACTORY = new Factory();
@@ -34,6 +35,24 @@ public final class SimpleDefaultTint implements Tint {
         json.addProperty("type", this.type.asMinimalString());
         applyTint(json, this.defaultValue, "default");
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof SimpleDefaultTint that)) {
+            return false;
+        }
+        return Objects.equals(this.defaultValue, that.defaultValue)
+                && Objects.equals(this.type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.defaultValue);
+        return 31 * result + Objects.hashCode(this.type);
     }
 
     private static class Factory implements TintFactory<SimpleDefaultTint> {

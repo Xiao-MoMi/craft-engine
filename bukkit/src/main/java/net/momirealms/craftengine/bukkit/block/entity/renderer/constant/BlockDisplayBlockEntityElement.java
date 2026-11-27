@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer.constant;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.AbstractConstantBlockEntityElement;
 import net.momirealms.craftengine.core.entity.culling.ViewRangeCullable;
 import net.momirealms.craftengine.core.entity.player.Player;
@@ -33,14 +34,23 @@ public final class BlockDisplayBlockEntityElement extends AbstractConstantBlockE
     BlockDisplayBlockEntityElement(BlockDisplayBlockEntityElementConfig config, BlockPos pos, int entityId, boolean posChanged) {
         super(config.predicate, config.hasCondition);
         Vector3f position = config.position();
+        double x = pos.x() + (double) position.x;
+        double y = pos.y() + (double) position.y;
+        double z = pos.z() + (double) position.z;
+        if (config.offset.type() != BlockEntityRenderOffset.Type.NONE) {
+            long offsetSeed = config.offset.seed(pos);
+            x += config.offset.x(offsetSeed);
+            y += config.offset.y(offsetSeed);
+            z += config.offset.z(offsetSeed);
+        }
         this.cachedSpawnPacket = ClientboundAddEntityPacketProxy.INSTANCE.newInstance(
-                entityId, UUID.randomUUID(), pos.x() + (double) position.x, pos.y() + (double) position.y, pos.z() + (double) position.z,
+                entityId, UUID.randomUUID(), x, y, z,
                 config.xRot(), config.yRot(), EntityTypesProxy.BLOCK_DISPLAY, 0, Vec3Proxy.ZERO, 0
         );
         this.config = config;
         this.cachedDespawnPacket = ClientboundRemoveEntitiesPacketProxy.INSTANCE.newInstance(IntList.of(entityId));
         this.entityId = entityId;
-        this.cachedUpdatePosPacket = posChanged ? EntityUtils.createUpdatePosPacket(this.entityId, pos.x() + (double) position.x, pos.y() + (double) position.y, pos.z() + (double) position.z, config.yRot(), config.xRot(), false) : null;
+        this.cachedUpdatePosPacket = posChanged ? EntityUtils.createUpdatePosPacket(this.entityId, x, y, z, config.yRot(), config.xRot(), false) : null;
     }
 
     @Override

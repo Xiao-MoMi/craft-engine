@@ -32,7 +32,8 @@ final class FixedTextReplacementRenderer implements ComponentRenderer<FixedTextR
 
         if (component instanceof TextComponent tc) {
             final String content = tc.content();
-            final Matcher matcher = state.pattern.matcher(content);
+            // 当前节点完成全部匹配后才递归，因此本次渲染可以复用同一个 Matcher。
+            final Matcher matcher = state.matcher.reset(content);
             int replacedUntil = 0;
             boolean firstMatch = true;
             while (matcher.find()) {
@@ -85,14 +86,18 @@ final class FixedTextReplacementRenderer implements ComponentRenderer<FixedTextR
             List<TranslationArgument> newArgs = null;
             for (int i = 0, size = args.size(); i < size; i++) {
                 final TranslationArgument original = args.get(i);
-                final TranslationArgument replaced = original.value() instanceof Component
-                        ? TranslationArgument.component(this.render((Component) original.value(), state))
-                        : original;
+                TranslationArgument replaced = original;
+                if (original.value() instanceof Component argument) {
+                    Component rendered = this.render(argument, state);
+                    if (rendered != argument) {
+                        replaced = TranslationArgument.component(rendered);
+                    }
+                }
                 if (replaced != original) {
                     if (newArgs == null) {
                         newArgs = new ArrayList<>(size);
-                        if (i > 0) {
-                            newArgs.addAll(args.subList(0, i));
+                        for (int j = 0; j < i; j++) {
+                            newArgs.add(args.get(j));
                         }
                     }
                 }
@@ -122,7 +127,9 @@ final class FixedTextReplacementRenderer implements ComponentRenderer<FixedTextR
                     children = new ArrayList<>(oldChildrenSize);
                 }
                 if (first) {
-                    children.addAll(oldChildren.subList(0, i));
+                    for (int j = 0; j < i; j++) {
+                        children.add(oldChildren.get(j));
+                    }
                 }
                 first = false;
             }
@@ -138,6 +145,10 @@ final class FixedTextReplacementRenderer implements ComponentRenderer<FixedTextR
         return modified;
     }
 
-    record State(Pattern pattern, Function<MatchResult, Component> replacement) {
+    record State(Matcher matcher, Function<MatchResult, Component> replacement) {
+
+        State(Pattern pattern, Function<MatchResult, Component> replacement) {
+            this(pattern.matcher(""), replacement);
+        }
     }
 }

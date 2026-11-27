@@ -9,6 +9,7 @@ import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourceKey;
 
 public final class StorageTypes {
+    public static final StorageType<NoneStorage> NONE = register(Key.ce("none"), NoneStorage.FACTORY);
     public static final StorageType<FileStorage> JSON = register(Key.ce("json"), FileStorage.FACTORY);
     public static final StorageType<SqlStorage> SQLITE = register(Key.ce("sqlite"), new SqlStorageFactory(SqlDialect.SQLITE));
     public static final StorageType<SqlStorage> H2 = register(Key.ce("h2"), new SqlStorageFactory(SqlDialect.H2));

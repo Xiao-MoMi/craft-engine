@@ -5,6 +5,8 @@ import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.MethodInvoker;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 
+import java.util.List;
+
 @ReflectionProxy(name = "net.minecraft.world.phys.shapes.VoxelShape")
 public interface VoxelShapeProxy {
     VoxelShapeProxy INSTANCE = ASMProxyFactory.create(VoxelShapeProxy.class);
@@ -15,4 +17,7 @@ public interface VoxelShapeProxy {
 
     @MethodInvoker(name = "isEmpty")
     boolean isEmpty(Object target);
+
+    @MethodInvoker(name = "toAabbs")
+    List<Object> toAabbs(Object target);
 }

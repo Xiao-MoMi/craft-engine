@@ -2,13 +2,11 @@ package net.momirealms.craftengine.bukkit.plugin.injector;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.Advice;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.FieldAccessor;
-import net.bytebuddy.implementation.MethodDelegation;
-import net.bytebuddy.implementation.bind.annotation.RuntimeType;
-import net.bytebuddy.implementation.bind.annotation.SuperCall;
-import net.bytebuddy.implementation.bind.annotation.This;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.block.LiquidSolidification;
@@ -46,26 +44,24 @@ import net.momirealms.sparrow.reflection.constructor.matcher.ConstructorMatcher;
 import net.momirealms.sparrow.reflection.method.matcher.MethodMatcher;
 
 import java.lang.reflect.Method;
-import java.util.Optional;
-import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNull;
 
 public final class FallingBlockEntityGenerator {
-    private static SConstructor2 constructor$CraftEngineFallingBlockEntity;
-    public static final Method method$Entity$spawnAtLocation = requireNonNull(
+    private static SConstructor2 constructor;
+    private static final Method SPAWN_AT_LOCATION = requireNonNull(
             SparrowClass.of(EntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("spawnAtLocation")
                     .and(VersionHelper.isOrAbove1_21_2
                             ? MethodMatcher.takeArguments(ServerLevelProxy.CLASS, ItemLikeProxy.CLASS)
                             : MethodMatcher.takeArguments(ItemLikeProxy.CLASS))
                     .and(MethodMatcher.returnType(ItemEntityProxy.CLASS)))
     );
-    public static final Method method$Entity$move = requireNonNull(
+    private static final Method MOVE = requireNonNull(
             SparrowClass.of(EntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("move")
                     .and(MethodMatcher.takeArguments(MoverTypeProxy.CLASS, Vec3Proxy.CLASS))
                     .and(MethodMatcher.returnType(void.class)))
     );
-    public static final Method method$FallingBlockEntity$tick = requireNonNull(
+    private static final Method TICK = requireNonNull(
             SparrowClass.of(FallingBlockEntityProxy.CLASS).getDeclaredMethod(MethodMatcher.named("tick")
                     .and(MethodMatcher.takeArguments(new Class<?>[0]))
                     .and(MethodMatcher.returnType(void.class)))
@@ -75,11 +71,9 @@ public final class FallingBlockEntityGenerator {
     }
 
     public static void init() {
-        String packageWithName = FallingBlockEntityGenerator.class.getName();
-        String generatedClassName = packageWithName.substring(0, packageWithName.lastIndexOf('.')) + ".CraftEngineFallingBlockEntity";
-        Class<?> clazz$CraftEngineFallingBlockEntity = new ByteBuddy(ClassFileVersion.JAVA_V21)
+        Class<?> generated = InjectorClassLoading.load(new ByteBuddy(ClassFileVersion.JAVA_V21)
                 .subclass(FallingBlockEntityProxy.CLASS, ConstructorStrategy.Default.IMITATE_SUPER_CLASS_OPENING)
-                .name(generatedClassName)
+                .name(FallingBlockEntityGenerator.class.getPackageName() + ".CraftEngineFallingBlockEntity")
                 .defineField("liquidSolidifier", LiquidSolidifiableBlock.class, Visibility.PRIVATE)
                 .defineField("ticking", boolean.class, Visibility.PRIVATE)
                 .implement(InjectedFallingBlockEntity.class)
@@ -87,17 +81,14 @@ public final class FallingBlockEntityGenerator {
                 .intercept(FieldAccessor.ofField("liquidSolidifier"))
                 .method(ElementMatchers.named("ticking"))
                 .intercept(FieldAccessor.ofField("ticking"))
-                .method(ElementMatchers.is(method$Entity$spawnAtLocation))
-                .intercept(MethodDelegation.to(SpawnAtLocationInterceptor.class))
-                .method(ElementMatchers.is(method$Entity$move))
-                .intercept(MethodDelegation.to(MoveInterceptor.class))
-                .method(ElementMatchers.is(method$FallingBlockEntity$tick))
-                .intercept(MethodDelegation.to(TickInterceptor.class))
-                .make()
-                .load(FallingBlockEntityGenerator.class.getClassLoader())
-                .getLoaded();
+                .method(ElementMatchers.is(SPAWN_AT_LOCATION))
+                .intercept(Advice.to(SpawnAtLocationAdvice.class).wrap(SuperMethodCall.INSTANCE))
+                .method(ElementMatchers.is(MOVE))
+                .intercept(Advice.to(MoveAdvice.class).wrap(SuperMethodCall.INSTANCE))
+                .method(ElementMatchers.is(TICK))
+                .intercept(Advice.to(TickAdvice.class).wrap(SuperMethodCall.INSTANCE)));
         // The position constructor is private on vanilla/Spigot and only exposed by Paper.
-        constructor$CraftEngineFallingBlockEntity = SparrowClass.of(clazz$CraftEngineFallingBlockEntity)
+        constructor = SparrowClass.of(generated)
                 .getSparrowConstructor(ConstructorMatcher.takeArguments(
                         EntityTypeProxy.CLASS,
                         LevelProxy.CLASS
@@ -106,12 +97,12 @@ public final class FallingBlockEntityGenerator {
     }
 
     public static Object fall(Object level, Object pos, Object blockState) {
-        if (constructor$CraftEngineFallingBlockEntity == null) {
+        if (constructor == null) {
             throw new IllegalStateException("FallingBlockEntityGenerator has not been initialized");
         }
 
         Object finalBlockState = withoutWaterlogged(blockState);
-        Object fallingBlockEntity = constructor$CraftEngineFallingBlockEntity.newInstance(
+        Object fallingBlockEntity = constructor.newInstance(
                 EntityTypesProxy.FALLING_BLOCK,
                 level
         );
@@ -130,7 +121,7 @@ public final class FallingBlockEntityGenerator {
                 fallingBlockEntity,
                 EntityProxy.INSTANCE.getBlockPosition(fallingBlockEntity)
         );
-        ImmutableBlockState customBlockState = BlockStateUtils.getOptionalCustomBlockState(finalBlockState).orElse(null);
+        ImmutableBlockState customBlockState = BlockStateUtils.getNullableCustomBlockState(finalBlockState);
         if (customBlockState != null) {
             ((InjectedFallingBlockEntity) fallingBlockEntity).liquidSolidifier(customBlockState.behavior().getFirst(LiquidSolidifiableBlock.class));
         }
@@ -146,7 +137,7 @@ public final class FallingBlockEntityGenerator {
     }
 
     private static Object withoutWaterlogged(Object blockState) {
-        ImmutableBlockState customBlockState = BlockStateUtils.getOptionalCustomBlockState(blockState).orElse(null);
+        ImmutableBlockState customBlockState = BlockStateUtils.getNullableCustomBlockState(blockState);
         if (customBlockState != null) {
             for (Property<?> property : customBlockState.getProperties()) {
                 if (!property.name().equals("waterlogged") || property.valueClass() != Boolean.class) {
@@ -164,79 +155,69 @@ public final class FallingBlockEntityGenerator {
                 : blockState;
     }
 
-    public static final class SpawnAtLocationInterceptor {
-
-        private SpawnAtLocationInterceptor() {
-        }
-
-        @RuntimeType
-        public static Object intercept(@This Object fallingBlockEntity,
-                                       @SuperCall Callable<Object> superMethod) throws Exception {
-            Optional<ImmutableBlockState> optionalCustomState = BlockStateUtils.getOptionalCustomBlockState(
-                    FallingBlockEntityProxy.INSTANCE.getBlockState(fallingBlockEntity)
-            );
-            if (optionalCustomState.isEmpty()) {
-                return superMethod.call();
+    static final class SpawnAtLocationAdvice {
+        @Advice.OnMethodEnter(skipOn = Advice.OnNonDefaultValue.class)
+        static boolean dropCustomItems(@Advice.This Object entity) {
+            ImmutableBlockState state = BlockStateUtils.getNullableCustomBlockState(FallingBlockEntityProxy.INSTANCE.getBlockState(entity));
+            if (state == null) {
+                return false;
             }
-
-            ImmutableBlockState state = optionalCustomState.get();
-            Object level = EntityProxy.INSTANCE.getLevel(fallingBlockEntity);
-            World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(level));
-            WorldPosition position = new WorldPosition(
-                    world,
-                    EntityProxy.INSTANCE.getXo(fallingBlockEntity),
-                    EntityProxy.INSTANCE.getYo(fallingBlockEntity),
-                    EntityProxy.INSTANCE.getZo(fallingBlockEntity)
-            );
-            for (Item item : state.getDrops(ContextHolder.builder(
-                    DirectContextParameters.CUSTOM_BLOCK_STATE, state,
-                    DirectContextParameters.FALLING_BLOCK, true,
-                    DirectContextParameters.POSITION, position
-            ).build(), world, null)) {
-                world.dropItemNaturally(position, item);
-            }
-            return null;
+            FallingBlockEntityGenerator.dropItems(entity, state);
+            return true;
         }
     }
 
-    public static final class MoveInterceptor {
+    static void dropItems(Object fallingBlockEntity, ImmutableBlockState state) {
+        Object level = EntityProxy.INSTANCE.getLevel(fallingBlockEntity);
+        World world = BukkitAdaptor.adapt(LevelProxy.INSTANCE.getWorld(level));
+        WorldPosition position = new WorldPosition(
+                world,
+                EntityProxy.INSTANCE.getXo(fallingBlockEntity),
+                EntityProxy.INSTANCE.getYo(fallingBlockEntity),
+                EntityProxy.INSTANCE.getZo(fallingBlockEntity)
+        );
+        for (Item item : state.getDrops(ContextHolder.builder(
+                DirectContextParameters.CUSTOM_BLOCK_STATE, state,
+                DirectContextParameters.FALLING_BLOCK, true,
+                DirectContextParameters.POSITION, position
+        ).build(), world, null)) {
+            world.dropItemNaturally(position, item);
+        }
+    }
 
-        private MoveInterceptor() {
+    static final class MoveAdvice {
+        @Advice.OnMethodEnter
+        static Object beforeMove(@Advice.This Object entity, @Advice.FieldValue("ticking") boolean ticking,
+                                 @Advice.FieldValue("liquidSolidifier") LiquidSolidifiableBlock solidifier,
+                                 @Advice.Local("movingSolidifier") LiquidSolidifiableBlock movingSolidifier) {
+            if (ticking && solidifier != null) {
+                movingSolidifier = solidifier;
+                return EntityProxy.INSTANCE.getPosition(entity);
+            }
+            return null;
         }
 
-        @RuntimeType
-        public static void intercept(@This Object fallingBlockEntity,
-                                     @SuperCall Callable<Object> superMethod) throws Exception {
-            InjectedFallingBlockEntity injected = (InjectedFallingBlockEntity) fallingBlockEntity;
-            LiquidSolidifiableBlock solidifiable = injected.liquidSolidifier();
-            if (!injected.ticking() || solidifiable == null) {
-                superMethod.call();
-                return;
-            }
-
-            Object from = EntityProxy.INSTANCE.getPosition(fallingBlockEntity);
-            superMethod.call();
-            if (LiquidSolidification.solidifyFallingBlock(fallingBlockEntity, from, solidifiable)) {
+        @Advice.OnMethodExit
+        static void afterMove(@Advice.This Object entity, @Advice.Enter Object from,
+                              @Advice.Local("movingSolidifier") LiquidSolidifiableBlock solidifier) {
+            if (solidifier != null && LiquidSolidification.solidifyFallingBlock(entity, from, solidifier)) {
                 throw TickConsumed.INSTANCE;
             }
         }
     }
 
-    public static final class TickInterceptor {
-
-        private TickInterceptor() {
+    static final class TickAdvice {
+        @Advice.OnMethodEnter
+        static void begin(@Advice.FieldValue(value = "ticking", readOnly = false) boolean ticking) {
+            ticking = true;
         }
 
-        @RuntimeType
-        public static void intercept(@This Object fallingBlockEntity,
-                                     @SuperCall Callable<Object> superMethod) throws Exception {
-            InjectedFallingBlockEntity injected = (InjectedFallingBlockEntity) fallingBlockEntity;
-            injected.ticking(true);
-            try {
-                superMethod.call();
-            } catch (TickConsumed ignored) {
-            } finally {
-                injected.ticking(false);
+        @Advice.OnMethodExit(onThrowable = Throwable.class)
+        static void finish(@Advice.FieldValue(value = "ticking", readOnly = false) boolean ticking,
+                           @Advice.Thrown(readOnly = false) Throwable failure) {
+            ticking = false;
+            if (failure == TickConsumed.INSTANCE) {
+                failure = null;
             }
         }
     }
@@ -251,8 +232,8 @@ public final class FallingBlockEntityGenerator {
         void ticking(boolean ticking);
     }
 
-    private static final class TickConsumed extends RuntimeException {
-        private static final TickConsumed INSTANCE = new TickConsumed();
+    static final class TickConsumed extends RuntimeException {
+        static final TickConsumed INSTANCE = new TickConsumed();
 
         private TickConsumed() {
             super(null, null, false, false);

@@ -1,0 +1,177 @@
+package net.momirealms.craftengine.bedrock.geyser.item;
+
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.SortedSetMultimap;
+import net.momirealms.craftengine.bedrock.geyser.item.predicate.GeyserItemPredicates;
+import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
+import net.momirealms.craftengine.bedrock.geyser.proxy.registry.type.ItemMappingsProxy;
+import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
+import org.cloudburstmc.protocol.bedrock.data.definitions.ItemDefinition;
+import org.cloudburstmc.protocol.bedrock.data.inventory.ItemData;
+import org.geysermc.geyser.api.item.custom.v2.CustomItemBedrockOptions;
+import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
+import org.geysermc.geyser.api.item.custom.v2.component.ItemDataComponentMap;
+import org.geysermc.geyser.api.predicate.MinecraftPredicate;
+import org.geysermc.geyser.api.predicate.PredicateStrategy;
+import org.geysermc.geyser.api.predicate.context.item.ItemPredicateContext;
+import org.geysermc.geyser.api.util.Identifier;
+import org.geysermc.geyser.inventory.GeyserItemStack;
+import org.geysermc.geyser.item.GeyserCustomMappingData;
+import org.geysermc.geyser.registry.type.ItemMapping;
+import org.geysermc.geyser.registry.type.ItemMappings;
+import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.translator.item.CustomItemTranslator;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+
+public final class GeyserItemRuntime {
+    private final GeyserSession session;
+    private final Set<String> selectedItems;
+    private boolean selected;
+    private final ItemMappings originalMappings;
+    private ItemMappings boundMappings;
+    private GeyserSelectedItemHandler selectedHandler;
+    private final Map<String, GeyserItemTints> tintSources;
+
+    private GeyserItemRuntime(GeyserSession session, Set<String> selectedItems, Map<String, GeyserItemTints> tintSources) {
+        this.session = session;
+        this.originalMappings = session.getItemMappings();
+        this.selectedItems = selectedItems;
+        this.tintSources = tintSources;
+    }
+
+    static GeyserItemRuntime install(GeyserPlayer player, GeyserItemBindingPlan plan) {
+        GeyserSession session = player.session();
+        GeyserItemRuntime runtime = new GeyserItemRuntime(session, plan.selected, plan.tints);
+        GeyserItemBindingPlan.Bindings bindings = plan.forMappings(runtime.originalMappings);
+        if (bindings.affected().length != 0) {
+            session.setItemMappings(runtime.bindMappings(runtime.originalMappings, bindings.affected(), plan.contextual));
+        }
+        runtime.boundMappings = session.getItemMappings();
+        runtime.selectedHandler = GeyserSelectedItemHandler.install(player, runtime, bindings.heads(), plan.usesDimension);
+        return runtime;
+    }
+
+    public GeyserSelectedItemHandler selectedHandler() {
+        return this.selectedHandler;
+    }
+
+    public void close() {
+        this.selectedHandler.close();
+        if (this.session.getItemMappings() == this.boundMappings) {
+            this.session.setItemMappings(this.originalMappings);
+        }
+    }
+
+    private ItemMappings bindMappings(ItemMappings original, int[] affected, Set<String> contextual) {
+        ItemMapping[] items = original.getItems().clone();
+        Supplier<String> dimension = this::dimension;
+        BooleanSupplier selection = () -> this.selected;
+        for (int index : affected) {
+            ItemMapping item = items[index];
+            items[index] = this.bind(item, item.getCustomItemDefinitions(), contextual, dimension, selection);
+        }
+        return ItemMappingsProxy.INSTANCE.copy(original, items);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private <K> ItemMapping bind(ItemMapping item,
+                                 SortedSetMultimap<K, GeyserCustomMappingData> source,
+                                 Set<String> contextual, Supplier<String> dimension, BooleanSupplier selection) {
+        SortedSetMultimap<K, GeyserCustomMappingData> mappings = MultimapBuilder.hashKeys().treeSetValues(source.valueComparator()).build();
+        for (Map.Entry<K, GeyserCustomMappingData> entry : source.entries()) {
+            GeyserCustomMappingData mapping = entry.getValue();
+            CustomItemDefinition definition = mapping.definition();
+            if (contextual.contains(definition.bedrockIdentifier().toString())) {
+                List<MinecraftPredicate<? super ItemPredicateContext>> predicates = new ArrayList<>(definition.predicates().size());
+                for (MinecraftPredicate<? super ItemPredicateContext> predicate : definition.predicates()) {
+                    predicates.add(GeyserItemPredicates.bind(predicate, dimension, selection));
+                }
+                CustomItemDefinition bound = new SessionDefinition(
+                        definition.bedrockIdentifier(),
+                        definition.displayName(),
+                        definition.model(),
+                        definition.icon(),
+                        List.copyOf(predicates),
+                        definition.predicateStrategy(),
+                        definition.priority(),
+                        definition.bedrockOptions(),
+                        definition.components(),
+                        definition.removedComponents()
+                );
+                mapping = new GeyserCustomMappingData(bound, mapping.itemDefinition(), mapping.integerId());
+            }
+            mappings.put(entry.getKey(), mapping);
+        }
+        // 模型键可能已被平台重定位；保留原键，不能在扩展内重新创建 Adventure Key。
+        return ItemMapping.builder()
+                .bedrockIdentifier(item.getBedrockIdentifier()).bedrockDefinition(item.getBedrockDefinition())
+                .bedrockData(item.getBedrockData()).bedrockBlockDefinition(item.getBedrockBlockDefinition())
+                .translationString(item.getTranslationString()).javaItem(item.getJavaItem())
+                .containsV1Mappings(item.isContainsV1Mappings()).customItemDefinitions((SortedSetMultimap) mappings).build();
+    }
+
+    String dimension() {
+        Object world = GeyserSessionProxy.INSTANCE.worldName(this.session);
+        return world == null ? null : world.toString();
+    }
+
+    boolean usesSelection() {
+        return !this.selectedItems.isEmpty();
+    }
+
+    boolean hasTints() {
+        return !this.tintSources.isEmpty();
+    }
+
+    GeyserItemTints tints(ItemData item) {
+        return this.tintSources.getOrDefault(item.getDefinition().getIdentifier(), GeyserItemTints.DEFAULT);
+    }
+
+    GeyserItemTints tints(GeyserItemStack stack, boolean selected) {
+        if (this.tintSources.isEmpty() || stack.isEmpty()) {
+            return GeyserItemTints.DEFAULT;
+        }
+        ItemMapping mapping = stack.getMapping(this.session);
+        if (mapping.getCustomItemDefinitions() == null) {
+            return GeyserItemTints.DEFAULT;
+        }
+        this.selected = selected;
+        try {
+            ItemDefinition definition = CustomItemTranslator.getCustomItem(this.session, stack.getAmount(), stack.getAllComponents(), mapping);
+            return definition == null ? GeyserItemTints.DEFAULT : this.tintSources.getOrDefault(definition.getIdentifier(), GeyserItemTints.DEFAULT);
+        } finally {
+            this.selected = false;
+        }
+    }
+
+    boolean hasSelected(ItemData item) {
+        return this.selectedItems.contains(item.getDefinition().getIdentifier());
+    }
+
+    ItemData selected(GeyserItemStack item) {
+        // 只在当前连接的事件循环内临时切换上下文，其余翻译仍以 selected=false 执行。
+        this.selected = true;
+        try {
+            return item.getItemData(this.session);
+        } finally {
+            this.selected = false;
+        }
+    }
+
+    private record SessionDefinition(Identifier bedrockIdentifier,
+                                     String displayName,
+                                     Identifier model,
+                                     String icon,
+                                     List<MinecraftPredicate<? super ItemPredicateContext>> predicates,
+                                     PredicateStrategy predicateStrategy, int priority,
+                                     CustomItemBedrockOptions bedrockOptions,
+                                     ItemDataComponentMap components,
+                                     List<Identifier> removedComponents) implements CustomItemDefinition {
+    }
+}

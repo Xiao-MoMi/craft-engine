@@ -193,7 +193,7 @@ public final class ConfigSection {
     public ConfigValue getNonNullValue(String key, String argType) {
         Object value = this.value.get(key);
         if (value == null) {
-            throw new KnownResourceException(ConfigConstants.MISSING_ARGUMENT, assemblePath(key), key, TranslationManager.instance().plainTranslation(argType));
+            throw new KnownResourceException(ConfigConstants.MISSING_ARGUMENT, assemblePath(key), key, TranslationManager.message(argType));
         }
         return new ConfigValue(assemblePath(key), value);
     }
@@ -206,7 +206,7 @@ public final class ConfigSection {
                 return new ConfigValue(assemblePath(key), value);
             }
         }
-        throw new KnownResourceException(ConfigConstants.MISSING_ARGUMENT, assemblePath(keys[0]), keys[0], TranslationManager.instance().plainTranslation(argType));
+        throw new KnownResourceException(ConfigConstants.MISSING_ARGUMENT, assemblePath(keys[0]), keys[0], TranslationManager.message(argType));
     }
 
     // 获取非空 config value 进行基础转换
@@ -483,6 +483,10 @@ public final class ConfigSection {
 
     public <T extends Enum<T>> T getEnum(String key, Class<T> enumClass, T def) {
         return getValue(key, v -> v.getAsEnum(enumClass), def);
+    }
+
+    public <T extends Enum<T>> T getEnum(String key, Class<T> enumClass, T def, Function<String, T> custom) {
+        return getValue(key, v -> v.getAsEnum(enumClass, custom), def);
     }
 
     public <T extends Enum<T>> T getEnum(String[] keys, Class<T> enumClass, T def) {

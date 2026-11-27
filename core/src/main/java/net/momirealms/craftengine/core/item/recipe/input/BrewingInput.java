@@ -2,7 +2,7 @@ package net.momirealms.craftengine.core.item.recipe.input;
 
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
 
-public final class BrewingInput<T> implements RecipeInput {
+public final class BrewingInput implements RecipeInput {
     private final UniqueIdItem container;
     private final UniqueIdItem ingredient;
 

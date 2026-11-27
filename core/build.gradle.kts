@@ -13,6 +13,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":bedrock"))
     nbt(project, JavaPlugin.IMPLEMENTATION_CONFIGURATION_NAME)
     netty(project)
     common(project)
@@ -33,6 +34,7 @@ dependencies {
     adventure(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     netty(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     compression(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
+    cloud(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     storage(project, JavaPlugin.TEST_IMPLEMENTATION_CONFIGURATION_NAME)
     testRuntimeOnly(libs.jackson.annotations)
     testRuntimeOnly(libs.jackson.core)
@@ -41,6 +43,8 @@ dependencies {
     testRuntimeOnly(libs.h2)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.mockito.core)
+    testRuntimeOnly(project(":common-files"))
     testRuntimeOnly(libs.junit.platform.launcher)
     testRuntimeOnly(libs.sparrow.reflection)
 }

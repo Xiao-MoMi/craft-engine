@@ -22,6 +22,22 @@ public final class CustomModelDataSelectProperty implements SelectProperty {
         model.addProperty("index", this.index);
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof CustomModelDataSelectProperty that)) {
+            return false;
+        }
+        return this.index == that.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(this.index);
+    }
+
     private static class Factory implements SelectPropertyFactory<CustomModelDataSelectProperty> {
         @Override
         public CustomModelDataSelectProperty create(ConfigSection section) {

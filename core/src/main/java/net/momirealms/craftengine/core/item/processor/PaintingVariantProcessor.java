@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public final class PaintingVariantProcessor implements SimpleNetworkItemProcessor {
+public final class PaintingVariantProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<PaintingVariantProcessor> FACTORY = new Factory();
     private static final Object[] NBT_PATH = new Object[]{"EntityTag", "variant"};
     public final String id;

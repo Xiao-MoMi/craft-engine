@@ -25,6 +25,15 @@ public interface CraftItemStackProxy {
     @MethodInvoker(name = "asNMSCopy", isStatic = true)
     Object asNMSCopy(ItemStack original);
 
+    @MethodInvoker(name = "unwrap", isStatic = true, activeIf = "has_patch=paper && min_version=1.20.5")
+    default Object unwrap(ItemStack original) {
+        if (CLASS.isInstance(original)) {
+            Object handle = this.getHandle(original);
+            return handle == null ? ItemStackProxy.EMPTY : handle;
+        }
+        return this.asNMSCopy(original);
+    }
+
     @MethodInvoker(name = {"asBukkitMirror", "asCraftMirror"}, isStatic = true)
     ItemStack asCraftMirror(@Type(clazz = ItemStackProxy.class) Object original);
 }

@@ -15,7 +15,12 @@ public interface RecipeDisplay {
     void applyClientboundData(Function<Item, Item> function);
 
     static RecipeDisplay read(final FriendlyByteBuf buf, FriendlyByteBuf.Reader<Item> reader) {
-        return buf.readById(BuiltInRegistries.RECIPE_DISPLAY_TYPE).read(buf, reader);
+        int id = buf.readVarInt();
+        Type<? extends RecipeDisplay> type = BuiltInRegistries.RECIPE_DISPLAY_TYPE.getValue(id);
+        if (type == null) {
+            throw new UnknownDisplayTypeException("Unknown recipe display type: " + id);
+        }
+        return type.read(buf, reader);
     }
 
     record Type<T extends RecipeDisplay>(Key id, BiFunction<FriendlyByteBuf, FriendlyByteBuf.Reader<Item>, T> reader) {

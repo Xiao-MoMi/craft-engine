@@ -7,8 +7,11 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.momirealms.craftengine.core.item.behavior.*;
 import net.momirealms.craftengine.core.item.customdata.*;
 import net.momirealms.craftengine.core.item.equipment.*;
+import net.momirealms.craftengine.core.item.network.GlobalNetworkItemProcessors;
 import net.momirealms.craftengine.core.item.processor.*;
+import net.momirealms.craftengine.core.item.setting.CustomItemSettingType;
 import net.momirealms.craftengine.core.item.setting.ItemSettings;
+import net.momirealms.craftengine.core.item.setting.value.SharedModelData;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateConfig;
 import net.momirealms.craftengine.core.item.updater.ItemUpdateResult;
 import net.momirealms.craftengine.core.item.updater.ItemUpdater;
@@ -21,6 +24,7 @@ import net.momirealms.craftengine.core.pack.model.definition.*;
 import net.momirealms.craftengine.core.pack.model.definition.select.ChargeTypeSelectProperty;
 import net.momirealms.craftengine.core.pack.model.definition.select.TrimMaterialSelectProperty;
 import net.momirealms.craftengine.core.pack.model.generation.AbstractModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyItemModel;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyModelPredicate;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
@@ -33,7 +37,9 @@ import net.momirealms.craftengine.core.plugin.context.*;
 import net.momirealms.craftengine.core.plugin.context.number.ConstantNumberProvider;
 import net.momirealms.craftengine.core.util.*;
 import org.incendo.cloud.suggestion.Suggestion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -51,11 +57,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected static final List<Key> VANILLA_ITEMS = new ObjectArrayList<>(1024);
     protected static final Map<Key, Set<Key>> VANILLA_ITEM_TO_TAGS = new HashMap<>(1024);
     protected static final Map<Key, List<UniqueKey>> VANILLA_TAG_TO_ITEMS = new HashMap<>();
+    private final GlobalNetworkItemProcessors globalNetworkItemProcessors = new GlobalNetworkItemProcessors();
     // 解析器
     private final ItemParser itemParser;
     private final EquipmentParser equipmentParser;
     // 缓存
     protected final Map<Key, ItemDefinition> itemDefinitionById = new ConcurrentHashMap<>();
+    private volatile Map<Key, ItemDefinition> loadedItems = Map.of();
     protected final Map<String, ItemDefinition> itemDefinitionByPath = new ConcurrentHashMap<>();
     protected final Map<Key, List<UniqueKey>> customItemTags = new HashMap<>();
     protected final Map<Key, ModernItemModel> modernItemModels1_21_4 = new ConcurrentHashMap<>();
@@ -72,6 +80,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, List<UniqueKey>> ingredientSubstitutes = new HashMap<>();
     // 有序物品id
     protected final List<Key> orderedItemIds = new ObjectArrayList<>();
+    private volatile List<Key> bedrockCreativeItemIds = List.of();
     // 原版物品 + 自定义物品
     protected final List<Key> allItemIds = new ObjectArrayList<>();
     // 其他设置
@@ -99,8 +108,36 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     }
 
     @Override
+    public void registerGlobalNetworkItemProcessor(Key id, int priority, NetworkItemProcessor processor) {
+        this.globalNetworkItemProcessors.register(id, priority, processor);
+    }
+
+    @Override
+    public boolean unregisterGlobalNetworkItemProcessor(Key id) {
+        return this.globalNetworkItemProcessors.unregister(id);
+    }
+
+    @ApiStatus.Internal
+    public NetworkItemProcessor[] globalNetworkItemProcessors() {
+        return this.globalNetworkItemProcessors.processors();
+    }
+
+    @Override
     public ConfigParser[] parsers() {
         return new ConfigParser[]{this.itemParser, this.equipmentParser};
+    }
+
+    @Override
+    public void delayedLoad() {
+        Object value = YamlUtils.reader(this.plugin.config().settings()).getValue("item.global-network-processors");
+        try {
+            List<ConfigSection> sections = value == null ? List.of() : ConfigValue.of("item.global-network-processors", value).getAsList(ConfigValue::getAsSection);
+            this.globalNetworkItemProcessors.loadConfig(sections);
+        } catch (KnownResourceException e) {
+            this.plugin.logger().warn("Failed to load config.yml at " + e.node() + ": " + e.getLocalizedMessage());
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load item.global-network-processors from config.yml", e);
+        }
     }
 
     @Override
@@ -108,6 +145,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         super.clearModelsToGenerate();
         this.clearFeatureFlags();
         this.itemDefinitionById.clear();
+        this.loadedItems = Map.of();
         this.itemDefinitionByPath.clear();
         this.cachedCustomItemSuggestions.clear();
         this.cachedTotemSuggestions.clear();
@@ -119,6 +157,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         this.modernItemModels1_21_2.clear();
         this.ingredientSubstitutes.clear();
         this.orderedItemIds.clear();
+        this.bedrockCreativeItemIds = List.of();
         this.allItemIds.clear();
         this.dyeableItems.clear();
         this.vanillaItemDataOverrides.clear();
@@ -150,7 +189,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public Optional<ItemDefinition> getItemDefinition(Key key) {
-        return Optional.ofNullable(this.itemDefinitionById.get(key));
+        return Optional.ofNullable(getItemDefinitionOrNull(key));
+    }
+
+    @Override
+    @Nullable
+    public ItemDefinition getItemDefinitionOrNull(Key key) {
+        return this.itemDefinitionById.get(key);
     }
 
     @Override
@@ -169,9 +214,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public ItemUpdateResult updateItem(Item item, Supplier<ItemBuildContext> contextSupplier) {
-        Optional<ItemDefinition> optionalCustomItem = item.getDefinition();
-        if (optionalCustomItem.isPresent()) {
-            ItemDefinition itemDefinition = optionalCustomItem.get();
+        ItemDefinition itemDefinition = item.getDefinitionOrNull();
+        if (itemDefinition != null) {
             Optional<ItemUpdateConfig> updater = itemDefinition.updater();
             if (updater.isPresent()) {
                 return updater.get().update(item, contextSupplier);
@@ -202,17 +246,23 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     @Override
     public Optional<ItemBehavior> getItemBehavior(Key key) {
-        Optional<ItemDefinition> definitionOptional = getItemDefinition(key);
-        return definitionOptional.map(ItemDefinition::behavior).or(() -> Optional.ofNullable(VANILLA_ITEM_EXTRA_BEHAVIORS.get(key)));
+        ItemDefinition definition = getItemDefinitionOrNull(key);
+        ItemBehavior behavior = definition != null ? definition.behavior() : null;
+        return Optional.ofNullable(behavior != null ? behavior : VANILLA_ITEM_EXTRA_BEHAVIORS.get(key));
     }
 
     @Override
     public Map<Key, ItemDefinition> loadedItems() {
-        return Collections.unmodifiableMap(this.itemDefinitionById);
+        return this.loadedItems;
     }
 
     public List<Key> orderedItemIds() {
         return this.orderedItemIds;
+    }
+
+    @Override
+    public List<Key> bedrockCreativeItemIds() {
+        return this.bedrockCreativeItemIds;
     }
 
     @Override
@@ -338,6 +388,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         private final Map<Key, IdAllocator> idAllocators = new HashMap<>();
         private final List<CompletableFuture<?>> futures = Collections.synchronizedList(new ArrayList<>());
         private final Map<Key, List<Key>> tempCategories = new ConcurrentHashMap<>();
+        private final Map<Key, ItemDefinition> pendingAliases = new ConcurrentHashMap<>();
 
         @Override
         public Key type() {
@@ -346,7 +397,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
         @Override
         public int count() {
-            return AbstractItemManager.this.itemDefinitionById.size();
+            return AbstractItemManager.this.loadedItems.size();
         }
 
         private boolean isModernFormatRequired() {
@@ -387,6 +438,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
         @Override
         public void preProcess() {
+            CustomItemSettingType.freeze();
+            this.pendingAliases.clear();
             if (!this.idAllocators.isEmpty()) {
                 this.idAllocators.clear();
             }
@@ -424,6 +477,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
             AbstractItemManager.this.allItemIds.clear();
             AbstractItemManager.this.allItemIds.addAll(VANILLA_ITEMS);
+            int firstCustom = AbstractItemManager.this.allItemIds.size();
 
             // 获取有序的物品id
             int size = this.pendingConfigSections.size();
@@ -481,8 +535,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     }
                 }
             }
+            List<Key> allItems = AbstractItemManager.this.allItemIds;
+            AbstractItemManager.this.bedrockCreativeItemIds = List.copyOf(allItems.subList(firstCustom, allItems.size()));
             ARROW_ONLY.setDynamic(customProjectiles);
             ARROW_OR_FIREWORK.setDynamic(customProjectiles);
+            AbstractItemManager.this.loadedItems = Map.copyOf(AbstractItemManager.this.itemDefinitionById);
+            this.pendingAliases.forEach(AbstractItemManager.this.itemDefinitionById::putIfAbsent);
+            this.pendingAliases.clear();
         }
 
         // 创建或获取已有的自动分配器
@@ -641,11 +700,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 ConfigSection legacyModelSection = section.getSection(LEGACY_MODEL);
                 boolean hasModelSection = modelValue != null || textureValue != null || blueprintValue != null || legacyModelSection != null;
 
-                if (customModelData > 0 && (hasModelSection || forceCustomModelData)) {
+                boolean applyModelData = customModelData > 0 && (hasModelSection || forceCustomModelData);
+                boolean applyItemModel = itemModel != null && (hasModelSection || forceItemModel);
+                if (applyModelData) {
                     if (clientBoundModel) itemBuilder.clientBoundProcessor(new OverwritableCustomModelDataProcessor(ConstantNumberProvider.constant(customModelData)));
                     else itemBuilder.dataProcessor(new CustomModelDataProcessor(ConstantNumberProvider.constant(customModelData)));
                 }
-                if (itemModel != null && (hasModelSection || forceItemModel)) {
+                if (applyItemModel) {
                     if (clientBoundModel) {
                         itemBuilder.clientBoundProcessor(new OverwritableItemModelProcessor(itemModel));
                     }
@@ -662,7 +723,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                 // 应用客户端侧数据
                 try {
                     if (VersionHelper.PREMIUM) {
-                        ItemProcessors.collectProcessors(section.getSection(CLIENT_BOUND_DATA), itemBuilder::clientBoundProcessor);
+                        ItemProcessors.collectNetworkProcessors(section.getSection(CLIENT_BOUND_DATA), itemBuilder::clientBoundProcessor);
                     }
                 } catch (KnownResourceException e) {
                     error(e, path);
@@ -685,6 +746,12 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 // 设置
                 ItemSettings settings = ItemSettings.forItem(isVanillaItem);
+                if (applyModelData) {
+                    Key baseModel = applyItemModel ? itemModel : clientBoundMaterial;
+                    if (AbstractPackManager.PRESET_ITEMS.containsKey(baseModel)) {
+                        settings.sharedModelData(new SharedModelData(baseModel, customModelData));
+                    }
+                }
                 try {
                     ItemSettings.applyModifiers(settings, section.getSection("settings"));
                 } catch (KnownResourceException e) {
@@ -739,6 +806,13 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 AbstractItemManager.this.itemDefinitionById.put(id, itemDefinition);
                 AbstractItemManager.this.itemDefinitionByPath.put(id.value(), itemDefinition);
+                // 别名
+                List<Key> aliases = section.getList("alias", ConfigValue::getAsIdentifier);
+                if (!aliases.isEmpty()) {
+                    for (int i = 0, size = aliases.size(); i < size; i++) {
+                        this.pendingAliases.putIfAbsent(aliases.get(i), itemDefinition);
+                    }
+                }
                 if (VersionHelper.isOrAbove26_1 && settings.dyeable() == Tristate.TRUE) {
                     AbstractItemManager.this.dyeableItems.put(id, itemDefinition);
                 }
@@ -767,6 +841,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
                 // 新版格式
                 ItemModel modernModel;
+                List<ModelGenerationHolder> modelGenerations = new ObjectArrayList<>();
                 // 旧版格式
                 TreeSet<LegacyOverridesModel> legacyOverridesModels;
                 // 如果需要支持新版item model 或者用户需要旧版本兼容，但是没配置legacy-model
@@ -774,7 +849,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     if (blueprintValue != null) {
                         Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                         SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
-                        modernModel = simplifiedModelReader.readBlueprints(blueprintValue, modelValue, pack, path);
+                        modernModel = simplifiedModelReader.readBlueprints(blueprintValue, modelValue, pack, path, modelGenerations::add);
                     } else if (textureValue != null) {
                         Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                         SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
@@ -784,39 +859,38 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                                 return modelSection.getValue(ConfigKeys.of("path|model"));
                             }
                             return it;
-                        }), id);
+                        }), id, modelGenerations::add);
                     } else if (modelValue != null) {
                         if (modelValue.is(List.class)) {
                             Key templateModel = itemModel != null && AbstractPackManager.PRESET_MODERN_MODELS_ITEM.containsKey(itemModel) ? itemModel : clientBoundMaterial;
                             SimplifiedItemModelReader simplifiedModelReader = AbstractPackManager.SIMPLIFIED_MODEL_READERS.get(templateModel);
                             modernModel = simplifiedModelReader.read(modelValue);
                         } else {
-                            modernModel = ItemModels.fromConfig(pack, path, modelValue);
+                            modernModel = ItemModels.fromConfig(pack, path, modelValue, modelGenerations::add);
                         }
                     } else {
                         throw KnownResourceException.missingArgument("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION);
                     }
-                    modernModel.prepareModelGeneration(AbstractItemManager.this::prepareModelGeneration);
                 } else {
                     modernModel = null;
                 }
                 // 如果需要旧版本兼容
                 if (needsLegacyCompatibility()) {
                     if (legacyModelSection != null) {
-                        LegacyItemModel legacyItemModel = LegacyItemModel.fromConfig(pack, path, legacyModelSection, customModelData);
-                        legacyItemModel.prepareModelGeneration(AbstractItemManager.this::prepareModelGeneration);
+                        LegacyItemModel legacyItemModel = LegacyItemModel.fromConfig(pack, path, legacyModelSection, customModelData, modelGenerations::add);
                         legacyOverridesModels = new TreeSet<>(legacyItemModel.overrides());
                     } else {
                         legacyOverridesModels = new TreeSet<>();
                         processModelRecursively(modernModel, new LinkedHashMap<>(), legacyOverridesModels, clientBoundMaterial, customModelData);
                         if (legacyOverridesModels.isEmpty()) {
-                            throw new KnownResourceException("resource.item.model_definition.downgrade_failure", section.path());
+                            this.error(new KnownResourceException("resource.item.model_definition.downgrade_failure", section.path()), path);
                         }
                     }
                 } else {
                     legacyOverridesModels = null;
                 }
 
+                modelGenerations.forEach(AbstractItemManager.this::prepareModelGeneration);
                 boolean hasLegacyModel = legacyOverridesModels != null && !legacyOverridesModels.isEmpty();
                 boolean hasModernModel = modernModel != null;
 
@@ -912,22 +986,19 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     baseModel.path(),
-                    customModelData,
-                    null
+                    customModelData
             ));
         } else if (currentModel instanceof SpecialItemModel specialModel) {
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     specialModel.base(),
-                    customModelData,
-                    null
+                    customModelData
             ));
         } else if (currentModel instanceof EmptyItemModel) {
             resultList.add(new LegacyOverridesModel(
                     new LinkedHashMap<>(accumulatedPredicates),
                     Key.of("item/air"),
-                    customModelData,
-                    null
+                    customModelData
             ));
         }
     }
@@ -979,14 +1050,14 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     ) {
         if (model.property() instanceof LegacyModelPredicate predicate) {
             String predicateId = predicate.legacyPredicateId(materialId);
-            for (Map.Entry<Float, ItemModel> entry : model.entries().entrySet()) {
+            for (RangeDispatchItemModel.Entry entry : model.entries()) {
                 Map<String, Object> merged = mergePredicates(
                         parentPredicates,
                         predicateId,
-                        predicate.toLegacyValue(entry.getKey())
+                        predicate.toLegacyValue(entry.threshold())
                 );
                 processModelRecursively(
-                        entry.getValue(),
+                        entry.model(),
                         merged,
                         resultList,
                         materialId,

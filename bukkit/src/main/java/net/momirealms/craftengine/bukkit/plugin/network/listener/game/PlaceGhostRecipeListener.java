@@ -30,7 +30,7 @@ public final class PlaceGhostRecipeListener implements ByteBufferPacketListener 
         BukkitServerPlayer player = (BukkitServerPlayer) user;
         BukkitItemManager itemManager = BukkitItemManager.instance();
         int containerId = buf.readContainerId();
-        RecipeDisplay display = RecipeDisplay.read(buf, $ -> PacketUtils.readItem(buf));
+        RecipeDisplay display = RecipeDisplay.read(buf, b -> VersionHelper.isOrAbove26_1 ? PacketUtils.readItemTemplate(b) : PacketUtils.readItem(b));
         display.applyClientboundData(item -> {
             Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.CONTAINER);
             if (remapped.isEmpty()) {
@@ -45,7 +45,13 @@ public final class PlaceGhostRecipeListener implements ByteBufferPacketListener 
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeContainerId(containerId);
-            display.write(buf, ($, item) -> PacketUtils.writeItem(buf, item));
+            display.write(buf, (b, item) -> {
+                if (VersionHelper.isOrAbove26_1) {
+                    PacketUtils.writeItemTemplate(b, item);
+                } else {
+                    PacketUtils.writeItem(b, item);
+                }
+            });
         }
     }
 }

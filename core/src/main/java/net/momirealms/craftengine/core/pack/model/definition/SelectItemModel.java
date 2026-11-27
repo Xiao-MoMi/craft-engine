@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class SelectItemModel implements ItemModel {
@@ -133,22 +130,46 @@ public final class SelectItemModel implements ItemModel {
     }
 
     @Override
-    public void prepareModelGeneration(Consumer<ModelGenerationHolder> consumer) {
-        if (this.fallBack != null) {
-            this.fallBack.prepareModelGeneration(consumer);
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
         }
-        for (ItemModel itemModel : this.whenMap.values()) {
-            itemModel.prepareModelGeneration(consumer);
+        if (!(object instanceof SelectItemModel that)) {
+            return false;
         }
+        if (!Objects.equals(this.property, that.property)
+                || !Objects.equals(this.fallBack, that.fallBack)
+                || !Objects.equals(this.transformation, that.transformation)
+                || this.whenMap.size() != that.whenMap.size()) {
+            return false;
+        }
+        Iterator<Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel>> first = this.whenMap.entrySet().iterator();
+        Iterator<Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel>> second = that.whenMap.entrySet().iterator();
+        while (first.hasNext()) {
+            if (!first.next().equals(second.next())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.property);
+        for (Map.Entry<Either<JsonElement, List<JsonElement>>, ItemModel> entry : this.whenMap.entrySet()) {
+            result = 31 * result + entry.hashCode();
+        }
+        result = 31 * result + Objects.hashCode(this.fallBack);
+        return 31 * result + Objects.hashCode(this.transformation);
     }
 
     private static class Factory implements ItemModelFactory<SelectItemModel> {
 
         @Override
-        public SelectItemModel create(Pack pack, Path path, ConfigSection section) {
+        public SelectItemModel create(Pack pack, Path path, ConfigSection section, Consumer<ModelGenerationHolder> generations) {
             SelectProperty property = SelectProperties.fromConfig(section);
-            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v));
-            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>();
+            ItemModel fallbackModel = section.getValue("fallback", v -> ItemModels.fromConfig(pack, path, v, generations));
+            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new LinkedHashMap<>();
             ConfigValue cases = section.getNonNullValue("cases", ConfigConstants.ARGUMENT_LIST);
             cases.forEach(value -> {
                 ConfigSection entry = value.getAsSection();
@@ -159,7 +180,7 @@ public final class SelectItemModel implements ItemModel {
                 } else {
                     either = Either.right(when);
                 }
-                ItemModel model = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v));
+                ItemModel model = entry.getNonNullValue("model", ConfigConstants.ARGUMENT_ITEM_MODEL_DEFINITION, v -> ItemModels.fromConfig(pack, path, v, generations));
                 whenMap.put(either, model);
             });
             return new SelectItemModel(
@@ -176,10 +197,11 @@ public final class SelectItemModel implements ItemModel {
         @Override
         public SelectItemModel read(JsonObject json) {
             JsonArray cases = json.getAsJsonArray("cases");
-            if (cases == null) {
-                throw new IllegalArgumentException("cases is expected to be a JsonArray");
+            if (cases == null || cases.isEmpty()) {
+                throw new IllegalArgumentException("cases must be a non-empty JsonArray");
             }
-            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new HashMap<>(cases.size());
+            Map<Either<JsonElement, List<JsonElement>>, ItemModel> whenMap = new LinkedHashMap<>(cases.size());
+            Set<JsonElement> values = new HashSet<>();
             for (JsonElement caseElement : cases) {
                 if (!(caseElement instanceof JsonObject caseObj)) {
                     throw new IllegalArgumentException("case is expected to be a JsonObject");
@@ -192,6 +214,9 @@ public final class SelectItemModel implements ItemModel {
                 JsonElement whenObj = caseObj.get("when");
                 Either<JsonElement, List<JsonElement>> either;
                 if (whenObj instanceof JsonArray array) {
+                    if (array.isEmpty()) {
+                        throw new IllegalArgumentException("'when' must not be empty");
+                    }
                     List<JsonElement> whens = new ArrayList<>(array.size());
                     for (JsonElement o : array) {
                         whens.add(o);
@@ -201,6 +226,11 @@ public final class SelectItemModel implements ItemModel {
                     either = Either.left(whenObj);
                 } else {
                     throw new IllegalArgumentException("'when' should not be null");
+                }
+                for (JsonElement value : either.map(List::of, list -> list)) {
+                    if (!values.add(value)) {
+                        throw new IllegalArgumentException("Duplicate select case value: " + value);
+                    }
                 }
                 whenMap.put(either, model);
             }

@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemMo
 import net.momirealms.craftengine.core.pack.model.definition.condition.UsingItemConditionProperty;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.UseDurationRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
+import net.momirealms.craftengine.core.pack.model.generation.ModelGenerationHolder;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Map2;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public final class BowItemModelReader implements SimplifiedItemModelReader {
     public static final BowItemModelReader INSTANCE = new BowItemModelReader();
@@ -31,19 +33,19 @@ public final class BowItemModelReader implements SimplifiedItemModelReader {
 
     @Override
     @NotNull
-    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id) {
+    public ItemModel read(ConfigValue textureValue, Optional<ConfigValue> optionalModelValue, Key id, Consumer<ModelGenerationHolder> generations) {
         List<Key> textures = textureValue.getAsFixedSizeList(4, ConfigValue::getAsAssetPath);
         List<Key> models = optionalModelValue.map(it -> it.getAsFixedSizeList(4, ConfigValue::getAsAssetPath)).orElse(null);
         Key[] paths = new Key[4];
-        ModelGeneration[] generations = new ModelGeneration[4];
         for (int i = 0; i < 4; i++) {
             paths[i] = models != null ? models.get(i) : Key.of(id.namespace(), "item/" + id.value() + AUTO_SUFFIXES[i]);
-            generations[i] = ModelGeneration.builder()
+            ModelGeneration generation = ModelGeneration.builder()
                     .parentModelPath(PARENTS[i])
                     .texturesOverride(Map.of("layer0", textures.get(i).asMinimalString()))
                     .build();
+            generations.accept(new ModelGenerationHolder(paths[i], generation));
         }
-        return build(paths, generations);
+        return build(paths);
     }
 
     @Override
@@ -70,30 +72,29 @@ public final class BowItemModelReader implements SimplifiedItemModelReader {
     }
 
     @Override
-    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints) {
+    public ItemModel buildFromBlueprints(List<BBModelConverter.Converted> blueprints, Consumer<ModelGenerationHolder> generations) {
         Key[] paths = new Key[4];
-        ModelGeneration[] generations = new ModelGeneration[4];
         for (int i = 0; i < 4; i++) {
             BBModelConverter.Converted converted = blueprints.get(i);
             paths[i] = converted.model();
-            generations[i] = ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata());
+            generations.accept(new ModelGenerationHolder(paths[i], ModelGeneration.raw(converted.json(), converted.textures(), converted.textureMetadata())));
         }
-        return build(paths, generations);
+        return build(paths);
     }
 
-    private ItemModel build(Key[] paths, ModelGeneration[] generations) {
+    private ItemModel build(Key[] paths) {
         return new ConditionItemModel(
                 UsingItemConditionProperty.INSTANCE,
                 new RangeDispatchItemModel(
                         new UseDurationRangeDispatchProperty(false),
                         0.05f,
                         Map2.of(
-                                0.65f, new BaseItemModel(paths[2], List.of(), generations[2]),
-                                0.9f, new BaseItemModel(paths[3], List.of(), generations[3])
+                                0.65f, new BaseItemModel(paths[2]),
+                                0.9f, new BaseItemModel(paths[3])
                         ),
-                        new BaseItemModel(paths[1], List.of(), generations[1])
+                        new BaseItemModel(paths[1])
                 ),
-                new BaseItemModel(paths[0], List.of(), generations[0])
+                new BaseItemModel(paths[0])
         );
     }
 }

@@ -1,8 +1,11 @@
 package net.momirealms.craftengine.bukkit.plugin.network.listener.common;
 
 import com.mojang.datafixers.util.Either;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
+import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
+import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
@@ -12,6 +15,7 @@ import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.plugin.network.protocol.dialog.Dialog;
+import net.momirealms.craftengine.core.plugin.network.protocol.dialog.DialogPacketInspection;
 import net.momirealms.craftengine.core.plugin.network.protocol.dialog.DialogTypes;
 import net.momirealms.craftengine.core.plugin.text.component.ComponentProvider;
 import net.momirealms.craftengine.core.util.AdventureHelper;
@@ -33,6 +37,9 @@ public final class ShowDialogListener implements ByteBufferPacketListener {
         Either<Integer, Tag> directOrRef = buf.readHolder(it -> it.readNbt(false));
         Player player = (Player) user;
         directOrRef.ifRight(tag -> {
+            if (!DialogPacketInspection.requiresProcessing(tag, BukkitNetworkManager.instance()::hasNetworkTag)) {
+                return;
+            }
             Dialog dialog = DialogTypes.read((CompoundTag) tag);
             MutableBoolean changed = new MutableBoolean(false);
             dialog.applyClientboundData(item -> {
@@ -45,9 +52,19 @@ public final class ShowDialogListener implements ByteBufferPacketListener {
             });
             dialog.replaceNetworkTags(component -> {
                 Map<String, ComponentProvider> tokens = BukkitNetworkManager.instance().matchNetworkTags(AdventureHelper.componentToNbt(component));
-                if (tokens.isEmpty()) return component;
-                changed.set(true);
-                return AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(player));
+                if (!tokens.isEmpty()) {
+                    changed.set(true);
+                    component = AdventureHelper.replaceText(component, tokens, NetworkTextReplaceContext.of(player));
+                }
+                if (Config.disableItemOperations()) return component;
+                // hover show_item 里的物品和物品正文一样要重映射
+                return AdventureHelper.replaceShowItem(component, showItem -> {
+                    HoverEvent.ShowItem remapped = ComponentUtils.replaceShowItem(showItem, (BukkitServerPlayer) user, ItemPacketSource.DIALOG);
+                    if (remapped != showItem) {
+                        changed.set(true);
+                    }
+                    return remapped;
+                });
             });
             if (changed.booleanValue()) {
                 event.setChanged(true);

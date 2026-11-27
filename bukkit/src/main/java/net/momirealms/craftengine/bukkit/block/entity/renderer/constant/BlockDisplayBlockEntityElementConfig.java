@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bukkit.block.entity.renderer.constant;
 import com.google.common.base.Objects;
 import net.momirealms.craftengine.bukkit.entity.data.DisplayData;
 import net.momirealms.craftengine.core.block.BlockStateWrapper;
+import net.momirealms.craftengine.core.block.entity.render.BlockEntityRenderOffset;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfig;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElementConfigFactory;
 import net.momirealms.craftengine.core.entity.display.Billboard;
@@ -34,6 +35,7 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
     public final LazyReference<BlockStateWrapper> blockState;
     public final Vector3f scale;
     public final Vector3f position;
+    public final BlockEntityRenderOffset offset;
     public final Vector3f translation;
     public final float xRot;
     public final float yRot;
@@ -51,6 +53,7 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
     public BlockDisplayBlockEntityElementConfig(LazyReference<BlockStateWrapper> blockState,
                                                 Vector3f scale,
                                                 Vector3f position,
+                                                BlockEntityRenderOffset offset,
                                                 Vector3f translation,
                                                 float xRot,
                                                 float yRot,
@@ -67,6 +70,7 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
         this.blockState = blockState;
         this.scale = scale;
         this.position = position;
+        this.offset = offset;
         this.translation = translation;
         this.xRot = xRot;
         this.yRot = yRot;
@@ -116,6 +120,7 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
         return new BlockDisplayBlockEntityElement(this, pos, previous.entityId,
                 previous.config.yRot != this.yRot ||
                         previous.config.xRot != this.xRot ||
+                        !previous.config.offset.equals(this.offset) ||
                         !previous.config.position.equals(this.position)
         );
     }
@@ -170,11 +175,12 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
     }
 
     public boolean isSamePosition(BlockDisplayBlockEntityElementConfig that) {
-        return Float.compare(xRot, that.xRot) == 0 &&
-                Float.compare(yRot, that.yRot) == 0 &&
-                Objects.equal(position, that.position) &&
-                Objects.equal(translation, that.translation) &&
-                Objects.equal(rotation, that.rotation);
+        return this.offset.equals(that.offset) &&
+                Float.compare(this.xRot, that.xRot) == 0 &&
+                Float.compare(this.yRot, that.yRot) == 0 &&
+                Objects.equal(this.position, that.position) &&
+                Objects.equal(this.translation, that.translation) &&
+                Objects.equal(this.rotation, that.rotation);
     }
 
     private static class Factory implements BlockEntityElementConfigFactory<BlockDisplayBlockEntityElement> {
@@ -196,6 +202,7 @@ public final class BlockDisplayBlockEntityElementConfig implements BlockEntityEl
                     }),
                     section.getVector3f("scale", ConfigConstants.NORMAL_SCALE),
                     section.getVector3f("position", ConfigConstants.ZERO_VECTOR3),
+                    BlockEntityRenderOffset.fromConfig(section.getSection("offset")),
                     section.getVector3f("translation", ConfigConstants.ZERO_VECTOR3),
                     section.getFloat("pitch", 0f),
                     section.getFloat("yaw", 0f),

@@ -1,0 +1,217 @@
+{
+  "pre_animation": [
+    "variable.ce_spear_swing = variable.ce_spear_attack ? variable.attack_time : 0;",
+    "variable.ce_spear_attack_progress = math.clamp((variable.ce_spear_swing - 0.05) / 0.15, 0, 1);",
+    "variable.ce_spear_retract_progress = math.clamp((variable.ce_spear_swing - 0.4) / 0.6, 0, 1);",
+    "variable.ce_spear_raise = variable.ce_spear_delay > 0 ? math.clamp(variable.ce_spear_time / variable.ce_spear_delay, 0, 1) : (variable.ce_spear_time > 0 ? 1 : 0);",
+    "variable.ce_spear_start = math.clamp((variable.ce_spear_raise - (0)) / ((0.5) - (0)), 0, 1);",
+    "variable.ce_spear_middle = math.clamp((variable.ce_spear_raise - (0.5)) / ((0.8) - (0.5)), 0, 1);",
+    "variable.ce_spear_end = math.clamp((variable.ce_spear_raise - (0.8)) / ((1) - (0.8)), 0, 1);",
+    "variable.ce_spear_sway = math.clamp((variable.ce_spear_time - (variable.ce_spear_delay + variable.ce_spear_dismount - 20)) / ((variable.ce_spear_delay + variable.ce_spear_dismount) - (variable.ce_spear_delay + variable.ce_spear_dismount - 20)), 0, 1);",
+    "variable.ce_spear_lower_progress = math.clamp((variable.ce_spear_time - (variable.ce_spear_delay + variable.ce_spear_knockback - 20)) / 40, 0, 1);",
+    "variable.ce_spear_lower_wave = math.sin((20 * variable.ce_spear_lower_progress - 11.125) * 80);",
+    "variable.ce_spear_lower_elastic = variable.ce_spear_lower_progress == 0 ? 0 : (variable.ce_spear_lower_progress == 1 ? 1 : (variable.ce_spear_lower_progress < 0.5 ? -math.pow(2, 20 * variable.ce_spear_lower_progress - 10) * variable.ce_spear_lower_wave / 2 : math.pow(2, -20 * variable.ce_spear_lower_progress + 10) * variable.ce_spear_lower_wave / 2 + 1));",
+    "variable.ce_spear_lower = 1 - math.pow(1 - variable.ce_spear_lower_elastic, 3);",
+    "variable.ce_spear_back = math.clamp((variable.ce_spear_time - (variable.ce_spear_delay + variable.ce_spear_damage - 5)) / ((variable.ce_spear_delay + variable.ce_spear_damage) - (variable.ce_spear_delay + variable.ce_spear_damage - 5)), 0, 1);",
+    "variable.ce_spear_intensity = 2 * math.sqrt(1 - math.pow(variable.ce_spear_sway - 1, 2)) - 2 * (1 - math.sqrt(1 - variable.ce_spear_back * variable.ce_spear_back));",
+    "variable.ce_spear_slow = math.sin(variable.ce_spear_time * 19) * variable.ce_spear_intensity;",
+    "variable.ce_spear_fast = math.sin(variable.ce_spear_time * 30) * variable.ce_spear_intensity;",
+    "variable.ce_spear_prepare = (1 - math.cos(math.clamp(variable.ce_spear_swing / 0.05, 0, 1) * 180)) / 2;",
+    "variable.ce_spear_thrust = 1 + 2.70158 * math.pow(variable.ce_spear_attack_progress - 1, 3) + 1.70158 * math.pow(variable.ce_spear_attack_progress - 1, 2);",
+    "variable.ce_spear_attack_linear = variable.ce_spear_attack_progress * variable.ce_spear_attack_progress;",
+    "variable.ce_spear_retract = variable.ce_spear_retract_progress == 0 ? 0 : (variable.ce_spear_retract_progress == 1 ? 1 : (variable.ce_spear_retract_progress < 0.5 ? math.pow(2, 20 * variable.ce_spear_retract_progress - 10) / 2 : (2 - math.pow(2, -20 * variable.ce_spear_retract_progress + 10)) / 2));",
+    "variable.ce_spear_hit = variable.ce_spear_hit_ticks >= 0 ? 0.4 * (1 - math.pow(1 - math.clamp((variable.ce_spear_hit_ticks - 1) / 2, 0, 1), 4) - (1 - math.cos(math.clamp((variable.ce_spear_hit_ticks - 3) / 7, 0, 1) * 180)) / 2) : 0;",
+    "variable.ce_spear_raise_curve = variable.ce_spear_raise < 0.5 ? 2 * variable.ce_spear_raise * variable.ce_spear_raise * (7.189819 * variable.ce_spear_raise - 2.5949094) : (math.pow(2 * variable.ce_spear_raise - 2, 2) * (3.5949094 * (2 * variable.ce_spear_raise - 2) + 2.5949094) + 2) / 2;",
+    "variable.ce_spear_raise_forward = 2.70158 * math.pow(variable.ce_spear_raise, 3) - 1.70158 * math.pow(variable.ce_spear_raise, 2);"
+  ],
+  "animate": [
+    {
+      "spear_fp_use": "context.is_first_person && variable.ce_spear_use"
+    },
+    {
+      "spear_fp_attack": "context.is_first_person && !variable.ce_using_item && variable.ce_spear_attack"
+    },
+    {
+      "spear_tp_use": "!context.is_first_person && variable.ce_spear_use"
+    },
+    {
+      "spear_tp_attack": "!context.is_first_person && variable.ce_spear_attack"
+    }
+  ],
+  "animations": {
+    "spear_fp_use": {
+      "loop": true,
+      "bones": {
+        "ce_spear_move": {
+          "position": [
+            "-variable.ce_spear_side * (variable.ce_spear_raise * 0.15 - variable.ce_spear_end * 0.05 - variable.ce_spear_sway * 0.1 + variable.ce_spear_slow * 0.005) * 16",
+            "(-variable.ce_spear_raise * 0.075 + variable.ce_spear_middle * 0.075 + variable.ce_spear_fast * 0.01) * 16",
+            "(variable.ce_spear_start * 0.05 - variable.ce_spear_end * 0.05 + variable.ce_spear_slow * 0.005) * 16"
+          ]
+        },
+        "ce_spear_xp": {
+          "position": [
+            0,
+            1.6,
+            0
+          ]
+        },
+        "ce_spear_x": {
+          "rotation": [
+            "65 * variable.ce_spear_raise_curve + 35 * variable.ce_spear_lower - 100 * variable.ce_spear_back + 0.5 * variable.ce_spear_fast",
+            0,
+            0
+          ]
+        },
+        "ce_spear_xu": {
+          "position": [
+            0,
+            -1.6,
+            0
+          ]
+        },
+        "ce_spear_yp": {
+          "position": [
+            "-variable.ce_spear_side * 2.4",
+            0,
+            0
+          ]
+        },
+        "ce_spear_y": {
+          "rotation": [
+            0,
+            "variable.ce_spear_side * (-90 * math.clamp((variable.ce_spear_raise - (0.5)) / ((0.55) - (0.5)), 0, 1) + 90 * variable.ce_spear_sway + 2 * variable.ce_spear_slow)",
+            0
+          ]
+        },
+        "ce_spear_yu": {
+          "position": [
+            "variable.ce_spear_side * 2.4",
+            0,
+            0
+          ]
+        },
+        "ce_spear_feedback": {
+          "position": [
+            0,
+            "-variable.ce_spear_hit * 16",
+            0
+          ]
+        }
+      }
+    },
+    "spear_fp_attack": {
+      "loop": true,
+      "bones": {
+        "ce_spear_stab_move": {
+          "position": [
+            "-variable.ce_spear_side * 0.1 * (variable.ce_spear_prepare - variable.ce_spear_thrust) * 16",
+            "-0.075 * (variable.ce_spear_prepare - variable.ce_spear_retract) * 16",
+            "0.65 * (variable.ce_spear_prepare - variable.ce_spear_thrust) * 16"
+          ]
+        },
+        "ce_spear_stab_x": {
+          "rotation": [
+            "70 * (variable.ce_spear_prepare - variable.ce_spear_retract)",
+            0,
+            0
+          ]
+        },
+        "ce_spear_stab_feedback": {
+          "position": [
+            0,
+            0,
+            "-0.25 * (variable.ce_spear_retract - variable.ce_spear_thrust) * 16"
+          ]
+        }
+      }
+    },
+    "spear_tp_use": {
+      "loop": true,
+      "bones": {
+        "ce_spear_move": {
+          "position": [
+            0,
+            "-variable.ce_spear_hit * 0.4 * 16",
+            "(-variable.ce_spear_forward * (variable.ce_spear_raise_forward - variable.ce_spear_back) + variable.ce_spear_hit) * 16"
+          ]
+        },
+        "ce_spear_xp": {
+          "position": [
+            0,
+            -0.5,
+            2
+          ]
+        },
+        "ce_spear_x": {
+          "rotation": [
+            "70 * (variable.ce_spear_raise - variable.ce_spear_back) - 40 * (variable.ce_spear_attack_linear - variable.ce_spear_retract)",
+            0,
+            0
+          ]
+        },
+        "ce_spear_xu": {
+          "position": [
+            0,
+            0.5,
+            -2
+          ]
+        },
+        "ce_spear_yp": {
+          "position": [
+            0,
+            0,
+            2
+          ]
+        },
+        "ce_spear_y": {
+          "rotation": [
+            0,
+            "-variable.ce_spear_side * 90 * (variable.ce_spear_raise - variable.ce_spear_sway + 3 * variable.ce_spear_retract + variable.ce_spear_attack_linear)",
+            0
+          ]
+        },
+        "ce_spear_yu": {
+          "position": [
+            0,
+            0,
+            -2
+          ]
+        }
+      }
+    },
+    "spear_tp_attack": {
+      "loop": true,
+      "bones": {
+        "ce_spear_stab_xp": {
+          "position": [
+            0,
+            -2,
+            2
+          ]
+        },
+        "ce_spear_stab_x": {
+          "rotation": [
+            "70 * (variable.ce_spear_attack_linear - variable.ce_spear_retract)",
+            0,
+            0
+          ]
+        },
+        "ce_spear_stab_xu": {
+          "position": [
+            0,
+            2,
+            -2
+          ]
+        },
+        "ce_spear_stab_feedback": {
+          "position": [
+            0,
+            "variable.ce_spear_forward * (variable.ce_spear_attack_linear - variable.ce_spear_retract) * 16",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

@@ -18,7 +18,7 @@ public final class EmptyBlockDefinition extends AbstractBlockDefinition {
         INSTANCE = new EmptyBlockDefinition(holder);
         holder.bindValue(INSTANCE);
         STATE = INSTANCE.defaultState();
-        STATE.setSettings(BlockSettings.of());
+        STATE.setSettings(BlockSettings.ofEmptyBlock());
     }
 
     private EmptyBlockDefinition(Holder.Reference<BlockDefinition> holder) {

@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.proxy.minecraft.server.level;
 
 import net.momirealms.craftengine.proxy.minecraft.core.BlockPosProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.chunk.ChunkSourceProxy;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.*;
@@ -20,6 +21,9 @@ public interface ServerChunkCacheProxy extends ChunkSourceProxy {
 
     @MethodInvoker(name = "blockChanged")
     void blockChanged(Object target, @Type(clazz = BlockPosProxy.class) Object blockPos);
+
+    @MethodInvoker(name = "removeEntity")
+    void removeEntity(Object target, @Type(clazz = EntityProxy.class) Object entity);
 
     @MethodInvoker(name = {"getChunkAtIfLoadedMainThread"}, activeIf = "max_version=1.20.6 && has_patch=paper")
     Object getChunkAtIfLoadedMainThread(Object target, int chunkX, int chunkZ);

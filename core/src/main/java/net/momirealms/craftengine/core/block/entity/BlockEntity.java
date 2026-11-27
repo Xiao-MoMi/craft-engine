@@ -1,16 +1,22 @@
 package net.momirealms.craftengine.core.block.entity;
 
+import net.momirealms.craftengine.core.block.BlockDefinition;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.block.behavior.EntityBlock;
 import net.momirealms.craftengine.core.block.entity.render.ConstantBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.DynamicBlockEntityRenderer;
 import net.momirealms.craftengine.core.block.entity.render.element.BlockEntityElement;
 import net.momirealms.craftengine.core.entity.player.Player;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
+import net.momirealms.craftengine.core.registry.Holder;
+import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.core.world.BlockPos;
 import net.momirealms.craftengine.core.world.CEWorld;
 import net.momirealms.craftengine.core.world.ChunkPos;
 import net.momirealms.craftengine.core.world.SectionPos;
 import net.momirealms.craftengine.core.world.chunk.CEChunk;
+import net.momirealms.craftengine.core.world.chunk.ChunkLoadSubscriptions;
+import net.momirealms.craftengine.core.world.chunk.ChunkSubscription;
 import net.momirealms.sparrow.nbt.CompoundTag;
 
 import java.util.ArrayList;
@@ -23,10 +29,15 @@ public final class BlockEntity {
     public CEWorld world;
     public BlockEntityController controller;
     private boolean valid;
+    private final Holder<BlockDefinition> blockOwner;
+    private boolean validForTick;
+    private ChunkLoadSubscriptions.Owner chunkLoadSubscriptions;
 
     public BlockEntity(BlockPos pos, ImmutableBlockState blockState) {
         this.pos = pos;
+        this.blockOwner = blockState.owner();
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
         this.controller = ((EntityBlock) blockState.behavior()).createBlockEntityController(this);
         if (this.controller.hasElement()) {
             List<BlockEntityElement> elements = new ArrayList<>(4);
@@ -39,7 +50,9 @@ public final class BlockEntity {
 
     private BlockEntity(BlockPos pos, ImmutableBlockState blockState, CompoundTag tag) {
         this.pos = pos;
+        this.blockOwner = blockState.owner();
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
         this.controller = new InactiveBlockEntityController(this, tag);
         this.renderer = null;
         this.valid = true;
@@ -79,6 +92,11 @@ public final class BlockEntity {
             this.controller.preBlockStateChange(blockState);
         }
         this.blockState = blockState;
+        this.validForTick = isValidBlockState(blockState);
+    }
+
+    public boolean isValidForTick() {
+        return this.validForTick;
     }
 
     public ImmutableBlockState blockState() {
@@ -99,6 +117,30 @@ public final class BlockEntity {
 
     public void setValid(boolean valid) {
         this.valid = valid;
+        if (!valid) cancelChunkLoadSubscriptions();
+    }
+
+    ChunkSubscription subscribeChunkLoad(BlockPos target, Runnable callback) {
+        if (this.world == null || !this.valid) {
+            throw new IllegalStateException("Subscribe to chunk loads from onLoad or while the block entity is valid");
+        }
+        if (this.chunkLoadSubscriptions == null) {
+            this.chunkLoadSubscriptions = this.world.chunkLoadSubscriptions().createOwner(
+                    task -> {
+                        if (VersionHelper.hasFoliaPatch) {
+                            CraftEngine.instance().scheduler().platform().run(task, this.world.world(), this.pos.x() >> 4, this.pos.z() >> 4);
+                        } else {
+                            task.run();
+                        }
+                    },
+                    task -> CraftEngine.instance().scheduler().platform().runDelayed(task, this.world.world(), this.pos.x() >> 4, this.pos.z() >> 4)
+            );
+        }
+        return this.chunkLoadSubscriptions.subscribe(ChunkPos.asLong(target.x() >> 4, target.z() >> 4), callback);
+    }
+
+    private void cancelChunkLoadSubscriptions() {
+        if (this.chunkLoadSubscriptions != null) this.chunkLoadSubscriptions.cancelAll();
     }
 
     private void savePos(CompoundTag tag) {
@@ -116,7 +158,11 @@ public final class BlockEntity {
     }
 
     public void preRemove() {
-        this.controller.onRemove();
+        try {
+            this.controller.onRemove();
+        } finally {
+            cancelChunkLoadSubscriptions();
+        }
     }
 
     public BlockPos pos() {
@@ -124,7 +170,7 @@ public final class BlockEntity {
     }
 
     public boolean isValidBlockState(ImmutableBlockState blockState) {
-        return blockState.owner() == this.blockState.owner();
+        return blockState.hasBlockEntity() && blockState.owner() == this.blockOwner;
     }
 
     public DynamicBlockEntityRenderer dynamicRenderer() {

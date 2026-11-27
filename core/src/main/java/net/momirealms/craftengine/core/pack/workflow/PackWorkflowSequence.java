@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.workflow;
 
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,7 @@ public record PackWorkflowSequence(String name, Set<String> triggers, List<PackW
     public PackWorkflowSequence {
         triggers = Set.copyOf(triggers);
         workflows = List.copyOf(workflows);
-        if (!name.matches("[A-Za-z0-9_-]+") || workflows.isEmpty()) {
+        if (!StringUtils.isAsciiIdentifier(name) || workflows.isEmpty()) {
             throw new IllegalArgumentException("Invalid or empty resource pack workflow: " + name);
         }
     }

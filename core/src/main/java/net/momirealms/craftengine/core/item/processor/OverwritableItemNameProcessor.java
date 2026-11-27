@@ -4,11 +4,14 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
+import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.VersionHelper;
+import org.jetbrains.annotations.Nullable;
 
-public final class OverwritableItemNameProcessor implements SimpleNetworkItemProcessor {
+public final class OverwritableItemNameProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<OverwritableItemNameProcessor> FACTORY = new Factory();
     private final ItemNameProcessor modifier;
 
@@ -18,17 +21,30 @@ public final class OverwritableItemNameProcessor implements SimpleNetworkItemPro
 
     @Override
     public void apply(ItemBuildContext context) {
+        this.apply(context, null);
+    }
+
+    @Override
+    public boolean applyNetworkItem(NetworkItemBuildContext context, @Nullable NetworkItemData networkData) {
+        return this.apply(context, networkData);
+    }
+
+    private boolean apply(ItemBuildContext context, @Nullable NetworkItemData networkData) {
         Item item = context.item();
         if (VersionHelper.COMPONENT_RELEASE) {
             if (item.hasNonDefaultComponent(DataComponentKeys.ITEM_NAME)) {
-                return;
+                return false;
             }
         } else {
             if (item.hasTag("display", "Name")) {
-                return;
+                return false;
             }
         }
+        if (networkData != null) {
+            this.prepareNetworkItem((NetworkItemBuildContext) context, networkData);
+        }
         this.modifier.apply(context);
+        return true;
     }
 
     @Override

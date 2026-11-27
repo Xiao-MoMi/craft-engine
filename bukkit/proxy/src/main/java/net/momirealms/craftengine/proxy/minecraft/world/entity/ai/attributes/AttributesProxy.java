@@ -10,6 +10,7 @@ public interface AttributesProxy {
     Object BLOCK_BREAK_SPEED = INSTANCE.getBlockBreakSpeed();
     Object BLOCK_INTERACTION_RANGE = INSTANCE.getBlockInteractionRange();
     Object SCALE = INSTANCE.getScale();
+    Object SAFE_FALL_DISTANCE = INSTANCE.getSafeFallDistance();
 
     @FieldGetter(name = "BLOCK_BREAK_SPEED", isStatic = true, activeIf = "min_version=1.20.5")
     default Object getBlockBreakSpeed() {
@@ -23,6 +24,11 @@ public interface AttributesProxy {
 
     @FieldGetter(name = "SCALE", isStatic = true, activeIf = "min_version=1.20.5")
     default Object getScale() {
+        return null;
+    }
+
+    @FieldGetter(name = "SAFE_FALL_DISTANCE", isStatic = true, activeIf = "min_version=1.20.5")
+    default Object getSafeFallDistance() {
         return null;
     }
 }

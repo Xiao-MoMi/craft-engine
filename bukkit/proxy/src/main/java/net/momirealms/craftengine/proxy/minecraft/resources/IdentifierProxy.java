@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.proxy.minecraft.resources;
 
+import com.mojang.serialization.Codec;
 import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
@@ -11,6 +12,9 @@ import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 public interface IdentifierProxy {
     IdentifierProxy INSTANCE = ASMProxyFactory.create(IdentifierProxy.class);
     Class<?> CLASS = SparrowClass.find("net.minecraft.resources.Identifier", "net.minecraft.resources.ResourceLocation");
+
+    @FieldGetter(name = "CODEC", isStatic = true)
+    Codec<Object> codec();
 
     @ConstructorInvoker
     Object newInstance(String namespace, String path);

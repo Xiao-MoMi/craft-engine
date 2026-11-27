@@ -18,6 +18,10 @@ public final class OverlayCombination {
     }
 
     public OverlayCombination(List<Overlay> overlays, PackVersion minVersion, PackVersion maxVersion) {
+        this(overlays, minVersion, maxVersion, List.of());
+    }
+
+    public OverlayCombination(List<Overlay> overlays, PackVersion minVersion, PackVersion maxVersion, List<PackVersion> boundaries) {
         this.versionBasedEvents = new ArrayList<>();
         this.currentOverlays = new ArrayList<>();
         this.version = encode(minVersion);
@@ -28,6 +32,13 @@ public final class OverlayCombination {
         Map<Long, List<Event>> eventsByVersion = new TreeMap<>();
         eventsByVersion.computeIfAbsent(min, k -> new ArrayList<>());
         eventsByVersion.computeIfAbsent(max + 1, k -> new ArrayList<>());
+        // 额外边界只切分版本区间，不改变当前生效的 overlay。
+        for (PackVersion boundary : boundaries) {
+            long point = encode(boundary);
+            if (point > min && point <= max) {
+                eventsByVersion.computeIfAbsent(point, k -> new ArrayList<>());
+            }
+        }
         for (Overlay overlay : overlays) {
             if (overlay.minVersion().isAbove(maxVersion)) {
                 continue;

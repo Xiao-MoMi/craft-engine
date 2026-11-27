@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
 import net.momirealms.craftengine.core.util.Key;
+import net.momirealms.craftengine.core.util.ModelUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +20,7 @@ public final class ModelUvBoundsValidator {
     }
 
     public static List<Problem> validate(JsonObject model, Map<String, Key> textures) {
-        if (!(model.get("elements") instanceof JsonArray elements)) {
+        if (!(model.get(ModelJsonKeys.ELEMENTS) instanceof JsonArray elements)) {
             return List.of();
         }
 
@@ -28,9 +30,9 @@ public final class ModelUvBoundsValidator {
                 continue;
             }
 
-            float[] from = readVector(element, "from");
-            float[] to = readVector(element, "to");
-            if (from == null || to == null || !(element.get("faces") instanceof JsonObject faces)) {
+            float[] from = readVector(element, ModelJsonKeys.FROM);
+            float[] to = readVector(element, ModelJsonKeys.TO);
+            if (from == null || to == null || !(element.get(ModelJsonKeys.FACES) instanceof JsonObject faces)) {
                 continue;
             }
 
@@ -39,9 +41,9 @@ public final class ModelUvBoundsValidator {
                     continue;
                 }
 
-                float[] uv = face.has("uv")
+                float[] uv = face.has(ModelJsonKeys.UV)
                         ? readUv(face)
-                        : defaultUv(entry.getKey(), from, to);
+                        : ModelUtils.defaultUv(entry.getKey(), from, to);
                 if (uv == null || !isOutOfBounds(uv)) {
                     continue;
                 }
@@ -58,7 +60,7 @@ public final class ModelUvBoundsValidator {
     }
 
     public static int fix(JsonObject model, List<Problem> problems) {
-        if (!(model.get("elements") instanceof JsonArray elements)) {
+        if (!(model.get(ModelJsonKeys.ELEMENTS) instanceof JsonArray elements)) {
             return 0;
         }
 
@@ -66,7 +68,7 @@ public final class ModelUvBoundsValidator {
         for (Problem problem : problems) {
             if (problem.elementIndex() < 0 || problem.elementIndex() >= elements.size()
                     || !(elements.get(problem.elementIndex()) instanceof JsonObject element)
-                    || !(element.get("faces") instanceof JsonObject faces)
+                    || !(element.get(ModelJsonKeys.FACES) instanceof JsonObject faces)
                     || !(faces.get(problem.face()) instanceof JsonObject face)) {
                 continue;
             }
@@ -76,7 +78,7 @@ public final class ModelUvBoundsValidator {
             uv.add(clamp(problem.v1()));
             uv.add(clamp(problem.u2()));
             uv.add(clamp(problem.v2()));
-            face.add("uv", uv);
+            face.add(ModelJsonKeys.UV, uv);
             fixed++;
         }
         return fixed;
@@ -90,7 +92,7 @@ public final class ModelUvBoundsValidator {
     }
 
     private static float[] readUv(JsonObject face) {
-        if (!(face.get("uv") instanceof JsonArray array)) {
+        if (!(face.get(ModelJsonKeys.UV) instanceof JsonArray array)) {
             return null;
         }
         if (array.size() != 4) {
@@ -124,18 +126,6 @@ public final class ModelUvBoundsValidator {
         };
     }
 
-    private static float[] defaultUv(String face, float[] from, float[] to) {
-        return switch (face) {
-            case "down" -> new float[]{from[0], 16f - to[2], to[0], 16f - from[2]};
-            case "up" -> new float[]{from[0], from[2], to[0], to[2]};
-            case "north" -> new float[]{16f - to[0], 16f - to[1], 16f - from[0], 16f - from[1]};
-            case "south" -> new float[]{from[0], 16f - to[1], to[0], 16f - from[1]};
-            case "west" -> new float[]{from[2], 16f - to[1], to[2], 16f - from[1]};
-            case "east" -> new float[]{16f - to[2], 16f - to[1], 16f - from[2], 16f - from[1]};
-            default -> null;
-        };
-    }
-
     private static boolean isOutOfBounds(float[] uv) {
         float minU = Math.min(uv[0], uv[2]);
         float minV = Math.min(uv[1], uv[3]);
@@ -145,11 +135,11 @@ public final class ModelUvBoundsValidator {
     }
 
     private static float clamp(float value) {
-        return Math.max(MIN_UV, Math.min(MAX_UV, value));
+        return Math.clamp(value, MIN_UV, MAX_UV);
     }
 
     private static String resolveTexture(JsonObject face, Map<String, Key> textures) {
-        if (!(face.get("texture") instanceof JsonPrimitive texturePrimitive)) {
+        if (!(face.get(ModelJsonKeys.TEXTURE) instanceof JsonPrimitive texturePrimitive)) {
             return "<missing>";
         }
 
@@ -162,8 +152,11 @@ public final class ModelUvBoundsValidator {
         return resolved == null ? texture : resolved.asString();
     }
 
-    public record Problem(int elementIndex, String face, String texture,
-                          float u1, float v1, float u2, float v2) {
+    public record Problem(int elementIndex,
+                          String face,
+                          String texture,
+                          float u1, float v1,
+                          float u2, float v2) {
 
         public String uv() {
             return "[" + u1 + ", " + v1 + ", " + u2 + ", " + v2 + "]";

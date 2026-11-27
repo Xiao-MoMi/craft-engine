@@ -2,7 +2,6 @@ package net.momirealms.craftengine.core.plugin;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/** Excludes configuration reloads and pack workflows, including work spanning multiple threads. */
 public final class ResourceOperationCoordinator {
     private final AtomicReference<Lease> active = new AtomicReference<>();
 

@@ -279,7 +279,7 @@ public final class TranslationManagerImpl implements TranslationManager {
                                 @SuppressWarnings("unchecked")
                                 Map<String, String> data = (Map<String, String>) load.loadFromInputStream(inputStream);
                                 if (data == null) return FileVisitResult.CONTINUE;
-                                String langVersion = data.getOrDefault("lang-version", "");
+                                String langVersion = data.getOrDefault("___version___", "");
                                 if (!langVersion.equals(TranslationManagerImpl.this.langVersion) && TranslationManagerImpl.this.supportedLanguages.contains(localeName)) {
                                     data = updateLangFile(data, path);
                                 }
@@ -324,7 +324,8 @@ public final class TranslationManagerImpl implements TranslationManager {
             Map<String, String> newMap = (Map<String, String>) load.loadFromInputStream(is);
 
             previous.remove("lang-version");
-            newFileContents.put("lang-version", this.langVersion);
+            previous.remove("___version___");
+            newFileContents.put("___version___", this.langVersion);
             newFileContents.putAll(this.translationFallback);
             if (newMap != null) {
                 newFileContents.putAll(newMap);

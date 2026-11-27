@@ -4,6 +4,7 @@ import net.momirealms.craftengine.core.entity.projectile.ProjectileMeta;
 import net.momirealms.craftengine.core.item.processor.EquippableProcessor;
 import net.momirealms.craftengine.core.item.processor.FoodProcessor;
 import net.momirealms.craftengine.core.item.processor.ItemProcessor;
+import net.momirealms.craftengine.core.item.processor.NetworkItemProcessor;
 import net.momirealms.craftengine.core.item.recipe.remainder.CraftRemainder;
 import net.momirealms.craftengine.core.item.setting.value.*;
 import net.momirealms.craftengine.core.plugin.config.Config;
@@ -15,14 +16,20 @@ import net.momirealms.craftengine.core.util.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public final class ItemSettings {
+    private static final Object NULL_VALUE = new Object();
+    private final Object[] customData;
     int fuelTime;
     int breakPower = -1;
     Set<Key> tags = Set.of();
     Repairable repairable = Repairable.UNDEFINED;
     List<AnvilRepairItem> anvilRepairItems = List.of();
+    List<AnvilRepairItem> anvilRepairMaterials = List.of();
     List<DragRepairItem> dragRepairItems = List.of();
+    List<DragRepairItem> dragRepairMaterials = List.of();
     boolean renameable = true;
     boolean preventBreak = false;
     boolean disableVanillaBehavior = true;
@@ -34,31 +41,31 @@ public final class ItemSettings {
     Key fuelRemainder = null;
     List<DamageSource> invulnerable = List.of();
     boolean canEnchant = true;
-    float compostProbability= 0.5f;
+    float compostProbability = 0.5f;
     boolean respectRepairableComponent = false;
     List<Key> ingredientSubstitutes = List.of();
-    @Nullable
     ItemEquipment equipment;
-    @Nullable
     EquipmentFallback equipmentFallback;
-    @Nullable
     Color dyeColor;
-    @Nullable
     Color fireworkColor;
     float keepOnDeathChance = 0f;
     float destroyOnDeathChance = 0f;
-    @Nullable
     String dropDisplay = Config.defaultDropDisplayFormat();
-    @Nullable
     LegacyChatFormatter glowColor = null;
-    Map<CustomItemSettingType<?>, Object> customData = new IdentityHashMap<>(4);
     boolean triggerAdvancement = false;
     Set<Key> allowedProjectiles = Set.of();
     EquipmentSetPart equipmentSetPart;
     AttributeModifiers attributeModifiers;
     EquipmentPotionEffects equipmentPotionEffects;
+    SharedModelData sharedModelData;
 
-    private ItemSettings() {}
+    private ItemSettings() {
+        this(CustomItemSettingType.newDataArray());
+    }
+
+    private ItemSettings(Object[] customData) {
+        this.customData = customData;
+    }
 
     @SuppressWarnings("unchecked")
     public List<ItemProcessor> processors() {
@@ -74,31 +81,43 @@ public final class ItemSettings {
                 processors.addAll(this.equipment.equipment().modifiers());
             }
         }
-        if (VersionHelper.isOrAbove1_20_5 && this.foodData != null) {
+        if (this.foodData != null && VersionHelper.isOrAbove1_20_5) {
             processors.add(new FoodProcessor(this.foodData.nutrition(), this.foodData.saturation(), false));
         }
-        for (Map.Entry<CustomItemSettingType<?>, Object> entry : this.customData.entrySet()) {
-            CustomItemSettingType<Object> type = (CustomItemSettingType<Object>) entry.getKey();
-            Optional.ofNullable(type.dataProcessor()).ifPresent(it -> {
-                it.accept(entry.getValue(), processors::add);
-            });
+        Consumer<ItemProcessor> consumer = processors::add;
+        for (int id = 0; id < this.customData.length; id++) {
+            Object value = this.customData[id];
+            if (value == null) {
+                continue;
+            }
+            CustomItemSettingType<Object> type = (CustomItemSettingType<Object>) CustomItemSettingType.byId(id);
+            BiConsumer<Object, Consumer<ItemProcessor>> processor = type.dataProcessor();
+            if (processor != null) {
+                processor.accept(value == NULL_VALUE ? null : value, consumer);
+            }
         }
         return processors;
     }
 
     @SuppressWarnings("unchecked")
-    public List<ItemProcessor> clientBoundProcessors() {
-        ArrayList<ItemProcessor> processors = new ArrayList<>();
+    public List<NetworkItemProcessor> clientBoundProcessors() {
+        ArrayList<NetworkItemProcessor> processors = new ArrayList<>();
         if (this.equipment != null) {
             if (this.equipment.clientBoundModel().asBoolean(Config.globalClientboundModel())) {
                 processors.addAll(this.equipment.equipment().modifiers());
             }
         }
-        for (Map.Entry<CustomItemSettingType<?>, Object> entry : this.customData.entrySet()) {
-            CustomItemSettingType<Object> type = (CustomItemSettingType<Object>) entry.getKey();
-            Optional.ofNullable(type.clientBoundDataProcessor()).ifPresent(it -> {
-                it.accept(entry.getValue(), processors::add);
-            });
+        Consumer<NetworkItemProcessor> consumer = processors::add;
+        for (int id = 0; id < this.customData.length; id++) {
+            Object value = this.customData[id];
+            if (value == null) {
+                continue;
+            }
+            CustomItemSettingType<Object> type = (CustomItemSettingType<Object>) CustomItemSettingType.byId(id);
+            BiConsumer<Object, Consumer<NetworkItemProcessor>> processor = type.clientBoundDataProcessor();
+            if (processor != null) {
+                processor.accept(value == NULL_VALUE ? null : value, consumer);
+            }
         }
         return processors;
     }
@@ -137,7 +156,8 @@ public final class ItemSettings {
     }
 
     public static ItemSettings ofFullCopy(ItemSettings settings) {
-        ItemSettings newSettings = of();
+        ItemSettings newSettings = new ItemSettings(settings.customData.clone());
+        newSettings.sharedModelData = settings.sharedModelData;
         newSettings.fuelTime = settings.fuelTime;
         newSettings.breakPower = settings.breakPower;
         newSettings.tags = settings.tags;
@@ -145,7 +165,9 @@ public final class ItemSettings {
         newSettings.equipmentFallback = settings.equipmentFallback;
         newSettings.repairable = settings.repairable;
         newSettings.anvilRepairItems = settings.anvilRepairItems;
+        newSettings.anvilRepairMaterials = settings.anvilRepairMaterials;
         newSettings.dragRepairItems = settings.dragRepairItems;
+        newSettings.dragRepairMaterials = settings.dragRepairMaterials;
         newSettings.renameable = settings.renameable;
         newSettings.preventBreak = settings.preventBreak;
         newSettings.disableVanillaBehavior = settings.disableVanillaBehavior;
@@ -170,7 +192,6 @@ public final class ItemSettings {
         newSettings.equipmentSetPart = settings.equipmentSetPart;
         newSettings.attributeModifiers = settings.attributeModifiers;
         newSettings.equipmentPotionEffects = settings.equipmentPotionEffects;
-        newSettings.customData = new IdentityHashMap<>(settings.customData);
         return newSettings;
     }
 
@@ -192,21 +213,25 @@ public final class ItemSettings {
 
     @SuppressWarnings("unchecked")
     public <T> T getCustomData(CustomItemSettingType<T> type) {
-        return (T) this.customData.get(type);
+        Object value = this.customData[type.id()];
+        return value == NULL_VALUE ? null : (T) value;
     }
 
     public void clearCustomData() {
-        this.customData.clear();
+        Arrays.fill(this.customData, null);
     }
 
     @Nullable
     @SuppressWarnings("unchecked")
     public <T> T removeCustomData(CustomItemSettingType<?> type) {
-        return (T) this.customData.remove(type);
+        int id = type.id();
+        Object value = this.customData[id];
+        this.customData[id] = null;
+        return value == NULL_VALUE ? null : (T) value;
     }
 
     public <T> void addCustomData(CustomItemSettingType<T> key, T value) {
-        this.customData.put(key, value);
+        this.customData[key.id()] = value == null ? NULL_VALUE : value;
     }
 
     public ProjectileMeta projectileMeta() {
@@ -255,6 +280,14 @@ public final class ItemSettings {
 
     public List<DragRepairItem> dragRepairItems() {
         return this.dragRepairItems;
+    }
+
+    public List<AnvilRepairItem> repairMaterials() {
+        return this.anvilRepairMaterials;
+    }
+
+    public List<DragRepairItem> dragRepairMaterials() {
+        return this.dragRepairMaterials;
     }
 
     public boolean respectRepairableComponent() {
@@ -359,6 +392,15 @@ public final class ItemSettings {
         return this.equipmentPotionEffects;
     }
 
+    @Nullable
+    public SharedModelData sharedModelData() {
+        return this.sharedModelData;
+    }
+
+    public void sharedModelData(SharedModelData sharedModelData) {
+        this.sharedModelData = sharedModelData;
+    }
+
     public ItemSettings fireworkColor(Color color) {
         this.fireworkColor = color;
         return this;
@@ -381,6 +423,16 @@ public final class ItemSettings {
 
     public ItemSettings dragRepairItems(List<DragRepairItem> items) {
         this.dragRepairItems = items;
+        return this;
+    }
+
+    public ItemSettings repairMaterials(List<AnvilRepairItem> materials) {
+        this.anvilRepairMaterials = materials;
+        return this;
+    }
+
+    public ItemSettings dragRepairMaterials(List<DragRepairItem> materials) {
+        this.dragRepairMaterials = materials;
         return this;
     }
 

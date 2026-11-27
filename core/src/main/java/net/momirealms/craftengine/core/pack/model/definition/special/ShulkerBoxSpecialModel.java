@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.util.MiscUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class ShulkerBoxSpecialModel implements SpecialModel {
@@ -54,6 +55,26 @@ public final class ShulkerBoxSpecialModel implements SpecialModel {
         }
         json.addProperty("openness", this.openness);
         return json;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ShulkerBoxSpecialModel that)) {
+            return false;
+        }
+        return Objects.equals(this.texture, that.texture)
+                && Float.compare(this.openness, that.openness) == 0
+                && Objects.equals(this.orientation, that.orientation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.texture);
+        result = 31 * result + Float.hashCode(this.openness);
+        return 31 * result + Objects.hashCode(this.orientation);
     }
 
     private static class Factory implements SpecialModelFactory<ShulkerBoxSpecialModel> {

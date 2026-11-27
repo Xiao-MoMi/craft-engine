@@ -25,6 +25,7 @@ dependencies {
     adventure(project)
 
     compileOnly(project(":core"))
+    compileOnly(project(":bedrock"))
     compileOnly(project(":bukkit"))
     compileOnly(project(":bukkit:proxy"))
     compileOnly(project(":bukkit:compatibility:legacy"))
@@ -33,7 +34,6 @@ dependencies {
     // Reflection
     compileOnly(libs.sparrow.reflection)
     // NMS
-    compileOnly(libs.nms.helper)
     // Placeholder
     compileOnly(libs.placeholder.api)
     // SlimeWorld
@@ -81,6 +81,9 @@ dependencies {
     // CoreProtect
     compileOnly(libs.compat.coreprotect)
 
+    testImplementation(project(":bedrock"))
+    testImplementation(libs.paper.api)
+    netty(project, JavaPlugin.TEST_RUNTIME_ONLY_CONFIGURATION_NAME)
     testImplementation(project(":core"))
     testImplementation(project(":bukkit"))
     testImplementation(libs.compat.bettermodel)

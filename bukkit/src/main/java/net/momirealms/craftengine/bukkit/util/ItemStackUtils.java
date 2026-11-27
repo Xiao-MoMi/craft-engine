@@ -4,15 +4,16 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Scheduler;
 import com.mojang.serialization.Dynamic;
-import net.momirealms.craftengine.bukkit.api.BukkitAdaptor;
 import net.momirealms.craftengine.bukkit.item.BukkitItem;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemTags;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.recipe.UniqueIdItem;
+import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
 import net.momirealms.craftengine.core.util.VersionHelper;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.inventory.CraftItemStackProxy;
@@ -64,10 +65,25 @@ public final class ItemStackUtils {
         return BukkitItemManager.instance().wrap(itemStack);
     }
 
+    public static @Nullable ExternalItemModel externalItemModel(ItemStack itemStack) {
+        if (!VersionHelper.isOrAbove1_21_2 || isEmpty(itemStack)) {
+            return null;
+        }
+        BukkitItem item = wrap(itemStack);
+        if (!item.hasNonDefaultComponent(DataComponentKeys.ITEM_MODEL)) {
+            return null;
+        }
+        String itemModel = item.itemModel().orElse(null);
+        if (itemModel == null) {
+            return null;
+        }
+        return new ExternalItemModel(item.vanillaId(), Key.of(itemModel));
+    }
+
     public static boolean hasCustomItem(ItemStack[] stack) {
         for (ItemStack itemStack : stack) {
             if (!ItemStackUtils.isEmpty(itemStack)) {
-                if (BukkitAdaptor.adapt(itemStack).customId().isPresent()) {
+                if (BukkitItemManager.instance().customId(itemStack) != null) {
                     return true;
                 }
             }
@@ -77,7 +93,7 @@ public final class ItemStackUtils {
 
     public static boolean isCustomItem(ItemStack stack) {
         if (!ItemStackUtils.isEmpty(stack)) {
-            return BukkitAdaptor.adapt(stack).customId().isPresent();
+            return BukkitItemManager.instance().customId(stack) != null;
         }
         return false;
     }

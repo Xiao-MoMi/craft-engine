@@ -195,6 +195,9 @@ public interface BlockBehaviourProxy {
         @FieldGetter(name = "replaceable")
         boolean isReplaceable(Object target);
 
+        @MethodInvoker(name = "canBeReplaced", activeIf = "min_version=26.3")
+        boolean canBeReplaced(Object target);
+
         @FieldSetter(name = "replaceable")
         void setReplaceable(Object target, boolean replaceable);
 

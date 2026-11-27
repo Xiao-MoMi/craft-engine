@@ -9,6 +9,8 @@ public final class Key {
     public static final String MINECRAFT_NAMESPACE = "minecraft";
     public final String namespace;
     public final String value;
+    // Resolved by UniqueKey.create; the immutable namespace/value never need invalidation.
+    transient UniqueKey uniqueKey;
 
     public Key(String namespace, String value) {
         this.namespace = namespace;
@@ -23,6 +25,10 @@ public final class Key {
     @NotNull
     public String value() {
         return this.value;
+    }
+
+    public Key withSameNamespace(String value) {
+        return new Key(this.namespace, value);
     }
 
     public static Key withCraftEngineNamespace(String value) {
@@ -43,6 +49,10 @@ public final class Key {
 
     public static Key of(String namespacedId) {
         return of(decompose(namespacedId, MINECRAFT_NAMESPACE));
+    }
+
+    public static Key ofCached(String namespacedId) {
+        return KeyUtils.CACHE.get(namespacedId, Key::of);
     }
 
     public static Key minecraft(String namespacedId) {

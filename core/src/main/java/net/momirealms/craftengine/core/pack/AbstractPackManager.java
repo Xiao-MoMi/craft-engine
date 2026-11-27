@@ -1,11 +1,11 @@
 package net.momirealms.craftengine.core.pack;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.*;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.momirealms.craftengine.core.block.BlockRegistryMirror;
+import net.momirealms.craftengine.core.block.BlockStateWrapper;
 import net.momirealms.craftengine.core.block.ImmutableBlockState;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.font.BitmapImage;
@@ -16,6 +16,10 @@ import net.momirealms.craftengine.core.item.equipment.Equipment;
 import net.momirealms.craftengine.core.item.equipment.EquipmentLayerType;
 import net.momirealms.craftengine.core.item.equipment.TrimBasedEquipment;
 import net.momirealms.craftengine.core.pack.atlas.*;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockPackGenerator;
+import net.momirealms.craftengine.core.pack.bedrock.BedrockPackPlan;
+import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.pack.bedrock.model.JavaModelResources;
 import net.momirealms.craftengine.core.pack.conflict.PathContext;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.ResourcePackDownloadData;
@@ -28,18 +32,22 @@ import net.momirealms.craftengine.core.pack.host.impl.SelfHostHttpServer;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlay;
 import net.momirealms.craftengine.core.pack.mcmeta.Overlays;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
-import net.momirealms.craftengine.core.pack.mcmeta.overlay.OverlayCombination;
+import net.momirealms.craftengine.core.pack.model.ModelJsonKeys;
+import net.momirealms.craftengine.core.pack.model.definition.BaseItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.ModernItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.RangeDispatchItemModel;
 import net.momirealms.craftengine.core.pack.model.definition.rangedisptach.CustomModelDataRangeDispatchProperty;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGeneration;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.OffsetBlockModel;
 import net.momirealms.craftengine.core.pack.model.legacy.LegacyOverridesModel;
 import net.momirealms.craftengine.core.pack.model.simplified.item.*;
 import net.momirealms.craftengine.core.pack.revision.Revision;
 import net.momirealms.craftengine.core.pack.revision.Revisions;
-import net.momirealms.craftengine.core.pack.validation.ModelUvBoundsValidator;
+import net.momirealms.craftengine.core.pack.validation.PackValidator;
+import net.momirealms.craftengine.core.pack.validation.ValidationModelResolver;
+import net.momirealms.craftengine.core.pack.validation.ValidationResources;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowContext;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowSequence;
 import net.momirealms.craftengine.core.pack.workflow.PackWorkflowValidation;
@@ -65,7 +73,6 @@ import net.momirealms.craftengine.core.util.*;
 import net.momirealms.sparrow.reflection.SReflection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 import org.snakeyaml.engine.v2.api.Load;
 import org.snakeyaml.engine.v2.api.LoadSettings;
 import org.snakeyaml.engine.v2.exceptions.ParserException;
@@ -78,6 +85,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,14 +117,10 @@ public abstract class AbstractPackManager implements PackManager {
     public static final Map<Key, SimplifiedItemModelReader> SIMPLIFIED_MODEL_READERS = new HashMap<>();
 
     public static final String NEW_TRIM_MATERIAL = "custom";
-
     public static final Set<String> ALLOWED_VANILLA_EQUIPMENT = Set.of("chainmail", "diamond", "gold", "iron", "netherite");
-    public static final Set<String> ALLOWED_MODEL_TAGS = Set.of("parent", "ambientocclusion", "display", "textures", "elements", "gui_light", "overrides");
-
-    private static final Key MISSING_NO = Key.of("missingno");
-
-    private static final Key BUILTIN_GENERATED = Key.of("builtin/generated");
-    private static final Key BUILTIN_ENTITY = Key.of("builtin/entity");
+    public static final Key MISSING_NO = Key.of("missingno");
+    public static final Key BUILTIN_GENERATED = Key.of("builtin/generated");
+    public static final Key BUILTIN_ENTITY = Key.of("builtin/entity");
 
     public static final Set<Key> DYEABLE_LEATHER_ARMOR = Set.of(
             ItemKeys.LEATHER_HELMET, ItemKeys.LEATHER_CHESTPLATE, ItemKeys.LEATHER_LEGGINGS,
@@ -126,6 +130,9 @@ public abstract class AbstractPackManager implements PackManager {
     private static final byte[] EMPTY_1X1_IMAGE;
     private static final byte[] EMPTY_EQUIPMENT_IMAGE;
     private static final byte[] EMPTY_16X16_IMAGE;
+    private static final Configuration GENERATED_PACK_FILE_SYSTEM = Configuration.forCurrentPlatform().toBuilder()
+            .setBlockSize(4096)
+            .build();
     static {
         try (ByteArrayOutputStream stream1 = new ByteArrayOutputStream();
              ByteArrayOutputStream stream2 = new ByteArrayOutputStream();
@@ -148,11 +155,12 @@ public abstract class AbstractPackManager implements PackManager {
     public final JsonObject vanillaItemAtlas;
     private Map<Path, CachedConfigFile> cachedConfigFiles = Collections.emptyMap();
     private Map<Path, CachedAssetFile> cachedAssetFiles = Collections.emptyMap();
+    private final Map<Path, CachedResourceArchive> resourceArchives = new HashMap<>();
     private final PackOptimizationCache optimizationCache = new PackOptimizationCache(0);
     protected ZipGenerator zipGenerator;
     protected volatile ResourcePackHost resourcePackHost = NoneHost.INSTANCE;
     private volatile Map<String, ResourcePackHost> resourcePackHosts = Map.of();
-    private volatile Map<String, Boolean> defaultPacks = Map.of();
+    private volatile PackSelection packSelection = new PackSelection(Map.of(), Map.of(), Map.of());
     private volatile Map<String, PackWorkflowSequence> workflows = Map.of();
     private volatile Map<String, PackPreset> packPresets = Map.of();
     private final Map<NetWorkUser, Set<String>> selectedPacks = Collections.synchronizedMap(new WeakHashMap<>());
@@ -190,6 +198,8 @@ public abstract class AbstractPackManager implements PackManager {
 
     protected abstract void dispatchGenerationEvent(Path resourceFolder, Path zipPath);
 
+    protected abstract BedrockPackPlan prepareBedrockPack(JavaModelResources resources) throws IOException;
+
     private void initInternalData() {
         loadInternalData("legacy_internal/models/item/_all.json", ((key, jsonObject) -> {
             PRESET_LEGACY_MODELS_ITEM.put(key, jsonObject);
@@ -222,7 +232,7 @@ public abstract class AbstractPackManager implements PackManager {
         for (Key item : PRESET_ITEMS.keySet()) {
             JsonObject jsonObject = PRESET_MODERN_MODELS_ITEM.get(item);
             if (jsonObject != null) {
-                JsonElement parent = jsonObject.get("parent");
+                JsonElement parent = jsonObject.get(ModelJsonKeys.PARENT);
                 if (parent instanceof JsonPrimitive primitive) {
                     String parentModel = primitive.getAsString();
                     if (parentModel.equals("minecraft:item/handheld")) {
@@ -326,21 +336,21 @@ public abstract class AbstractPackManager implements PackManager {
         UUID playerId = user.uuid();
         if (playerId == null) return CompletableFuture.completedFuture(List.of());
         Map<String, ResourcePackHost> hosts = this.resourcePackHosts;
-        Map<String, Boolean> defaults = this.defaultPacks;
+        PackSelection selection = this.packSelection;
         ResourcePackHost group = this.resourcePackHost;
         return this.plugin.storageManager().submit(storage -> storage.loadPackPreferences(playerId)).thenApplyAsync(states -> {
             this.packPreferences.put(user, Map.copyOf(states));
-            List<String> selected = new ArrayList<>(defaults.entrySet().stream()
-                    .filter(entry -> states.getOrDefault(entry.getKey(), entry.getValue()))
-                    .map(Map.Entry::getKey).toList());
+            List<String> selected = new ArrayList<>(selection.resolve(states));
             prepareResourcePackList(user, selected);
-            // Plugins may change membership; configured order and known IDs remain authoritative.
-            return hosts.keySet().stream().filter(selected::contains).toList();
+            // Apply the same rules after plugins change membership; preserve configured sending order.
+            return selection.resolve(selected);
         }, this.plugin.scheduler().async()).thenCompose(selected -> {
             // Keep the selection even when a pack has not been generated or uploaded yet.
             this.selectedPacks.put(user, Set.copyOf(selected));
             if (!(group instanceof ResourcePackHostGroup hostGroup)) return CompletableFuture.completedFuture(List.of());
-            return hostGroup.requestResourcePackDownloadLink(user, selected.stream().map(hosts::get).toList());
+            Map<String, ResourcePackHost> selectedHosts = new LinkedHashMap<>();
+            selected.forEach(pack -> selectedHosts.put(pack, hosts.get(pack)));
+            return hostGroup.requestResourcePackDownloadLink(user, selectedHosts, selection::dependenciesAvailable);
         });
     }
 
@@ -374,19 +384,18 @@ public abstract class AbstractPackManager implements PackManager {
             case FALSE -> false;
             case UNDEFINED -> null;
         }));
-        Map<String, Boolean> defaults = this.defaultPacks;
+        PackSelection selection = this.packSelection;
         return this.plugin.storageManager().submit(storage -> {
             Map<String, Boolean> previous = storage.loadPackPreferences(player);
+            Map<String, Boolean> expanded = selection.expandUpdates(previous, snapshot);
             // 比较保存的三态偏好，而非最终是否启用；默认启用与显式启用仍是不同偏好。
-            boolean preferencesChanged = snapshot.entrySet().stream()
+            boolean preferencesChanged = expanded.entrySet().stream()
                     .anyMatch(entry -> !Objects.equals(previous.get(entry.getKey()), entry.getValue()));
             if (!preferencesChanged) return new PackPreferenceUpdate(Map.copyOf(previous), false, false);
             // 整批持久化后再更新缓存、重发，不能逐个调用单包接口导致多次加载。
-            storage.setPackPreferences(player, snapshot);
+            storage.setPackPreferences(player, expanded);
             Map<String, Boolean> states = Map.copyOf(storage.loadPackPreferences(player));
-            boolean changed = defaults.entrySet().stream().anyMatch(entry ->
-                    !Objects.equals(previous.getOrDefault(entry.getKey(), entry.getValue()),
-                            states.getOrDefault(entry.getKey(), entry.getValue())));
+            boolean changed = !selection.resolve(previous).equals(selection.resolve(states));
             return new PackPreferenceUpdate(states, true, changed);
         }).thenCompose(result -> {
             Player online = this.plugin.networkManager().getOnlineUser(player);
@@ -412,6 +421,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     @Override
     public void disable() {
+        this.closeResourceArchives();
         this.optimizationCache.clear();
         this.selectedPacks.clear();
         this.packPreferences.clear();
@@ -430,6 +440,64 @@ public abstract class AbstractPackManager implements PackManager {
         this.loadedPacks.clear();
         this.workflows = Map.of();
     }
+
+    private void closeResourceArchives() {
+        for (CachedResourceArchive archive : this.resourceArchives.values()) {
+            this.closeResourceArchive(archive);
+        }
+        this.resourceArchives.clear();
+    }
+
+    private void closeResourceArchive(CachedResourceArchive archive) {
+        FileSystem fileSystem = archive.pack().folder().getFileSystem();
+        this.cachedConfigFiles.keySet().removeIf(path -> path.getFileSystem() == fileSystem);
+        this.cachedAssetFiles.keySet().removeIf(path -> path.getFileSystem() == fileSystem);
+        try {
+            fileSystem.close();
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to close resource archive file system", e);
+        }
+    }
+
+    private Pack loadResourceArchive(PackSource source) throws IOException {
+        Path sourcePath = source.path().toAbsolutePath().normalize();
+        CachedResourceArchive cached = this.resourceArchives.get(sourcePath);
+        BasicFileAttributes attributes = Files.readAttributes(sourcePath, BasicFileAttributes.class);
+        if (cached != null) {
+            if (cached.lastModified().equals(attributes.lastModifiedTime()) && cached.size() == attributes.size()) {
+                return cached.pack();
+            }
+            this.resourceArchives.remove(sourcePath);
+            this.closeResourceArchive(cached);
+        }
+        FileSystem fileSystem = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
+        try {
+            Path folder = source.loadArchive(fileSystem);
+            Pack pack = this.readPack(folder, source.defaultNamespace());
+            this.resourceArchives.put(sourcePath, new CachedResourceArchive(attributes.lastModifiedTime(), attributes.size(), pack));
+            return pack;
+        } catch (IOException | RuntimeException e) {
+            try {
+                fileSystem.close();
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
+        }
+    }
+
+    private void removeUnusedResourceArchives() {
+        Iterator<CachedResourceArchive> archives = this.resourceArchives.values().iterator();
+        while (archives.hasNext()) {
+            CachedResourceArchive archive = archives.next();
+            if (this.loadedPacks.get(archive.pack().name()) != archive.pack()) {
+                archives.remove();
+                this.closeResourceArchive(archive);
+            }
+        }
+    }
+
+    private record CachedResourceArchive(FileTime lastModified, long size, Pack pack) {}
 
     @Override
     public void delayedInit() {
@@ -482,7 +550,19 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Override
+    public boolean setPackEnabled(String name, boolean enabled) throws IOException {
+        Path path = this.plugin.dataFolderPath().resolve("resources").resolve(name);
+        PackSource source = new PackSource(path);
+        if (!Files.isDirectory(path) && !source.isArchive()) {
+            return false;
+        }
+        source.setEnabled(this.plugin.config(), enabled);
+        return true;
+    }
+
+    @Override
     public void loadPacks() {
+        this.loadedPacks.clear();
         Path resourcesFolder = this.plugin.dataFolderPath().resolve("resources");
         try {
             if (Files.notExists(resourcesFolder)) {
@@ -495,66 +575,87 @@ public abstract class AbstractPackManager implements PackManager {
         try {
             try (DirectoryStream<Path> paths = Files.newDirectoryStream(resourcesFolder)) {
                 for (Path path : paths) {
-                    if (!Files.isDirectory(path)) {
-                        continue;
-                    }
                     // hidden
-                    String namespace = path.getFileName().toString();
-                    if (namespace.charAt(0) == '.') {
+                    PackSource source = new PackSource(path);
+                    String packName = source.name();
+                    if (packName.charAt(0) == '.') {
                         continue;
                     }
-                    if (!Identifier.isValidNamespace(namespace)) {
-                        namespace = "minecraft";
-                    }
-
-                    String description = null;
-                    String version = null;
-                    String author = null;
-                    boolean enable = true;
-                    List<String> subPacks = new ArrayList<>(4);
-                    Path metaFile = path.resolve("pack.yml");
-                    if (Files.exists(metaFile) && Files.isRegularFile(metaFile)) {
-                        LoadSettings settings = LoadSettings.builder()
-                                .setLabel(metaFile.toAbsolutePath().toString())
-                                .build();
-
-                        StringKeyConstructor constructor = new StringKeyConstructor(settings, path);
-                        Load load = new Load(settings, constructor);
-                        try (InputStream is = Files.newInputStream(metaFile)) {
-                            Object rawData = load.loadFromInputStream(is);
-                            if (rawData instanceof Map<?, ?> data) {
-                                @SuppressWarnings("unchecked")
-                                ConfigSection section = ConfigSection.ofRoot((Map<String, Object>) data);
-
-                                enable = section.getBoolean("enable", true);
-                                namespace = section.getString("namespace", namespace);
-                                description = section.getString("description");
-                                version = section.getString("version");
-                                author = section.getString("author");
-
-                                ConfigSection subpackSection = section.getSection("subpacks");
-                                if (subpackSection != null) {
-                                    for (String subpackId : subpackSection.keySet()) {
-                                        if (subpackSection.getBoolean(subpackId)) {
-                                            subPacks.add(subpackId);
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (IOException e) {
-                            this.plugin.logger().warn("Failed to load " + metaFile, e);
-                        } catch (Exception e) {
-                            this.plugin.logger().error("YAML syntax error in " + metaFile, e);
+                    String namespace = source.defaultNamespace();
+                    Pack pack;
+                    if (!Files.isDirectory(path)) {
+                        if (!source.isArchive()) {
+                            continue;
                         }
+                        if (Files.isDirectory(resourcesFolder.resolve(namespace))) {
+                            this.plugin.logger().warn("Skipping " + packName + ": resource folder " + namespace + " takes precedence");
+                            continue;
+                        }
+                        try {
+                            pack = this.loadResourceArchive(source);
+                        } catch (IOException | RuntimeException e) {
+                            this.plugin.logger().warn("Failed to load resource archive " + packName, e);
+                            continue;
+                        }
+                    } else {
+                        pack = this.readPack(path, namespace);
                     }
-                    Pack pack = new Pack(path, new PackMeta(author, description, version, namespace), enable, subPacks.toArray(new String[0]));
-                    this.loadedPacks.put(path.getFileName().toString(), pack);
-                    this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.pack_loaded", pack.folder().getFileName().toString(), namespace));
+                    this.loadedPacks.put(packName, pack);
+                    TranslationManager.info("resource.pack_loaded", pack.name(), pack.namespace());
                 }
             }
         } catch (IOException e) {
             this.plugin.logger().error("Error loading packs", e);
         }
+        this.removeUnusedResourceArchives();
+    }
+
+    private Pack readPack(Path path, String namespace) {
+        if (!Identifier.isValidNamespace(namespace)) {
+            namespace = "minecraft";
+        }
+
+        String description = null;
+        String version = null;
+        String author = null;
+        boolean enable = true;
+        List<String> subPacks = new ArrayList<>(4);
+        Path metaFile = path.resolve("pack.yml");
+        if (Files.exists(metaFile) && Files.isRegularFile(metaFile)) {
+            LoadSettings settings = LoadSettings.builder()
+                    .setLabel(metaFile.toAbsolutePath().toString())
+                    .build();
+
+            StringKeyConstructor constructor = new StringKeyConstructor(settings, path);
+            Load load = new Load(settings, constructor);
+            try (InputStream is = Files.newInputStream(metaFile)) {
+                Object rawData = load.loadFromInputStream(is);
+                if (rawData instanceof Map<?, ?> data) {
+                    @SuppressWarnings("unchecked")
+                    ConfigSection section = ConfigSection.ofRoot((Map<String, Object>) data);
+
+                    enable = section.getBoolean("enable", true);
+                    namespace = section.getString("namespace", namespace);
+                    description = section.getString("description");
+                    version = section.getString("version");
+                    author = section.getString("author");
+
+                    ConfigSection subpackSection = section.getSection("subpacks");
+                    if (subpackSection != null) {
+                        for (String subpackId : subpackSection.keySet()) {
+                            if (subpackSection.getBoolean(subpackId)) {
+                                subPacks.add(subpackId);
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                this.plugin.logger().warn("Failed to load " + metaFile, e);
+            } catch (Exception e) {
+                this.plugin.logger().error("YAML syntax error in " + metaFile, e);
+            }
+        }
+        return new Pack(path, new PackMeta(author, description, version, namespace), enable, subPacks.toArray(new String[0]));
     }
 
     public void saveDefaultConfigs(String path) throws IOException {
@@ -724,8 +825,8 @@ public abstract class AbstractPackManager implements PackManager {
                 if (parser.silentIfNotExists() && count <= 0) {
                     return;
                 }
-                this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource.config_loaded",
-                       parser.loadingStage().name(), String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count)));
+                TranslationManager.info("resource.config_loaded",
+                       parser.loadingStage().name(), String.format("%.2f", ((t2 - t1) / 1_000_000.0)), String.valueOf(count));
             });
         }
         pyramid.execute().join();
@@ -734,13 +835,13 @@ public abstract class AbstractPackManager implements PackManager {
             List<ResourceException> issues = entry.getValue();
             issueCount += issues.size();
             Path path = entry.getKey();
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource.errors_detected", String.valueOf(path), String.valueOf(issues.size())));
+            TranslationManager.warn("resource.errors_detected", String.valueOf(path), String.valueOf(issues.size()));
             for (int i = 0; i < issues.size(); i++) {
                 ResourceException issue = issues.get(i);
                 if (issue instanceof KnownResourceException) {
-                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource.errors_detail", String.valueOf(i+1), issue.node(), issue.getLocalizedMessage()));
+                    TranslationManager.warn("resource.errors_detail", String.valueOf(i+1), issue.node(), issue.getLocalizedMessage());
                 } else if (issue instanceof UnknownResourceException) {
-                    this.plugin.logger().error(TranslationManager.instance().plainTranslation("resource.errors_detail", String.valueOf(i+1), issue.node(), TranslationManager.instance().plainTranslation("resource.unknown_error")), issue.getCause());
+                    this.plugin.logger().error(TranslationManager.message("resource.errors_detail", String.valueOf(i+1), issue.node(), TranslationManager.message("resource.unknown_error")), issue.getCause());
                 }
             }
         }
@@ -767,20 +868,20 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private GeneratedPack generatePackAssets(PackGenerationOptions options) throws IOException {
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.generation_started"));
+        TranslationManager.info("resource_pack.generation_started");
         Timestamp timestamp = new Timestamp();
         // Create cache data
         PackCacheData cacheData = new PackCacheData(this.plugin);
         this.dispatchCacheEvent(cacheData);
 
         // get the target location
-        FileSystem fs = Jimfs.newFileSystem(Configuration.forCurrentPlatform());
+        FileSystem fs = Jimfs.newFileSystem(GENERATED_PACK_FILE_SYSTEM);
         try {
             // firstly merge existing folders
             Path generatedPackPath = fs.getPath("resource_pack");
             List<Pair<String, List<Path>>> duplicated = this.updateCachedAssets(cacheData, fs);
             if (!duplicated.isEmpty()) {
-                this.plugin.logger().error(TranslationManager.instance().plainTranslation("resource_pack.duplicated_files"));
+                TranslationManager.error("resource_pack.duplicated_files");
                 int x = 1;
                 for (Pair<String, List<Path>> path : duplicated) {
                     this.plugin.logger().warn("[ " + (x++) + " ] " + path.left());
@@ -802,14 +903,16 @@ public abstract class AbstractPackManager implements PackManager {
             // 一定要先生成 item model 再生成 overrides
             this.generateModernItemModels1_21_2(generatedPackPath);
             this.generateModernItemModels1_21_4(generatedPackPath, revisions::add);
-            this.generateLegacyItemOverrides(generatedPackPath);
             this.generateModernItemOverrides(generatedPackPath, revisions::add);
+            this.generateLegacyItemOverrides(generatedPackPath);
             this.generateOverrideSounds(generatedPackPath);
             this.generateCustomSounds(generatedPackPath);
             this.generateClientLang(generatedPackPath);
-            this.generateEquipments(generatedPackPath, revisions::add);
+            List<Overlay> equipmentOverlays = new ArrayList<>();
+            this.generateEquipments(generatedPackPath, equipmentOverlays::add, this.plugin.itemManager().equipments().values());
             this.generateParticle(generatedPackPath);
             this.generateAtlases(generatedPackPath);
+            OffsetBlockModel.generateAll(generatedPackPath, this.plugin.blockManager().offsetBlockModels());
 
             // Maps use CraftEngine block IDs instead of sacrificed vanilla block states.
             if (options.mapCompatibility()) {
@@ -821,7 +924,7 @@ public abstract class AbstractPackManager implements PackManager {
             JsonObject packMcMeta = null;
             Path packMcMetaPath = generatedPackPath.resolve("pack.mcmeta");
             if (Files.exists(packMcMetaPath)) {
-                packMcMeta = readJsonObjectFromFileOrWarn(packMcMetaPath);
+                packMcMeta = ResourcePackJsonUtils.readJsonObjectOrWarn(packMcMetaPath);
             }
 
             if (packMcMeta == null) {
@@ -833,6 +936,9 @@ public abstract class AbstractPackManager implements PackManager {
             for (Revision revision : revisions) {
                 overlays.addOverlay(revision.createOverlay());
             }
+            for (Overlay overlay : equipmentOverlays) {
+                overlays.addOverlay(overlay);
+            }
 
             // 排除shaders
             if (Config.excludeShaders()) {
@@ -841,9 +947,9 @@ public abstract class AbstractPackManager implements PackManager {
 
             this.validatePackMetadata(packMcMeta, overlays, options.description());
             this.writeJsonSafely(packMcMeta, generatedPackPath.resolve("pack.mcmeta"));
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.generation_finished", String.valueOf(timestamp.deltaMillis())));
+            TranslationManager.info("resource_pack.generation_finished", String.valueOf(timestamp.deltaMillis()));
             return new GeneratedPack(fs, generatedPackPath, packMcMeta, overlays, options);
-        } catch (IOException | RuntimeException | Error e) {
+        } catch (Throwable e) {
             fs.close();
             throw e;
         }
@@ -856,7 +962,7 @@ public abstract class AbstractPackManager implements PackManager {
             this.validatePackMetadata(pack.metadata(), pack.overlays(), pack.options().description());
             this.writeJsonSafely(pack.metadata(), pack.path().resolve("pack.mcmeta"));
         }
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.validation_finished", String.valueOf(timestamp.deltaMillis())));
+        TranslationManager.info("resource_pack.validation_finished", String.valueOf(timestamp.deltaMillis()));
     }
 
     private Path resolveWorkflowPath(String path) {
@@ -864,7 +970,7 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void writePack(GeneratedPack pack, Path output, ZipGenerator writer, boolean protection, boolean storePng) throws IOException {
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_started"));
+        TranslationManager.info("resource_pack.compression_started");
         // 包含混淆、ZIP 写入和最终文件替换的耗时，仅在成功后输出完成提示。
         Timestamp timestamp = new Timestamp();
         Files.createDirectories(output.toAbsolutePath().getParent());
@@ -877,7 +983,7 @@ public abstract class AbstractPackManager implements PackManager {
         } finally {
             Files.deleteIfExists(temporary);
         }
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.compression_finished", String.valueOf(timestamp.deltaMillis())));
+        TranslationManager.info("resource_pack.compression_finished", String.valueOf(timestamp.deltaMillis()));
     }
 
     protected void loadHosts() {
@@ -885,16 +991,14 @@ public abstract class AbstractPackManager implements PackManager {
         try {
             ConfigSection packs = ConfigSection.of("resource-pack.packs", hostingObj == null ? Map.of() : hostingObj);
             Map<String, ResourcePackHost> hosts = new LinkedHashMap<>();
-            Map<String, Boolean> defaults = new LinkedHashMap<>();
             Map<String, Path> selfHostedPacks = new LinkedHashMap<>();
             // 与工作流一样使用配置键作为 ID，并保留配置顺序作为资源包发送顺序。
             for (String id : packs.keySet()) {
-                if (!id.matches("[A-Za-z0-9_-]{1,64}")) {
+                if (id.length() > 64 || !StringUtils.isAsciiIdentifier(id)) {
                     throw new IllegalArgumentException("Invalid resource pack host id: " + id);
                 }
                 ConfigSection section = packs.getNonNullSection(id);
                 hosts.put(id, ResourcePackHosts.fromConfig(id, section));
-                defaults.put(id, section.getBoolean("default", true));
                 if (hosts.get(id) instanceof SelfHost selfHost) {
                     selfHostedPacks.put(id, selfHost.storagePath());
                 }
@@ -907,12 +1011,42 @@ public abstract class AbstractPackManager implements PackManager {
                 SelfHostHttpServer.instance().clearPacks();
             }
             this.resourcePackHosts = Collections.unmodifiableMap(hosts);
-            this.defaultPacks = Collections.unmodifiableMap(defaults);
             this.resourcePackHost = hosts.isEmpty() ? NoneHost.INSTANCE : new ResourcePackHostGroup(hosts.values());
+            this.loadPackSelection(packs);
         } catch (KnownResourceException e) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+            TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
         } catch (Throwable e) {
             this.plugin.logger().warn("Failed to load resource pack hosts", e);
+        }
+    }
+
+    private void loadPackSelection(ConfigSection packs) {
+        Map<String, Boolean> defaults = new LinkedHashMap<>();
+        for (String id : this.resourcePackHosts.keySet()) {
+            defaults.put(id, true);
+            try {
+                defaults.put(id, packs.getNonNullSection(id).getBoolean("default", true));
+            } catch (KnownResourceException e) {
+                TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
+            } catch (Exception e) {
+                this.plugin.logger().warn("Failed to load resource pack default: " + id, e);
+            }
+        }
+        // Use the current hosts and defaults even if dependency/conflict rules cannot be loaded.
+        this.packSelection = new PackSelection(defaults, Map.of(), Map.of());
+        try {
+            Map<String, List<String>> dependencies = new LinkedHashMap<>();
+            Map<String, List<String>> conflicts = new LinkedHashMap<>();
+            for (String id : defaults.keySet()) {
+                ConfigSection section = packs.getNonNullSection(id);
+                dependencies.put(id, section.getStringList("dependencies", List.of()));
+                conflicts.put(id, section.getStringList("conflicts", List.of()));
+            }
+            this.packSelection = new PackSelection(defaults, dependencies, conflicts);
+        } catch (KnownResourceException e) {
+            TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
+        } catch (Exception e) {
+            this.plugin.logger().warn("Failed to load resource pack selection rules", e);
         }
     }
 
@@ -925,13 +1059,13 @@ public abstract class AbstractPackManager implements PackManager {
                 try {
                     presets.put(name, PackPreset.fromConfig(name, Objects.requireNonNull(section.getValue(name))));
                 } catch (KnownResourceException e) {
-                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+                    TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
                 } catch (Exception e) {
                     this.plugin.logger().warn("Failed to load resource pack preset: " + name, e);
                 }
             }
         } catch (KnownResourceException e) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+            TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
         }
         this.packPresets = Collections.unmodifiableMap(presets);
     }
@@ -945,7 +1079,7 @@ public abstract class AbstractPackManager implements PackManager {
                 PackWorkflowValidation validation = new PackWorkflowValidation(this.plugin.dataFolderPath(), this.resourcePackHosts);
                 workflows.put(name, PackWorkflowSequence.fromConfig(name, Objects.requireNonNull(section.getValue(name)), validation));
             } catch (KnownResourceException e) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("config.errors_detected", e.getLocalizedMessage()));
+                TranslationManager.warn("config.errors_detected", e.getLocalizedMessage());
             } catch (Exception e) {
                 this.plugin.logger().warn("Failed to load resource pack workflow: " + name, e);
             }
@@ -1023,7 +1157,7 @@ public abstract class AbstractPackManager implements PackManager {
             GeneratedPack previous = this.pack;
             this.pack = loaded;
             if (previous != null) previous.close();
-            plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.zip_loaded", path, String.valueOf(timestamp.deltaMillis())));
+            TranslationManager.info("resource_pack.zip_loaded", path, String.valueOf(timestamp.deltaMillis()));
         }
 
         @Override
@@ -1035,7 +1169,28 @@ public abstract class AbstractPackManager implements PackManager {
         public void export(String path) throws IOException {
             Timestamp timestamp = new Timestamp();
             this.pack.export(resolveWorkflowPath(path));
-            plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.export_finished", path, String.valueOf(timestamp.deltaMillis())));
+            TranslationManager.info("resource_pack.export_finished", path, String.valueOf(timestamp.deltaMillis()));
+        }
+
+        @Override
+        public void generateBedrockPack(String input, String output, boolean protection) throws IOException {
+            if (VersionHelper.MINECRAFT_VERSION.isBelow(MinecraftVersion.V1_21_4)) {
+                throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.unsupported_version", MinecraftVersion.V1_21_4.version(), VersionHelper.MINECRAFT_VERSION.version()));
+            }
+            Path sourcePath = this.resolvePath(input);
+            if (!Files.isRegularFile(sourcePath)) {
+                throw new IOException(TranslationManager.message("resource_pack.bedrock.workflow.input_file", sourcePath.toString()));
+            }
+            TranslationManager.info("resource_pack.bedrock.workflow.started");
+            Timestamp timestamp = new Timestamp();
+            Path vanilla = new VanillaResourcePackDownloader(this.resolvePath("cache/vanilla_resource_pack")).download(VersionHelper.MINECRAFT_VERSION);
+            Path dataPath = this.resolvePath(output);
+            try (JavaResourcePack resources = JavaResourcePack.openZip(sourcePath, vanilla, VersionHelper.MINECRAFT_VERSION)) {
+                JavaModelResources models = new JavaModelResources(resources);
+                BedrockPackPlan plan = AbstractPackManager.this.prepareBedrockPack(models);
+                BedrockPackGenerator.generate(models, plan, dataPath, protection);
+            }
+            TranslationManager.info("resource_pack.bedrock.workflow.bundle_finished", dataPath.toString(), String.valueOf(timestamp.deltaMillis()));
         }
 
         @Override
@@ -1054,11 +1209,11 @@ public abstract class AbstractPackManager implements PackManager {
         public void upload(String pack, String path) throws IOException {
             Path source = resolveWorkflowPath(path);
             if (!Files.isRegularFile(source)) throw new IOException("Resource pack does not exist: " + source);
-            plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_started"));
+            TranslationManager.info("host.upload_started");
             Timestamp timestamp = new Timestamp();
             // 托管上传是异步操作，等待完成后再统计耗时，失败时不输出成功提示。
             resourcePackHosts.get(pack).upload(source).join();
-            plugin.logger().info(TranslationManager.instance().plainTranslation("host.upload_finished", String.valueOf(timestamp.deltaMillis())));
+            TranslationManager.info("host.upload_finished", String.valueOf(timestamp.deltaMillis()));
         }
 
         @Override
@@ -1201,7 +1356,7 @@ public abstract class AbstractPackManager implements PackManager {
     private void optimizeResourcePack(Path path) {
         Timestamp timestamp = new Timestamp();
         this.optimizationCache.setMaximumBytes(Config.optimizationCacheSize());
-        Path optimizationCachePath = this.plugin.dataFolderPath().resolve("cache").resolve("pack-optimization.bin");
+        Path optimizationCachePath = this.plugin.dataFolderPath().resolve("cache").resolve("pack_optimization.bin");
         try {
             this.optimizationCache.load(optimizationCachePath);
         } catch (IOException e) {
@@ -1246,7 +1401,7 @@ public abstract class AbstractPackManager implements PackManager {
         if (Config.optimizeJson()) {
             Path metaPath = path.resolve("pack.mcmeta");
             if (Files.exists(metaPath)) {
-                if (jsonExcluder.test(metaPath)) {
+                if (!jsonExcluder.test(metaPath)) {
                     commonJsonToOptimize.add(metaPath);
                 }
             }
@@ -1346,7 +1501,7 @@ public abstract class AbstractPackManager implements PackManager {
         }
 
         if (Config.optimizeJson()) {
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.json_optimization_started"));
+            TranslationManager.info("resource_pack.json_optimization_started");
             AtomicLong previousBytes = new AtomicLong(0L);
             AtomicLong afterBytes = new AtomicLong(0L);
             int amount = commonJsonToOptimize.size() + modelJsonToOptimize.size();
@@ -1404,11 +1559,11 @@ public abstract class AbstractPackManager implements PackManager {
             long originalSize = previousBytes.get();
             long optimizedSize = afterBytes.get();
             double compressionRatio = ((double) optimizedSize / originalSize) * 100;
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f", compressionRatio)));
+            TranslationManager.info("resource_pack.optimization_result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f", compressionRatio));
         }
 
         if (Config.optimizeTexture()) {
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.texture_optimization_started"));
+            TranslationManager.info("resource_pack.texture_optimization_started");
             int zopfliIterations = Config.zopfliIterations();
             AtomicLong previousBytes = new AtomicLong(0L);
             AtomicLong afterBytes = new AtomicLong(0L);
@@ -1449,14 +1604,14 @@ public abstract class AbstractPackManager implements PackManager {
             long originalSize = previousBytes.get();
             long optimizedSize = afterBytes.get();
             double compressionRatio = ((double) optimizedSize / originalSize) * 100;
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f", compressionRatio)));
+            TranslationManager.info("resource_pack.optimization_result", formatSize(originalSize), formatSize(optimizedSize), String.format("%.2f", compressionRatio));
         }
         try {
             this.optimizationCache.save(optimizationCachePath);
         } catch (IOException e) {
             this.plugin.logger().warn("Failed to save pack optimization cache", e);
         }
-        this.plugin.logger().info(TranslationManager.instance().plainTranslation("resource_pack.optimization_finished", String.valueOf(timestamp.deltaMillis())));
+        TranslationManager.info("resource_pack.optimization_finished", String.valueOf(timestamp.deltaMillis()));
     }
 
     private static final int BAR_LENGTH = 30;
@@ -1494,9 +1649,7 @@ public abstract class AbstractPackManager implements PackManager {
     private static byte[] optimizeJson(byte[] input, boolean model) {
         JsonElement json = GsonHelper.parseJson(new String(input, StandardCharsets.UTF_8));
         if (model) {
-            JsonObject object = json.getAsJsonObject();
-            List<String> invalidKey = object.keySet().stream().filter(k -> !ALLOWED_MODEL_TAGS.contains(k)).toList();
-            for (String key : invalidKey) object.remove(key);
+            ModelJsonOptimizer.optimize(json.getAsJsonObject());
         }
         return PackJsonWriter.toJson(json).replace("\"minecraft:", "\"").getBytes(StandardCharsets.UTF_8);
     }
@@ -1518,1232 +1671,28 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void validateResourcePack(Path path, Overlays packOverlays, boolean obfuscation) {
-        List<OverlayCombination.Segment> segments = new ArrayList<>();
-        // 完全小于1.21.11或完全大于1.21.11
-        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_11) || Config.packMinVersion().isAtOrAbove(MinecraftVersion.V1_21_11)) {
-            OverlayCombination combination = new OverlayCombination(packOverlays.overlays(), Config.packMinVersion().packFormat(), Config.packMaxVersion().packFormat());
-            while (combination.hasNext()) {
-                OverlayCombination.Segment segment = combination.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
-            }
-        }
-        // 混合版本
-        else {
-            OverlayCombination combinationLegacy = new OverlayCombination(packOverlays.overlays(), Config.packMinVersion().packFormat(), new PackVersion(72, Integer.MAX_VALUE) /* 25w44a */);
-            while (combinationLegacy.hasNext()) {
-                OverlayCombination.Segment segment = combinationLegacy.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
-            }
-            OverlayCombination combinationModern = new OverlayCombination(packOverlays.overlays(), new PackVersion(73) /* 25w45a */, Config.packMaxVersion().packFormat());
-            while (combinationModern.hasNext()) {
-                OverlayCombination.Segment segment = combinationModern.nextSegment();
-                if (segment != null) {
-                    segments.add(segment);
-                } else {
-                    break;
-                }
-            }
-        }
-
-        AtlasFixer itemFixer = new AtlasFixer();
-        AtlasFixer blockFixer = new AtlasFixer();
-
-        boolean hasNonOverlaySupport = false;
-        if (!segments.isEmpty()) {
-            // 第一个segment一定是最小的
-            hasNonOverlaySupport = segments.getFirst().min() <= MinecraftVersion.V1_20_1.packFormat().major();
-        }
-
-        boolean fixAtlasOnValidation = Config.fixTextureAtlas() && !obfuscation;
-        Set<Revision> revisions = new TreeSet<>();
-        for (int i = 0, size = segments.size(); i < size; i++) {
-            OverlayCombination.Segment segment = segments.get(i);
-            List<Path> rootPathList = new ArrayList<>();
-            rootPathList.add(path);
-            List<Overlay> overlayInOrder = new ArrayList<>(segment.overlays().size());
-            for (Overlay overlay : packOverlays.overlays()) {
-                if (segment.overlays().contains(overlay)) {
-                    Path overlayDir = path.resolve(overlay.directory());
-                    if (Files.isDirectory(overlayDir)) {
-                        overlayInOrder.add(overlay);
-                        rootPathList.add(overlayDir);
-                    }
-                }
-            }
-
-            this.plugin.logger().info(TranslationManager.instance().plainTranslation(
-                    "resource_pack.validation_started",
-                    String.valueOf(i + 1), String.valueOf(size), segment.minVersion().asString(), segment.maxVersion().asString(), overlayInOrder.stream().map(Overlay::directory).toList().toString()
-            ));
-
-            Set<Path> fixedModels = new HashSet<>();
-            ValidationResult result = validateResourcePackWithOverlays(
-                    path,
-                    rootPathList.toArray(new Path[0]),
-                    fixedModels,
-                    revisions,
-                    segment.min() >= MinecraftVersion.V1_21_6.packFormat().major(),
-                    segment.max() >= MinecraftVersion.V1_21_11.packFormat().major(),
-                    segment.min() >= MinecraftVersion.V26_1.packFormat().major(),
-                    segment.max() >= MinecraftVersion.V26_1.packFormat().major(),
-                    obfuscation
-            );
-            if (fixAtlasOnValidation) {
-                // 有修复物品
-                if (result.fixedItemAtlas != null) {
-                    itemFixer.addEntry(segment.minVersion(), segment.maxVersion(), result.fixedItemAtlas);
-                }
-                // 有修复方块
-                if (result.fixedBlockAtlas != null) {
-                    blockFixer.addEntry(segment.minVersion(), segment.maxVersion(), result.fixedBlockAtlas);
-                } else if (hasNonOverlaySupport) {
-                    // 如果有低版本的支持，那么要通过overlay复原atlas
-                    blockFixer.addEntry(segment.minVersion(), segment.maxVersion(), Objects.requireNonNullElseGet(result.originalBlockAtlas, JsonObject::new));
-                }
-            }
-        }
-
-        // 加入新的 overlay
-        for (Revision revision : revisions) {
-            packOverlays.addOverlay(revision.createOverlay());
-        }
-        // 尝试修复atlas
-        if (fixAtlasOnValidation) {
-            // 物品
-            for (AtlasFixer.Entry entry : itemFixer.entries()) {
-                PackVersion min = entry.min();
-                PackVersion max = entry.max();
-                String directoryName = Config.createOverlayFolderName(min.asString() + "-" + max.asString());
-                Path atlasPath = path.resolve(directoryName)
-                        .resolve("assets")
-                        .resolve("minecraft")
-                        .resolve("atlases")
-                        .resolve("items.json");
-                writeJsonSafely(entry.atlas(), atlasPath);
-                packOverlays.addOverlay(new Overlay(min, max, directoryName));
-            }
-            // 方块
-            for (AtlasFixer.Entry entry : blockFixer.entries()) {
-                PackVersion min = entry.min();
-                PackVersion max = entry.max();
-                String directoryName = Config.createOverlayFolderName(min.asString() + "-" + max.asString());
-                // 这个版本不认可overlay，得把atlas直接写进主包内
-                if (min.major() <= MinecraftVersion.V1_20_1.packFormat().major()) {
-                    Path atlasPath = path.resolve("assets")
-                            .resolve("minecraft")
-                            .resolve("atlases")
-                            .resolve("blocks.json");
-                    writeJsonSafely(entry.atlas(), atlasPath);
-                } else {
-                    Path atlasPath = path.resolve(directoryName)
-                            .resolve("assets")
-                            .resolve("minecraft")
-                            .resolve("atlases")
-                            .resolve("blocks.json");
-                    writeJsonSafely(entry.atlas(), atlasPath);
-                    packOverlays.addOverlay(new Overlay(min, max, directoryName));
-                }
-            }
-        }
+        ValidationResources resources = new ValidationResources(this.vanillaBlockAtlas, this.vanillaItemAtlas, PRESET_MODELS, VANILLA_MODELS, VANILLA_TEXTURES, VANILLA_SOUNDS);
+        new PackValidator(resources).validate(path, packOverlays, obfuscation);
     }
 
-    private JsonObject readJsonObjectFromFileOrWarn(Path path) {
-        try {
-            JsonObject jsonObject = GsonHelper.readJsonObjectFromFile(path);
-            if (jsonObject == null) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.not_a_json_object", path.toString()));
-            }
-            return jsonObject;
-        } catch (IOException | JsonParseException | IllegalStateException e) {
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.malformatted_json", path.toString()));
-        }
-        return null;
+    public TexturedModel getTexturedModel(Key currentRL,
+                                          @Nullable Key parentRL,
+                                          Map<String, Key> textures,
+                                          Path[] rootPaths,
+                                          Map<Key, TexturedModel> cached) {
+        return new ValidationModelResolver(this.plugin.logger(), VANILLA_MODELS, PRESET_MODELS)
+                .getTexturedModel(currentRL, parentRL, textures, rootPaths, cached);
     }
 
-    @SuppressWarnings("DuplicatedCode")
-    private ValidationResult validateResourcePackWithOverlays(
-            Path resourcePackPath,
-            Path[] rootPaths,
-            Set<Path> checkedModels,
-            Set<Revision> revisions,
-            boolean v1_21_6, // no 22.5 angle limit
-            boolean v1_21_11, // item atlas + no -45~45 angle limit
-            boolean v26_1,  // texture format update
-            boolean checkModelUvOutOfBounds,
-            boolean obfuscation
-    ) {
-        boolean fixModelUvOutOfBounds = v26_1 && Config.fixModelUvOutOfBounds();
-
-        Multimap<Key, Key> glyphToFonts = HashMultimap.create(128, 32); // 图片到字体的映射
-        Multimap<Key, Key> modelToItemDefinitions = HashMultimap.create(128, 4); // 模型到物品的映射
-        Multimap<Key, String> modelToBlockStates = HashMultimap.create(128, 32); // 模型到方块的映射
-        Multimap<Key, Key> textureToModels = HashMultimap.create(128, 8); // 纹理到模型的映射
-        Multimap<Key, Key> textureToEquipments = HashMultimap.create(128, 8); // 纹理到盔甲的映射
-        Multimap<Key, Key> oggToSoundEvents = HashMultimap.create(128, 4); // 音频到声音的映射
-
-        ResourcePackView rpView = new ResourcePackView(rootPaths);
-
-        // 如果需要验证资源包，则需要先读取所有atlas
-        JsonObject lastBlocksAtlas = rpView.getExistingReversed("assets/minecraft/atlases/blocks.json", this::readJsonObjectFromFileOrWarn);
-        JsonObject lastItemAtlas = v1_21_11 ? rpView.getExistingReversed("assets/minecraft/atlases/items.json", this::readJsonObjectFromFileOrWarn) : null;
-
-
-        /*
-
-
-        构建Atlas文件，
-        验证只使用默认的atlas，否则整个过程将会变成非常复杂
-
-
-         */
-        Atlas blockAtlas;
-        Atlas itemAtlas;
-        if (v1_21_11) {
-            blockAtlas = new Atlas(ListUtils.newNonNullList(lastBlocksAtlas, this.vanillaBlockAtlas));
-            itemAtlas = new Atlas(ListUtils.newNonNullList(lastItemAtlas, this.vanillaItemAtlas));
-        } else {
-            blockAtlas = new Atlas(ListUtils.newNonNullList(lastBlocksAtlas, this.vanillaBlockAtlas, this.vanillaItemAtlas));
-            itemAtlas = null;
-        }
-
-        for (Path rootPath : rootPaths) {
-            Path assetsPath = rootPath.resolve("assets");
-            if (!Files.isDirectory(assetsPath)) continue;
-
-            // 收集全部命名空间
-            List<Path> namespaces;
-            try {
-                namespaces = FileUtils.collectNamespaces(assetsPath);
-            } catch (IOException e) {
-                this.plugin.logger().warn("Failed to collect namespaces for " + assetsPath.toAbsolutePath(), e);
-                continue;
-            }
-
-            for (Path namespacePath : namespaces) {
-                String namespace = namespacePath.getFileName().toString(); // 命名空间
-
-                // 字体文件夹
-                Path fontPath = namespacePath.resolve("font");
-                if (Files.isDirectory(fontPath)) {
-                    try {
-                        Files.walkFileTree(fontPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
-                            @Override
-                            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
-                                if (!FileUtils.isJsonFile(file)) return FileVisitResult.CONTINUE;
-                                JsonObject fontJson = readJsonObjectFromFileOrWarn(file);
-                                if (fontJson == null) return FileVisitResult.CONTINUE;
-                                JsonArray providers = fontJson.getAsJsonArray("providers");
-                                if (providers != null) {
-                                    Key fontName = Key.of(namespace, FileUtils.pathWithoutExtension(file.getFileName().toString()));
-                                    for (JsonElement provider : providers) {
-                                        if (!(provider instanceof JsonObject providerJO)) continue;
-                                        JsonPrimitive typePrimitive = providerJO.getAsJsonPrimitive("type");
-                                        if (typePrimitive == null) continue;
-                                        String type = typePrimitive.getAsString();
-                                        if (!type.equals("bitmap")) continue;
-                                        JsonPrimitive filePrimitive = providerJO.getAsJsonPrimitive("file");
-                                        if (filePrimitive == null) continue;
-                                        String pngFile = filePrimitive.getAsString();
-                                        Key identifier = Key.of(FileUtils.pathWithoutExtension(pngFile));
-                                        glyphToFonts.put(identifier, fontName);
-                                    }
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (IOException e) {
-                        this.plugin.logger().warn("Failed to walk through font", e);
-                    }
-                }
-
-                // 1.21.4+的物品模型
-                Path itemsPath = namespacePath.resolve("items");
-                if (Files.isDirectory(itemsPath)) {
-                    try {
-                        Files.walkFileTree(itemsPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
-                            @Override
-                            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
-                                if (!FileUtils.isJsonFile(file)) return FileVisitResult.CONTINUE;
-                                JsonObject itemJson = readJsonObjectFromFileOrWarn(file);
-                                if (itemJson == null) return FileVisitResult.CONTINUE;
-                                Key item = Key.of(namespace, FileUtils.pathWithoutExtension(file.getFileName().toString()));
-                                collectItemModelsDeeply(itemJson, (identifier) -> modelToItemDefinitions.put(identifier, item));
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (IOException e) {
-                        this.plugin.logger().warn("Failed to walk through items", e);
-                    }
-                }
-
-                // 方块状态json
-                Path blockStatesPath = namespacePath.resolve("blockstates");
-                if (Files.isDirectory(blockStatesPath)) {
-                    try {
-                        Files.walkFileTree(blockStatesPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
-                            @Override
-                            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
-                                if (!FileUtils.isJsonFile(file)) return FileVisitResult.CONTINUE;
-                                JsonObject blockStateJson = readJsonObjectFromFileOrWarn(file);
-                                if (blockStateJson == null) return FileVisitResult.CONTINUE;
-                                String blockId = FileUtils.pathWithoutExtension(file.getFileName().toString());
-                                if (blockStateJson.has("multipart")) {
-                                    collectMultipart(blockStateJson.getAsJsonArray("multipart"), (location) -> modelToBlockStates.put(location, blockId));
-                                } else if (blockStateJson.has("variants")) {
-                                    collectVariants(blockId, blockStateJson.getAsJsonObject("variants"), modelToBlockStates::put);
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (IOException e) {
-                        this.plugin.logger().warn("Failed to walk through blockstates", e);
-                    }
-                }
-
-                // 装备
-                Path equipmentPath = namespacePath.resolve("equipment");
-                if (Files.isDirectory(equipmentPath)) {
-                    try {
-                        Files.walkFileTree(equipmentPath, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
-                            @Override
-                            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) {
-                                if (!FileUtils.isJsonFile(file)) return FileVisitResult.CONTINUE;
-                                JsonObject equipmentJson = readJsonObjectFromFileOrWarn(file);
-                                if (equipmentJson == null) return FileVisitResult.CONTINUE;
-                                String equipmentId = FileUtils.pathWithoutExtension(file.getFileName().toString());
-                                if (equipmentJson.get("layers") instanceof JsonObject layersObject) {
-                                    for (Map.Entry<String, JsonElement> layerEntry : layersObject.entrySet()) {
-                                        String type = layerEntry.getKey();
-                                        if (layerEntry.getValue() instanceof JsonArray equipmentLayers) {
-                                            for (JsonElement equipmentLayer : equipmentLayers) {
-                                                if (equipmentLayer instanceof JsonObject layer && layer.get("texture") instanceof JsonPrimitive layerTexture) {
-                                                    Key rawTexture = Key.of(layerTexture.getAsString());
-                                                    Key fullPath = Key.of(rawTexture.namespace(), "entity/equipment/" + type + "/" + rawTexture.value());
-                                                    textureToEquipments.put(fullPath, Key.of(namespace, equipmentId));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                return FileVisitResult.CONTINUE;
-                            }
-                        });
-                    } catch (IOException | ClassCastException e) {
-                        this.plugin.logger().warn("Failed to walk through equipments", e);
-                    }
-                }
-
-                // 声音文件
-                Path soundsPath = namespacePath.resolve("sounds.json");
-                if (Files.exists(soundsPath)) {
-                    JsonObject soundsJson = readJsonObjectFromFileOrWarn(soundsPath);
-                    if (soundsJson != null) {
-                        for (Map.Entry<String, JsonElement> soundEventEntry : soundsJson.entrySet()) {
-                            Key soundKey = Key.of(namespace, soundEventEntry.getKey());
-                            if (soundEventEntry.getValue() instanceof JsonObject soundEventObj) {
-                                JsonArray soundArray = soundEventObj.getAsJsonArray("sounds");
-                                if (soundArray != null) {
-                                    for (JsonElement sound : soundArray) {
-                                        if (sound instanceof JsonPrimitive primitive) {
-                                            oggToSoundEvents.put(Key.of(primitive.getAsString()), soundKey);
-                                        } else if (sound instanceof JsonObject soundObj && soundObj.get("name") instanceof JsonPrimitive name) {
-                                            if (soundObj.get("type") instanceof JsonPrimitive type && type.getAsString().equals("file")) {
-                                                oggToSoundEvents.put(Key.of(name.getAsString()), soundKey);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // 验证font的贴图是否存在
-        for (Map.Entry<Key, Collection<Key>> entry : glyphToFonts.asMap().entrySet()) {
-            Key key = entry.getKey();
-            if (VANILLA_TEXTURES.contains(key)) continue;
-            String imagePath = "assets/" + key.namespace + "/textures/" + key.value + ".png";
-            if (rpView.exists(imagePath)) continue;
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_font_texture", entry.getValue().stream().distinct().toList().toString(), imagePath));
-        }
-
-        // 验证equipment的贴图是否存在
-        for (Map.Entry<Key, Collection<Key>> entry : textureToEquipments.asMap().entrySet()) {
-            Key key = entry.getKey();
-            if (VANILLA_TEXTURES.contains(key)) continue;
-            String imagePath = "assets/" + key.namespace() + "/textures/" + key.value() + ".png";
-            if (rpView.exists(imagePath)) continue;
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_equipment_texture", entry.getValue().stream().distinct().toList().toString(), imagePath));
-        }
-
-        // 验证sounds的ogg文件是否存在
-        for (Map.Entry<Key, Collection<Key>> entry : oggToSoundEvents.asMap().entrySet()) {
-            Key key = entry.getKey();
-            if (VANILLA_SOUNDS.contains(key)) continue;
-            String oggPath = "assets/" + key.namespace() + "/sounds/" + key.value() + ".ogg";
-            if (rpView.exists(oggPath)) continue;
-            this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_sound", entry.getValue().stream().distinct().toList().toString(), oggPath));
-        }
-
-        // 获取所有能直接从资源包里捕获到的方块和物品模型
-        Map<Key, TexturedModel> blockModels = new HashMap<>(256);
-        Map<Key, TexturedModel> itemModels = new HashMap<>(256);
-        // 获取全部minecraft模型
-        Map<Key, TexturedModel> modelsCache = new HashMap<>(256);
-
-        boolean fixMissingTexture = Config.fixMissingTexture();
-        boolean fixTexturesFormat = Config.fixTexturesFormat() && !v26_1;
-        boolean fixRotationAngle = Config.fixRotationAngle() && !v1_21_11;
-        boolean fixElement = fixMissingTexture || fixRotationAngle;
-        ModelFixFlags flags = new ModelFixFlags(fixMissingTexture, fixTexturesFormat, fixRotationAngle, fixElement, v1_21_6);
-
-        // 收集全部方块状态的模型贴图
-        for (Map.Entry<Key, Collection<String>> entry : modelToBlockStates.asMap().entrySet()) {
-            Key modelPath = entry.getKey();
-            if (blockModels.containsKey(modelPath)) {
-                continue;
-            }
-
-            String modelStringPath = "assets/" + modelPath.namespace() + "/models/" + modelPath.value() + ".json";
-            Path modelJsonPath = rpView.getExistingReversed(modelStringPath);
-            if (modelJsonPath != null) {
-                JsonObject modelJson = readJsonObjectFromFileOrWarn(modelJsonPath);
-                if (modelJson == null) continue;
-                TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
-                blockModels.put(modelPath, texturedModel);
-                if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
-                }
-                continue;
-            }
-            // 提示方块状态缺少模型
-            if (!VANILLA_MODELS.contains(modelPath)) {
-                modelsCache.put(modelPath, TexturedModel.EMPTY);
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_block_model", entry.getValue().toString(), modelStringPath));
-            }
-        }
-
-        // 收集全部物品定义的模型贴图
-        for (Map.Entry<Key, Collection<Key>> entry : modelToItemDefinitions.asMap().entrySet()) {
-            Key modelPath = entry.getKey();
-            if (itemModels.containsKey(modelPath)) {
-                continue;
-            }
-            String modelStringPath = "assets/" + modelPath.namespace() + "/models/" + modelPath.value() + ".json";
-            Path modelJsonPath = rpView.getExistingReversed(modelStringPath);
-            if (modelJsonPath != null) {
-                // A shared block/item model has already been read and validated in this pass.
-                // Resolve the path first: validation may have generated a higher-priority overlay.
-                TexturedModel blockModel = blockModels.get(modelPath);
-                if (blockModel != null && checkedModels.contains(modelJsonPath)) {
-                    itemModels.put(modelPath, blockModel);
-                    continue;
-                }
-                JsonObject modelJson = readJsonObjectFromFileOrWarn(modelJsonPath);
-                if (modelJson == null) continue;
-                TexturedModel texturedModel = getTexturedModel(modelPath, TexturedModel.getParent(modelJson), TexturedModel.getTextures(modelJson), rootPaths, modelsCache);
-                itemModels.put(modelPath, texturedModel);
-                if (checkedModels.add(modelJsonPath)) {
-                    validateModel(resourcePackPath, modelJson, modelJsonPath, modelStringPath, texturedModel, revisions, flags, checkModelUvOutOfBounds, fixModelUvOutOfBounds);
-                }
-                continue;
-            }
-            if (!VANILLA_MODELS.contains(modelPath)) {
-                modelsCache.put(modelPath, TexturedModel.EMPTY);
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.missing_item_model", entry.getValue().toString(), modelStringPath));
-            }
-        }
-
-        ValidationResult result = null;
-
-        if (!obfuscation) {
-
-            if (v1_21_11) {
-
-                // 并查集联通贴图
-                Map<Key, Key> parent = new HashMap<>(512);
-                Map<Key, TextureStatus> textureStatuses = new HashMap<>(512);
-                Set<Key> notInAtlasTextures = new HashSet<>();
-
-                // 对全部方块状态的模型的贴图进行归类
-                for (Map.Entry<Key, TexturedModel> entry : blockModels.entrySet()) {
-                    Map<String, Key> textures = entry.getValue().textures;
-                    Key[] paths = textures.values().toArray(new Key[0]);
-                    for (Key spritePath : paths) {
-                        parent.putIfAbsent(spritePath, spritePath);
-                        textureStatuses.compute(spritePath, (path, status) -> {
-                            if (status == null) {
-                                status = new TextureStatus();
-                                if (itemAtlas.isDefined(spritePath)) {
-                                    status.setInItemAtlas(true);
-                                }
-                                if (blockAtlas.isDefined(spritePath)) {
-                                    status.setInBlockAtlas(true);
-                                }
-                            }
-                            status.setShouldBeInBlockAtlas(true);
-                            if (!Config.fixTextureAtlas()) {
-                                // 不修复就骂你
-                                if (status.inItemAtlas()) {
-                                    if (status.inBlockAtlas()) {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.duplicated_sprite",
-                                                entry.getKey().asString(), spritePath.asString(),
-                                                "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png")
-                                        );
-                                    } else {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.bad_sprite",
-                                                entry.getKey().asString(), spritePath.asString(),
-                                                "minecraft:textures/atlas/blocks.png", "minecraft:textures/atlas/items.png"
-                                        ));
-                                    }
-                                } else {
-                                    if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.texture_not_in_atlas",
-                                                spritePath.asString()
-                                        ));
-                                    }
-                                }
-                            }
-                            return status;
-                        });
-                    }
-                    for (int i = 1; i < paths.length; i++) {
-                        union(parent, paths[0], paths[i]);
-                    }
-                }
-
-                // 对全部物品的模型的贴图进行归类
-                for (Map.Entry<Key, TexturedModel> entry : itemModels.entrySet()) {
-                    Map<String, Key> textures = entry.getValue().textures;
-                    Key[] paths = textures.values().toArray(new Key[0]);
-
-                    boolean hasBlockAtlas = false;
-                    for (Key spritePath : paths) {
-                        TextureStatus status = textureStatuses.computeIfAbsent(spritePath, (path) -> {
-                            TextureStatus newStatus = new TextureStatus();
-                            if (itemAtlas.isDefined(spritePath)) {
-                                newStatus.setInItemAtlas(true);
-                            }
-                            if (blockAtlas.isDefined(spritePath)) {
-                                newStatus.setInBlockAtlas(true);
-                            }
-                            return newStatus;
-                        });
-                        if (status.inBlockAtlas()) {
-                            hasBlockAtlas = true;
-                            break;
-                        }
-                    }
-
-                    boolean finalHasBlockAtlas = hasBlockAtlas;
-                    for (Key spritePath : paths) {
-                        parent.putIfAbsent(spritePath, spritePath);
-                        textureStatuses.compute(spritePath, (path, status) -> {
-                            if (status == null) {
-                                status = new TextureStatus();
-                                if (itemAtlas.isDefined(spritePath)) {
-                                    status.setInItemAtlas(true);
-                                }
-                                if (blockAtlas.isDefined(spritePath)) {
-                                    status.setInBlockAtlas(true);
-                                }
-                            }
-                            if (finalHasBlockAtlas && !status.shouldBeInBlockAtlas()) {
-                                status.setShouldBeInBlockAtlas(true);
-                            }
-                            if (!Config.fixTextureAtlas()) {
-                                // 不修复就骂你
-                                if (status.inItemAtlas()) {
-                                    if (status.inBlockAtlas()) {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.duplicated_sprite",
-                                                entry.getKey().asString(), spritePath.asString(),
-                                                "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
-                                        ));
-                                    } else if (finalHasBlockAtlas) {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.multiple_atlases",
-                                                entry.getKey().asString(),
-                                                "minecraft:textures/atlas/items.png", "minecraft:textures/atlas/blocks.png"
-                                        ));
-                                    }
-                                } else {
-                                    if (!status.inBlockAtlas() && notInAtlasTextures.add(spritePath)) {
-                                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                                "resource_pack.texture_not_in_atlas",
-                                                spritePath.asString()
-                                        ));
-                                    }
-                                }
-                            }
-                            return status;
-                        });
-                    }
-                    for (int i = 1; i < paths.length; i++) {
-                        union(parent, paths[0], paths[i]);
-                    }
-                }
-
-                if (Config.fixTextureAtlas()) {
-
-                    // 使用并查集处理
-                    // 按根节点汇总结果
-                    Map<Key, Set<Key>> groups = new HashMap<>();
-                    for (Key element : parent.keySet()) {
-                        Key root = find(parent, element);
-                        groups.computeIfAbsent(root, k -> new HashSet<>()).add(element);
-                    }
-                    Map<Key, MutableBoolean> groupedTextures = new HashMap<>();
-                    for (Set<Key> set : groups.values()) {
-                        MutableBoolean bool = new MutableBoolean(false);
-                        for (Key key : set) {
-                            groupedTextures.put(key, bool);
-                        }
-                    }
-
-                    // 收集剩余未处理过的
-                    for (Map.Entry<Key, SimplifiedModelFile> entry : PRESET_MODELS.entrySet()) {
-                        Key modelPath = entry.getKey();
-                        if (!modelsCache.containsKey(modelPath)) continue;
-                        SimplifiedModelFile modelFile = entry.getValue();
-                        getTexturedModel(modelPath, modelFile.parent, modelFile.textures, rootPaths, modelsCache);
-                    }
-
-                    // 创建所有贴图到模型的索引
-                    Multimap<Key, TexturedModel> textureToModel = HashMultimap.create(512, 4);
-                    for (Map.Entry<Key, TexturedModel> entry : modelsCache.entrySet()) {
-                        TexturedModel texturedModel = entry.getValue();
-                        for (Key texture : entry.getValue().textures.values()) {
-                            textureToModel.put(texture, texturedModel);
-                        }
-                    }
-
-                    Set<Key> blockAtlasToAdd = new HashSet<>();
-                    Set<Key> itemAtlasToAdd = new HashSet<>();
-                    Set<Key> itemAtlasToRemove = new HashSet<>();
-
-                    // 分配不在图集内的贴图到适合的图集内
-                    List<Key> lateInitTexture = new ArrayList<>();
-                    for (Map.Entry<Key, TextureStatus> entry : textureStatuses.entrySet()) {
-                        Key spritePath = entry.getKey();
-                        TextureStatus status = entry.getValue();
-                        if (status.shouldBeInBlockAtlas()) {
-                            if (status.inItemAtlas()) {
-                                // 此贴图需要链式影响
-                                itemAtlasToRemove.add(spritePath);
-                            }
-                            if (!status.inBlockAtlas()) {
-                                blockAtlasToAdd.add(spritePath);
-                                groupedTextures.get(spritePath).set(true);
-                            }
-                        } else {
-                            if (status.inItemAtlas()) {
-                                continue;
-                            }
-                            if (status.inBlockAtlas()) {
-                                continue;
-                            }
-                            lateInitTexture.add(spritePath);
-                        }
-                    }
-
-                    for (Key spritePath : lateInitTexture) {
-                        MutableBoolean inBlockAtlas = groupedTextures.get(spritePath);
-                        if (inBlockAtlas.booleanValue()) {
-                            blockAtlasToAdd.add(spritePath);
-                        } else {
-                            itemAtlasToAdd.add(spritePath);
-                        }
-                    }
-
-                    Stack<Key> chainDetection = new Stack<>();
-                    chainDetection.addAll(itemAtlasToRemove);
-                    while (!chainDetection.isEmpty()) {
-                        Key spritePath = chainDetection.pop();
-                        Collection<TexturedModel> texturedModels = textureToModel.get(spritePath);
-                        for (TexturedModel texturedModel : texturedModels) {
-                            for (Key texture : texturedModel.textures.values()) {
-                                if (itemAtlas.isDefined(texture)) {
-                                    if (itemAtlasToRemove.add(texture)) {
-                                        blockAtlasToAdd.add(texture);
-                                        chainDetection.push(texture);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    itemAtlasToAdd.remove(MISSING_NO);
-                    itemAtlasToRemove.remove(MISSING_NO);
-                    blockAtlasToAdd.remove(MISSING_NO);
-
-                    JsonObject fixedItemAtlas = null;
-                    if (!itemAtlasToAdd.isEmpty() || !itemAtlasToRemove.isEmpty()) {
-                        fixedItemAtlas = lastItemAtlas == null ? new JsonObject() : lastItemAtlas;
-                        JsonArray sources = fixedItemAtlas.getAsJsonArray("sources");
-                        if (sources == null) {
-                            sources = new JsonArray();
-                            fixedItemAtlas.add("sources", sources);
-                        }
-                        for (Key texture : itemAtlasToAdd) {
-                            JsonObject source = new JsonObject();
-                            source.addProperty("type", "single");
-                            source.addProperty("resource", texture.asString());
-                            sources.add(source);
-                            itemAtlas.addSingle(texture);
-                        }
-                        for (Key texture : itemAtlasToRemove) {
-                            JsonObject source = new JsonObject();
-                            source.addProperty("type", "filter");
-                            JsonObject pattern = new JsonObject();
-                            pattern.addProperty("namespace", "^" + texture.namespace() + "$");
-                            pattern.addProperty("path", "^" + texture.value() + "$");
-                            source.add("pattern", pattern);
-                            sources.add(source);
-                            itemAtlas.addDeleted(texture);
-                        }
-                    }
-
-                    JsonObject fixedBlockAtlas = null;
-                    if (!blockAtlasToAdd.isEmpty()) {
-                        fixedBlockAtlas = lastBlocksAtlas == null ? new JsonObject() : lastBlocksAtlas;
-                        JsonArray sources = fixedBlockAtlas.getAsJsonArray("sources");
-                        if (sources == null) {
-                            sources = new JsonArray();
-                            fixedBlockAtlas.add("sources", sources);
-                        }
-                        for (Key texture : blockAtlasToAdd) {
-                            JsonObject source = new JsonObject();
-                            source.addProperty("type", "single");
-                            source.addProperty("resource", texture.asString());
-                            sources.add(source);
-                            blockAtlas.addSingle(texture);
-                        }
-                    }
-
-                    // 至少有一个修复
-                    if (fixedBlockAtlas != null || fixedItemAtlas != null) {
-                        result = new ValidationResult(fixedItemAtlas, lastItemAtlas, fixedBlockAtlas, lastBlocksAtlas);
-                    }
-                }
-            } else {
-
-                Set<Key> blockAtlasToAdd = new HashSet<>();
-
-                // 只需要收集即可
-                for (Map.Entry<Key, TexturedModel> entry : blockModels.entrySet()) {
-                    Map<String, Key> textures = entry.getValue().textures;
-                    for (Map.Entry<String, Key> texture : textures.entrySet()) {
-                        Key spritePath = texture.getValue();
-                        if (!blockAtlas.isDefined(spritePath)) {
-                            blockAtlasToAdd.add(spritePath);
-                        }
-                    }
-                }
-                for (Map.Entry<Key, TexturedModel> entry : itemModels.entrySet()) {
-                    Map<String, Key> textures = entry.getValue().textures;
-                    for (Map.Entry<String, Key> texture : textures.entrySet()) {
-                        Key spritePath = texture.getValue();
-                        if (!blockAtlas.isDefined(spritePath)) {
-                            blockAtlasToAdd.add(spritePath);
-                        }
-                    }
-                }
-
-                blockAtlasToAdd.remove(MISSING_NO);
-
-                if (Config.fixTextureAtlas()) {
-                    JsonObject fixedBlockAtlas = null;
-                    if (!blockAtlasToAdd.isEmpty()) {
-                        fixedBlockAtlas = lastBlocksAtlas == null ? new JsonObject() : lastBlocksAtlas;
-                        JsonArray sources = fixedBlockAtlas.getAsJsonArray("sources");
-                        if (sources == null) {
-                            sources = new JsonArray();
-                            fixedBlockAtlas.add("sources", sources);
-                        }
-                        for (Key texture : blockAtlasToAdd) {
-                            JsonObject source = new JsonObject();
-                            source.addProperty("type", "single");
-                            source.addProperty("resource", texture.asString());
-                            sources.add(source);
-                            blockAtlas.addSingle(texture);
-                        }
-                    }
-
-                    // 至少有一个修复
-                    if (fixedBlockAtlas != null) {
-                        result = new ValidationResult(null, null, fixedBlockAtlas, lastBlocksAtlas);
-                    }
-                } else {
-                    // 骂死你臭杂鱼
-                    for (Key spritePath : blockAtlasToAdd) {
-                        this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                                "resource_pack.texture_not_in_atlas",
-                                spritePath.asString()
-                        ));
-                    }
-                }
-            }
-        }
-
-        // 再次遍历验证贴图
-        // 只允许在图集内的进行下一步操作
-        for (Map.Entry<Key, TexturedModel> entry : blockModels.entrySet()) {
-            Map<String, Key> textures = entry.getValue().textures;
-            for (Map.Entry<String, Key> texture : textures.entrySet()) {
-                Key spritePath = texture.getValue();
-                Key sourceTexturePath = blockAtlas.getSourceTexturePath(spritePath);
-                if (sourceTexturePath != null) {
-                    textureToModels.put(sourceTexturePath, entry.getKey());
-                }
-            }
-        }
-
-        for (Map.Entry<Key, TexturedModel> entry : itemModels.entrySet()) {
-            Map<String, Key> textures = entry.getValue().textures;
-            for (Map.Entry<String, Key> texture : textures.entrySet()) {
-                Key spritePath = texture.getValue();
-                Key sourceTexturePath = itemAtlas == null ? null : itemAtlas.getSourceTexturePath(spritePath);
-                if (sourceTexturePath != null) {
-                    textureToModels.put(sourceTexturePath, entry.getKey());
-                } else {
-                    sourceTexturePath = blockAtlas.getSourceTexturePath(spritePath);
-                    if (sourceTexturePath != null) {
-                        textureToModels.put(sourceTexturePath, entry.getKey());
-                    }
-                }
-            }
-        }
-
-        // 验证贴图是否存在
-        for (Map.Entry<Key, Collection<Key>> entry : textureToModels.asMap().entrySet()) {
-            Key sourceTexturePath = entry.getKey();
-            if (!VANILLA_TEXTURES.contains(sourceTexturePath)) {
-                String texturePath = "assets/" + sourceTexturePath.namespace() + "/textures/" + sourceTexturePath.value() + ".png";
-                if (rpView.exists(texturePath)) continue;
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_model_texture",
-                        entry.getValue().toString(), texturePath
-                ));
-            }
-        }
-
-        if (result == null) {
-            result = new ValidationResult(null, lastItemAtlas, null, lastBlocksAtlas);
-        }
-
-        return result;
-    }
-
-    private void validateModel(Path resourcePackPath,
-                               JsonObject modelJson,
-                               Path modelJsonPath,
-                               String modelStringPath,
-                               TexturedModel texturedModel,
-                               Set<Revision> revisions,
-                               ModelFixFlags flags,
-                               boolean checkModelUvOutOfBounds,
-                               boolean fixModelUvOutOfBounds) {
-        boolean changed = false;
-        boolean illegalRotation225 = false;
-        boolean illegalRotation45 = false;
-        boolean illegalNewRotationFormat = false;
-        boolean illegalTextures = false;
-
-        List<ModelUvBoundsValidator.Problem> uvProblems = List.of();
-        if (checkModelUvOutOfBounds) {
-            uvProblems = ModelUvBoundsValidator.validate(modelJson, texturedModel.textures);
-        }
-        if (!uvProblems.isEmpty()) {
-            if (fixModelUvOutOfBounds) {
-                if (ModelUvBoundsValidator.fix(modelJson, uvProblems) > 0) {
-                    changed = true;
-                }
-            } else {
-                for (ModelUvBoundsValidator.Problem problem : uvProblems) {
-                    this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                            "resource_pack.model_uv_out_of_bounds",
-                            texturedModel.path.asString(),
-                            String.valueOf(problem.elementIndex() + 1),
-                            problem.face(),
-                            problem.uv(),
-                            problem.texture()
-                    ));
-                }
-            }
-        }
-        if (flags.fixTexturesFormat && modelJson.get("textures") instanceof JsonObject textures) {
-            for (Map.Entry<String, JsonElement> textureEntry : textures.entrySet()) {
-                if (textureEntry.getValue() instanceof JsonObject texture && texture.has("sprite")) {
-                    illegalTextures = true;
-                    break;
-                }
-            }
-        }
-
-        if (flags.fixElement && modelJson.get("elements") instanceof JsonArray elements) {
-            for (JsonElement e : elements) {
-                if (e instanceof JsonObject element) {
-
-                    // 修复含有 #missing 的贴图的元素
-                    if (flags.fixMissingTexture) {
-                        if (element.get("faces") instanceof JsonObject faces) {
-                            for (Map.Entry<String, JsonElement> faceEntry : faces.entrySet()) {
-                                if (faceEntry.getValue() instanceof JsonObject face) {
-                                    if (face.get("texture") instanceof JsonPrimitive texture && texture.getAsString().equals("#missing")) {
-                                        Optional<String> first = texturedModel.textures.keySet().stream().findFirst();
-                                        if (first.isPresent()) {
-                                            face.addProperty("texture", "#" + first.get());
-                                            changed = true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // 检查含有非法旋转角度的元素
-                    if (flags.fixRotationAngle) {
-                        if (element.get("rotation") instanceof JsonObject rotation) {
-                            if (rotation.get("angle") instanceof JsonPrimitive angle) {
-                                float angleValue = angle.getAsFloat();
-                                if (angleValue < -45 || angleValue > 45) {
-                                    illegalRotation45 = true;
-                                }
-                                if (!flags.v1_21_6 && angleValue % 22.5f != 0) {
-                                    illegalRotation225 = true;
-                                }
-                            } else if (!rotation.has("axis")) {
-                                illegalNewRotationFormat = true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (illegalTextures) {
-            // 如果资源包支持 26.1
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V26_1)) {
-                // 先把高版本格式写到 overlay 内
-                Path overlayModelPath = resourcePackPath
-                        .resolve(Config.createOverlayFolderName(Revisions.SINCE_26_1.versionString()))
-                        .resolve(modelStringPath);
-                revisions.add(Revisions.SINCE_26_1);
-                writeJsonSafely(modelJson, overlayModelPath);
-            }
-
-            // 再进行修复
-            JsonObject newTextures = new JsonObject();
-            if (modelJson.get("textures") instanceof JsonObject textures) {
-                for (Map.Entry<String, JsonElement> textureEntry : textures.entrySet()) {
-                    if (textureEntry.getValue() instanceof JsonObject texture) {
-                        newTextures.addProperty(textureEntry.getKey(), texture.getAsJsonPrimitive("sprite").getAsString());
-                    } else if (textureEntry.getValue() instanceof JsonPrimitive texture) {
-                        newTextures.addProperty(textureEntry.getKey(), texture.getAsString());
-                    }
-                }
-            }
-            modelJson.add("textures", newTextures);
-            changed = true;
-        }
-
-        if (illegalRotation45 || illegalNewRotationFormat) {
-            // 如果支持 1.21.11
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_11)) {
-                // 先把高版本格式写到 overlay 内
-                Path overlayModelPath = resourcePackPath
-                        .resolve(Config.createOverlayFolderName(Revisions.SINCE_1_21_11.versionString()))
-                        .resolve(modelStringPath);
-                revisions.add(Revisions.SINCE_1_21_11);
-                writeJsonSafely(modelJson, overlayModelPath);
-            }
-
-            if (modelJson.get("elements") instanceof JsonArray elements) {
-                for (JsonElement e : elements) {
-                    if (e instanceof JsonObject element) {
-                        if (element.get("rotation") instanceof JsonObject rotation) {
-
-                            if (!rotation.has("angle")) {
-                                float x = 0f;
-                                float y = 0f;
-                                float z = 0f;
-
-                                if (rotation.remove("x") instanceof JsonPrimitive xp) {
-                                    x = xp.getAsFloat();
-                                }
-                                if (rotation.remove("y") instanceof JsonPrimitive yp) {
-                                    y = yp.getAsFloat();
-                                }
-                                if (rotation.remove("z") instanceof JsonPrimitive zp) {
-                                    z = zp.getAsFloat();
-                                }
-
-                                float absX = Math.abs(x);
-                                float absY = Math.abs(y);
-                                float absZ = Math.abs(z);
-
-                                float finalAngle;
-                                String finalAxis;
-
-                                if (absX >= absY && absX >= absZ) {
-                                    finalAngle = x;
-                                    finalAxis = "x";
-                                } else if (absY >= absZ) {
-                                    finalAngle = y;
-                                    finalAxis = "y";
-                                } else {
-                                    finalAngle = z;
-                                    finalAxis = "z";
-                                }
-
-                                rotation.addProperty("axis", finalAxis);
-                                rotation.addProperty("angle", finalAngle);
-                            }
-
-                            if (rotation.get("angle") instanceof JsonPrimitive angle) {
-                                float angleValue = angle.getAsFloat();
-                                if (angleValue < -45 || angleValue > 45) {
-                                    Vector3f from = VectorUtils.vector3f(element.getAsJsonArray("from"));
-                                    Vector3f to = VectorUtils.vector3f(element.getAsJsonArray("to"));
-                                    Vector3f origin = VectorUtils.vector3f(rotation.getAsJsonArray("origin"));
-                                    String axis = rotation.getAsJsonPrimitive("axis").getAsString();
-
-                                    CubeRotationProcessor.RotationResult result = CubeRotationProcessor.process(from, to, origin, axis, angleValue);
-
-                                    element.add("from", VectorUtils.toJson(result.from()));
-                                    element.add("to", VectorUtils.toJson(result.to()));
-                                    rotation.add("origin", VectorUtils.toJson(result.origin()));
-                                    rotation.addProperty("angle", result.angle());
-
-                                    if (element.has("faces")) {
-                                        JsonObject oldFaces = element.getAsJsonObject("faces");
-                                        JsonObject newFaces = new JsonObject();
-
-                                        for (CubeRotationProcessor.Face sourceFace : CubeRotationProcessor.Face.values()) {
-                                            if (oldFaces.has(sourceFace.name())) {
-                                                JsonObject faceObj = oldFaces.getAsJsonObject(sourceFace.name()).deepCopy();
-                                                CubeRotationProcessor.FaceData mappingData = result.faceChanges().get(sourceFace);
-
-                                                int oldRot = faceObj.has("rotation") ? faceObj.get("rotation").getAsInt() : 0;
-                                                int finalRot = (oldRot + mappingData.uvRotation()) % 360;
-
-                                                if (finalRot != 0) {
-                                                    faceObj.addProperty("rotation", finalRot);
-                                                } else {
-                                                    faceObj.remove("rotation");
-                                                }
-
-                                                newFaces.add(mappingData.targetFace().name(), faceObj);
-                                            }
-                                        }
-                                        element.add("faces", newFaces);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            changed = true;
-        }
-
-        // 遵循 22.5 且在 [-45, 45]
-        if (illegalRotation225) {
-            // 如果支持 1.21.6
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_6)) {
-                // 先把高版本格式写到 overlay 内
-                Path overlayModelPath = resourcePackPath
-                        .resolve(Config.createOverlayFolderName(Revisions.SINCE_1_21_6.versionString()))
-                        .resolve(modelStringPath);
-                revisions.add(Revisions.SINCE_1_21_6);
-                writeJsonSafely(modelJson, overlayModelPath);
-            }
-
-            if (modelJson.get("elements") instanceof JsonArray elements) {
-                for (JsonElement e : elements) {
-                    if (e instanceof JsonObject element) {
-                        if (element.get("rotation") instanceof JsonObject rotation && rotation.get("angle") instanceof JsonPrimitive angle) {
-                            float finalValue = Math.round(angle.getAsFloat() / 22.5f) * 22.5f;
-                            rotation.addProperty("angle", finalValue);
-                        }
-                    }
-                }
-            }
-            changed = true;
-        }
-
-        if (changed) {
-            writeJsonSafely(modelJson, modelJsonPath);
-        }
+    public TexturedModel getTexturedModel(Key currentRL,
+                                          SimplifiedModelFile model,
+                                          Path[] rootPaths,
+                                          Map<Key, TexturedModel> cached) {
+        return new ValidationModelResolver(this.plugin.logger(), VANILLA_MODELS, PRESET_MODELS)
+                .getTexturedModel(currentRL, model, rootPaths, cached);
     }
 
     public record ModelFixFlags(boolean fixMissingTexture, boolean fixTexturesFormat, boolean fixRotationAngle, boolean fixElement, boolean v1_21_6) {}
-
-    private static Key find(Map<Key, Key> parent, Key i) {
-        if (parent.get(i).equals(i)) {
-            return i;
-        }
-        Key root = find(parent, parent.get(i));
-        parent.put(i, root); // 路径压缩
-        return root;
-    }
-
-    private static void union(Map<Key, Key> parent, Key i, Key j) {
-        Key rootI = find(parent, i);
-        Key rootJ = find(parent, j);
-        if (!rootI.equals(rootJ)) {
-            parent.put(rootI, rootJ);
-        }
-    }
-
-    protected record ValidationResult(JsonObject fixedItemAtlas,
-                                   JsonObject originalItemAtlas,
-                                   JsonObject fixedBlockAtlas,
-                                   JsonObject originalBlockAtlas) {
-    }
-
-    @SuppressWarnings("all")
-    public TexturedModel getTexturedModel(Key currentRL, @Nullable Key parentRL, Map<String, Key> textures, Path[] rootPaths, Map<Key, TexturedModel> cached) {
-        TexturedModel cachedModel = cached.get(currentRL);
-        if (cachedModel != null) {
-            return cachedModel;
-        }
-        TexturedModel texturedModel = new TexturedModel(currentRL, textures);
-        // 放这里防止parent互相引用造成死循环
-        cached.put(currentRL, texturedModel);
-        if (parentRL != null) {
-            TexturedModel parentModel = cached.get(parentRL);
-            if (parentModel == null) {
-                String parentModelStringPath = "assets/" + parentRL.namespace() + "/models/" + parentRL.value() + ".json";
-                // 找一下有没有自定义的父模型
-                JsonObject parentModelJson = getParentModel(parentModelStringPath, rootPaths);
-                if (parentModelJson != null) {
-                    parentModel = getTexturedModel(parentRL, TexturedModel.getParent(parentModelJson), TexturedModel.getTextures(parentModelJson), rootPaths, cached);
-                } else {
-                    if (VANILLA_MODELS.contains(parentRL)) {
-                        // 可能为空，因为存在built-in模型
-                        SimplifiedModelFile simplifiedModelFile = PRESET_MODELS.get(parentRL);
-                        if (simplifiedModelFile == null) {
-                            parentModel = TexturedModel.BUILTIN;
-                            cached.put(parentRL, parentModel);
-                        } else {
-                            parentModel = getTexturedModel(parentRL, simplifiedModelFile.parent, simplifiedModelFile.textures, rootPaths, cached);
-                        }
-                    } else {
-                        parentModel = TexturedModel.EMPTY;
-                        cached.put(parentRL, parentModel);
-                    }
-                }
-            }
-            if (parentModel == TexturedModel.EMPTY) {
-                String parentModelStringPath = "assets/" + parentRL.namespace() + "/models/" + parentRL.value() + ".json";
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_parent_model",
-                        currentRL.asString(), parentModelStringPath
-                ));
-            } else {
-                texturedModel.addParent(parentModel);
-            }
-        }
-        return texturedModel;
-    }
-
-    private JsonObject getParentModel(String path, Path[] rootPaths) {
-        // 倒序遍历数组
-        for (int i = rootPaths.length - 1; i >= 0; i--) {
-            Path rootPath = rootPaths[i];
-            Path modelJsonPath = rootPath.resolve(path);
-            if (Files.exists(modelJsonPath)) {
-                JsonObject parentModelJson = readJsonObjectFromFileOrWarn(modelJsonPath);
-                if (parentModelJson != null) {
-                    return parentModelJson;
-                }
-            }
-        }
-        return null;
-    }
-
-    private static void collectMultipart(JsonArray jsonArray, Consumer<Key> callback) {
-        for (JsonElement element : jsonArray) {
-            if (element instanceof JsonObject jo) {
-                JsonElement applyJE = jo.get("apply");
-                if (applyJE instanceof JsonObject applyJO) {
-                    String modelPath = applyJO.get("model").getAsString();
-                    Key location = Key.from(modelPath);
-                    callback.accept(location);
-                } else if (applyJE instanceof JsonArray applyJA) {
-                    for (JsonElement applyInnerJE : applyJA) {
-                        if (applyInnerJE instanceof JsonObject applyInnerJO) {
-                            String modelPath = applyInnerJO.get("model").getAsString();
-                            Key location = Key.from(modelPath);
-                            callback.accept(location);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static void collectVariants(String block, JsonObject jsonObject, BiConsumer<Key, String> callback) {
-        for (Map.Entry<String, JsonElement> entry : jsonObject.entrySet()) {
-            if (entry.getValue() instanceof JsonObject entryJO) {
-                String modelPath = entryJO.get("model").getAsString();
-                Key location = Key.from(modelPath);
-                callback.accept(location, block + "[" + entry.getKey() + "]");
-            } else if (entry.getValue() instanceof JsonArray entryJA) {
-                for (JsonElement entryInnerJE : entryJA) {
-                    if (entryInnerJE instanceof JsonObject entryJO) {
-                        String modelPath = entryJO.get("model").getAsString();
-                        Key location = Key.from(modelPath);
-                        callback.accept(location, block + "[" + entry.getKey() + "]");
-                    }
-                }
-            }
-        }
-    }
-
-    private static void collectItemModelsDeeply(JsonObject jo, Consumer<Key> callback) {
-        JsonElement modelJE = jo.get("model");
-        if (modelJE instanceof JsonPrimitive jsonPrimitive) {
-            Key location = Key.from(jsonPrimitive.getAsString());
-            callback.accept(location);
-            return;
-        }
-        if (jo.has("type") && jo.has("base")) {
-            if (jo.get("type") instanceof JsonPrimitive jp1 && jo.get("base") instanceof JsonPrimitive jp2) {
-                String type = jp1.getAsString();
-                if (type.equals("minecraft:special") || type.equals("special")) {
-                    Key location = Key.from(jp2.getAsString());
-                    callback.accept(location);
-                }
-            }
-        }
-        for (Map.Entry<String, JsonElement> entry : jo.entrySet()) {
-            if (entry.getValue() instanceof JsonObject innerJO) {
-                collectItemModelsDeeply(innerJO, callback);
-            } else if (entry.getValue() instanceof JsonArray innerJA) {
-                for (JsonElement innerElement : innerJA) {
-                    if (innerElement instanceof JsonObject innerJO) {
-                        collectItemModelsDeeply(innerJO, callback);
-                    }
-                }
-            }
-        }
-    }
 
     private void generateParticle(Path generatedPackPath) {
         if (!Config.removeTintedLeavesParticle()) return;
@@ -2790,7 +1739,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve(atlasId.value() + ".json");
             List<SpriteSource> sources = new ArrayList<>();
             if (Files.exists(atlasPath)) {
-                JsonObject existing = readJsonObjectFromFileOrWarn(atlasPath);
+                JsonObject existing = ResourcePackJsonUtils.readJsonObjectOrWarn(atlasPath);
                 if (existing != null) {
                     sources.addAll(AtlasParser.parse(existing).sources());
                 }
@@ -2800,23 +1749,42 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void generateEquipments(Path generatedPackPath, Consumer<Revision> callback) {
+    void generateEquipments(Path generatedPackPath, Consumer<Overlay> callback, Collection<Equipment> equipments) {
+        EquipmentTextures textures = new EquipmentTextures();
         // asset id + 是否有上身 + 是否有腿
         List<Tuple<Key, Boolean, Boolean>> collectedTrims = new ArrayList<>();
 
         // 为trim类型提供的两个兼容性值
         boolean needLegacyCompatibility = Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2);
         boolean needModernCompatibility = Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2);
+        boolean needModernTrimAtlas = needModernCompatibility && Config.packMinVersion().packFormat().isBelow(PackVersion.PALETTE_TEXTURES_VERSION);
 
-        for (Equipment equipment : this.plugin.itemManager().equipments().values()) {
+        for (Equipment equipment : equipments) {
             if (equipment instanceof ComponentBasedEquipment componentBasedEquipment) {
                 // 现代的盔甲生成
-                processComponentBasedEquipment(componentBasedEquipment, generatedPackPath);
+                this.processComponentBasedEquipment(componentBasedEquipment, generatedPackPath, textures);
             } else if (equipment instanceof TrimBasedEquipment trimBasedEquipment) {
                 Key assetId = trimBasedEquipment.assetId();
-                Pair<Boolean, Boolean> result = processTrimBasedEquipment(trimBasedEquipment, generatedPackPath);
+                Pair<Boolean, Boolean> result = this.processTrimBasedEquipment(trimBasedEquipment, generatedPackPath, textures);
                 if (result != null) {
                     collectedTrims.add(Tuple.of(assetId, result.left(), result.right()));
+                }
+            }
+        }
+
+        if (!collectedTrims.isEmpty()) {
+            // 修复被干碎的原版盔甲
+            Key vanillaFixTrimType = Key.of("minecraft", Config.sacrificedVanillaArmorType());
+            collectedTrims.add(Tuple.of(vanillaFixTrimType, true, true));
+            this.processTrimBasedEquipment(new TrimBasedEquipment(vanillaFixTrimType, Config.sacrificedHumanoid(), Config.sacrificedHumanoidLeggings()), generatedPackPath, textures);
+        }
+        // 所有装备（含原版盔甲兼容层）处理完后，才清理独占且已复制的输入贴图。
+        for (Path source : textures.copiedSources) {
+            if (!textures.retained.contains(source)) {
+                try {
+                    Files.delete(source);
+                } catch (IOException e) {
+                    this.plugin.logger().error("Error deleting armor texture file from " + source, e);
                 }
             }
         }
@@ -2837,14 +1805,9 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
 
-            // 修复被干碎的原版盔甲
-            Key vanillaFixTrimType = Key.of("minecraft", Config.sacrificedVanillaArmorType());
-            collectedTrims.add(Tuple.of(vanillaFixTrimType, true, true));
-            processTrimBasedEquipment(new TrimBasedEquipment(vanillaFixTrimType, Config.sacrificedHumanoid(), Config.sacrificedHumanoidLeggings()), generatedPackPath);
-
             // 准备新版本atlas和覆盖纹理
             JsonObject modernTrimAtlasJson = null;
-            if (needModernCompatibility) {
+            if (needModernTrimAtlas) {
                 modernTrimAtlasJson = new JsonObject();
                 JsonArray sourcesArray = new JsonArray();
                 modernTrimAtlasJson.add("sources", sourcesArray);
@@ -2865,6 +1828,8 @@ public abstract class AbstractPackManager implements PackManager {
                 if (previousAtlasSources != null) {
                     sourcesArray.addAll(previousAtlasSources);
                 }
+            }
+            if (needModernCompatibility) {
                 Path vanillaArmorPath1 = generatedPackPath
                         .resolve("assets")
                         .resolve("minecraft")
@@ -2937,24 +1902,26 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
             // 写入atlas文件, 优先写入旧版
-            writeJsonSafely(needLegacyCompatibility ? legacyTrimAtlasJson : modernTrimAtlasJson, atlasPath);
-            // 既要又要，那么需要overlay
-            if (needLegacyCompatibility && needModernCompatibility) {
-                Revision revision = Revisions.SINCE_1_21_2;
-                Path overlayAtlasPath = generatedPackPath
-                        .resolve(Config.createOverlayFolderName(revision.versionString()))
-                        .resolve("assets")
-                        .resolve("minecraft")
-                        .resolve("atlases")
-                        .resolve("armor_trims.json");
-                // 创建atlas文件夹
-                writeJsonSafely(modernTrimAtlasJson, overlayAtlasPath);
-                callback.accept(revision);
+            if (needLegacyCompatibility || needModernTrimAtlas) {
+                writeJsonSafely(needLegacyCompatibility ? legacyTrimAtlasJson : modernTrimAtlasJson, atlasPath);
+                if (needLegacyCompatibility && needModernTrimAtlas) {
+                    Overlay overlay = Revisions.SINCE_1_21_2.createOverlay();
+                    Path overlayAtlasPath = generatedPackPath.resolve(overlay.directory()).resolve(generatedPackPath.relativize(atlasPath));
+                    writeJsonSafely(modernTrimAtlasJson, overlayAtlasPath);
+                    callback.accept(overlay);
+                }
+                if (Config.packMaxVersion().packFormat().isAtOrAbove(PackVersion.PALETTE_TEXTURES_VERSION)) {
+                    String directory = Config.createOverlayFolderName(PackVersion.PALETTE_TEXTURES_VERSION.asString());
+                    JsonObject emptyAtlas = new JsonObject();
+                    emptyAtlas.add("sources", new JsonArray());
+                    writeJsonSafely(emptyAtlas, generatedPackPath.resolve(directory).resolve(generatedPackPath.relativize(atlasPath)));
+                    callback.accept(new Overlay(PackVersion.PALETTE_TEXTURES_VERSION, PackVersion.MAX_PACK_VERSION, directory));
+                }
             }
         }
     }
 
-    private void processComponentBasedEquipment(ComponentBasedEquipment componentBasedEquipment, Path generatedPackPath) {
+    private void processComponentBasedEquipment(ComponentBasedEquipment componentBasedEquipment, Path generatedPackPath, EquipmentTextures textures) {
         Key assetId = componentBasedEquipment.assetId();
         if (assetId == null) {
             this.plugin.logger().error("Asset id is null for equipment " + componentBasedEquipment);
@@ -2978,10 +1945,12 @@ public abstract class AbstractPackManager implements PackManager {
                         .resolve("equipment")
                         .resolve(entry.getKey().id())
                         .resolve(texture.value() + ".png");
+                textures.retained.add(correctPath);
                 if (Files.exists(badPath) && !Files.exists(correctPath)) {
                     try {
                         Files.createDirectories(correctPath.getParent());
-                        Files.move(badPath, correctPath);
+                        Files.copy(badPath, correctPath);
+                        textures.copied(badPath);
                     } catch (IOException e) {
                         this.plugin.logger().error("Error creating " + correctPath.toAbsolutePath());
                         return;
@@ -3060,140 +2029,71 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     @Nullable
-    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment trimBasedEquipment, Path generatedPackPath) {
-        Key assetId = trimBasedEquipment.assetId();
-
-        Key humanoidIdentifier = trimBasedEquipment.humanoid();
-        boolean hasLayer1 = humanoidIdentifier != null;
-        Key humanoidLeggingsIdentifier = trimBasedEquipment.humanoidLeggings();
-        boolean hasLayer2 = humanoidLeggingsIdentifier != null;
-
-        if (hasLayer1) {
-            Path texture = generatedPackPath
-                    .resolve("assets")
-                    .resolve(humanoidIdentifier.namespace())
-                    .resolve("textures")
-                    .resolve(humanoidIdentifier.value() + ".png");
-            if (!Files.exists(texture) || !Files.isRegularFile(texture)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_equipment_texture",
-                        assetId.asString(), texture.toString()
-                ));
-                return null;
-            }
-            boolean shouldPreserve = false;
-            if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
-                Path legacyTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("models")
-                        .resolve("armor")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!legacyTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(legacyTarget.getParent());
-                        Files.copy(texture, legacyTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + legacyTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2)) {
-                Path modernTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("entity")
-                        .resolve("humanoid")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!modernTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(modernTarget.getParent());
-                        Files.copy(texture, modernTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + modernTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (!shouldPreserve) {
-                try {
-                    Files.delete(texture);
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error deleting armor texture file from " + texture, e);
-                }
-            }
-        }
-        if (hasLayer2) {
-            Path texture = generatedPackPath
-                    .resolve("assets")
-                    .resolve(humanoidLeggingsIdentifier.namespace())
-                    .resolve("textures")
-                    .resolve(humanoidLeggingsIdentifier.value() + ".png");
-            if (!Files.exists(texture) && !Files.isRegularFile(texture)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation(
-                        "resource_pack.missing_equipment_texture",
-                        assetId.asString(), texture.toString()
-                ));
-                return null;
-            }
-            boolean shouldPreserve = false;
-            if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
-                Path legacyTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("models")
-                        .resolve("armor")
-                        .resolve(assetId.value() + "_leggings_" + NEW_TRIM_MATERIAL + ".png");
-                if (!legacyTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(legacyTarget.getParent());
-                        Files.copy(texture, legacyTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + legacyTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2)) {
-                Path modernTarget = generatedPackPath
-                        .resolve("assets")
-                        .resolve(assetId.namespace())
-                        .resolve("textures")
-                        .resolve("trims")
-                        .resolve("entity")
-                        .resolve("humanoid_leggings")
-                        .resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png");
-                if (!modernTarget.equals(texture)) {
-                    try {
-                        Files.createDirectories(modernTarget.getParent());
-                        Files.copy(texture, modernTarget, StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        this.plugin.logger().error("Error writing armor texture file from " + texture + " to " + modernTarget, e);
-                    }
-                } else {
-                    shouldPreserve = true;
-                }
-            }
-            if (!shouldPreserve) {
-                try {
-                    Files.delete(texture);
-                } catch (IOException e) {
-                    this.plugin.logger().error("Error deleting armor texture file from " + texture, e);
-                }
-            }
+    private Pair<Boolean, Boolean> processTrimBasedEquipment(TrimBasedEquipment equipment, Path generatedPackPath, EquipmentTextures textures) {
+        Map<Path, List<Path>> copies = new LinkedHashMap<>();
+        if (!collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoid(), false, copies) || !collectTrimTextureCopies(generatedPackPath, equipment.assetId(), equipment.humanoidLeggings(), true, copies)) {
+            return null;
         }
 
-        return Pair.of(hasLayer1, hasLayer2);
+        for (Map.Entry<Path, List<Path>> entry : copies.entrySet()) {
+            Path source = entry.getKey();
+            for (Path target : entry.getValue()) {
+                textures.retained.add(target);
+                if (!source.equals(target)) {
+                    try {
+                        Files.createDirectories(target.getParent());
+                        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        this.plugin.logger().error("Error writing armor texture file from " + source + " to " + target, e);
+                        return null;
+                    }
+                }
+            }
+            textures.copied(source);
+        }
+        return Pair.of(equipment.humanoid() != null, equipment.humanoidLeggings() != null);
+    }
+
+    private static final class EquipmentTextures {
+        private final Set<Path> copiedSources = new HashSet<>();
+        private final Set<Path> retained = new HashSet<>();
+
+        private void copied(Path source) {
+            if (!this.copiedSources.add(source)) {
+                this.retained.add(source);
+            }
+        }
+    }
+
+    private boolean collectTrimTextureCopies(Path root,
+                                             Key assetId,
+                                             @Nullable Key textureId,
+                                             boolean leggings,
+                                             Map<Path, List<Path>> copies) {
+        if (textureId == null) {
+            return true;
+        }
+        Path source = root.resolve("assets").resolve(textureId.namespace()).resolve("textures").resolve(textureId.value() + ".png");
+        if (!Files.isRegularFile(source)) {
+            TranslationManager.warn(
+                    "resource_pack.missing_equipment_texture", assetId.asString(), source.toString()
+            );
+            return false;
+        }
+        Path trims = root.resolve("assets").resolve(assetId.namespace()).resolve("textures").resolve("trims");
+        List<Path> targets = copies.computeIfAbsent(source, ignored -> new ArrayList<>(3));
+        if (Config.packMinVersion().isBelow(MinecraftVersion.V1_21_2)) {
+            String suffix = leggings ? "_leggings_" : "_";
+            targets.add(trims.resolve("models/armor").resolve(assetId.value() + suffix + NEW_TRIM_MATERIAL + ".png"));
+        }
+        Path entityTrims = trims.resolve(leggings ? "entity/humanoid_leggings" : "entity/humanoid");
+        if (Config.packMaxVersion().isAtOrAbove(MinecraftVersion.V1_21_2) && Config.packMinVersion().packFormat().isBelow(PackVersion.PALETTE_TEXTURES_VERSION)) {
+            targets.add(entityTrims.resolve(assetId.value() + "_" + NEW_TRIM_MATERIAL + ".png"));
+        }
+        if (Config.packMaxVersion().packFormat().isAtOrAbove(PackVersion.PALETTE_TEXTURES_VERSION)) {
+            targets.add(entityTrims.resolve(assetId.value() + ".png"));
+        }
+        return true;
     }
 
     private void generateEmptyBlockModel(Path generatedPackPath) {
@@ -3339,9 +2239,21 @@ public abstract class AbstractPackManager implements PackManager {
         for (Map.Entry<Key, Key> mapper : this.plugin.blockManager().soundReplacements().entrySet()) {
             Key originalKey = mapper.getKey();
 
+            JsonObject configured = soundJson.getAsJsonObject(originalKey.value());
             soundJson.add(originalKey.value(), empty);
             try {
                 JsonObject originalSounds = soundTemplate.getAsJsonObject(originalKey.value());
+                if (configured != null) {
+                    JsonObject restored = configured.deepCopy();
+                    if (originalSounds != null && (!configured.has("replace") || !configured.get("replace").getAsBoolean())) {
+                        JsonArray merged = originalSounds.getAsJsonArray("sounds").deepCopy();
+                        if (configured.has("sounds")) {
+                            merged.addAll(configured.getAsJsonArray("sounds"));
+                        }
+                        restored.add("sounds", merged);
+                    }
+                    originalSounds = restored;
+                }
                 if (originalSounds != null) {
                     soundJson.add(mapper.getValue().value(), originalSounds);
                 } else {
@@ -3373,7 +2285,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve("models")
                     .resolve(entry.getKey().value() + ".json");
             if (Files.exists(modelPath)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.model_generation.conflict", modelPath.toAbsolutePath().toString()));
+                TranslationManager.warn("resource_pack.model_generation.conflict", modelPath.toAbsolutePath().toString());
                 continue;
             }
             writeJsonSafely(entry.getValue().get(), modelPath);
@@ -3385,7 +2297,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve("textures")
                     .resolve(entry.getKey().value() + ".png");
             if (Files.exists(texturePath)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.texture_generation.conflict", texturePath.toAbsolutePath().toString()));
+                TranslationManager.warn("resource_pack.texture_generation.conflict", texturePath.toAbsolutePath().toString());
                 continue;
             }
             try {
@@ -3432,14 +2344,8 @@ public abstract class AbstractPackManager implements PackManager {
                     stateJson = new JsonObject();
                 }
 
-                JsonObject newVariants = new JsonObject();
-                if (previousVariants != null) {
-                    for (Map.Entry<String, JsonElement> variantEntry : previousVariants.entrySet()) {
-                        newVariants.add(variantEntry.getKey(), variantEntry.getValue());
-                    }
-                }
-                // 新增变体排序后追加在末尾；与旧变体同 key 的仅替换值，保持原位
                 Map<String, JsonElement> sortedNewVariants = new TreeMap<>(entry.getValue());
+                JsonObject newVariants = previousVariants == null ? new JsonObject() : this.expandBlockVariantOverlaps(key, previousVariants, sortedNewVariants.keySet());
                 for (Map.Entry<String, JsonElement> resourcePathEntry : sortedNewVariants.entrySet()) {
                     newVariants.add(resourcePathEntry.getKey(), resourcePathEntry.getValue());
                 }
@@ -3469,6 +2375,49 @@ public abstract class AbstractPackManager implements PackManager {
                 writeJsonSafely(blueMapBlockStates, generatedPackPath.resolve("assets").resolve(Key.CRAFTENGINE_NAMESPACE).resolve("blockColors.json"));
             }
         }
+    }
+
+    private JsonObject expandBlockVariantOverlaps(Key block, JsonObject previous, Set<String> overrides) {
+        JsonObject result = new JsonObject();
+        List<String> stateSelectors = null;
+        for (Map.Entry<String, JsonElement> entry : previous.entrySet()) {
+            String selector = entry.getKey();
+            boolean overlaps = overrides.stream().anyMatch(state -> !state.equals(selector) && matchesBlockVariant(selector, state));
+            if (!overlaps) {
+                result.add(selector, entry.getValue());
+                continue;
+            }
+            // Java 会拒绝同一状态的重叠定义，将通用变体展开到未被自定义方块占用的状态
+            if (stateSelectors == null) {
+                stateSelectors = new ArrayList<>();
+                int vanillaCount = this.plugin.blockManager().vanillaBlockStateCount();
+                for (int i = 0; i < vanillaCount; i++) {
+                    BlockStateWrapper state = BlockRegistryMirror.byId(i);
+                    if (state.ownerId().equals(block)) {
+                        stateSelectors.add(ResourcePackUtils.blockStateSelector(state.getAsString()));
+                    }
+                }
+            }
+            for (String state : stateSelectors) {
+                if (!overrides.contains(state) && matchesBlockVariant(selector, state)) {
+                    result.add(state, entry.getValue());
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean matchesBlockVariant(String selector, String state) {
+        if (selector.isEmpty()) {
+            return true;
+        }
+        String properties = ',' + state + ',';
+        for (String property : selector.split(",")) {
+            if (!properties.contains(',' + property + ',')) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void generateModernItemModels1_21_2(Path generatedPackPath) {
@@ -3531,7 +2480,7 @@ public abstract class AbstractPackManager implements PackManager {
                     firstBaseModel = legacyOverridesModels.getFirst();
                 }
 
-                itemJson.addProperty("parent", firstBaseModel.model().asMinimalString());
+                itemJson.addProperty(ModelJsonKeys.PARENT, firstBaseModel.model().asMinimalString());
                 if (!overrideJsons.isEmpty()) {
                     JsonArray overrides = new JsonArray();
                     for (JsonObject override : overrideJsons) {
@@ -3555,7 +2504,7 @@ public abstract class AbstractPackManager implements PackManager {
                     .resolve("items")
                     .resolve(key.value() + ".json");
             if (Files.exists(itemPath)) {
-                this.plugin.logger().warn(TranslationManager.instance().plainTranslation("resource_pack.item_model.conflict", key.asString(), itemPath.toAbsolutePath().toString()));
+                TranslationManager.warn("resource_pack.item_model.conflict", key.asString(), itemPath.toAbsolutePath().toString());
                 continue;
             }
 
@@ -3581,9 +2530,14 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void generateModernItemOverrides(Path generatedPackPath, Consumer<Revision> callback) {
-        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_4)) return;
-        for (Map.Entry<Key, TreeMap<Integer, ModernItemModel>> entry : this.plugin.itemManager().modernItemOverrides().entrySet()) {
-            Key vanillaItemModel = entry.getKey();
+        if (Config.packMaxVersion().isBelow(MinecraftVersion.V1_21_4)) {
+            return;
+        }
+        Map<Key, TreeMap<Integer, ModernItemModel>> modernOverrides = this.plugin.itemManager().modernItemOverrides();
+        Map<Key, Map<Float, ItemModel>> legacyOverrides = Config.collectLegacyCustomModelData() ? this.collectLegacyCustomModelData(generatedPackPath) : Map.of();
+        Set<Key> itemModels = new HashSet<>(modernOverrides.keySet());
+        itemModels.addAll(legacyOverrides.keySet());
+        for (Key vanillaItemModel : itemModels) {
             Path overridedItemPath = generatedPackPath
                     .resolve("assets")
                     .resolve(vanillaItemModel.namespace())
@@ -3610,8 +2564,23 @@ public abstract class AbstractPackManager implements PackManager {
             boolean oversizedInGui = originalItemModel.oversizedInGui();
             float swapAnimationScale = originalItemModel.swapAnimationScale();
 
-            Map<Float, ItemModel> entries = new TreeMap<>();
-            for (Map.Entry<Integer, ModernItemModel> modelWithDataEntry : entry.getValue().entrySet()) {
+            Map<Float, ItemModel> entries = new TreeMap<>(legacyOverrides.getOrDefault(vanillaItemModel, Map.of()));
+            ItemModel fallback = originalItemModel.model();
+            if (fallback instanceof RangeDispatchItemModel originalRangeDispatch
+                    && originalRangeDispatch.property() instanceof CustomModelDataRangeDispatchProperty property
+                    && property.index() == 0
+                    && originalRangeDispatch.scale() == 1f
+                    && originalRangeDispatch.transformation() == null) {
+                for (RangeDispatchItemModel.Entry originalEntry : originalRangeDispatch.entries()) {
+                    entries.put(originalEntry.threshold(), originalEntry.model());
+                }
+                fallback = originalRangeDispatch.fallBack();
+            }
+            Map<Integer, ModernItemModel> customOverrides = modernOverrides.get(vanillaItemModel);
+            if (customOverrides == null) {
+                customOverrides = Map.of();
+            }
+            for (Map.Entry<Integer, ModernItemModel> modelWithDataEntry : customOverrides.entrySet()) {
                 ModernItemModel modernItemModel = modelWithDataEntry.getValue();
                 entries.put(modelWithDataEntry.getKey().floatValue(), modernItemModel.model());
                 if (modernItemModel.handAnimationOnSwap()) {
@@ -3623,7 +2592,7 @@ public abstract class AbstractPackManager implements PackManager {
             }
 
             RangeDispatchItemModel rangeDispatch = new RangeDispatchItemModel(
-                new CustomModelDataRangeDispatchProperty(0), 1f, entries, originalItemModel.model()
+                new CustomModelDataRangeDispatchProperty(0), 1f, entries, fallback
             );
 
             ModernItemModel newItemModel = new ModernItemModel(rangeDispatch, handAnimationOnSwap, oversizedInGui, swapAnimationScale);
@@ -3645,6 +2614,53 @@ public abstract class AbstractPackManager implements PackManager {
                 }
             }
         }
+    }
+
+    private Map<Key, Map<Float, ItemModel>> collectLegacyCustomModelData(Path generatedPackPath) {
+        Path itemModelsPath = generatedPackPath
+                .resolve("assets")
+                .resolve("minecraft")
+                .resolve("models")
+                .resolve("item");
+        if (!Files.isDirectory(itemModelsPath)) {
+            return Map.of();
+        }
+        Map<Key, Map<Float, ItemModel>> collected = new HashMap<>();
+        try (DirectoryStream<Path> paths = Files.newDirectoryStream(itemModelsPath, "*.json")) {
+            for (Path path : paths) {
+                String fileName = path.getFileName().toString();
+                Key itemModel = Key.minecraft(fileName.substring(0, fileName.length() - 5));
+                if (!PRESET_ITEMS.containsKey(itemModel)) {
+                    continue;
+                }
+                try {
+                    JsonObject model = GsonHelper.readJsonFromFile(path).getAsJsonObject();
+                    if (!(model.get("overrides") instanceof JsonArray overrides)) {
+                        continue;
+                    }
+                    Map<Float, ItemModel> entries = new TreeMap<>();
+                    for (JsonElement element : overrides) {
+                        if (element instanceof JsonObject override
+                                && override.get("predicate") instanceof JsonObject predicate
+                                && predicate.size() == 1
+                                && predicate.get("custom_model_data") instanceof JsonPrimitive customModelData
+                                && customModelData.isNumber()
+                                && override.get("model") instanceof JsonPrimitive modelPath
+                                && modelPath.isString()) {
+                            entries.put(customModelData.getAsFloat(), new BaseItemModel(Key.of(modelPath.getAsString())));
+                        }
+                    }
+                    if (!entries.isEmpty()) {
+                        collected.put(itemModel, entries);
+                    }
+                } catch (IOException | JsonParseException | IllegalArgumentException | IllegalStateException e) {
+                    this.plugin.logger().warn("Failed to collect legacy custom model data from " + path, e);
+                }
+            }
+        } catch (IOException e) {
+            this.plugin.logger().warn("Failed to scan legacy item models in " + itemModelsPath, e);
+        }
+        return collected;
     }
 
     private void generateLegacyItemOverrides(Path generatedPackPath) {
@@ -3761,6 +2777,7 @@ public abstract class AbstractPackManager implements PackManager {
 
     private List<Pair<String, List<Path>>> updateCachedAssets(@NotNull PackCacheData cacheData, @Nullable FileSystem fs) throws IOException {
         Map<String, List<Path>> conflictChecker = new HashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f);
+        Set<Path> createdDirectories = new HashSet<>();
         Map<Path, CachedAssetFile> previousFiles = this.cachedAssetFiles;
         this.cachedAssetFiles = Config.cacheResourceFiles() ? new Object2ObjectOpenHashMap<>(Math.max(128, this.cachedAssetFiles.size()), 0.5f) : new Object2ObjectOpenHashMap<>();
 
@@ -3776,14 +2793,14 @@ public abstract class AbstractPackManager implements PackManager {
                 Files.walkFileTree(sourceFolder, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
                     @Override
                     public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        processRegularFile(file, attrs, sourceFolder, fs, conflictChecker, previousFiles);
+                        processRegularFile(file, attrs, sourceFolder, fs, conflictChecker, previousFiles, createdDirectories);
                         return FileVisitResult.CONTINUE;
                     }
                 });
             }
         }
         for (Path zip : cacheData.externalZips()) {
-            processZipFile(zip, fs, conflictChecker, previousFiles);
+            processZipFile(zip, fs, conflictChecker, previousFiles, createdDirectories);
         }
 
         List<Pair<String, List<Path>>> conflicts = new ArrayList<>();
@@ -3796,8 +2813,12 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void processRegularFile(Path file, BasicFileAttributes attrs, Path sourceFolder, @Nullable FileSystem fs,
-                                    Map<String, List<Path>> conflictChecker, Map<Path, CachedAssetFile> previousFiles) throws IOException {
+                                    Map<String, List<Path>> conflictChecker, Map<Path, CachedAssetFile> previousFiles,
+                                    Set<Path> createdDirectories) throws IOException {
         if (Config.excludeFileExtensions().contains(FileUtils.getExtension(file))) {
+            return;
+        }
+        if (Config.isFileExcluded(sourceFolder, file)) {
             return;
         }
         long lastModified = attrs.lastModifiedTime().toMillis();
@@ -3817,13 +2838,14 @@ public abstract class AbstractPackManager implements PackManager {
         }
         if (fs == null) return;
         Path relative = sourceFolder.relativize(file);
-        updateConflictChecker(fs, conflictChecker, file, file, relative, data);
+        updateConflictChecker(fs, conflictChecker, file, file, relative, data, createdDirectories);
     }
 
     private void processZipFile(Path zipFile,
                                 @Nullable FileSystem fs,
                                 Map<String, List<Path>> conflictChecker,
-                                Map<Path, CachedAssetFile> previousFiles) {
+                                Map<Path, CachedAssetFile> previousFiles,
+                                Set<Path> createdDirectories) {
         try (FileSystem zipFs = FileSystems.newFileSystem(zipFile)) {
             long zipLastModified = Files.getLastModifiedTime(zipFile).toMillis();
             long zipSize = Files.size(zipFile);
@@ -3835,6 +2857,9 @@ public abstract class AbstractPackManager implements PackManager {
                         return FileVisitResult.CONTINUE;
                     }
                     if (Config.excludeFileExtensions().contains(FileUtils.getExtension(entry))) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (Config.isFileExcluded(zipRoot, entry)) {
                         return FileVisitResult.CONTINUE;
                     }
                     Path entryPathInZip = zipRoot.relativize(entry);
@@ -3854,7 +2879,7 @@ public abstract class AbstractPackManager implements PackManager {
                     }
                     if (fs != null) {
                         try {
-                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, data);
+                            updateConflictChecker(fs, conflictChecker, entry, sourcePath, entryPathInZip, data, createdDirectories);
                         } catch (Exception e) {
                             AbstractPackManager.this.plugin.logger().warn("Failed to update conflict checker", e);
                         }
@@ -3867,12 +2892,17 @@ public abstract class AbstractPackManager implements PackManager {
         }
     }
 
-    private void updateConflictChecker(FileSystem fs, Map<String, List<Path>> conflictChecker, Path sourcePath, Path namedSourcePath, Path relative, byte[] data) throws IOException {
+    private void updateConflictChecker(FileSystem fs, Map<String, List<Path>> conflictChecker, Path sourcePath,
+                                       Path namedSourcePath, Path relative, byte[] data, Set<Path> createdDirectories) throws IOException {
         String relativePath = CharacterUtils.replaceBackslashWithSlash(relative.toString());
         Path targetPath = fs.getPath("resource_pack/" + relativePath);
         List<Path> conflicts = conflictChecker.get(relativePath);
         if (conflicts == null) {
-            Files.createDirectories(targetPath.getParent());
+            Path directory = targetPath.getParent();
+            if (!createdDirectories.contains(directory)) {
+                Files.createDirectories(directory);
+                createdDirectories.add(directory);
+            }
             Files.write(targetPath, data);
             conflictChecker.put(relativePath, List.of(namedSourcePath));
         } else {
@@ -3881,6 +2911,7 @@ public abstract class AbstractPackManager implements PackManager {
             PathContext sourceCTX = PathContext.of(sourcePath);
             for (ConditionalResolution resolution : Config.resolutions()) {
                 if (resolution.matcher().test(relativeCTX)) {
+                    createdDirectories.clear();
                     resolution.resolution().run(targetCTX, sourceCTX);
                     return;
                 }
@@ -3898,17 +2929,7 @@ public abstract class AbstractPackManager implements PackManager {
     }
 
     private void writeJsonSafely(JsonElement json, Path path) {
-        try {
-            Files.createDirectories(path.getParent());
-        } catch (IOException e) {
-            this.plugin.logger().error("Error creating " + path.toAbsolutePath(), e);
-            return;
-        }
-        try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-            GsonHelper.get().toJson(json, writer);
-        } catch (IOException e) {
-            this.plugin.logger().warn("Failed to write json file " + json.toString() + " to " + path, e);
-        }
+        ResourcePackJsonUtils.writeJsonSafely(json, path);
     }
 
     @Override

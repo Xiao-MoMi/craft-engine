@@ -6,12 +6,15 @@ import net.momirealms.craftengine.bukkit.util.PacketUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
+import net.momirealms.craftengine.core.plugin.logger.Debugger;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
 import net.momirealms.craftengine.core.plugin.network.event.ByteBufPacketEvent;
 import net.momirealms.craftengine.core.plugin.network.listener.ByteBufferPacketListener;
 import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.RecipeBookEntry;
+import net.momirealms.craftengine.core.plugin.network.protocol.recipe.modern.display.UnknownDisplayTypeException;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.MutableBoolean;
+import net.momirealms.craftengine.core.util.VersionHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,14 +27,26 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
 
     @Override
     public void onPacketSend(NetWorkUser user, ByteBufPacketEvent event) {
-        if (Config.disableItemOperations()) return;
+        if (Config.disableItemOperations()) {
+            return;
+        }
         BukkitServerPlayer player = (BukkitServerPlayer) user;
-        if (!player.isOnline()) return;
-        MutableBoolean changed = new MutableBoolean(false);
+        if (!player.isOnline()) {
+            player.markRecipeBookResendPending();
+            return;
+        }
         FriendlyByteBuf buf = event.getBuffer();
+        List<RecipeBookEntry> entries;
+        try {
+            entries = buf.readCollection(ArrayList::new, byteBuf -> RecipeBookEntry.read(byteBuf, b -> VersionHelper.isOrAbove26_1 ? PacketUtils.readItemTemplate(b) : PacketUtils.readItem(b)));
+        } catch (UnknownDisplayTypeException e) {
+            Debugger.PACKET.debug(() -> "Skipped rewriting recipe book packet for player " + user.name() + ": " + e.getMessage());
+            return;
+        }
+        boolean replace = buf.readBoolean();
+        MutableBoolean changed = new MutableBoolean(false);
         BukkitItemManager itemManager = BukkitItemManager.instance();
-        List<RecipeBookEntry> entries = buf.readCollection(ArrayList::new, byteBuf -> {
-            RecipeBookEntry entry = RecipeBookEntry.read(byteBuf, $ -> PacketUtils.readItem(buf));
+        for (RecipeBookEntry entry : entries) {
             entry.applyClientboundData(item -> {
                 Optional<Item> remapped = itemManager.s2c(item, player, ItemPacketSource.RECIPE);
                 if (remapped.isEmpty()) {
@@ -40,15 +55,19 @@ public final class RecipeBookAddListener implements ByteBufferPacketListener {
                 changed.set(true);
                 return remapped.get();
             });
-            return entry;
-        });
-        boolean replace = buf.readBoolean();
+        }
         if (changed.booleanValue()) {
             event.setChanged(true);
             buf.clear();
             buf.writeVarInt(event.packetID());
             buf.writeCollection(entries, ((byteBuf, recipeBookEntry) -> recipeBookEntry.write(byteBuf,
-                    ($, item) -> PacketUtils.writeItem(buf, item))));
+                    (b, item) -> {
+                        if (VersionHelper.isOrAbove26_1) {
+                            PacketUtils.writeItemTemplate(b, item);
+                        } else {
+                            PacketUtils.writeItem(b, item);
+                        }
+                    })));
             buf.writeBoolean(replace);
         }
     }

@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.core.item.setting.value;
 
+import com.mojang.datafixers.util.Either;
 import net.momirealms.craftengine.core.entity.EquipmentSlot;
 import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.plugin.config.ConfigValue;
+import net.momirealms.craftengine.core.util.HolderSetUtils;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.Pair;
 import net.momirealms.craftengine.core.util.VersionHelper;
@@ -11,6 +13,7 @@ import net.momirealms.sparrow.nbt.CompoundTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -32,6 +35,8 @@ public final class EquipmentData {
     private Pair<Key, @Nullable Float> equipSound;
     @Nullable
     private Pair<Key, @Nullable Float> shearingSound;
+    @Nullable
+    private Either<List<Key>, Key> allowedEntities;
 
     public EquipmentData(@NotNull EquipmentSlot slot,
                          @Nullable Key assetId,
@@ -43,6 +48,20 @@ public final class EquipmentData {
                          @Nullable Key cameraOverlay,
                          @Nullable Pair<Key, Float> equipSound,
                          @Nullable Pair<Key, Float> shearingSound) {
+        this(slot, assetId, dispensable, swappable, damageOnHurt, equipOnInteract, canBeSheared, cameraOverlay, equipSound, shearingSound, null);
+    }
+
+    public EquipmentData(@NotNull EquipmentSlot slot,
+                         @Nullable Key assetId,
+                         boolean dispensable,
+                         boolean swappable,
+                         boolean damageOnHurt,
+                         boolean equipOnInteract,
+                         boolean canBeSheared,
+                         @Nullable Key cameraOverlay,
+                         @Nullable Pair<Key, Float> equipSound,
+                         @Nullable Pair<Key, Float> shearingSound,
+                         @Nullable Either<List<Key>, Key> allowedEntities) {
         this.slot = slot;
         this.assetId = assetId;
         this.dispensable = dispensable;
@@ -53,6 +72,7 @@ public final class EquipmentData {
         this.cameraOverlay = cameraOverlay;
         this.equipSound = equipSound;
         this.shearingSound = shearingSound;
+        this.allowedEntities = allowedEntities;
     }
 
     private static final String[] ASSET_ID = ConfigKeys.of("asset_id");
@@ -63,6 +83,7 @@ public final class EquipmentData {
     private static final String[] EQUIP_SOUND = ConfigKeys.of("equip_sound");
     private static final String[] SHEARING_SOUND = ConfigKeys.of("shearing_sound");
     private static final String[] SOUND_ID = ConfigKeys.of("sound_id");
+    private static final String[] ALLOWED_ENTITIES = ConfigKeys.of("allowed_entities");
 
     public static EquipmentData fromConfig(@NotNull final ConfigSection section) {
         EquipmentSlot slot = section.getNonNullEnum("slot", EquipmentSlot.class, EquipmentSlot::byId);
@@ -75,7 +96,8 @@ public final class EquipmentData {
         boolean canBeSheared = section.getBoolean(CAN_BE_SHEARED);
         Pair<Key, Float> equipSound = section.getValue(EQUIP_SOUND, EquipmentData::parseSound);
         Pair<Key, Float> shearingSound = section.getValue(SHEARING_SOUND, EquipmentData::parseSound);
-        return new EquipmentData(slot, assetId, dispensable, swappable, damageOnHurt, equipOnInteract, canBeSheared, cameraOverlay, equipSound, shearingSound);
+        Either<List<Key>, Key> allowedEntities = section.getValue(ALLOWED_ENTITIES, HolderSetUtils::fromConfig);
+        return new EquipmentData(slot, assetId, dispensable, swappable, damageOnHurt, equipOnInteract, canBeSheared, cameraOverlay, equipSound, shearingSound, allowedEntities);
     }
 
     private static Pair<Key, @Nullable Float> parseSound(ConfigValue value) {
@@ -133,6 +155,11 @@ public final class EquipmentData {
         return this.shearingSound;
     }
 
+    @Nullable
+    public Either<List<Key>, Key> allowedEntities() {
+        return this.allowedEntities;
+    }
+
     public void setSlot(@NotNull EquipmentSlot slot) {
         this.slot = slot;
     }
@@ -173,6 +200,10 @@ public final class EquipmentData {
         this.shearingSound = shearingSound;
     }
 
+    public void setAllowedEntities(@Nullable Either<List<Key>, Key> allowedEntities) {
+        this.allowedEntities = allowedEntities;
+    }
+
     public CompoundTag toNBT() {
         CompoundTag tag = new CompoundTag();
         tag.putString("slot", this.slot.toString().toLowerCase(Locale.ROOT));
@@ -186,6 +217,9 @@ public final class EquipmentData {
         tag.putBoolean("dispensable", this.dispensable);
         tag.putBoolean("swappable", this.swappable);
         tag.putBoolean("damage_on_hurt", this.damageOnHurt);
+        if (this.allowedEntities != null) {
+            tag.put("allowed_entities", HolderSetUtils.toNBT(this.allowedEntities));
+        }
         if (VersionHelper.isOrAbove1_21_5) {
             tag.putBoolean("equip_on_interact", this.equipOnInteract);
             if (VersionHelper.isOrAbove1_21_6) {
@@ -238,6 +272,7 @@ public final class EquipmentData {
         private Key cameraOverlay;
         private Pair<Key, Float> equipSound;
         private Pair<Key, Float> shearingSound;
+        private Either<List<Key>, Key> allowedEntities;
 
         public Builder() {
         }
@@ -292,8 +327,13 @@ public final class EquipmentData {
             return this;
         }
 
+        public Builder allowedEntities(@Nullable Either<List<Key>, Key> allowedEntities) {
+            this.allowedEntities = allowedEntities;
+            return this;
+        }
+
         public EquipmentData build() {
-            return new EquipmentData(this.slot, this.assetId, this.dispensable, this.swappable, this.damageOnHurt, this.equipOnInteract, this.canBeSheared, this.cameraOverlay, this.equipSound, this.shearingSound);
+            return new EquipmentData(this.slot, this.assetId, this.dispensable, this.swappable, this.damageOnHurt, this.equipOnInteract, this.canBeSheared, this.cameraOverlay, this.equipSound, this.shearingSound, this.allowedEntities);
         }
     }
 }

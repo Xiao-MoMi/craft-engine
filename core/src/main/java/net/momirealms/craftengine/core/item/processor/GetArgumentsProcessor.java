@@ -7,7 +7,7 @@ import net.momirealms.sparrow.nbt.Tag;
 
 import java.util.Map;
 
-public final class GetArgumentsProcessor implements ItemProcessor {
+public final class GetArgumentsProcessor implements NetworkItemProcessor {
     public static final GetArgumentsProcessor INSTANCE = new GetArgumentsProcessor();
     public static final ItemProcessorFactory<GetArgumentsProcessor> FACTORY = v -> INSTANCE;
 

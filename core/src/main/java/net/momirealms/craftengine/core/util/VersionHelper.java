@@ -15,6 +15,7 @@ public final class VersionHelper {
     public static final MinecraftVersion MINECRAFT_VERSION;
     public static final boolean COMPONENT_RELEASE;
     public static final int WORLD_VERSION;
+    public static final int JAVA_PROTOCOL_VERSION;
     public static final int version;
     public static final int majorVersion;
     public static final int minorVersion;
@@ -67,6 +68,7 @@ public final class VersionHelper {
             }
             JsonObject json = GsonHelper.parseJsonToJsonObject(new String(inputStream.readAllBytes(), StandardCharsets.UTF_8));
             WORLD_VERSION = GsonHelper.getAsInt(json.get("world_version"), -1);
+            JAVA_PROTOCOL_VERSION = GsonHelper.getAsInt(json.get("protocol_version"), -1);
             if (WORLD_VERSION == -1) {
                 throw new IllegalStateException("Failed to get world_version from version.json");
             }
@@ -129,38 +131,7 @@ public final class VersionHelper {
     }
 
     public static int parseVersionToInteger(String versionString) {
-        int v1 = 0;
-        int v2 = 0;
-        int v3 = 0;
-        int currentNumber = 0;
-        int part = 0;
-        for (int i = 0; i < versionString.length(); i++) {
-            char c = versionString.charAt(i);
-            if (c >= '0' && c <= '9') {
-                currentNumber = currentNumber * 10 + (c - '0');
-            } else if (c == '.') {
-                if (part == 0) {
-                    v1 = currentNumber;
-                }
-                if (part == 1) {
-                    v2 = currentNumber;
-                }
-                part++;
-                currentNumber = 0;
-                if (part > 2) {
-                    break;
-                }
-            }
-        }
-        // 处理最后一个数字部分
-        if (part == 0) {  // 没有点号：如 "26"
-            v1 = currentNumber;
-        } else if (part == 1) {  // 一个点号：如 "26.1"
-            v2 = currentNumber;
-        } else if (part == 2) {  // 两个点号：如 "1.2.3"
-            v3 = currentNumber;
-        }
-        return 10000 * v1 + v2 * 100 + v3;
+        return MinecraftVersion.parseVersionToInteger(versionString);
     }
 
     private static boolean exists(String... classNames) {

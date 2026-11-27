@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.plugin.config.ConfigKeys;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.Objects;
 
 public final class LocalTimeSelectProperty implements SelectProperty {
     public static final SelectPropertyFactory<LocalTimeSelectProperty> FACTORY = new Factory();
@@ -43,6 +44,26 @@ public final class LocalTimeSelectProperty implements SelectProperty {
         if (this.timeZone != null) {
             model.addProperty("time_zone", this.timeZone);
         }
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof LocalTimeSelectProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.pattern, that.pattern)
+                && Objects.equals(this.locale, that.locale)
+                && Objects.equals(this.timeZone, that.timeZone);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.pattern);
+        result = 31 * result + Objects.hashCode(this.locale);
+        return 31 * result + Objects.hashCode(this.timeZone);
     }
 
     private static class Factory implements SelectPropertyFactory<LocalTimeSelectProperty> {

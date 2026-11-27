@@ -18,8 +18,7 @@ import java.util.zip.CheckedOutputStream;
 
 final class PackOptimizationCache {
     private static final int MAGIC = 0x43455043;
-    // Bump when the format or PNG/JSON optimization behavior changes.
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final Result UNCHANGED = new Result(null);
     private final Cache<CacheKey, Result> results;
     private volatile long maximumBytes;
@@ -138,7 +137,7 @@ final class PackOptimizationCache {
             }
             Path parent = path.toAbsolutePath().getParent();
             Files.createDirectories(parent);
-            temporary = Files.createTempFile(parent, "pack-optimization-", ".tmp");
+            temporary = Files.createTempFile(parent, "pack_optimization_", ".tmp");
             CRC32 checksum = new CRC32();
             try (var output = new DataOutputStream(new CheckedOutputStream(
                     new BufferedOutputStream(Files.newOutputStream(temporary)), checksum))) {

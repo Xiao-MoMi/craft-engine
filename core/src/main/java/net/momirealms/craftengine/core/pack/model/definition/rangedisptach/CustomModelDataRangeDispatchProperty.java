@@ -34,6 +34,22 @@ public final class CustomModelDataRangeDispatchProperty implements RangeDispatch
         return value.intValue();
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof CustomModelDataRangeDispatchProperty that)) {
+            return false;
+        }
+        return this.index == that.index;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(this.index);
+    }
+
     private static class Factory implements RangeDispatchPropertyFactory<CustomModelDataRangeDispatchProperty> {
         @Override
         public CustomModelDataRangeDispatchProperty create(ConfigSection section) {

@@ -3,6 +3,7 @@ package net.momirealms.craftengine.core.block;
 import com.google.gson.JsonElement;
 import net.momirealms.craftengine.core.block.behavior.BlockBehavior;
 import net.momirealms.craftengine.core.pack.model.generation.ModelGenerator;
+import net.momirealms.craftengine.core.pack.model.generation.OffsetBlockModel;
 import net.momirealms.craftengine.core.plugin.Manageable;
 import net.momirealms.craftengine.core.plugin.config.ConfigParser;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
@@ -11,10 +12,7 @@ import org.incendo.cloud.suggestion.Suggestion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public interface BlockManager extends Manageable, ModelGenerator {
 
@@ -23,6 +21,10 @@ public interface BlockManager extends Manageable, ModelGenerator {
     Map<Key, Map<String, JsonElement>> blockOverrides();
 
     Map<Integer, JsonElement> modBlockStates();
+
+    default Set<OffsetBlockModel> offsetBlockModels() {
+        return Set.of();
+    }
 
     boolean isTransparentModelInUse();
 
@@ -38,6 +40,9 @@ public interface BlockManager extends Manageable, ModelGenerator {
     Collection<Suggestion> cachedSuggestions();
 
     Map<Key, Key> soundReplacements();
+
+    @Nullable
+    BlockSounds blockSoundsByName(String name);
 
     Key getBlockOwnerId(BlockStateWrapper state);
 

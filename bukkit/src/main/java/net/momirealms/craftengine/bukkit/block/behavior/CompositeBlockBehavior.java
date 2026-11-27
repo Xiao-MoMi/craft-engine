@@ -89,6 +89,16 @@ public final class CompositeBlockBehavior extends BukkitBlockBehavior implements
     }
 
     @Override
+    public BlockBreakResult onPlayerBreak(World world, Player player, BlockPos pos, ImmutableBlockState state) {
+        for (BlockBehavior behavior : this.behaviors) {
+            if (behavior.onPlayerBreak(world, player, pos, state) == BlockBreakResult.CANCEL) {
+                return BlockBreakResult.CANCEL;
+            }
+        }
+        return BlockBreakResult.PASS;
+    }
+
+    @Override
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {
         boolean hasPass = false;
         for (BlockBehavior behavior : this.behaviors) {

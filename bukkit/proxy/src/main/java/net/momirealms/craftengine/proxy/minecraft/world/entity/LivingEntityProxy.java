@@ -39,6 +39,9 @@ public interface LivingEntityProxy extends EntityProxy {
     @MethodInvoker(name = "getAttribute", activeIf = "min_version=1.20.5")
     Object getAttribute(Object target, @Type(clazz = HolderProxy.class) Object attribute);
 
+    @MethodInvoker(name = "getAttributeValue", activeIf = "min_version=1.20.5")
+    double getAttributeValue(Object target, @Type(clazz = HolderProxy.class) Object attribute);
+
     @MethodInvoker(name = "getEffect", activeIf = "max_version=1.20.4")
     Object getEffect$legacy(Object target, @Type(clazz = MobEffectProxy.class) Object effect);
 

@@ -37,10 +37,10 @@ public record PackSquashWorkflow(String executable, String config, int timeout) 
                 ? context.resolvePath(this.executable).toString() : this.executable;
         ProcessBuilder builder = new ProcessBuilder(command, configuration.toString())
                 .directory(context.resolvePath(".").toFile());
-        context.plugin().logger().info(TranslationManager.instance().plainTranslation("resource_pack.packsquash_started", configuration.toString()));
+        context.plugin().logger().info(TranslationManager.message("resource_pack.packsquash_started", configuration.toString()));
         Timestamp timestamp = new Timestamp();
         run(builder, this.timeout);
-        context.plugin().logger().info(TranslationManager.instance().plainTranslation("resource_pack.packsquash_finished", String.valueOf(timestamp.deltaMillis())));
+        context.plugin().logger().info(TranslationManager.message("resource_pack.packsquash_finished", String.valueOf(timestamp.deltaMillis())));
     }
 
     static void run(ProcessBuilder builder, long timeout) throws IOException {

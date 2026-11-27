@@ -7,7 +7,6 @@ import io.papermc.paper.potion.PotionMix;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
-import net.momirealms.craftengine.bukkit.nms.FastNMS;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.plugin.injector.RecipeInjector;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
@@ -23,7 +22,9 @@ import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.registry.BuiltInRegistries;
 import net.momirealms.craftengine.core.util.*;
 import net.momirealms.craftengine.proxy.bukkit.craftbukkit.CraftServerProxy;
+import net.momirealms.craftengine.proxy.minecraft.core.registries.RegistriesProxy;
 import net.momirealms.craftengine.proxy.minecraft.resources.FileToIdConverterProxy;
+import net.momirealms.craftengine.proxy.minecraft.resources.ResourceKeyProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.MinecraftServerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.PlayerAdvancementsProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.level.ServerPlayerProxy;
@@ -33,10 +34,7 @@ import net.momirealms.craftengine.proxy.minecraft.server.packs.repository.PackRe
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.MultiPackResourceManagerProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.packs.resources.ResourceProxy;
 import net.momirealms.craftengine.proxy.minecraft.server.players.PlayerListProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.FireworkStarFadeRecipeProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeHolderProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeManagerProxy;
-import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.RecipeTypeProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.item.crafting.*;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.AbstractFurnaceBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.BlastFurnaceBlockEntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.block.entity.FurnaceBlockEntityProxy;
@@ -48,30 +46,30 @@ import org.bukkit.potion.PotionBrewer;
 
 import java.io.Reader;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 public final class BukkitRecipeManager extends AbstractRecipeManager {
     private static BukkitRecipeManager instance;
     public static final NamespacedKey FURNACE_LAST_USER = new NamespacedKey("craftengine", "furnace_last_user");
     public static final Map<Key, Function<Recipe, Object>> RECIPE_GENERATOR = MiscUtils.init(new HashMap<>(), it -> {
-        it.put(RecipeSerializers.SHAPED, recipe -> FastNMS.INSTANCE.createShapedRecipe((CustomShapedRecipe) recipe));
-        it.put(RecipeSerializers.SHAPED_TRANSFORM, recipe -> FastNMS.INSTANCE.createShapedRecipe((CustomShapedTransformRecipe) recipe));
-        it.put(RecipeSerializers.SHAPELESS, recipe -> FastNMS.INSTANCE.createShapelessRecipe((CustomShapelessRecipe) recipe));
-        it.put(RecipeSerializers.SHAPELESS_TRANSFORM, recipe -> FastNMS.INSTANCE.createShapelessRecipe((CustomShapelessRecipe) recipe));
-        it.put(RecipeSerializers.SMELTING, recipe -> FastNMS.INSTANCE.createSmeltingRecipe((CustomSmeltingRecipe) recipe));
-        it.put(RecipeSerializers.BLASTING, recipe -> FastNMS.INSTANCE.createBlastingRecipe((CustomBlastingRecipe) recipe));
-        it.put(RecipeSerializers.SMOKING, recipe -> FastNMS.INSTANCE.createSmokingRecipe((CustomSmokingRecipe) recipe));
-        it.put(RecipeSerializers.CAMPFIRE_COOKING, recipe -> FastNMS.INSTANCE.createCampfireRecipe((CustomCampfireRecipe) recipe));
-        it.put(RecipeSerializers.STONECUTTING, recipe -> FastNMS.INSTANCE.createStonecuttingRecipe((CustomStoneCuttingRecipe) recipe));
-        it.put(RecipeSerializers.SMITHING_TRIM, recipe -> FastNMS.INSTANCE.createSmithingTrimRecipe((CustomSmithingTrimRecipe) recipe));
-        it.put(RecipeSerializers.SMITHING_TRANSFORM, recipe -> FastNMS.INSTANCE.createSmithingTransformRecipe((CustomSmithingTransformRecipe) recipe));
-        it.put(RecipeSerializers.DYE, recipe -> FastNMS.INSTANCE.createDyeRecipe((CustomDyeRecipe) recipe));
+        it.put(RecipeSerializers.SHAPED, recipe -> NativeRecipeFactory.shaped((CustomShapedRecipe) recipe));
+        it.put(RecipeSerializers.SHAPED_TRANSFORM, recipe -> NativeRecipeFactory.shaped((CustomShapedTransformRecipe) recipe));
+        it.put(RecipeSerializers.SHAPELESS, recipe -> NativeRecipeFactory.shapeless((CustomShapelessRecipe) recipe));
+        it.put(RecipeSerializers.SHAPELESS_TRANSFORM, recipe -> NativeRecipeFactory.shapeless((CustomShapelessRecipe) recipe));
+        it.put(RecipeSerializers.SMELTING, recipe -> NativeRecipeFactory.cooking(SmeltingRecipeProxy.CLASS, (CustomCookingRecipe) recipe));
+        it.put(RecipeSerializers.BLASTING, recipe -> NativeRecipeFactory.cooking(BlastingRecipeProxy.CLASS, (CustomCookingRecipe) recipe));
+        it.put(RecipeSerializers.SMOKING, recipe -> NativeRecipeFactory.cooking(SmokingRecipeProxy.CLASS, (CustomCookingRecipe) recipe));
+        it.put(RecipeSerializers.CAMPFIRE_COOKING, recipe -> NativeRecipeFactory.cooking(CampfireCookingRecipeProxy.CLASS, (CustomCookingRecipe) recipe));
+        it.put(RecipeSerializers.STONECUTTING, recipe -> NativeRecipeFactory.stonecutting((CustomStoneCuttingRecipe) recipe));
+        it.put(RecipeSerializers.SMITHING_TRIM, recipe -> NativeRecipeFactory.smithingTrim((CustomSmithingTrimRecipe) recipe));
+        it.put(RecipeSerializers.SMITHING_TRANSFORM, recipe -> NativeRecipeFactory.smithingTransform((CustomSmithingTransformRecipe) recipe));
+        it.put(RecipeSerializers.DYE, recipe -> NativeRecipeFactory.dye((CustomDyeRecipe) recipe));
         if (VersionHelper.isOrAbove26_3) {
-            it.put(RecipeSerializers.BREWING, recipe -> FastNMS.INSTANCE.createBrewingRecipe((CustomBrewingRecipe) recipe));
+            it.put(RecipeSerializers.BREWING, recipe -> NativeRecipeFactory.brewing((CustomBrewingRecipe) recipe));
         }
     });
 
-    // nms 模块需要使用此方法
     public static List<Object> getIngredientLooks(Ingredient ingredient) {
         List<Object> itemStacks = new ArrayList<>();
         for (UniqueKey holder : ingredient.items()) {
@@ -105,6 +103,8 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
     private List<NamespacedKey> cachedAllRecipeKeys;
     // 进入服务器时自动解锁指定配方的缓存（全局 list 与单配方 unlock_on_join 合并）
     private List<NamespacedKey> cachedUnlockOnJoinKeys;
+    // Share immutable keys across players; discovery state stays in each player's recipe book.
+    private final Map<Key, Object> cachedRecipeKeys = new ConcurrentHashMap<>();
 
     public BukkitRecipeManager(BukkitCraftEngine plugin) {
         super(createRecipeRegistry(), plugin);
@@ -135,9 +135,24 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         return instance;
     }
 
+    // Recipe books use ResourceKey since 1.21.2, and ResourceLocation on older versions.
+    public Object minecraftRecipeKey(Key id) {
+        Object cached = this.cachedRecipeKeys.get(id);
+        if (cached != null) return cached;
+        return this.cachedRecipeKeys.computeIfAbsent(id, key -> {
+            Object identifier = KeyUtils.toIdentifier(key);
+            return VersionHelper.isOrAbove1_21_2
+                    ? ResourceKeyProxy.INSTANCE.create(RegistriesProxy.RECIPE, identifier)
+                    : identifier;
+        });
+    }
+
     @Override
     public DataComponentPredicate parsePotionContentsPredicate(JsonObject json) {
-        return FastNMS.INSTANCE.parsePotionContentsPredicate(json);
+        if (!VersionHelper.isOrAbove26_3) {
+            throw new UnsupportedOperationException("Native brewing predicates require Minecraft 26.3 or newer");
+        }
+        return BrewingPotionPredicate.parse(json);
     }
 
     @Override
@@ -154,6 +169,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
 
     @Override
     public void unload() {
+        this.cachedRecipeKeys.clear();
         if (!Config.enableRecipeSystem()) return;
         // 安排卸载任务，这些任务会在load后执行。如果没有load说明服务器已经关闭了，那就不需要管卸载了。
         if (!this.plugin.isStopping()) {
@@ -198,12 +214,14 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 if (!hasCustomItem && Boolean.FALSE.equals(this.replacedDatapackRecipes.get(id))) {
                     continue;
                 }
-                super.recipeRegistry.unregister(id);
             }
             try {
-                super.recipeRegistry.register(id, RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe));
+                Object nativeRecipe = RECIPE_GENERATOR.get(recipe.serializerType()).apply(recipe);
                 if (dataPackRecipe) {
+                    replaceRecipe(id, nativeRecipe);
                     this.replacedDatapackRecipes.put(id, hasCustomItem);
+                } else {
+                    super.recipeRegistry.register(id, nativeRecipe);
                 }
             } catch (Exception e) {
                 collector.add(e);
@@ -211,27 +229,24 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         }
 
         // 重新注入特殊配方
-        super.recipeRegistry.unregister(RecipeInjector.REPAIR_ITEM);
-        super.recipeRegistry.register(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
+        replaceRecipe(RecipeInjector.REPAIR_ITEM, RecipeInjector.REPAIR_ITEM_RECIPE);
 
         // 在低版本是特殊配方，高版本不是
         if (!VersionHelper.isOrAbove26_1) {
-            super.recipeRegistry.unregister(RecipeInjector.ARMOR_DYE);
-            super.recipeRegistry.unregister(RecipeInjector.FIREWORK_STAR_FADE);
-            super.recipeRegistry.register(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
-            super.recipeRegistry.register(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
+            replaceRecipe(RecipeInjector.ARMOR_DYE, RecipeInjector.ARMOR_DYE_RECIPE);
+            replaceRecipe(RecipeInjector.FIREWORK_STAR_FADE, RecipeInjector.FIREWORK_STAR_FADE_RECIPE);
         } else {
             Key recipeId = Key.of("firework_star_fade");
             Object fireworkStarFadeRecipe = super.recipeRegistry.get(recipeId);
             if (fireworkStarFadeRecipe != null) {
                 fireworkStarFadeRecipe = RecipeHolderProxy.INSTANCE.getValue(fireworkStarFadeRecipe);
-                super.recipeRegistry.unregister(recipeId);
                 try {
-                    super.recipeRegistry.register(recipeId, RecipeInjector.FIREWORK_STAR_FADE_RECIPE_CONSTRUCTOR.newInstance(
+                    Object nativeRecipe = RecipeInjector.FIREWORK_STAR_FADE_RECIPE_CONSTRUCTOR.newInstance(
                         FireworkStarFadeRecipeProxy.INSTANCE.getTarget(fireworkStarFadeRecipe),
                         FireworkStarFadeRecipeProxy.INSTANCE.getDye(fireworkStarFadeRecipe),
                         FireworkStarFadeRecipeProxy.INSTANCE.getResult(fireworkStarFadeRecipe)
-                    ));
+                    );
+                    replaceRecipe(recipeId, nativeRecipe);
                 } catch (ReflectiveOperationException e) {
                     this.plugin.logger().warn("Failed to construct FireworkStarFadeRecipe", e);
                 }
@@ -254,6 +269,27 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Optional.ofNullable(collector.result()).ifPresent(t -> {
             this.plugin.logger().warn("Failed to load recipes", t);
         });
+    }
+
+    private void replaceRecipe(Key id, Object recipe) {
+        Object previousRecipe = super.recipeRegistry.get(id);
+        if (previousRecipe != null && VersionHelper.isOrAbove1_20_2) {
+            previousRecipe = RecipeHolderProxy.INSTANCE.getValue(previousRecipe);
+        }
+        super.recipeRegistry.unregister(id);
+        try {
+            super.recipeRegistry.register(id, recipe);
+        } catch (RuntimeException e) {
+            try {
+                super.recipeRegistry.unregister(id);
+                if (previousRecipe != null) {
+                    super.recipeRegistry.register(id, previousRecipe);
+                }
+            } catch (RuntimeException restoreException) {
+                e.addSuppressed(restoreException);
+            }
+            throw e;
+        }
     }
 
     @SuppressWarnings({"deprecation", "removal"})
@@ -329,6 +365,7 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
         Set<Key> disabledRecipes = Config.disabledVanillaRecipes();
         boolean hasDisabledAny = !disabledRecipes.isEmpty();
 
+        Map<String, List<Key>> skippedRecipes = new LinkedHashMap<>();
         for (Map.Entry<Key, JsonObject> entry : this.lastDatapackRecipes.entrySet()) {
             Key id = entry.getKey();
             if (hasDisabledAny && disabledRecipes.contains(entry.getKey())) {
@@ -346,9 +383,43 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
                 markAsDataPackRecipe(id);
                 registerRecipeInternal(recipe, false, false);
             } catch (Throwable e) {
-                this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                if (Config.debugCommon()) {
+                    this.plugin.logger().warn("Failed to load data pack recipe " + id + ". Json: " + jsonObject, e);
+                } else {
+                    skippedRecipes.computeIfAbsent(reason(e), k -> new ArrayList<>(1)).add(id);
+                }
             }
         }
+
+        if (!Config.debugCommon() && !skippedRecipes.isEmpty()) {
+            this.plugin.logger().info("Skipped " + skippedRecipes.values().stream().mapToInt(List::size).sum() + " data pack recipes that CraftEngine can not read, they keep their vanilla behaviour. Reasons (set debug.common to true for the full stack traces): " + summarize(skippedRecipes));
+        }
+    }
+
+    private static String reason(Throwable throwable) {
+        String message = throwable.getMessage();
+        if (message == null || message.isEmpty()) {
+            return throwable.getClass().getSimpleName();
+        }
+        // 冒号后面是具体失败的物品/标签/类型，同类失败要能合并成一条
+        int separator = message.indexOf(": ");
+        return separator > 0 ? message.substring(0, separator) : message;
+    }
+
+    // 加了大量 mod 后这里可能上百条，逐条打日志会把启动输出淹掉
+    private static String summarize(Map<String, List<Key>> skippedRecipes) {
+        StringBuilder builder = new StringBuilder();
+        skippedRecipes.entrySet().stream()
+                .sorted(Comparator.comparingInt((Map.Entry<String, List<Key>> it) -> -it.getValue().size()).thenComparing(Map.Entry::getKey))
+                .limit(6)
+                .forEach(it -> builder.append(it.getKey()).append(" x").append(it.getValue().size())
+                        .append(" [").append(it.getValue().get(0)).append(it.getValue().size() > 1 ? ", ..." : "").append("], "));
+        if (skippedRecipes.size() > 6) {
+            builder.append("and ").append(skippedRecipes.size() - 6).append(" more reasons");
+        } else {
+            builder.setLength(builder.length() - 2);
+        }
+        return builder.toString();
     }
 
     public boolean shouldUnlockRecipesOnJoin() {
@@ -431,16 +502,9 @@ public final class BukkitRecipeManager extends AbstractRecipeManager {
     }
 
     public static void injectFurnaceBlockEntity(Object blockEntity) {
-        Object recipeType = null;
-        if (SmokerBlockEntityProxy.CLASS.isInstance(blockEntity)) {
-            recipeType = RecipeTypeProxy.SMOKING;
-        } else if (BlastFurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
-            recipeType = RecipeTypeProxy.BLASTING;
-        } else if (FurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
-            recipeType = RecipeTypeProxy.SMELTING;
-        }
-        if (recipeType != null) {
-            AbstractFurnaceBlockEntityProxy.INSTANCE.setQuickCheck(blockEntity, FastNMS.INSTANCE.createInjectedFurnaceCachedCheck(recipeType, blockEntity));
+        if (SmokerBlockEntityProxy.CLASS.isInstance(blockEntity) || BlastFurnaceBlockEntityProxy.CLASS.isInstance(blockEntity) || FurnaceBlockEntityProxy.CLASS.isInstance(blockEntity)) {
+            AbstractFurnaceBlockEntityProxy access = AbstractFurnaceBlockEntityProxy.INSTANCE;
+            access.setQuickCheck(blockEntity, FurnaceRecipeCheck.wrap(access.getQuickCheck(blockEntity), blockEntity));
         }
     }
 }

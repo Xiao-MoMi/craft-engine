@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.item.BukkitItemManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentData;
 import net.momirealms.craftengine.core.item.setting.value.EquipmentFallback;
@@ -62,7 +63,8 @@ public final class EquipmentLodTracker {
 
     public Optional<Item> equipment(int entityId, int slot, Item original) {
         EntityState state = this.entities.get(entityId);
-        EquipmentFallback fallback = original.getDefinition().map(definition -> definition.settings().equipmentFallback()).orElse(null);
+        ItemDefinition definition = original.getDefinitionOrNull();
+        EquipmentFallback fallback = definition != null ? definition.settings().equipmentFallback() : null;
         Item snapshot = state != null && fallback != null ? original.copy() : null;
         Optional<Item> conversion = BukkitItemManager.instance().s2c(original, this.player, ItemPacketSource.SET_EQUIPMENT);
         if (state == null) return conversion;

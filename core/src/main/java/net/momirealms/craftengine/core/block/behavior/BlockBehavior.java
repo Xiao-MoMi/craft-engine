@@ -18,7 +18,6 @@ import net.momirealms.craftengine.core.world.context.UseOnContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public abstract class BlockBehavior {
@@ -204,7 +203,7 @@ public abstract class BlockBehavior {
     }
 
     /**
-     * --- 1.21+ ---<br>
+     * --- 1.20.3+ ---<br>
      * <code>args[0]</code>: BlockState (state)<br>
      * <code>args[1]</code>: ServerLevel (level)<br>
      * <code>args[2]</code>: BlockPos (pos)<br>
@@ -217,7 +216,7 @@ public abstract class BlockBehavior {
     }
 
     /**
-     * --- 1.21+ ---<br>
+     * --- 1.20.3+ ---<br>
      * <code>args[0]</code>: BlockState (state)<br>
      * <code>args[1]</code>: ServerLevel (level)<br>
      * <code>args[2]</code>: BlockPos (pos)<br>
@@ -386,7 +385,7 @@ public abstract class BlockBehavior {
     public abstract void fallOn(Object thisBlock, Object[] args);
 
     /**
-     * --- 1.20 - 26.1.2 ---
+     * --- 1.20 - 26.1.2 ---<br>
      * <code>args[0]</code>: BlockGetter (level)<br>
      * <code>args[1]</code>: Entity (entity)<br>
      * <p>
@@ -450,9 +449,8 @@ public abstract class BlockBehavior {
         // 如果物品和方块是一家人，那么不应该被替换
         Key clickedBlockId = state.owner().value().id();
         Item item = context.getItem();
-        Optional<ItemDefinition> customItem = CraftEngine.instance().itemManager().getItemDefinition(item.id());
-        if (customItem.isEmpty()) return state.settings().replaceable();
-        ItemDefinition custom = customItem.get();
+        ItemDefinition custom = CraftEngine.instance().itemManager().getItemDefinitionOrNull(item.id());
+        if (custom == null) return state.settings().replaceable();
         MutableBoolean canPlace = new MutableBoolean(true);
         custom.behavior().let(BlockItem.class, b -> {
             Key blockId = b.block();
@@ -464,6 +462,10 @@ public abstract class BlockBehavior {
             return false;
         }
         return state.settings().replaceable();
+    }
+
+    public BlockBreakResult onPlayerBreak(World world, Player player, BlockPos pos, ImmutableBlockState state) {
+        return BlockBreakResult.PASS;
     }
 
     public InteractionResult useOnBlock(UseOnContext context, ImmutableBlockState state) {

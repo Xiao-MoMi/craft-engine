@@ -7,12 +7,12 @@ import net.momirealms.craftengine.bukkit.entity.furniture.hitbox.InteractionFurn
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.FurnitureEventListener;
 import net.momirealms.craftengine.bukkit.entity.furniture.listener.PaperFurnitureEventListener;
 import net.momirealms.craftengine.bukkit.entity.seat.BukkitSeat;
-import net.momirealms.craftengine.bukkit.nms.CollisionEntity;
 import net.momirealms.craftengine.bukkit.plugin.BukkitCraftEngine;
 import net.momirealms.craftengine.bukkit.util.EntityUtils;
 import net.momirealms.craftengine.bukkit.util.KeyUtils;
 import net.momirealms.craftengine.bukkit.util.LevelUtils;
 import net.momirealms.craftengine.bukkit.util.LocationUtils;
+import net.momirealms.craftengine.core.entity.CollisionEntity;
 import net.momirealms.craftengine.core.entity.furniture.*;
 import net.momirealms.craftengine.core.entity.furniture.behavior.FurnitureController;
 import net.momirealms.craftengine.core.entity.furniture.element.FurnitureElement;
@@ -111,6 +111,7 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         BukkitFurniture furnitureInstance = loadedFurnitureByMetaEntityId(furnitureEntity.getEntityId());
         if (furnitureInstance != null) {
             furnitureInstance.controller.onPlace(player);
+            this.registerAsyncFurnitureTicker(furnitureInstance);
         }
 
         return furnitureInstance;
@@ -331,6 +332,7 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
         furnitureInstance.controller.onLoad();
         // 首次放置由后续生成包同步；恢复已有实体由调用方补发生成包，无需另发更新通知。
         furnitureInstance.publishClientSnapshot(List.of());
+        this.registerAsyncFurnitureTicker(furnitureInstance);
     }
 
     /**
@@ -444,7 +446,7 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
                                                        FurniturePersistentData data,
                                                        @Nullable SafeEntityOperationRunner runner) {
         BukkitFurniture bukkitFurniture = new BukkitFurniture(display, furniture, data);
-        registerFurniture(bukkitFurniture);
+        this.registerFurniture(bukkitFurniture, false);
         Location location = display.getLocation();
         Runnable action = () -> {
             bukkitFurniture.addCollidersToWorld();
@@ -464,6 +466,10 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
 
     /** 登记实体 ID 映射并按需安装 ticker；也用于变体切换或移动后的重新登记。 */
     void registerFurniture(BukkitFurniture furniture) {
+        this.registerFurniture(furniture, true);
+    }
+
+    private void registerFurniture(BukkitFurniture furniture, boolean registerAsyncTicker) {
         int entityId = furniture.entityId();
         this.byMetaEntityId.put(entityId, furniture);
         this.byInteractableEntityId.put(entityId, furniture);
@@ -491,11 +497,20 @@ public final class BukkitFurnitureManager extends AbstractFurnitureManager {
                 }
             }
         }
-        if (!this.asyncTickers.containsKey(entityId)) {
-            FurnitureTicker<FurnitureController> ticker = furniture.controller.createAsyncFurnitureTicker();
-            if (ticker != null) {
-                TickingFurnitureImpl<FurnitureController> tickingFurniture = new TickingFurnitureImpl<>(furniture, ticker);
-                this.asyncTickers.put(entityId, tickingFurniture);
+        if (registerAsyncTicker) {
+            this.registerAsyncFurnitureTicker(furniture);
+        }
+    }
+
+    private void registerAsyncFurnitureTicker(BukkitFurniture furniture) {
+        int entityId = furniture.entityId();
+        if (!furniture.isValid() || this.asyncTickers.containsKey(entityId)) {
+            return;
+        }
+        FurnitureTicker<FurnitureController> ticker = furniture.controller.createAsyncFurnitureTicker();
+        if (ticker != null) {
+            TickingFurnitureImpl<FurnitureController> tickingFurniture = new TickingFurnitureImpl<>(furniture, ticker);
+            if (this.asyncTickers.putIfAbsent(entityId, tickingFurniture) == null) {
                 this.addAsyncFurnitureTicker(tickingFurniture);
             }
         }

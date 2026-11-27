@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
 import net.momirealms.craftengine.core.util.GsonHelper;
+import java.util.Objects;
 
 public final class ComponentConditionProperty implements ConditionProperty {
     public static final ConditionPropertyFactory<ComponentConditionProperty> FACTORY = new Factory();
@@ -30,6 +31,24 @@ public final class ComponentConditionProperty implements ConditionProperty {
         model.addProperty("property", "component");
         model.addProperty("predicate", this.predicate);
         model.add("value", this.value);
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof ComponentConditionProperty that)) {
+            return false;
+        }
+        return Objects.equals(this.predicate, that.predicate)
+                && Objects.equals(this.value, that.value);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hashCode(this.predicate);
+        return 31 * result + Objects.hashCode(this.value);
     }
 
     private static class Factory implements ConditionPropertyFactory<ComponentConditionProperty> {

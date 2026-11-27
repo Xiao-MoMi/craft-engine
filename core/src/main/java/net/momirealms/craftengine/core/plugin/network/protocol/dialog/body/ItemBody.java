@@ -51,7 +51,7 @@ public final class ItemBody implements DialogBody {
 
         int width = tag.getInt("width", 16);
         int height = tag.getInt("height", 16);
-        boolean showDecorations = tag.getBoolean("show_decoration", true);
+        boolean showDecorations = tag.getBoolean("show_decorations", true);
         boolean showTooltip = tag.getBoolean("show_tooltip", true);
         Item item = Item.fromNBT(tag.getCompound("item"));
         return new ItemBody(item, description, showDecorations, showTooltip, width, height);
@@ -66,7 +66,7 @@ public final class ItemBody implements DialogBody {
             tag.put("description", d.save());
         });
         if (!this.showDecorations) {
-            tag.putBoolean("show_decoration", false);
+            tag.putBoolean("show_decorations", false);
         }
         if (!this.showTooltip) {
             tag.putBoolean("show_tooltip", false);

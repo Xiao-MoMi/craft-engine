@@ -1,5 +1,7 @@
 package net.momirealms.craftengine.bukkit.world;
 
+import net.momirealms.craftengine.bukkit.api.event.ChunkLifecycleEvent;
+import net.momirealms.craftengine.bukkit.util.EventUtils;
 import net.momirealms.craftengine.bukkit.world.chunk.BukkitChunkAccess;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.world.CEWorld;
@@ -34,9 +36,12 @@ public final class BukkitChunkLifecycle {
 
     public static void start(Object[] args) {
         CEWorld world = world(args[0]);
-        if (world == null || !(world.worldDataStorage() instanceof LifecycleCachedStorage storage)) return;
+        if (world == null || !(world.worldDataStorage() instanceof LifecycleCachedStorage storage)) {
+            return;
+        }
         ChunkPos pos = new ChunkPos((int) args[1], (int) args[2]);
         LOADS.put(args[4], new LoadContext(world, pos, storage, storage.bind(pos, args[3])));
+        notifyLifecycle(world, pos, ChunkLifecycleEvent.Stage.LOAD_START);
     }
 
     public static Object context(Object task) {
@@ -68,8 +73,13 @@ public final class BukkitChunkLifecycle {
     }
 
     private static void preload(LoadContext context, Object chunk) throws Exception {
-        if (chunk == null) return;
-        if (ImposterProtoChunkProxy.CLASS.isInstance(chunk)) chunk = ImposterProtoChunkProxy.INSTANCE.getWrapped(chunk);
+        if (chunk == null) {
+            return;
+        }
+        notifyLifecycle(context.world, context.pos, ChunkLifecycleEvent.Stage.DATA_READ);
+        if (ImposterProtoChunkProxy.CLASS.isInstance(chunk)) {
+            chunk = ImposterProtoChunkProxy.INSTANCE.getWrapped(chunk);
+        }
         context.storage.preload(context.entry, context.world, context.pos, new BukkitChunkAccess(chunk));
     }
 
@@ -80,7 +90,15 @@ public final class BukkitChunkLifecycle {
     public static void release(Object[] args) {
         CEWorld world = world(args[0]);
         if (world != null && world.worldDataStorage() instanceof LifecycleCachedStorage storage) {
-            storage.release(new ChunkPos((int) args[1], (int) args[2]), args[3]);
+            ChunkPos pos = new ChunkPos((int) args[1], (int) args[2]);
+            storage.release(pos, args[3]);
+            notifyLifecycle(world, pos, ChunkLifecycleEvent.Stage.HOLDER_UNLOAD);
+        }
+    }
+
+    private static void notifyLifecycle(CEWorld world, ChunkPos pos, ChunkLifecycleEvent.Stage stage) {
+        if (ChunkLifecycleEvent.HANDLERS.getRegisteredListeners().length != 0) {
+            EventUtils.fireAndForget(new ChunkLifecycleEvent((World) world.world.platformWorld(), pos.x, pos.z, stage));
         }
     }
 

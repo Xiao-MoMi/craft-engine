@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.momirealms.craftengine.core.entity.player.Player;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
+import net.momirealms.craftengine.core.item.ItemDefinition;
 import net.momirealms.craftengine.core.item.ItemKeys;
 import net.momirealms.craftengine.core.item.recipe.*;
 import net.momirealms.craftengine.core.pack.Pack;
@@ -49,6 +50,14 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         }
         instance = this;
         this.plugin = plugin;
+    }
+
+    private Item buildGuiItem(Key id, ItemBuildContext context) {
+        ItemDefinition definition = this.plugin.itemManager().getItemDefinitionOrNull(id);
+        if (definition == null) throw new GuiElementMissingException(id);
+        Item item = definition.buildItem(context);
+        if (item == null) throw new GuiElementMissingException(id);
+        return item;
     }
 
     @Override
@@ -173,24 +182,20 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         .addIngredient('A', Ingredient.paged())
         .addIngredient('>', GuiElement.paged((element) -> {
                     Key next = element.gui().hasNextPage() ? Constants.BROWSER_NEXT_PAGE_AVAILABLE : Constants.BROWSER_NEXT_PAGE_BLOCK;
-                    return this.plugin.itemManager().getItemDefinition(next)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                                    DirectContextParameters.PLAYER, player,
-                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
-                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
-                            ).build())))
-                            .orElseThrow(() -> new GuiElementMissingException(next));
+                    return buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                            DirectContextParameters.PLAYER, player,
+                            GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                            GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                    ).build()));
                 }, true)
         )
         .addIngredient('<', GuiElement.paged((element) -> {
                     Key previous = element.gui().hasPreviousPage() ? Constants.BROWSER_PREVIOUS_PAGE_AVAILABLE : Constants.BROWSER_PREVIOUS_PAGE_BLOCK;
-                    return this.plugin.itemManager().getItemDefinition(previous)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                                    DirectContextParameters.PLAYER, player,
-                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
-                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
-                            ).build())))
-                            .orElseThrow(() -> new GuiElementMissingException(previous));
+                    return buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                            DirectContextParameters.PLAYER, player,
+                            GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                            GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                    ).build()));
                 }, false)
         );
 
@@ -236,9 +241,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 " <  =  > "
         )
         .addIngredient('A', Ingredient.paged())
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.CATEGORY_BACK : Constants.CATEGORY_EXIT)
-                .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.CATEGORY_BACK : Constants.CATEGORY_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.CATEGORY_BACK : Constants.CATEGORY_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -251,24 +254,20 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
         )
         .addIngredient('>', GuiElement.paged((element) -> {
                     Key next = element.gui().hasNextPage() ? Constants.CATEGORY_NEXT_PAGE_AVAILABLE : Constants.CATEGORY_NEXT_PAGE_BLOCK;
-                    return this.plugin.itemManager().getItemDefinition(next)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                                    DirectContextParameters.PLAYER, player,
-                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
-                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
-                            ).build())))
-                            .orElseThrow(() -> new GuiElementMissingException(next));
+                    return buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                            DirectContextParameters.PLAYER, player,
+                            GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                            GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                    ).build()));
                 }, true)
         )
         .addIngredient('<', GuiElement.paged((element) -> {
                     Key previous = element.gui().hasPreviousPage() ? Constants.CATEGORY_PREVIOUS_PAGE_AVAILABLE : Constants.CATEGORY_PREVIOUS_PAGE_BLOCK;
-                    return this.plugin.itemManager().getItemDefinition(previous)
-                            .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                                    DirectContextParameters.PLAYER, player,
-                                    GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
-                                    GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
-                            ).build())))
-                            .orElseThrow(() -> new GuiElementMissingException(previous));
+                    return buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                            DirectContextParameters.PLAYER, player,
+                            GuiParameters.CURRENT_PAGE, String.valueOf(element.gui().currentPage()),
+                            GuiParameters.MAX_PAGE, String.valueOf(element.gui().maxPages())
+                    ).build()));
                 }, false)
         );
 
@@ -413,9 +412,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 player.giveItem(item.count(item.maxStackSize()));
             }
         }) : GuiElement.EMPTY)
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -529,9 +526,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 player.giveItem(item.count(item.maxStackSize()));
             }
         }) : GuiElement.EMPTY)
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -542,28 +537,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 }))
         )
-        .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
+        .addIngredient('>', GuiElement.constant(buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
                 openRecipePage(player, parentGui, recipes, index + 1, depth, canOpenNoRecipePage);
             }
         }))
-        .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
+        .addIngredient('<', GuiElement.constant(buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index > 0) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
@@ -684,9 +673,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 player.giveItem(item.count(item.maxStackSize()));
             }
         }) : GuiElement.EMPTY)
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -697,28 +684,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 }))
         )
-        .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
+        .addIngredient('>', GuiElement.constant(buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
                 openRecipePage(player, parentGui, recipes, index + 1, depth, canOpenNoRecipePage);
             }
         }))
-        .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
+        .addIngredient('<', GuiElement.constant(buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index > 0) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
@@ -918,9 +899,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 }
             }
         }))
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -931,28 +910,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 }))
         )
-        .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
+        .addIngredient('>', GuiElement.constant(buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
                 openRecipePage(player, parentGui, recipes, index + 1, depth, canOpenNoRecipePage);
             }
         }))
-        .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
+        .addIngredient('<', GuiElement.constant(buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index > 0) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
@@ -1017,13 +990,11 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 }
             }
         }))
-        .addIngredient('?', GuiElement.constant(this.plugin.itemManager().getItemDefinition(Constants.RECIPE_COOKING_INFO)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.COOKING_TIME, String.valueOf(recipe.cookingTime()),
-                        GuiParameters.COOKING_EXPERIENCE, String.valueOf(recipe.experience())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(Constants.RECIPE_COOKING_INFO)), (e, c) -> c.cancel()))
+        .addIngredient('?', GuiElement.constant(buildGuiItem(Constants.RECIPE_COOKING_INFO, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.COOKING_TIME, String.valueOf(recipe.cookingTime()),
+                GuiParameters.COOKING_EXPERIENCE, String.valueOf(recipe.experience())
+        ).build())), (e, c) -> c.cancel()))
         .addIngredient('^', player.hasPermission(GET_ITEM_PERMISSION) ? GuiElement.constant(Item.byId(Constants.RECIPE_GET_ITEM, player), (e, c) -> {
             c.cancel();
             player.playSound(Constants.SOUND_PICK_ITEM);
@@ -1060,9 +1031,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 }
             }
         }))
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -1073,28 +1042,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 }))
         )
-        .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
+        .addIngredient('>', GuiElement.constant(buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
                 openRecipePage(player, parentGui, recipes, index + 1, depth, canOpenNoRecipePage);
             }
         }))
-        .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
+        .addIngredient('<', GuiElement.constant(buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index > 0) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
@@ -1175,9 +1138,7 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                 player.giveItem(item.count(item.maxStackSize()));
             }
         }) : GuiElement.EMPTY)
-        .addIngredient('=', GuiElement.constant(this.plugin.itemManager().getItemDefinition(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)
-                        .map(it -> it.buildItem(ItemBuildContext.of(player)))
-                        .orElseThrow(() -> new GuiElementMissingException(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT)),
+        .addIngredient('=', GuiElement.constant(buildGuiItem(parentGui != null ? Constants.RECIPE_BACK : Constants.RECIPE_EXIT, ItemBuildContext.of(player)),
                 ((element, click) -> {
                     click.cancel();
                     player.playSound(Constants.SOUND_RETURN_PAGE, 0.25f, 1);
@@ -1188,28 +1149,22 @@ public final class ItemBrowserManagerImpl implements ItemBrowserManager {
                     }
                 }))
         )
-        .addIngredient('>', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(next)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(next)), (e, c) -> {
+        .addIngredient('>', GuiElement.constant(buildGuiItem(next, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index + 1 < recipes.size()) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);
                 openRecipePage(player, parentGui, recipes, index + 1, depth, canOpenNoRecipePage);
             }
         }))
-        .addIngredient('<', GuiElement.constant(this.plugin.itemManager()
-                .getItemDefinition(previous)
-                .map(it -> it.buildItem(ItemBuildContext.of(player, ContextHolder.builder(
-                        DirectContextParameters.PLAYER, player,
-                        GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
-                        GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
-                ).build())))
-                .orElseThrow(() -> new GuiElementMissingException(previous)), (e, c) -> {
+        .addIngredient('<', GuiElement.constant(buildGuiItem(previous, ItemBuildContext.of(player, ContextHolder.builder(
+                DirectContextParameters.PLAYER, player,
+                GuiParameters.CURRENT_PAGE, String.valueOf(index + 1),
+                GuiParameters.MAX_PAGE, String.valueOf(recipes.size())
+        ).build())), (e, c) -> {
             c.cancel();
             if (index > 0) {
                 player.playSound(Constants.SOUND_CHANGE_PAGE, 0.25f, 1);

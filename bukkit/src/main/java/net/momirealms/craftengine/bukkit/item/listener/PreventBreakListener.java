@@ -8,24 +8,23 @@ import net.momirealms.craftengine.bukkit.util.EquipmentSlotUtils;
 import net.momirealms.craftengine.bukkit.util.PlayerUtils;
 import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemDefinition;
-import net.momirealms.craftengine.core.util.VersionHelper;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.*;
-import org.bukkit.event.block.Action;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.HandlerList;
+import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDispenseArmorEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemDamageEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.plugin.Plugin;
 
-import java.util.Optional;
 
 public final class PreventBreakListener implements Listener {
     private final BukkitItemManager itemManager;
@@ -51,9 +50,9 @@ public final class PreventBreakListener implements Listener {
     public void onItemDamage(PlayerItemDamageEvent event) {
         ItemStack itemStack = event.getItem();
         Item wrapped = this.itemManager.wrap(itemStack);
-        Optional<ItemDefinition> optionalCustomItem = wrapped.getDefinition();
-        if (optionalCustomItem.isEmpty()) return;
-        if (!optionalCustomItem.get().settings().preventBreak()) return;
+        ItemDefinition customItem = wrapped.getDefinitionOrNull();
+        if (customItem == null) return;
+        if (!customItem.settings().preventBreak()) return;
         int maxDamage = wrapped.maxDamage();
         if (maxDamage <= 0) return;
         int damage = wrapped.damage().orElse(0);
@@ -119,19 +118,6 @@ public final class PreventBreakListener implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onDispenseBrokenArmor(BlockDispenseArmorEvent event) {
         if (this.itemManager.isBrokenItem(event.getItem())) {
-            event.setCancelled(true);
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOW)
-    public void onInteractWithBrokenItem(PlayerInteractEvent event) {
-        Action action = event.getAction();
-        if (action == Action.PHYSICAL) return;
-        ItemStack itemStack = event.getItem();
-        if (!this.itemManager.isBrokenItem(itemStack)) return;
-        if (VersionHelper.hasPaperPatch) {
-            event.setUseItemInHand(Event.Result.DENY);
-        } else {
             event.setCancelled(true);
         }
     }

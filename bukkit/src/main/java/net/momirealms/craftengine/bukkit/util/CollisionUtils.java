@@ -1,9 +1,11 @@
 package net.momirealms.craftengine.bukkit.util;
 
 import net.momirealms.craftengine.core.util.VersionHelper;
+import net.momirealms.craftengine.core.world.collision.AABB;
 import net.momirealms.craftengine.proxy.minecraft.world.entity.EntityProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.CollisionGetterProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.level.EntityGetterProxy;
+import net.momirealms.craftengine.proxy.minecraft.world.phys.AABBProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.BooleanOpProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.ShapesProxy;
 import net.momirealms.craftengine.proxy.minecraft.world.phys.shapes.VoxelShapeProxy;
@@ -15,6 +17,10 @@ import java.util.function.Predicate;
 
 public final class CollisionUtils {
     private CollisionUtils() {}
+
+    public static AABB fromMinecraftAabb(Object box) {
+        return new AABB(AABBProxy.INSTANCE.getMinX(box), AABBProxy.INSTANCE.getMinY(box), AABBProxy.INSTANCE.getMinZ(box), AABBProxy.INSTANCE.getMaxX(box), AABBProxy.INSTANCE.getMaxY(box), AABBProxy.INSTANCE.getMaxZ(box));
+    }
 
     /**
      * Checks whether the given collection of axis-aligned bounding boxes (AABBs) collides with

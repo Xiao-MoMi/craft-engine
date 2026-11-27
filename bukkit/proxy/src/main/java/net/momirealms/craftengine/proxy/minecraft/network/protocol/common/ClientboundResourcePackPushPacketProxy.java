@@ -2,8 +2,10 @@ package net.momirealms.craftengine.proxy.minecraft.network.protocol.common;
 
 import net.momirealms.craftengine.proxy.minecraft.network.chat.ComponentProxy;
 import net.momirealms.craftengine.proxy.minecraft.network.protocol.PacketProxy;
+import net.momirealms.sparrow.reflection.clazz.SparrowClass;
 import net.momirealms.sparrow.reflection.proxy.ASMProxyFactory;
 import net.momirealms.sparrow.reflection.proxy.annotation.ConstructorInvoker;
+import net.momirealms.sparrow.reflection.proxy.annotation.FieldGetter;
 import net.momirealms.sparrow.reflection.proxy.annotation.ReflectionProxy;
 import net.momirealms.sparrow.reflection.proxy.annotation.Type;
 
@@ -14,6 +16,10 @@ import java.util.UUID;
 @ReflectionProxy(name = {"net.minecraft.network.protocol.common.ClientboundResourcePackPushPacket", "net.minecraft.network.protocol.common.ClientboundResourcePackPacket", "net.minecraft.network.protocol.game.ClientboundResourcePackPacket"})
 public interface ClientboundResourcePackPushPacketProxy extends PacketProxy {
     ClientboundResourcePackPushPacketProxy INSTANCE = ASMProxyFactory.create(ClientboundResourcePackPushPacketProxy.class);
+    Class<?> CLASS = SparrowClass.find("net.minecraft.network.protocol.common.ClientboundResourcePackPushPacket", "net.minecraft.network.protocol.common.ClientboundResourcePackPacket", "net.minecraft.network.protocol.game.ClientboundResourcePackPacket");
+
+    @FieldGetter(name = "id", activeIf = "min_version=1.20.3")
+    UUID getId(Object target);
 
     @ConstructorInvoker(activeIf = "min_version=1.20.5")
     Object newInstance(UUID id, String url, String hash, boolean required, Optional<?> prompt);

@@ -22,6 +22,22 @@ public final class UseCycleRangeDispatchProperty implements RangeDispatchPropert
         model.addProperty("period", this.period);
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof UseCycleRangeDispatchProperty that)) {
+            return false;
+        }
+        return Float.compare(this.period, that.period) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return Float.hashCode(this.period);
+    }
+
     private static class Factory implements RangeDispatchPropertyFactory<UseCycleRangeDispatchProperty> {
         @Override
         public UseCycleRangeDispatchProperty create(ConfigSection section) {

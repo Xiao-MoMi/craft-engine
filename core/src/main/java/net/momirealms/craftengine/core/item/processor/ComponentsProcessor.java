@@ -5,7 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.item.ItemBuildContext;
 import net.momirealms.craftengine.core.item.component.DataComponentKeys;
 import net.momirealms.craftengine.core.item.network.NetworkItemBuildContext;
-import net.momirealms.craftengine.core.item.network.NetworkItemHandler;
+import net.momirealms.craftengine.core.item.network.NetworkItemData;
 import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.ConfigConstants;
 import net.momirealms.craftengine.core.plugin.config.ConfigSection;
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public final class ComponentsProcessor implements ItemProcessor {
+public final class ComponentsProcessor implements NetworkItemProcessor {
     public static final ItemProcessorFactory<ComponentsProcessor> FACTORY = new Factory();
     private final List<DynamicComponentProvider> arguments;
     private DynamicComponentProvider customData = null;
@@ -70,16 +70,9 @@ public final class ComponentsProcessor implements ItemProcessor {
     }
 
     @Override
-    public void prepareNetworkItem(NetworkItemBuildContext context, CompoundTag networkData) {
-        Item item = context.item();
+    public void prepareNetworkItem(NetworkItemBuildContext context, NetworkItemData networkData) {
         for (DynamicComponentProvider argument : this.arguments) {
-            String componentType = argument.type.asString();
-            Tag previous = item.getComponentAsSparrowTag(componentType);
-            if (previous != null) {
-                networkData.put(componentType, NetworkItemHandler.pack(NetworkItemHandler.Operation.ADD, previous));
-            } else {
-                networkData.put(componentType, NetworkItemHandler.pack(NetworkItemHandler.Operation.REMOVE));
-            }
+            networkData.saveComponent(argument.type);
         }
     }
 

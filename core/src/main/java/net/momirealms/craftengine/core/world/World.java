@@ -5,6 +5,7 @@ import net.momirealms.craftengine.core.item.Item;
 import net.momirealms.craftengine.core.plugin.context.ChainParameterSource;
 import net.momirealms.craftengine.core.plugin.context.Context;
 import net.momirealms.craftengine.core.plugin.context.ContextKey;
+import net.momirealms.craftengine.core.plugin.context.SimpleContext;
 import net.momirealms.craftengine.core.plugin.context.parameter.WorldParameterProvider;
 import net.momirealms.craftengine.core.sound.SoundData;
 import net.momirealms.craftengine.core.sound.SoundSource;
@@ -74,6 +75,10 @@ public interface World extends WorldAccessor, ChainParameterSource {
     void levelEvent(int id, BlockPos pos, int data);
 
     void spawnParticle(Position location, ParticleType particle, int count, double xOffset, double yOffset, double zOffset, double speed, @Nullable ParticleData extraData, @NotNull Context context);
+
+    default void spawnParticle(Position location, ParticleType particle, int count, double xOffset, double yOffset, double zOffset, double speed, @Nullable ParticleData extraData) {
+        spawnParticle(location, particle, count, xOffset, yOffset, zOffset, speed, extraData, SimpleContext.EMPTY);
+    }
 
     long time();
 

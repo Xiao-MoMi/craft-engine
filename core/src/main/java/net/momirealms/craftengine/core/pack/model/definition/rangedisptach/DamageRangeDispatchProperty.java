@@ -38,6 +38,22 @@ public final class DamageRangeDispatchProperty implements RangeDispatchProperty,
         throw new RuntimeException("Enable 'normalize' option if you want to use 'damage' on 1.21.3 and below");
     }
 
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+        if (!(object instanceof DamageRangeDispatchProperty that)) {
+            return false;
+        }
+        return this.normalize == that.normalize;
+    }
+
+    @Override
+    public int hashCode() {
+        return Boolean.hashCode(this.normalize);
+    }
+
     private static class Factory implements RangeDispatchPropertyFactory<DamageRangeDispatchProperty> {
         @Override
         public DamageRangeDispatchProperty create(ConfigSection section) {
