@@ -17,7 +17,8 @@ public final class GeyserGlyphData {
     private final FontData data;
     private final Map<String, Integer> verticalOffsets;
     private final Map<String, Int2IntMap> replacements = new HashMap<>();
-    @Nullable private final ContainerTitleLayout layout;
+    @Nullable
+    private final ContainerTitleLayout layout;
 
     private GeyserGlyphData() {
         this.data = FontData.EMPTY;

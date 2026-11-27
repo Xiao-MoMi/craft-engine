@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public record DisplayTextLayout(List<Line> lines, int width) {
-
     private static final String DEFAULT_FONT = "minecraft:default";
     private static final String JAVA_FORMATS = "0123456789abcdefklmnor";
     private static final int[] JAVA_COLORS = {

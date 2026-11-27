@@ -50,7 +50,7 @@ public final class GeyserTextDisplayManager {
                 .addTranslator(null)
                 .addTranslator(null)
                 .addTranslator(null)
-                .addTranslator(MetadataTypes.COMPONENT, GeyserTextDisplayEntity::setText)
+                .addTranslator(MetadataTypes.COMPONENT, GeyserTextDisplayEntity::setTextMetadata)
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.lineWidth(meta.getValue()))
                 .addTranslator(MetadataTypes.INT, (entity, meta) -> entity.background(meta.getValue()))
                 .addTranslator(MetadataTypes.BYTE, (entity, meta) -> entity.opacity(meta.getValue()))

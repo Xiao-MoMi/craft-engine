@@ -152,17 +152,21 @@ public final class GeyserTextDisplayEntity extends TextDisplayEntity implements 
     }
 
     @Override
-    public void setText(EntityMetadata<Component, ?> metadata) {
+    public void setTextMetadata(EntityMetadata<Component, ?> metadata) {
         Object component = metadata.getValue();
         if (Objects.equals(this.textComponent, component)) {
             return;
         }
-        super.setText(metadata);
         this.textComponent = component;
         this.textLocale = this.session.locale();
-        this.text = Objects.toString(this.metadata.get(EntityDataTypes.NAME), "");
+        this.text = MessageTranslatorProxy.INSTANCE.convertMessage(component, this.textLocale);
         this.layout = null;
         this.dirty = true;
+    }
+
+    @Override
+    public void updatePrimitiveText() {
+        this.clearDisplayDataDirty();
     }
 
     @Override

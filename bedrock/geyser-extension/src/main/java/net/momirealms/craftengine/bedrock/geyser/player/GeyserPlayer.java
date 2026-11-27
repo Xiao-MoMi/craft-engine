@@ -275,8 +275,12 @@ public final class GeyserPlayer {
                 this.session.setBlockBreakHandler(this.originalBlockBreakHandler);
             }
             Channel channel = this.session.getUpstream().getSession().getPeer().getChannel();
-            if (this.packetHandler != null && channel.pipeline().context(this.packetHandler) != null) {
-                channel.pipeline().remove(this.packetHandler);
+            if (this.packetHandler != null && channel.isOpen()) {
+                channel.eventLoop().execute(() -> {
+                    if (channel.pipeline().context(this.packetHandler) != null) {
+                        channel.pipeline().remove(this.packetHandler);
+                    }
+                });
             }
             this.pendingHitboxes = null;
             this.pendingShapes = null;

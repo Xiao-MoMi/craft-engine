@@ -80,7 +80,7 @@ tasks {
         }
         relocate("net.momirealms.sparrow.yaml", "net.momirealms.craftengine.bedrock.geyser.libs.yaml")
         relocate("com.google.gson", "net.momirealms.craftengine.bedrock.geyser.libs.gson")
-        relocate("net.momirealms.craftengine.bedrock.text", "net.momirealms.craftengine.bedrock.geyser.libs.bedrock.text")
+        relocate("net.momirealms.craftengine.bedrock.text", "net.momirealms.craftengine.bedrock.geyser.libs.bedrock.text") // 为了解决gson重定位问题
         relocate("net.momirealms.sparrow.reflection", "net.momirealms.craftengine.bedrock.geyser.libs.reflection")
         relocate("net.bytebuddy", "net.momirealms.craftengine.bedrock.geyser.libs.bytebuddy")
         archiveFileName = "craft-engine-geyser-extension-${project.version}.jar"
