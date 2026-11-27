@@ -10,13 +10,16 @@ import net.momirealms.craftengine.core.util.Key;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.FORMAT_VERSION;
 import static net.momirealms.craftengine.core.pack.bedrock.BedrockFormatVersions.*;
 
 public final class BedrockAnimalEquipment {
+    private static final int HORSE_ITEMS_PER_QUERY = 16;
     private boolean wolf;
     private final Map<Key, String> horseTextures = new LinkedHashMap<>();
 
@@ -54,20 +57,28 @@ public final class BedrockAnimalEquipment {
 
         JsonArray textures = new JsonArray();
         textures.add("Texture.armor_none");
-        StringBuilder selection = new StringBuilder("variable.ce_horse_equipment = ");
-        int index = 0;
+        Map<String, List<Key>> itemsByTexture = new LinkedHashMap<>();
         for (Map.Entry<Key, String> entry : this.horseTextures.entrySet()) {
-            String alias = "ce_horse_" + ++index;
-            description.getAsJsonObject("textures").addProperty(alias, entry.getValue());
-            textures.add("Texture." + alias);
-            selection.append("query.is_item_name_any('slot.armor.body', 0, '")
-                    .append(entry.getKey().asString())
-                    .append("') ? ")
-                    .append(index)
-                    .append(" : ");
+            itemsByTexture.computeIfAbsent(entry.getValue(), ignored -> new ArrayList<>()).add(entry.getKey());
         }
-        selection.append("0;");
-        description.getAsJsonObject("scripts").getAsJsonArray("pre_animation").add(selection.toString());
+        JsonArray preAnimation = description.getAsJsonObject("scripts").getAsJsonArray("pre_animation");
+        preAnimation.add("variable.ce_horse_equipment = 0;");
+        for (Map.Entry<String, List<Key>> entry : itemsByTexture.entrySet()) {
+            int index = textures.size();
+            String alias = "ce_horse_" + index;
+            description.getAsJsonObject("textures").addProperty(alias, entry.getKey());
+            textures.add("Texture." + alias);
+            // 分批写入独立表达式，避免大量马铠变体耗尽客户端的 Molang 解析栈。
+            List<Key> items = entry.getValue();
+            for (int start = 0; start < items.size(); start += HORSE_ITEMS_PER_QUERY) {
+                StringBuilder query = new StringBuilder("!variable.ce_horse_equipment && query.is_item_name_any('slot.armor.body', 0");
+                int end = Math.min(start + HORSE_ITEMS_PER_QUERY, items.size());
+                for (int i = start; i < end; i++) {
+                    query.append(", '").append(items.get(i).asString()).append("'");
+                }
+                preAnimation.add(query.append(") ? { variable.ce_horse_equipment = ").append(index).append("; };").toString());
+            }
+        }
         controller.getAsJsonObject("arrays").getAsJsonObject("textures").add("Array.ce_horse_equipment", textures);
         JsonArray renderedTextures = controller.getAsJsonArray("textures");
         String vanillaArmor = renderedTextures.get(2).getAsString();
