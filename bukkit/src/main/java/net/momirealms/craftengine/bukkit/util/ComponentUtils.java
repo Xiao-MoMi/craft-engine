@@ -192,7 +192,7 @@ public final class ComponentUtils {
     }
 
     // 把 hover show_item 中的服务端物品重映射为客户端应显示的物品
-    public static HoverEvent.ShowItem replaceShowItem(HoverEvent.ShowItem showItem, BukkitServerPlayer player) {
+    public static HoverEvent.ShowItem replaceShowItem(HoverEvent.ShowItem showItem, BukkitServerPlayer player, ItemPacketSource source) {
         Object nmsItemStack;
         if (VersionHelper.COMPONENT_RELEASE) {
             CompoundTag itemTag = new CompoundTag();
@@ -227,7 +227,7 @@ public final class ComponentUtils {
 
         BukkitItemManager itemManager = BukkitItemManager.instance();
         Item wrap = itemManager.wrap(ItemStackUtils.getBukkitStack(nmsItemStack));
-        Optional<Item> remapped = itemManager.s2c(wrap, player, ItemPacketSource.MESSAGE);
+        Optional<Item> remapped = itemManager.s2c(wrap, player, source);
         if (remapped.isEmpty()) {
             return showItem;
         }
