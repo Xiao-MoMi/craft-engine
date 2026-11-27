@@ -31,6 +31,7 @@ import net.momirealms.sparrow.yaml.SparrowYaml;
 import net.momirealms.sparrow.yaml.YamlDocument;
 import net.momirealms.sparrow.yaml.upgrade.YamlUpgradeBuilder;
 import net.momirealms.sparrow.yaml.upgrade.YamlUpgradePipeline;
+import net.momirealms.sparrow.yaml.upgrade.version.NumberVersionMatcher;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -308,6 +309,7 @@ public final class Config {
     private boolean bedrock$enable = true;
     private int bedrock$title$layer;
     private boolean bedrock$title$force_java_layout;
+    private boolean bedrock$bossbar$use_java_layout = true;
     private BedrockSidebarConfig bedrock$scoreboard = BedrockSidebarConfig.DEFAULT;
     private List<ExternalItemModel> bedrock$item$external = List.of();
     private BedrockEntitySettings bedrockEntities = BedrockEntitySettings.DEFAULT;
@@ -315,11 +317,12 @@ public final class Config {
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
     private String bedrock$resource_pack$name;
     private String bedrock$resource_pack$description;
-    private boolean bedrock$resource_pack$vanilla$convert_ui_textures;
+    private boolean bedrock$ui$convert_java_textures;
     private List<Pattern> bedrock$font$exclude = List.of();
     private Map<Key, Integer> bedrock$font$verticalOffsets = Map.of();
     private int bedrock$item$icon_size;
-    private boolean bedrock$item$async_creative_packet_build = true;
+    private boolean bedrock$item$creative_inventory_packet$enable = true;
+    private boolean bedrock$item$creative_inventory_packet$async = true;
     private BedrockEntityDye displayDye = new BedrockEntityDye(10, List.of());
     private Map<Key, BedrockEntityDye> displayDyeOverrides = Map.of();
     private String bedrock$additional_identification$name_prefix;
@@ -411,6 +414,12 @@ public final class Config {
 
     static YamlUpgradePipeline mainConfigUpgradePipeline() {
         return yamlUpgradeBuilder()
+                .addPatch(NumberVersionMatcher.of(142), patch -> patch.defaultValue(YamlUtils.route("bedrock.scoreboard.use-java-layout"),
+                        document -> YamlUtils.reader(document).getValue("bedrock.scoreboard.profiles") instanceof List<?> profiles && !profiles.isEmpty()))
+                .addPatch(NumberVersionMatcher.of(143), patch -> patch.relocate(
+                        YamlUtils.route("bedrock.resource-pack.vanilla.convert-ui-textures"), YamlUtils.route("bedrock.ui.convert-java-textures")))
+                .addPatch(NumberVersionMatcher.of(144), patch -> patch.relocate(
+                        YamlUtils.route("bedrock.item.async-creative-packet-build"), YamlUtils.route("bedrock.item.creative-inventory-packet.async")))
                 .updateComments(true)
                 .deleteRemovedNodes(true)
                 .build();
@@ -808,21 +817,25 @@ public final class Config {
         }
         this.bedrock$title$layer = config.getInt("bedrock.title.layer", 1);
         this.bedrock$title$force_java_layout = config.getBoolean("bedrock.title.force-java-layout", false);
+        this.bedrock$bossbar$use_java_layout = config.getBoolean("bedrock.bossbar.use-java-layout", true);
         this.bedrock$scoreboard = config.read("bedrock.scoreboard", value -> BedrockSidebarConfig.fromConfig(value.getAsSection(), config), BedrockSidebarConfig.DEFAULT);
+        String[] BASE_ITEM = ConfigKeys.of("base_item");
+        String[] ITEM_MODEL = ConfigKeys.of("item_model");
         this.bedrock$item$external = config.getList("bedrock.item.external", value -> {
             ConfigSection section = value.getAsSection();
-            return new ExternalItemModel(section.getNonNullIdentifier("base-item"), section.getNonNullIdentifier("item-model"));
+            return new ExternalItemModel(section.getNonNullIdentifier(BASE_ITEM), section.getNonNullIdentifier(ITEM_MODEL));
         });
         this.bedrockEntities = config.read("bedrock.custom-entity", value -> BedrockEntitySettings.read(value.getAsSection()), BedrockEntitySettings.DEFAULT);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
         this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
-        this.bedrock$resource_pack$vanilla$convert_ui_textures = config.getBoolean("bedrock.resource-pack.vanilla.convert-ui-textures", false);
+        this.bedrock$ui$convert_java_textures = config.getBoolean("bedrock.ui.convert-java-textures", false);
         this.bedrock$font$exclude = config.getPatterns("bedrock.font.exclude");
         this.bedrock$font$verticalOffsets = config.getKeyIntMap("bedrock.font.vertical-offsets");
         this.bedrock$item$icon_size = config.getInt("bedrock.item.icon-size", 64, 1, Integer.MAX_VALUE);
-        this.bedrock$item$async_creative_packet_build = config.getBoolean("bedrock.item.async-creative-packet-build", true);
+        this.bedrock$item$creative_inventory_packet$enable = config.getBoolean("bedrock.item.creative-inventory-packet.enable", true);
+        this.bedrock$item$creative_inventory_packet$async = config.getBoolean("bedrock.item.creative-inventory-packet.async", true);
         this.displayDye = config.read("bedrock.display-entity", value -> BedrockEntityDye.readDisplay(value.getAsSection(), false), new BedrockEntityDye(10, List.of()));
         Map<Key, BedrockEntityDye> displayOverrides = new HashMap<>();
         for (Map.Entry<Key, BedrockEntityDye> override : config.getList("bedrock.display-entity.overrides", value -> {
@@ -1578,6 +1591,10 @@ public final class Config {
         return instance.bedrock$scoreboard;
     }
 
+    public static boolean bedrockBossBarUseJavaLayout() {
+        return instance.bedrock$bossbar$use_java_layout;
+    }
+
     public static String bedrockPackName() {
         return instance.bedrock$resource_pack$name;
     }
@@ -1587,7 +1604,7 @@ public final class Config {
     }
 
     public static boolean bedrockConvertVanillaUiTextures() {
-        return instance.bedrock$resource_pack$vanilla$convert_ui_textures;
+        return instance.bedrock$ui$convert_java_textures;
     }
 
     public static List<Pattern> bedrockExcludedFonts() {
@@ -1602,8 +1619,12 @@ public final class Config {
         return instance.bedrock$item$icon_size;
     }
 
+    public static boolean bedrockCreativeInventoryPacketEnabled() {
+        return instance.bedrock$item$creative_inventory_packet$enable;
+    }
+
     public static boolean bedrockAsyncCreativePacketBuild() {
-        return instance.bedrock$item$async_creative_packet_build;
+        return instance.bedrock$item$creative_inventory_packet$async;
     }
 
     public static BedrockEntityDye bedrockDisplayDye() {

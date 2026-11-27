@@ -248,8 +248,7 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         DisplayPose previousPose = fullUpdate ? null : this.sentPose;
         int interpolationSequence = interpolationChanged ? this.interpolation.consume(!this.valid || fullUpdate) : -1;
         this.updatePropertiesBatched(batch -> {
-            this.carrier.write(batch, pose, previousPose, appearance, appearanceChanged, dyeColor, dyeChanged,
-                    interpolationSequence, this.interpolation.duration(), this.interpolation.delay());
+            this.carrier.write(batch, pose, previousPose, appearance, appearanceChanged, dyeColor, dyeChanged, interpolationSequence, this.interpolation.duration(), this.interpolation.delay());
             if (orientationChanged) {
                 this.carrier.orientation(batch, this.renderYaw, this.renderPitch);
             }

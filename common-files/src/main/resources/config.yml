@@ -808,19 +808,19 @@ client-optimization:
 bedrock:
   enable: true
   resource-pack:
-    # Resource pack name shown in the Bedrock client.
     name: "CraftEngine ResourcePack"
-    # Resource pack description shown in the Bedrock client.
     description: "Generated from the Java resource pack"
-    vanilla:
-      # Convert Java replacements for vanilla UI textures, including the hotbar, hearts and smithing slots.
-      # Custom chest and boss bar textures are generated independently.
-      convert-ui-textures: false
+  ui:
+    # Convert Java UI textures
+    convert-java-textures: false
   item:
     # Generated icon width and height in pixels (currently for dyeable items).
     icon-size: 64
-    # Build creative item packets on a worker thread. Set to false if item processors or placeholders require the server thread.
-    async-creative-packet-build: true
+    creative-inventory-packet:
+      # Send CraftEngine custom items to the Bedrock creative inventory.
+      enable: true
+      # Build packets on a worker thread. Set to false if item processors or placeholders require the server thread.
+      async: true
     # Register external item models for Bedrock conversion without defining CE items.
     # base-item: the vanilla item type used by the item stack.
     # item-model: its minecraft:item_model component, not a path under assets/<namespace>/models/.
@@ -828,8 +828,8 @@ bedrock:
     # must be included in the merged Java resource pack.
     # Example:
     # external:
-    #   - base-item: minecraft:paper
-    #     item-model: myplugin:example
+    #   - base_item: minecraft:paper
+    #     item_model: myplugin:example
     external: []
   font:
     # Fonts matching these full-ID regexes use native Bedrock glyphs, including through font references.
@@ -864,16 +864,16 @@ bedrock:
     # overrides:
     #   - model: ["bettermodel:demon_knight", "bettermodel:blue_wizard"]
     #     mode: display_entity
-    #     dye-max-layers: 8
-    #     prebaked-colors: []
+    #     dye_max_layers: 8
+    #     prebaked_colors: []
     overrides: []
   display-entity:
-    # Dyeable materials on ordinary displays and furniture. -1 disables dynamic dye.
-    dye-max-layers: 5
+    # Dyeable materials on item displays and furniture. -1 disables dynamic dye.
+    dye-max-layers: 6
     # Match the original Java minecraft:item_model ID
     # overrides:
-    #   - item-model: "myserver:sofa"
-    #     dye-max-layers: 4
+    #   - item_model: "myserver:sofa"
+    #     dye_max_layers: 4
     overrides: []
     # Vanilla item IDs whose Java models are converted for item display entities.
     # These items more closely match their Java Edition appearance than their Bedrock Edition counterparts.
@@ -896,7 +896,12 @@ bedrock:
     layer: 1
     # Use Java layout even for titles and subtitles that could use native Bedrock layout.
     force-java-layout: false
+  bossbar:
+    # Let the CraftEngine Geyser extension handle boss bars and generate their Bedrock HUD.
+    use-java-layout: true
   scoreboard:
+    # Let the extension render sidebars using Java layout, including sidebars without a matching profile.
+    use-java-layout: true
     # Match an existing sidebar to image decorations and a horizontal offset.
     #
     # objective-id: exact match against the internal scoreboard objective ID, not its displayed title.

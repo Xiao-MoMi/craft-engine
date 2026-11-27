@@ -20,7 +20,7 @@ public final class BedrockCreativeItemSender {
     }
 
     public static void send(Player player, int clientProtocol) {
-        if (clientProtocol < 0 || !VersionHelper.isOrAbove1_21_4) {
+        if (!Config.bedrockCreativeInventoryPacketEnabled() || clientProtocol < 0 || !VersionHelper.isOrAbove1_21_4) {
             return;
         }
         CraftEngine plugin = CraftEngine.instance();

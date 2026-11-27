@@ -45,8 +45,17 @@ public sealed interface NativeModelPayload {
         public static final int HOLD = 3;
     }
 
-    record NativeState(UUID instance, String model, int target, boolean hurt, Pose pose, Scale scale,
-                       int color, List<Animation> animations, List<String> hiddenBones, List<Integer> displays, List<UUID> anchors) implements Snapshot, NativeMessage {
+    record NativeState(UUID instance,
+                       String model,
+                       int target,
+                       boolean hurt,
+                       Pose pose,
+                       Scale scale,
+                       int color,
+                       List<Animation> animations,
+                       List<String> hiddenBones,
+                       List<Integer> displays,
+                       List<UUID> anchors) implements Snapshot, NativeMessage {
         @Override
         public RemoveNative remove() {
             return new RemoveNative(this.instance);
@@ -67,8 +76,16 @@ public sealed interface NativeModelPayload {
     }
 
     // null 表示沿用上一次的值；空列表表示清除该组的全部条目。
-    record Delta(UUID instance, Integer target, Boolean hurt, Pose pose, Scale scale, Integer color,
-                 List<Animation> animations, List<String> hiddenBones, List<Integer> displays, List<UUID> anchors) implements NativeMessage {
+    record Delta(UUID instance,
+                 Integer target,
+                 Boolean hurt,
+                 Pose pose,
+                 Scale scale,
+                 Integer color,
+                 List<Animation> animations,
+                 List<String> hiddenBones,
+                 List<Integer> displays,
+                 List<UUID> anchors) implements NativeMessage {
         public NativeState applyTo(NativeState previous) {
             return new NativeState(
                     this.instance,

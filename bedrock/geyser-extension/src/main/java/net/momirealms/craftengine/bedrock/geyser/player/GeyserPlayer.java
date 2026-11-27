@@ -76,7 +76,7 @@ public final class GeyserPlayer {
         this.placement = this.extension.blockManager().initPlayer(this);
         this.elytra = this.extension.itemManager().initPlayerElytra(this);
 
-        this.packetHandler = new GeyserPacketHandler(this, GeyserConfig.containerCloseHandlerEnabled());
+        this.packetHandler = new GeyserPacketHandler(this, this.extension.bedrockPackets(), GeyserConfig.containerCloseHandlerEnabled());
         this.session.getUpstream().getSession().getPeer().getChannel().pipeline().addBefore(BedrockPeer.NAME, "craftengine-packets", this.packetHandler);
     }
 

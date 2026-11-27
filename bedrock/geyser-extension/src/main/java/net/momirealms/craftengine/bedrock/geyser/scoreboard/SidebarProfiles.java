@@ -15,9 +15,6 @@ public record SidebarProfiles(boolean enabled, List<Profile> profiles) {
             return EMPTY;
         }
         JsonArray entries = data.getAsJsonArray("profiles");
-        if (entries.isEmpty()) {
-            return EMPTY;
-        }
         List<Profile> profiles = new ArrayList<>(entries.size());
         for (JsonElement value : entries) {
             JsonObject profile = value.getAsJsonObject();

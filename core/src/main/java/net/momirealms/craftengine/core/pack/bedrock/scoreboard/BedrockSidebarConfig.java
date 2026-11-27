@@ -9,23 +9,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public record BedrockSidebarConfig(List<Profile> profiles) {
-    public static final BedrockSidebarConfig DEFAULT = new BedrockSidebarConfig(List.of());
+public record BedrockSidebarConfig(boolean enable, List<Profile> profiles) {
+    public static final BedrockSidebarConfig DEFAULT = new BedrockSidebarConfig(false, List.of());
     private static final String[] OBJECTIVE_ID = ConfigKeys.of("objective_id");
     private static final String[] TITLE_CONTAINS = ConfigKeys.of("title_contains");
     private static final String[] OFFSET_X = ConfigKeys.of("offset_x");
 
+    public BedrockSidebarConfig(List<Profile> profiles) {
+        this(!profiles.isEmpty(), profiles);
+    }
+
     public static BedrockSidebarConfig fromConfig(ConfigSection section, CollectingConfigReader config) {
+        Boolean useJavaLayout = config.read(section.getValue("use-java-layout"), ConfigValue::getAsBoolean, null);
+        if (Boolean.FALSE.equals(useJavaLayout)) {
+            return DEFAULT;
+        }
         List<Profile> profiles = config.getList(section.getValue("profiles"), value -> {
             int errors = config.errorCount();
             Profile profile = Profile.fromConfig(value.getAsSection(), config);
             return config.errorCount() == errors ? profile : null;
         });
-        return new BedrockSidebarConfig(List.copyOf(profiles));
-    }
-
-    public boolean enable() {
-        return !this.profiles.isEmpty();
+        return new BedrockSidebarConfig(useJavaLayout != null || !profiles.isEmpty(), List.copyOf(profiles));
     }
 
     public record Profile(String objectiveId, String titleContains, int offsetX, List<Element> elements) {

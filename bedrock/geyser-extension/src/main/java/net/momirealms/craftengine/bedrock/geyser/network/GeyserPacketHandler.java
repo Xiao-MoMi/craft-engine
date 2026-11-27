@@ -14,11 +14,13 @@ import java.util.concurrent.RejectedExecutionException;
 
 public final class GeyserPacketHandler extends ChannelDuplexHandler {
     private final GeyserPlayer player;
+    private final GeyserBedrockPackets packets;
     private final EventExecutor sessionLoop;
     private final GeyserContainerCloseHandler containerClose;
 
-    public GeyserPacketHandler(GeyserPlayer player, boolean delayContainerClose) {
+    public GeyserPacketHandler(GeyserPlayer player, GeyserBedrockPackets packets, boolean delayContainerClose) {
         this.player = player;
+        this.packets = packets;
         this.sessionLoop = player.session().getTickEventLoop();
         this.containerClose = delayContainerClose ? new GeyserContainerCloseHandler(player.session()) : null;
     }
@@ -64,7 +66,7 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
     private void send(ChannelHandlerContext context, Object message, ChannelPromise promise) {
         if (message instanceof BedrockPacketWrapper wrapper && wrapper.getTargetSubClientId() == 0 && !this.player.isClosed()) {
             try {
-                if (GeyserBedrockPackets.send(this.player, wrapper, context)) {
+                if (this.packets.send(this.player, wrapper, context)) {
                     wrapper.release();
                     promise.trySuccess();
                     return;

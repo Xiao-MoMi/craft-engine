@@ -21,7 +21,7 @@ import java.util.function.Function;
 @SuppressWarnings("all")
 public final class GeyserBedrockPackets {
     private static final Table INCOMING = new Table();
-    private static final Table OUTGOING = new Table();
+    private final Table outgoing = new Table();
 
     static {
         INCOMING.on(ResourcePackClientResponsePacket.class,
@@ -40,72 +40,73 @@ public final class GeyserBedrockPackets {
         INCOMING.on(PlayerAuthInputPacket.class,
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::restorePlayerInput),
                 bind(Function.identity(), (player, event) -> player.cameraDirection(event.packet().getCameraOrientation())));
+    }
 
-        OUTGOING.on(ResourcePackStackPacket.class,
+    public GeyserBedrockPackets(boolean useJavaSidebar) {
+        this.outgoing.on(ResourcePackStackPacket.class,
                 bind(Function.identity(), (player, event) -> player.trackClientPack(event.packet())));
-        OUTGOING.on(CreativeContentPacket.class, bind(GeyserPlayer::creativeInventory, GeyserCreativeInventory::onCreativeContent));
-        OUTGOING.on(SetTitlePacket.class, bind(GeyserPlayer::titleSession, TitleSession::onTitle));
-        OUTGOING.on(SetDisplayObjectivePacket.class,
-                bind(GeyserPlayer::sidebar, SidebarSession::onDisplay));
-        OUTGOING.on(SetScorePacket.class,
-                bind(GeyserPlayer::sidebar, SidebarSession::onScores));
-        OUTGOING.on(RemoveObjectivePacket.class,
-                bind(GeyserPlayer::sidebar, SidebarSession::onRemove));
-        OUTGOING.on(InventoryContentPacket.class,
+        this.outgoing.on(CreativeContentPacket.class, bind(GeyserPlayer::creativeInventory, GeyserCreativeInventory::onCreativeContent));
+        this.outgoing.on(SetTitlePacket.class, bind(GeyserPlayer::titleSession, TitleSession::onTitle));
+        if (useJavaSidebar) {
+            this.outgoing.on(SetDisplayObjectivePacket.class,
+                    bind(GeyserPlayer::sidebar, SidebarSession::onDisplay));
+            this.outgoing.on(SetScorePacket.class,
+                    bind(GeyserPlayer::sidebar, SidebarSession::onScores));
+            this.outgoing.on(RemoveObjectivePacket.class,
+                    bind(GeyserPlayer::sidebar, SidebarSession::onRemove));
+        }
+        this.outgoing.on(InventoryContentPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.onInventoryContent(event.packet())),
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onInventoryContent),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.onInventoryContent(event.packet())));
-        OUTGOING.on(InventorySlotPacket.class,
+        this.outgoing.on(InventorySlotPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.onInventorySlot(event.packet())),
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onInventorySlot),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.onInventorySlot(event.packet())));
-        OUTGOING.on(MobArmorEquipmentPacket.class,
+        this.outgoing.on(MobArmorEquipmentPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.queue(event.packet().getRuntimeEntityId(), false)),
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onArmorEquipment),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.queueHead(event.packet().getRuntimeEntityId())));
-        OUTGOING.on(MobEquipmentPacket.class,
+        this.outgoing.on(MobEquipmentPacket.class,
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onEquipment),
                 bind(GeyserPlayer::heldDye, GeyserHeldDye::onEquipment));
-        OUTGOING.on(AddPlayerPacket.class,
+        this.outgoing.on(AddPlayerPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.queue(event.packet().getRuntimeEntityId(), true)),
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onAddPlayer),
                 bind(GeyserPlayer::heldDye, GeyserHeldDye::onAddPlayer));
-        OUTGOING.on(ItemStackResponsePacket.class,
+        this.outgoing.on(ItemStackResponsePacket.class,
                 bind(GeyserPlayer::selectedItems, GeyserSelectedItemHandler::onStackResponse),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.queueHands()));
-        OUTGOING.on(PlayerHotbarPacket.class,
+        this.outgoing.on(PlayerHotbarPacket.class,
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.onHotbar(event.packet())));
-        OUTGOING.on(RespawnPacket.class,
+        this.outgoing.on(RespawnPacket.class,
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.onRespawn(event.packet())),
                 bind(GeyserPlayer::activeUse, (use, event) -> use.reset()),
                 bind(GeyserPlayer::heldDye, (dye, event) -> dye.onRespawn(event.packet())));
-        OUTGOING.on(SetEntityDataPacket.class,
+        this.outgoing.on(SetEntityDataPacket.class,
                 bind(GeyserBedrockPackets::withModelAnchors, GeyserNativeModels.Connection::onEntityData));
-        OUTGOING.on(RemoveEntityPacket.class,
+        this.outgoing.on(RemoveEntityPacket.class,
                 bind(GeyserBedrockPackets::withModelAnchors, GeyserNativeModels.Connection::onRemoveEntity),
                 bind(GeyserPlayer::elytra, (elytra, event) -> elytra.remove(event.packet().getUniqueEntityId())));
-        OUTGOING.on(ItemComponentPacket.class,
+        this.outgoing.on(ItemComponentPacket.class,
                 bind(GeyserPlayer::componentPatcher, GeyserItemComponentPatcher::patch));
-        OUTGOING.on(CraftingDataPacket.class,
+        this.outgoing.on(CraftingDataPacket.class,
                 bind(GeyserPlayer::componentPatcher, GeyserItemComponentPatcher::patchRecipes));
-        OUTGOING.on(AddEntityPacket.class,
+        this.outgoing.on(AddEntityPacket.class,
                 bind(GeyserPlayer::nativeModels, GeyserNativeModels.Connection::onAddEntity));
-        OUTGOING.on(ChangeDimensionPacket.class,
+        this.outgoing.on(ChangeDimensionPacket.class,
                 bind(GeyserPlayer::nativeModels, (models, event) -> models.clear()),
                 bind(GeyserPlayer::displayOwners, (owners, event) -> owners.clear()),
                 bind(GeyserPlayer::activeUse, (use, event) -> use.reset()),
                 bind(GeyserPlayer::titleSession, TitleSession::onDimensionChange));
     }
 
-    private GeyserBedrockPackets() {
-    }
-
     public static boolean receive(GeyserPlayer player, BedrockPacketWrapper wrapper) {
         return INCOMING.dispatch(player, wrapper, null);
     }
 
-    public static boolean send(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context) {
-        return OUTGOING.dispatch(player, wrapper, context);
+    public boolean send(GeyserPlayer player, BedrockPacketWrapper wrapper, ChannelHandlerContext context) {
+        return this.outgoing.dispatch(player, wrapper, context);
     }
 
     private static GeyserNativeModels.Connection withModelAnchors(GeyserPlayer player) {

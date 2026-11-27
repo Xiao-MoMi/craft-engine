@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphManager;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserItemManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManager;
 import net.momirealms.craftengine.bedrock.geyser.locale.GeyserTranslationManagerImpl;
+import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
@@ -35,6 +36,7 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     private GeyserPlayerManager playerManager;
     private GeyserJavaPackets javaPackets;
+    private GeyserBedrockPackets bedrockPackets;
     private GeyserSidebarManager sidebarManager;
     private GeyserConfig config;
     private GeyserTranslationManager translations;
@@ -95,9 +97,10 @@ public final class CraftEngineGeyserExtension implements Extension {
     public void onPostInitialize(GeyserPostInitializeEvent event) {
         this.sounds.install(this.extensionData.soundMappings());
         this.entityManager.initialize(this.glyphManager.glyphs());
-        if (this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null) {
-            this.sidebarManager = new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard(), this.extensionData.verticalOffsets());
-        }
+        this.sidebarManager = this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null
+                ? new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard(), this.extensionData.verticalOffsets())
+                : null;
+        this.bedrockPackets = new GeyserBedrockPackets(this.sidebarManager != null);
         this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
         this.itemManager.init();
         this.blockManager.init();
@@ -171,6 +174,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     public GeyserJavaPackets javaPackets() {
         return this.javaPackets;
+    }
+
+    public GeyserBedrockPackets bedrockPackets() {
+        return this.bedrockPackets;
     }
 
     public GeyserPlayerManager playerManager() {

@@ -10,6 +10,7 @@ import java.util.StringJoiner;
 public record BedrockEntityDye(int maxLayers, List<Integer> prebakedColors) {
     public static final BedrockEntityDye DEFAULT = new BedrockEntityDye(-1, List.of(0xff8080));
     private static final String[] DYE_MAX_LAYERS = ConfigKeys.of("dye_max_layers");
+    private static final String[] PREBAKED_COLORS = ConfigKeys.of("prebaked_colors");
 
     public BedrockEntityDye {
         if (maxLayers != -1 && maxLayers < 1) {
@@ -24,8 +25,8 @@ public record BedrockEntityDye(int maxLayers, List<Integer> prebakedColors) {
     }
 
     public static BedrockEntityDye read(ConfigSection section, List<String> defaultColors) {
-        List<Integer> colors = section.getStringList("prebaked-colors", defaultColors).stream().map(value -> Color.fromHex(value).color() & 0xffffff).distinct().sorted().toList();
-        return new BedrockEntityDye(section.getInt("dye-max-layers", -1), colors);
+        List<Integer> colors = section.getStringList(PREBAKED_COLORS, defaultColors).stream().map(value -> Color.fromHex(value).color() & 0xffffff).distinct().sorted().toList();
+        return new BedrockEntityDye(section.getInt(DYE_MAX_LAYERS, -1), colors);
     }
 
     public static String matches(String property, int rgb) {

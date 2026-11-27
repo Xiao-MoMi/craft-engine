@@ -64,7 +64,9 @@ public final class BedrockPackGenerator {
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.FONTS));
             BedrockGuiGenerator.write(resources, pack);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
-            BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
+            if (Config.bedrockBossBarUseJavaLayout()) {
+                BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
+            }
             BedrockTitle.write(pack, Config.bedrockTitleLayer());
             JsonObject title = new JsonObject();
             JsonObject offsets = new JsonObject();

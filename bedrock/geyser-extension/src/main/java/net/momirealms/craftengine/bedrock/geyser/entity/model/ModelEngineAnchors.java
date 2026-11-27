@@ -93,8 +93,7 @@ final class ModelEngineAnchors {
 
     private void respawn(UUID id, boolean entering) {
         Entity entity = this.session.getEntityCache().getEntityByUuid(id);
-        if (!(entity instanceof AreaEffectCloudEntity cloud) || !cloud.isValid()
-                || cloud.bedrockDefinition() != VanillaEntities.AREA_EFFECT_CLOUD.defaultBedrockDefinition()) {
+        if (!(entity instanceof AreaEffectCloudEntity cloud) || !cloud.isValid() || cloud.bedrockDefinition() != VanillaEntities.AREA_EFFECT_CLOUD.defaultBedrockDefinition()) {
             return;
         }
         RemoveEntityPacket remove = new RemoveEntityPacket();
