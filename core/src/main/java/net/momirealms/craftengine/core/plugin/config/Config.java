@@ -14,7 +14,7 @@ import net.momirealms.craftengine.core.pack.AbstractPackManager;
 import net.momirealms.craftengine.core.pack.ExternalItemModel;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockEntityDye;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockEntitySettings;
-import net.momirealms.craftengine.core.pack.bedrock.font.GuiGlyphAssets;
+import net.momirealms.craftengine.core.pack.bedrock.font.GuiGlyphSelector;
 import net.momirealms.craftengine.core.pack.bedrock.scoreboard.BedrockSidebarConfig;
 import net.momirealms.craftengine.core.pack.conflict.resolution.ConditionalResolution;
 import net.momirealms.craftengine.core.pack.host.HttpClientManager;
@@ -320,7 +320,7 @@ public final class Config {
     private String bedrock$resource_pack$description;
     private boolean bedrock$ui$convert_java_textures;
     private List<Pattern> bedrock$font$exclude = List.of();
-    private Map<Key, Set<Integer>> bedrock$font$guiOnly = Map.of();
+    private Map<Key, List<GuiGlyphSelector>> bedrock$font$guiOnly = Map.of();
     private Map<Key, Integer> bedrock$font$verticalOffsets = Map.of();
     private int bedrock$item$icon_size;
     private boolean bedrock$item$creative_inventory_packet$enable = true;
@@ -835,7 +835,7 @@ public final class Config {
         this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
         this.bedrock$ui$convert_java_textures = config.getBoolean("bedrock.ui.convert-java-textures", false);
         this.bedrock$font$exclude = config.getPatterns("bedrock.font.exclude");
-        this.bedrock$font$guiOnly = GuiGlyphAssets.selection(config, "bedrock.font.gui-only-glyphs");
+        this.bedrock$font$guiOnly = GuiGlyphSelector.read(config, "bedrock.font.gui-only-glyphs");
         this.bedrock$font$verticalOffsets = config.getKeyIntMap("bedrock.font.vertical-offsets");
         this.bedrock$item$icon_size = config.getInt("bedrock.item.icon-size", 64, 1, Integer.MAX_VALUE);
         this.bedrock$item$creative_inventory_packet$enable = config.getBoolean("bedrock.item.creative-inventory-packet.enable", true);
@@ -1615,7 +1615,7 @@ public final class Config {
         return instance.bedrock$font$exclude;
     }
 
-    public static Map<Key, Set<Integer>> bedrockGuiOnlyGlyphs() {
+    public static Map<Key, List<GuiGlyphSelector>> bedrockGuiOnlyGlyphs() {
         return instance.bedrock$font$guiOnly;
     }
 

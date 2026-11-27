@@ -65,6 +65,10 @@ public record Glyph(@Nullable BufferedImage image,
         return this.height <= 0 || this.ascent < -2048 || this.actualWidth == 0;
     }
 
+    boolean isGuiBitmap() {
+        return this.image != null && !this.advanceOnly() && this.advance() > 1;
+    }
+
     private static int measureWidth(BufferedImage image, int x, int y, int width, int sourceHeight) {
         for (int column = width - 1; column >= 0; column--) {
             for (int row = 0; row < sourceHeight; row++) {

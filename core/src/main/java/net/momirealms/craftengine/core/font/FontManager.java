@@ -68,6 +68,8 @@ public interface FontManager extends Manageable {
 
     Map<Key, Image> loadedImages();
 
+    Map<Key, Image> bedrockUiImages();
+
     Optional<BitmapImage> bitmapImageByCodepoint(Key font, int codepoint);
 
     default Optional<BitmapImage> bitmapImageByChars(Key font, char[] chars) {

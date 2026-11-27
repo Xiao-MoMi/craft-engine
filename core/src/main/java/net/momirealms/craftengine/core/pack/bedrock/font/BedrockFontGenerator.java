@@ -8,6 +8,7 @@ import net.momirealms.craftengine.bedrock.text.ContainerTitleLayout;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
+import net.momirealms.craftengine.core.plugin.CraftEngine;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -33,7 +34,8 @@ public final class BedrockFontGenerator {
 
     public static void write(JavaResourcePack resources, Path root, Path fontFile) throws IOException {
         JavaFontResolver fonts = new JavaFontResolver(resources, Config.bedrockExcludedFonts());
-        write(fonts, Config.bedrockFontVerticalOffsets().keySet(), Config.bedrockGuiOnlyGlyphs(), root, fontFile);
+        Map<Key, Set<Integer>> selected = GuiGlyphAssets.includeImages(fonts, Config.bedrockGuiOnlyGlyphs(), CraftEngine.instance().fontManager().bedrockUiImages());
+        write(fonts, Config.bedrockFontVerticalOffsets().keySet(), selected, root, fontFile);
     }
 
     static void write(JavaFontResolver fonts, Set<Key> nativeFonts, Path root, Path fontFile) throws IOException {

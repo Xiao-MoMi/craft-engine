@@ -838,7 +838,8 @@ bedrock:
     # Bitmap glyphs drawn in their source colors as standalone images in CraftEngine container titles and HUDs.
     # Select only backgrounds/icons used exclusively in these layouts. Chat, books, text displays
     # and native UI cannot draw the image. Use the original font for glyphs also needed there.
-    # Example: {"minecraft:gui": ["U+E001", "U+E002"]}
+    # Each font accepts one value or a list. Inclusive ranges select visible bitmap glyphs present in the font.
+    # Example: {"minecraft:gui": ["U+E001..U+E010", "U+E020", "0xE021", '\uE022', 57379, "★"]}
     gui-only-glyphs: {}
     # Font offsets in Java font pixels for bossbars, actionbars, container titles, titles, subtitles and text displays.
     # Negative values move glyphs down, positive values move them up

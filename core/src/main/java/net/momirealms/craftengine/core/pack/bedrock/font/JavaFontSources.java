@@ -16,7 +16,7 @@ final class JavaFontSources {
     final JavaResourcePack pack;
     final Map<Key, List<JavaResourcePack.FontResource>> fonts;
     private final Map<String, JavaUnihexFont> unihexFonts = new HashMap<>();
-    private final Map<String, BufferedImage> images = new HashMap<>();
+    final Map<Key, BufferedImage> images = new HashMap<>();
 
     JavaFontSources(JavaResourcePack pack) throws IOException {
         this.pack = pack;
@@ -37,8 +37,8 @@ final class JavaFontSources {
         return source;
     }
 
-    BufferedImage image(String path) throws IOException {
-        BufferedImage image = this.images.get(path);
+    BufferedImage image(Key texture, String path) throws IOException {
+        BufferedImage image = this.images.get(texture);
         if (image == null) {
             try (InputStream input = this.pack.openResource(path)) {
                 if (input != null) {
@@ -50,7 +50,7 @@ final class JavaFontSources {
             if (image == null) {
                 throw new IOException(TranslationManager.message("resource_pack.bedrock.font.bitmap", path));
             }
-            this.images.put(path, image);
+            this.images.put(texture, image);
         }
         return image;
     }

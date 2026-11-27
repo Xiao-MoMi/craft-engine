@@ -12,6 +12,7 @@ import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.MinecraftVersion;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -87,6 +88,11 @@ public final class JavaFontResolver {
 
     public Set<Key> fonts() {
         return this.sources.fonts.keySet();
+    }
+
+    @Nullable
+    BufferedImage loadedBitmap(Key texture) {
+        return this.sources.images.get(texture);
     }
 
     boolean isExcluded(Key font) {
@@ -243,7 +249,7 @@ public final class JavaFontResolver {
         Int2ObjectMap<Glyph> glyphs = new Int2ObjectOpenHashMap<>();
         boolean convert = custom || this.sources.pack.hasCustomResource(path);
         boolean unicode = texture.namespace().equals("minecraft") && UNICODE_PAGE.matcher(texture.value()).matches();
-        BufferedImage image = this.sources.image(path);
+        BufferedImage image = this.sources.image(texture, path);
         int width = image.getWidth() / characters[0].length;
         int cellHeight = image.getHeight() / characters.length;
         if (width == 0 || cellHeight == 0) {
