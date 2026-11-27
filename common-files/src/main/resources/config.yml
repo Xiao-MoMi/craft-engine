@@ -816,10 +816,10 @@ bedrock:
   item:
     # Generated icon width and height in pixels (currently for dyeable items).
     icon-size: 64
+    # Send CraftEngine custom items to the Bedrock creative inventory.
     creative-inventory-packet:
-      # Send CraftEngine custom items to the Bedrock creative inventory.
       enable: true
-      # Build packets on a worker thread. Set to false if item processors or placeholders require the server thread.
+      # Set to false if item processors or placeholders require the server thread.
       async: true
     # Register external item models for Bedrock conversion without defining CE items.
     # base-item: the vanilla item type used by the item stack.
@@ -842,11 +842,13 @@ bedrock:
       "nameplates:shift_1": -4
       "nameplates:shift_2": -22
   custom-entity:
-    # Available values:
-    #  - disabled
-    #  - display_entity: full Java Edition movement recreation, with variable-speed playback and pause support but at higher performance cost
-    #  - native_entity: embedded PNG .bbmodel and Bedrock animations; procedural poses may differ
     integrations:
+      # Available values:
+      #  - disabled
+      #  - display_entity: full Java Edition movement recreation, with variable-speed playback and pause support
+      #  - native_entity: registered as a native Bedrock Edition entity, it may differ somewhat from the Java Edition behavior, but offers better performance
+      #
+      # For entities with complex animations, it is recommended to use display_entity, while those of lesser importance can be registered as native_entity.
       bettermodel: disabled
       modelengine: disabled
     # Bone visibility check interval in milliseconds for BetterModel and ModelEngine native_entity models.
