@@ -15,12 +15,7 @@ import net.momirealms.craftengine.bedrock.geyser.translation.GeyserTranslations;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

@@ -16,7 +16,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.BitSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 public final class BedrockFontGenerator {
     private static final int SPACER_PAGE = ContainerTitleLayout.SPACER_FIRST >>> 8;

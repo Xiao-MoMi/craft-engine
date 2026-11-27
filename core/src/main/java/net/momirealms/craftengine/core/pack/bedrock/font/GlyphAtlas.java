@@ -1,8 +1,8 @@
 package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import it.unimi.dsi.fastutil.ints.*;
-import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.bedrock.text.FontData;
+import net.momirealms.craftengine.bedrock.text.FontGlyph;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
