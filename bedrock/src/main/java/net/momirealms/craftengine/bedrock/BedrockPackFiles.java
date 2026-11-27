@@ -26,6 +26,7 @@ public final class BedrockPackFiles {
             BedrockPackLayout.ELYTRA_VARIANTS,
             BedrockPackLayout.NATIVE_MODELS,
             BedrockPackLayout.TRANSLATIONS,
+            BedrockPackLayout.PLAYER_PACK,
             BedrockPackLayout.SCOREBOARD,
             BedrockPackLayout.TITLE,
             BedrockPackLayout.BOSS_BARS,

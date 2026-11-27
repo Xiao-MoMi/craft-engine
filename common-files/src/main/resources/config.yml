@@ -807,9 +807,12 @@ client-optimization:
 
 bedrock:
   enable: true
-  resource-pack:
-    name: "CraftEngine ResourcePack"
+  main-pack:
+    name: "CraftEngine Main Pack"
     description: "Generated from the Java resource pack"
+  player-pack:
+    name: "CraftEngine Player Pack"
+    description: "Dynamically generated for your Bedrock client version"
   ui:
     # Convert Java UI textures
     convert-java-textures: false

@@ -14,6 +14,7 @@ public final class BedrockPackLayout {
     public static final String ELYTRA_VARIANTS = "craftengine/elytra_variants.json";
     public static final String NATIVE_MODELS = "craftengine/native_models.json";
     public static final String TRANSLATIONS = "craftengine/translations.json";
+    public static final String PLAYER_PACK = "craftengine/player-pack.json";
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
     public static final String TITLE = "craftengine/title.json";
     public static final String FORCE_JAVA_LAYOUT = "force_java_layout";

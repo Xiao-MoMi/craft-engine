@@ -11,6 +11,7 @@ import net.momirealms.craftengine.bedrock.geyser.network.GeyserBedrockPackets;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserCustomPayloads;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserJavaPackets;
 import net.momirealms.craftengine.bedrock.geyser.pack.GeyserExtensionData;
+import net.momirealms.craftengine.bedrock.geyser.pack.GeyserPocketItemSlots;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.GeyserSidebarManager;
 import net.momirealms.craftengine.bedrock.geyser.sound.GeyserSoundMappings;
@@ -19,16 +20,20 @@ import org.geysermc.event.PostOrder;
 import org.geysermc.event.subscribe.Subscribe;
 import org.geysermc.geyser.api.event.bedrock.SessionDisconnectEvent;
 import org.geysermc.geyser.api.event.bedrock.SessionInitializeEvent;
+import org.geysermc.geyser.api.event.bedrock.SessionLoadResourcePacksEvent;
 import org.geysermc.geyser.api.event.lifecycle.*;
 import org.geysermc.geyser.api.extension.Extension;
 import org.geysermc.geyser.api.pack.PackCodec;
 import org.geysermc.geyser.api.pack.ResourcePack;
+import org.geysermc.geyser.api.pack.option.PriorityOption;
 import org.geysermc.geyser.registry.Registries;
+import org.geysermc.geyser.registry.type.ItemMappings;
 import org.geysermc.geyser.session.GeyserSession;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 @SuppressWarnings("UnstableApiUsage")
 public final class CraftEngineGeyserExtension implements Extension {
@@ -48,7 +53,8 @@ public final class CraftEngineGeyserExtension implements Extension {
     private GeyserExtensionData extensionData;
     private GeyserSoundMappings sounds;
     private GeyserCustomPayloads customPayloads;
-    private String clientPackId;
+    private ResourcePack clientPack;
+    private Map<ItemMappings, ResourcePack> pocketSlotPacks = Map.of();
 
     @Subscribe
     public void onPreInitialize(GeyserPreInitializeEvent event) {
@@ -84,17 +90,36 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onDefineResourcePacks(GeyserDefineResourcePacksEvent event) {
+        this.clientPack = null;
+        this.pocketSlotPacks = Map.of();
         Path pack = this.extensionData.clientPack();
         if (pack != null) {
             ResourcePack resourcePack = ResourcePack.create(PackCodec.path(pack));
             event.register(resourcePack);
-            this.clientPackId = resourcePack.uuid().toString();
+            this.clientPack = resourcePack;
+            try {
+                this.pocketSlotPacks = GeyserPocketItemSlots.createPacks(pack, this.itemManager::usesBlockIcon, this.extensionData.playerPack());
+            } catch (IOException exception) {
+                throw new IllegalStateException("Failed to create Pocket inventory resource packs", exception);
+            }
+        }
+    }
+
+    @Subscribe(postOrder = PostOrder.LAST)
+    public void onSessionLoadResourcePacks(SessionLoadResourcePacksEvent event) {
+        if (this.pocketSlotPacks.isEmpty()) {
+            return;
+        }
+        ItemMappings palette = Registries.ITEMS.forVersion(event.connection().protocolVersion());
+        ResourcePack slots = this.pocketSlotPacks.get(palette);
+        if (slots != null && event.resourcePacks().stream().anyMatch(pack -> pack.uuid().equals(this.clientPack.uuid()))) {
+            event.register(slots, PriorityOption.NORMAL);
         }
     }
 
     @Nullable
     public String clientPackId() {
-        return this.clientPackId;
+        return this.clientPack == null ? null : this.clientPack.uuid().toString();
     }
 
     @Subscribe

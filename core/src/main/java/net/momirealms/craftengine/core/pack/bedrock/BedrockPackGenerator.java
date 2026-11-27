@@ -4,6 +4,7 @@ import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.bedrock.BedrockPlayerPack;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockWorldBlocks;
@@ -49,6 +50,11 @@ public final class BedrockPackGenerator {
             Path pack = fileSystem.getPath("bedrock").toAbsolutePath();
             Path data = fileSystem.getPath("extension-data").toAbsolutePath();
             writeItemsAndBlocks(models, plan, pack, data);
+            BedrockPlayerPack playerPack = Config.bedrockPlayerPack();
+            JsonObject playerPackMetadata = new JsonObject();
+            playerPackMetadata.addProperty("name", playerPack.name());
+            playerPackMetadata.addProperty("description", playerPack.description());
+            GsonHelper.writeJsonFile(playerPackMetadata, data.resolve(BedrockPackLayout.PLAYER_PACK));
             JsonObject translations = resources.translations();
             if (!translations.isEmpty()) {
                 GsonHelper.writeJsonFile(translations, data.resolve(BedrockPackLayout.TRANSLATIONS));

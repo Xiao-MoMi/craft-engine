@@ -1,6 +1,7 @@
 package net.momirealms.craftengine.core.plugin.config;
 
 import net.kyori.adventure.text.Component;
+import net.momirealms.craftengine.bedrock.BedrockPlayerPack;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicator;
 import net.momirealms.craftengine.core.attribute.damage.DamageIndicators;
 import net.momirealms.craftengine.core.attribute.damage.DamageVisibility;
@@ -317,8 +318,9 @@ public final class Config {
     private BedrockEntitySettings bedrockEntities = BedrockEntitySettings.DEFAULT;
     private Set<Key> bedrock$display_entity$vanilla_items = Set.of();
     private List<String> bedrock$display_entity$vanilla_blocks = List.of();
-    private String bedrock$resource_pack$name;
-    private String bedrock$resource_pack$description;
+    private String bedrock$main_pack$name;
+    private String bedrock$main_pack$description;
+    private BedrockPlayerPack bedrock$player_pack;
     private boolean bedrock$ui$convert_java_textures;
     private List<Pattern> bedrock$font$exclude = List.of();
     private Map<Key, List<GuiGlyphSelector>> bedrock$font$guiOnly = Map.of();
@@ -418,12 +420,6 @@ public final class Config {
 
     static YamlUpgradePipeline mainConfigUpgradePipeline() {
         return yamlUpgradeBuilder()
-                .addPatch(NumberVersionMatcher.of(142), patch -> patch.defaultValue(YamlUtils.route("bedrock.scoreboard.use-java-layout"),
-                        document -> YamlUtils.reader(document).getValue("bedrock.scoreboard.profiles") instanceof List<?> profiles && !profiles.isEmpty()))
-                .addPatch(NumberVersionMatcher.of(143), patch -> patch.relocate(
-                        YamlUtils.route("bedrock.resource-pack.vanilla.convert-ui-textures"), YamlUtils.route("bedrock.ui.convert-java-textures")))
-                .addPatch(NumberVersionMatcher.of(144), patch -> patch.relocate(
-                        YamlUtils.route("bedrock.item.async-creative-packet-build"), YamlUtils.route("bedrock.item.creative-inventory-packet.async")))
                 .updateComments(true)
                 .deleteRemovedNodes(true)
                 .build();
@@ -833,8 +829,11 @@ public final class Config {
         this.bedrockEntities = config.read("bedrock.custom-entity", value -> BedrockEntitySettings.read(value.getAsSection()), BedrockEntitySettings.DEFAULT);
         this.bedrock$display_entity$vanilla_items = Set.copyOf(config.getList("bedrock.display-entity.vanilla-items", CollectingConfigReader::identifier));
         this.bedrock$display_entity$vanilla_blocks = List.copyOf(config.getList("bedrock.display-entity.vanilla-blocks", ConfigValue::getAsString));
-        this.bedrock$resource_pack$name = config.getString("bedrock.resource-pack.name", "CraftEngine ResourcePack");
-        this.bedrock$resource_pack$description = config.getString("bedrock.resource-pack.description", "Generated from the Java resource pack");
+        this.bedrock$main_pack$name = config.getString("bedrock.main-pack.name", "CraftEngine ResourcePack");
+        this.bedrock$main_pack$description = config.getString("bedrock.main-pack.description", "Generated from the Java resource pack");
+        this.bedrock$player_pack = new BedrockPlayerPack(
+                config.getString("bedrock.player-pack.name", BedrockPlayerPack.DEFAULT.name()),
+                config.getString("bedrock.player-pack.description", BedrockPlayerPack.DEFAULT.description()));
         this.bedrock$ui$convert_java_textures = config.getBoolean("bedrock.ui.convert-java-textures", false);
         this.bedrock$font$exclude = config.getPatterns("bedrock.font.exclude");
         this.bedrock$font$guiOnly = GuiGlyphSelector.read(config, "bedrock.font.gui-only-glyphs");
@@ -1610,11 +1609,15 @@ public final class Config {
     }
 
     public static String bedrockPackName() {
-        return instance.bedrock$resource_pack$name;
+        return instance.bedrock$main_pack$name;
+    }
+
+    public static BedrockPlayerPack bedrockPlayerPack() {
+        return instance.bedrock$player_pack;
     }
 
     public static String bedrockPackDescription() {
-        return instance.bedrock$resource_pack$description;
+        return instance.bedrock$main_pack$description;
     }
 
     public static boolean bedrockConvertVanillaUiTextures() {

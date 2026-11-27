@@ -7,6 +7,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import net.momirealms.craftengine.bedrock.BedrockPackFiles;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
+import net.momirealms.craftengine.bedrock.BedrockPlayerPack;
 import net.momirealms.craftengine.bedrock.RegistrationPlanKind;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
 import net.momirealms.craftengine.bedrock.geyser.scoreboard.SidebarProfiles;
@@ -35,7 +36,7 @@ public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
             null, null, null, null,
             GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, false, Map.of(),
-            null, null, null, null
+            null, null, null, null, BedrockPlayerPack.DEFAULT
     );
     private final RegistrationJson bossBars;
     private final SidebarProfiles scoreboard;
@@ -51,6 +52,7 @@ public final class GeyserExtensionData {
     private final RegistrationJson nativeModels;
     private final RegistrationJson soundMappings;
     private final Path clientPack;
+    private final BedrockPlayerPack playerPack;
 
     private GeyserExtensionData(@Nullable RegistrationJson items,
                                 @Nullable RegistrationJson blocks,
@@ -65,7 +67,9 @@ public final class GeyserExtensionData {
                                 @Nullable RegistrationJson nativeModels,
                                 @Nullable RegistrationJson soundMappings,
                                 @Nullable RegistrationJson bossBars,
-                                @Nullable Path clientPack) {
+                                @Nullable Path clientPack,
+                                BedrockPlayerPack playerPack) {
+        this.playerPack = playerPack;
         this.bossBars = bossBars;
         this.soundMappings = soundMappings;
         this.clientPack = clientPack;
@@ -94,6 +98,8 @@ public final class GeyserExtensionData {
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
             boolean pocketClassicMenus = title != null && title.has(BedrockPackLayout.POCKET_CLASSIC_MENUS) && title.get(BedrockPackLayout.POCKET_CLASSIC_MENUS).getAsBoolean();
             Map<String, Integer> verticalOffsets = readVerticalOffsets(title);
+            JsonObject metadata = readJson(archive, BedrockPackLayout.PLAYER_PACK);
+            BedrockPlayerPack playerPack = metadata == null ? BedrockPlayerPack.DEFAULT : new BedrockPlayerPack(metadata.get("name").getAsString(), metadata.get("description").getAsString());
             GeyserGlyphData glyphs = readFonts(archive, verticalOffsets);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, RegistrationJson.read(archive, BedrockPackLayout.MODEL_DISPLAYS),
@@ -102,7 +108,7 @@ public final class GeyserExtensionData {
                     forceJavaTitleLayout, pocketClassicMenus, verticalOffsets,
                     RegistrationJson.read(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     RegistrationJson.read(archive, BedrockPackLayout.BOSS_BARS),
-                    extractClientPack(archive, cacheDirectory));
+                    extractClientPack(archive, cacheDirectory), playerPack);
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
         }
@@ -143,6 +149,10 @@ public final class GeyserExtensionData {
     @Nullable
     public Path clientPack() {
         return this.clientPack;
+    }
+
+    public BedrockPlayerPack playerPack() {
+        return this.playerPack;
     }
 
     private static GeyserGlyphData readFonts(ZipFile archive, Map<String, Integer> verticalOffsets) throws IOException {

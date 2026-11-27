@@ -15,19 +15,19 @@ import org.geysermc.geyser.api.entity.property.type.GeyserIntEntityProperty;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineCustomItemsEvent;
 import org.geysermc.geyser.api.event.lifecycle.GeyserDefineEntityPropertiesEvent;
 import org.geysermc.geyser.api.item.custom.v2.CustomItemDefinition;
+import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserBlockPlacer;
+import org.geysermc.geyser.api.item.custom.v2.component.geyser.GeyserItemDataComponents;
 import org.geysermc.geyser.api.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import static net.momirealms.craftengine.bedrock.BedrockPackLayout.*;
 
 public final class GeyserItemManager {
     private final CraftEngineGeyserExtension extension;
-    private final Set<String> registeredItems = new HashSet<>();
+    private final Map<String, Boolean> blockIconsByItem = new HashMap<>();
     private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
     private GeyserItemBindingPlan bindingPlan;
     private Map<String, CreativeItemCategory> creativeVariants = Map.of();
@@ -48,7 +48,7 @@ public final class GeyserItemManager {
     }
 
     public void registerItems(@Nullable JsonObject plan, @Nullable JsonObject elytraPlan, GeyserDefineCustomItemsEvent event) {
-        this.registeredItems.clear();
+        this.blockIconsByItem.clear();
         this.bindingPlan = null;
         this.creativeVariants = Map.of();
         this.extension.blockManager().clearBlockItems();
@@ -109,7 +109,8 @@ public final class GeyserItemManager {
         CustomItemDefinition definition = variant.definition();
         String primaryId = definition.bedrockIdentifier().toString();
         try {
-            this.registerDefinition(item, definition, registration);
+            boolean inventory = variant.worldView() == null;
+            this.registerDefinition(item, definition, registration, inventory);
             this.shelfViews |= "ON_SHELF".equals(variant.worldView());
             this.entityViews |= "GROUND".equals(variant.worldView()) || "FIXED".equals(variant.worldView());
             if (variant.creativeCategory() != null) {
@@ -121,7 +122,7 @@ public final class GeyserItemManager {
             }
             if (variant.head() != null) {
                 definition = variant.head();
-                this.registerDefinition(item, definition, registration);
+                this.registerDefinition(item, definition, registration, inventory);
                 registration.headIdentifiers.put(primaryId, definition.bedrockIdentifier().toString());
                 registration.patches.put(primaryId, GeyserItemComponentPatches.withoutWearable(item.componentPatch()));
             }
@@ -131,13 +132,14 @@ public final class GeyserItemManager {
         }
     }
 
-    private void registerDefinition(ConvertedItem item, CustomItemDefinition definition, Registration registration) {
+    private void registerDefinition(ConvertedItem item, CustomItemDefinition definition, Registration registration, boolean inventory) {
         String identifier = definition.bedrockIdentifier().toString();
         JsonElement elytra = registration.elytraPlan == null ? null : registration.elytraPlan.get(identifier);
         Integer elytraVariant = elytra == null ? null : elytra.getAsInt();
         registration.event.register(item.itemType(), definition);
         registration.registered++;
-        this.registeredItems.add(identifier);
+        GeyserBlockPlacer placer = definition.components().get(GeyserItemDataComponents.BLOCK_PLACER);
+        this.blockIconsByItem.put(identifier, inventory && placer != null && placer.useBlockIcon());
         if (elytraVariant != null) {
             registration.elytraVariants.put(identifier, elytraVariant);
         }
@@ -220,11 +222,15 @@ public final class GeyserItemManager {
     }
 
     public boolean hasRegisteredItems() {
-        return !this.registeredItems.isEmpty();
+        return !this.blockIconsByItem.isEmpty();
     }
 
     public boolean isRegisteredItem(String identifier) {
-        return this.registeredItems.contains(identifier);
+        return this.blockIconsByItem.containsKey(identifier);
+    }
+
+    public boolean usesBlockIcon(String identifier) {
+        return Boolean.TRUE.equals(this.blockIconsByItem.get(identifier));
     }
 
     public void disable() {
