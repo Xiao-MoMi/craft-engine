@@ -75,6 +75,10 @@ public final class CraftEngineGeyserExtension implements Extension {
             this.glyphManager.load(this.extensionData.glyphs());
         } catch (IOException exception) {
             throw new IllegalStateException(GeyserTranslationManager.message("extension.data_failed"), exception);
+        } catch (RuntimeException | Error failure) {
+            this.glyphManager.disable();
+            this.languageManager.disable();
+            throw failure;
         }
     }
 
@@ -95,16 +99,25 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onPostInitialize(GeyserPostInitializeEvent event) {
-        this.sounds.install(this.extensionData.soundMappings());
-        this.entityManager.initialize(this.glyphManager.glyphs());
-        this.sidebarManager = this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null
-                ? new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard(), this.extensionData.verticalOffsets())
-                : null;
-        this.bedrockPackets = new GeyserBedrockPackets(this.sidebarManager != null);
-        this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
-        this.itemManager.init();
-        this.blockManager.init();
-        this.javaPackets.install(this);
+        try {
+            this.sounds.install(this.extensionData.soundMappings());
+            this.entityManager.initialize(this.glyphManager.glyphs());
+            this.sidebarManager = this.extensionData.scoreboard().enabled() && this.glyphManager.glyphs().layout() != null
+                    ? new GeyserSidebarManager(this.glyphManager.glyphs().layout(), this.extensionData.scoreboard(), this.extensionData.verticalOffsets())
+                    : null;
+            this.bedrockPackets = new GeyserBedrockPackets(this.sidebarManager != null);
+            this.javaPackets = new GeyserJavaPackets(this.playerManager, Registries.JAVA_PACKET_TRANSLATORS);
+            this.itemManager.init();
+            this.blockManager.init();
+            this.javaPackets.install(this);
+        } catch (RuntimeException | Error failure) {
+            try {
+                this.uninstall();
+            } catch (RuntimeException | Error cleanup) {
+                failure.addSuppressed(cleanup);
+            }
+            throw failure;
+        }
     }
 
     @Subscribe
@@ -114,10 +127,10 @@ public final class CraftEngineGeyserExtension implements Extension {
 
     @Subscribe
     public void onShutdown(GeyserShutdownEvent event) {
-        this.sounds.uninstall();
-        if (this.entityManager != null) {
-            this.entityManager.disable();
-        }
+        this.uninstall();
+    }
+
+    private void uninstall() {
         if (this.playerManager != null) {
             this.playerManager.disable();
         }
@@ -130,7 +143,15 @@ public final class CraftEngineGeyserExtension implements Extension {
         if (this.itemManager != null) {
             this.itemManager.disable();
         }
-        this.glyphManager.disable();
+        if (this.entityManager != null) {
+            this.entityManager.disable();
+        }
+        if (this.sounds != null) {
+            this.sounds.uninstall();
+        }
+        if (this.glyphManager != null) {
+            this.glyphManager.disable();
+        }
         if (this.languageManager != null) {
             this.languageManager.disable();
         }

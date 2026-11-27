@@ -68,7 +68,7 @@ public final class BedrockItemUseScripts {
         }
     }
 
-    boolean trimUnused(JsonObject description) {
+    public boolean trimUnused(JsonObject description) {
         JsonObject scripts = description.getAsJsonObject("scripts");
         JsonArray preAnimation = scripts == null ? null : scripts.getAsJsonArray("pre_animation");
         if (preAnimation == null || preAnimation.isEmpty() || scripts.has("parent_setup") || scripts.has("variables")) {

@@ -1,5 +1,6 @@
 package net.momirealms.craftengine.bedrock.text;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 import net.momirealms.craftengine.bedrock.GuiTitlePart.Shadow;
 
@@ -63,14 +64,31 @@ public final class ContainerTitleLayout {
             FontData.Font font = this.fonts.font(part.font());
             boolean allowMissingGlyph = font.nativeFallback || "minecraft:default".equals(part.font()) || fontBaselines.containsKey(part.font());
             int boldAdvance = (part.decorations() & 2) != 0 ? 1 : 0;
+            Int2ObjectMap<String> images = this.fonts.guiImages().get(part.font());
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                FontGlyph glyph = font.rendering().get(codepoint);
+                String image = images == null ? null : images.get(codepoint);
+                if (image != null) {
+                    double position = Math.rint(2 * javaCursor) * 0.5;
+                    float advance = font.advance(codepoint, boldAdvance != 0);
+                    Layer layer = new Layer(baseline, position, Face.IMAGE, shadowOverride, position, position + advance - 1);
+                    layer.runs.add(new Run(GuiGlyphImage.IMAGE_RUN, image));
+                    layer.closed = true;
+                    layers.add(layer);
+                    javaCursor += advance;
+                    width += advance;
+                    remainingBytes -= ContainerTitleCodec.ENTRY_BYTES + image.length();
+                    if (remainingBytes < 0) {
+                        throw new UnsupportedOperationException("Title exceeds the four-digit layout table");
+                    }
+                    continue;
+                }
+                FontGlyph glyph = font.glyph(codepoint);
                 boolean unicode = this.hudFonts && (font.hudUnicode(codepoint) || (codepoint == ' ' && font.hudUnicode('A')));
                 // 无贴图映射的原生字符也保留 Java 度量，包括纯间距字体中穿插文字时的缺字宽度。
                 if (glyph == null && (unicode || allowMissingGlyph)) {
-                    glyph = new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0);
+                    glyph = FontGlyph.IDENTITY_FALLBACK;
                 }
                 if (glyph == null || codepoint == '\n' || codepoint == '§') {
                     throw new UnsupportedOperationException("Unknown title glyph metrics: " + part.font() + "/" + Integer.toHexString(codepoint));
@@ -83,8 +101,8 @@ public final class ContainerTitleLayout {
                 }
                 boolean nativeFallback = glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
                 if (nativeFallback && !unicode) {
-                    FontGlyph ordinary = defaultFont.rendering().get(codepoint);
-                    if (ordinary != null && ordinary.character() == codepoint && ordinary.renderedAdvance() >= 0) {
+                    FontGlyph ordinary = defaultFont.glyph(codepoint);
+                    if (ordinary != null && ordinary.character(codepoint) == codepoint && ordinary.renderedAdvance() >= 0) {
                         glyph = ordinary;
                     }
                 }
@@ -96,7 +114,7 @@ public final class ContainerTitleLayout {
                 // 用 bearing 修正落笔位置，使两端字形的可见部分对齐。
                 double position = (this.hudFonts ? Math.rint(2 * javaCursor) * 0.5 : Math.rint(javaCursor)) - glyph.bearing();
                 double advance = unknownWidth ? 0 : renderedAdvance;
-                Face face = !this.hudFonts ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.bearing() != 0 || glyph.character() != codepoint ? Face.ATLAS : Face.DEFAULT));
+                Face face = !this.hudFonts ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.bearing() != 0 || glyph.character(codepoint) != codepoint ? Face.ATLAS : Face.DEFAULT));
                 double inkStart = position + glyph.bearing();
                 // 实际原生字宽未知时，以当前字符结束本层。之后的字符仍按各自的 Java 光标定位。
                 double inkEnd = unknownWidth ? Double.POSITIVE_INFINITY : inkStart + advance - 1;
@@ -119,9 +137,9 @@ public final class ContainerTitleLayout {
                 if (gap > 0) {
                     selected.appendSpacing(gap);
                 }
-                selected.appendGlyph(partIndex, glyph.character());
+                selected.appendGlyph(partIndex, glyph.character(codepoint));
                 // Geyser 会展开 BossBar 名称里的 %。将它留在图层末尾，由 HUD 补回原字符。
-                selected.closed = unknownWidth || (target == Target.BOSS_BAR && glyph.character() == '%');
+                selected.closed = unknownWidth || (target == Target.BOSS_BAR && glyph.character(codepoint) == '%');
                 selected.cursor = position + advance;
                 float javaAdvance = this.hudFonts || nativeFallback ? font.advance(codepoint, boldAdvance != 0) : font.advance(codepoint, false) + boldAdvance;
                 javaCursor += javaAdvance;
@@ -205,16 +223,17 @@ public final class ContainerTitleLayout {
                 return true;
             }
             FontData.Font font = this.fonts.font(part.font());
-            if (!this.hudFonts && font.rendering().isEmpty()) {
+            Int2ObjectMap<String> images = this.fonts.guiImages().get(part.font());
+            if (images == null && !this.hudFonts && !font.hasRendering()) {
                 continue;
             }
             for (int offset = 0; offset < part.text().length();) {
                 int codepoint = part.text().codePointAt(offset);
                 offset += Character.charCount(codepoint);
-                if (this.hudFonts && font.hudUnicode(codepoint)) {
+                if ((images != null && images.containsKey(codepoint)) || (this.hudFonts && font.hudUnicode(codepoint))) {
                     return true;
                 }
-                FontGlyph glyph = font.rendering().get(codepoint);
+                FontGlyph glyph = font.glyph(codepoint);
                 if (glyph == null) {
                     if (font.nativeFallback) {
                         return true;
@@ -222,11 +241,10 @@ public final class ContainerTitleLayout {
                     continue;
                 }
                 boolean required = switch (target) {
-                    case POSITIONED -> glyph.character() != codepoint || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
+                    case POSITIONED -> glyph.character(codepoint) != codepoint || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
                     case BOSS_BAR -> {
                         float advance = font.advance(codepoint, false);
-                        yield (this.hudFonts && glyph.character() != codepoint) || advance < 0 || (!glyph.visible() && advance > 0)
-                                || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
+                        yield (this.hudFonts && glyph.character(codepoint) != codepoint) || advance < 0 || (!glyph.visible() && advance > 0) || glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK;
                     }
                 };
                 if (required) {
@@ -253,6 +271,9 @@ public final class ContainerTitleLayout {
 
     // part 是原始标题片段的索引，-1 表示不继承片段样式的间距文本。
     public record Run(int part, String text) {
+        public boolean image() {
+            return this.part == GuiGlyphImage.IMAGE_RUN;
+        }
     }
 
     private enum Target {
@@ -260,7 +281,7 @@ public final class ContainerTitleLayout {
     }
 
     private enum Face {
-        LEGACY, DEFAULT, UNICODE, ATLAS
+        LEGACY, DEFAULT, UNICODE, ATLAS, IMAGE
     }
 
     private static final class Layer {

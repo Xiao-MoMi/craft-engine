@@ -36,7 +36,7 @@ public final class GeyserTitle {
 
     public void title(GeyserPlayer player, ClientboundSetTitleTextPacket packet, PacketTranslator<ClientboundSetTitleTextPacket> original) {
         if (player.clientPackLoaded()) {
-            String text = this.rewrite(SetTitleTextPacketProxy.INSTANCE.text(packet), player.locale(), false);
+            String text = this.rewrite(SetTitleTextPacketProxy.INSTANCE.text(packet), player.locale(), 4);
             if (text != null) {
                 packet = SetTitleTextPacketProxy.INSTANCE.withText(packet, GeyserTextParts.resolvedText(text));
             }
@@ -46,7 +46,7 @@ public final class GeyserTitle {
 
     public void subtitle(GeyserPlayer player, ClientboundSetSubtitleTextPacket packet, PacketTranslator<ClientboundSetSubtitleTextPacket> original) {
         if (player.clientPackLoaded()) {
-            String text = this.rewrite(SetSubtitleTextPacketProxy.INSTANCE.text(packet), player.locale(), false);
+            String text = this.rewrite(SetSubtitleTextPacketProxy.INSTANCE.text(packet), player.locale(), 2);
             if (text != null) {
                 packet = SetSubtitleTextPacketProxy.INSTANCE.withText(packet, GeyserTextParts.resolvedText(text));
             }
@@ -69,7 +69,7 @@ public final class GeyserTitle {
     }
 
     private boolean sendActionBar(GeyserPlayer player, Object component) {
-        String text = this.rewrite(component, player.locale(), true);
+        String text = this.rewrite(component, player.locale(), 1);
         if (text == null) {
             return false;
         }
@@ -79,8 +79,9 @@ public final class GeyserTitle {
     }
 
     @Nullable
-    private String rewrite(Object component, String locale, boolean actionBar) {
+    private String rewrite(Object component, String locale, int imageScale) {
         try {
+            boolean actionBar = imageScale == 1;
             List<GuiTitlePart> parts = new ArrayList<>();
             if (!GeyserTextParts.collectParts(component, "minecraft:default", 0xffffff, 0, parts, locale)) {
                 return null;
@@ -90,7 +91,7 @@ public final class GeyserTitle {
                 return null;
             }
             String marker = actionBar ? ContainerTitleCodec.ACTIONBAR_MARKER : ContainerTitleCodec.TITLE_MARKER;
-            return ContainerTitleCodec.positioned(marker, measured, true,
+            return ContainerTitleCodec.positioned(marker, measured, true, imageScale,
                     runs -> GeyserTextParts.serializeLayer(runs, parts, locale));
         } catch (RuntimeException exception) {
             if (GeyserConfig.debug()) {

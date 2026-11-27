@@ -7,6 +7,7 @@ import net.momirealms.craftengine.core.pack.bedrock.BedrockModelIntegration;
 import net.momirealms.craftengine.core.util.Key;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public abstract class NativeModelInstance<T, V> {
@@ -31,6 +32,10 @@ public abstract class NativeModelInstance<T, V> {
     }
 
     protected abstract boolean visible(V viewer);
+
+    protected Set<UUID> trackedViewers() {
+        return null;
+    }
 
     protected abstract void nativeDisplays(Player player, V viewer, List<Integer> previous, List<Integer> current);
 

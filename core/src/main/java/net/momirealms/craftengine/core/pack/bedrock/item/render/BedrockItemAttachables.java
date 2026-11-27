@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingCondition;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry.EdgeMerging;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
 import net.momirealms.craftengine.core.pack.bedrock.model.BedrockModelTransform;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel;
@@ -49,7 +50,7 @@ public final class BedrockItemAttachables {
         BedrockItemAttachableBuilder attachment = new BedrockItemAttachableBuilder(id);
         String geometryId = "geometry." + attachment.prefix;
         JsonArray cubes = new JsonArray();
-        BedrockGeneratedGeometry.addLayer(cubes, new TextureData(image, null), null, 0, image.getWidth(), image.getHeight());
+        BedrockGeneratedGeometry.addLayer(cubes, new BedrockGeneratedGeometry.Outline(new TextureData(image, null)), null, 0, image.getWidth(), image.getHeight(), EdgeMerging.PER_PIXEL);
         displayAnimations(model, "animation." + attachment.prefix + '.', -1, attachment.animations, attachment.animationNames, attachment.animate);
         attachment.addGeometry("default", geometryId, texture, displayGeometry(model, cubes, geometryId, MODEL_RADIUS));
         attachment.showInHand("controller.render.item_default");

@@ -15,6 +15,8 @@ import net.momirealms.craftengine.bedrock.geyser.translation.GeyserTranslations;
 import net.momirealms.craftengine.bedrock.text.FontData;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,7 +25,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -37,32 +42,32 @@ public final class GeyserExtensionData {
             GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, Map.of(),
             null, null, null, null
     );
-    private final JsonObject bossBars;
+    private final RegistrationJson bossBars;
     private final SidebarProfiles scoreboard;
     private final boolean forceJavaTitleLayout;
     private final Map<String, Integer> verticalOffsets;
-    private final JsonObject items;
-    private final JsonObject blocks;
-    private final JsonObject modelDisplays;
-    private final JsonObject elytraVariants;
+    private final RegistrationJson items;
+    private final RegistrationJson blocks;
+    private final RegistrationJson modelDisplays;
+    private final RegistrationJson elytraVariants;
     private final GeyserGlyphData glyphs;
     private final GeyserLanguageData languages;
-    private final JsonObject nativeModels;
-    private final JsonObject soundMappings;
+    private final RegistrationJson nativeModels;
+    private final RegistrationJson soundMappings;
     private final Path clientPack;
 
-    private GeyserExtensionData(@Nullable JsonObject items,
-                                @Nullable JsonObject blocks,
-                                @Nullable JsonObject modelDisplays,
-                                @Nullable JsonObject elytraVariants,
+    private GeyserExtensionData(@Nullable RegistrationJson items,
+                                @Nullable RegistrationJson blocks,
+                                @Nullable RegistrationJson modelDisplays,
+                                @Nullable RegistrationJson elytraVariants,
                                 GeyserGlyphData glyphs,
                                 GeyserLanguageData languages,
                                 SidebarProfiles scoreboard,
                                 boolean forceJavaTitleLayout,
                                 Map<String, Integer> verticalOffsets,
-                                @Nullable JsonObject nativeModels,
-                                @Nullable JsonObject soundMappings,
-                                @Nullable JsonObject bossBars,
+                                @Nullable RegistrationJson nativeModels,
+                                @Nullable RegistrationJson soundMappings,
+                                @Nullable RegistrationJson bossBars,
                                 @Nullable Path clientPack) {
         this.bossBars = bossBars;
         this.soundMappings = soundMappings;
@@ -84,20 +89,20 @@ public final class GeyserExtensionData {
             return EMPTY;
         }
         try (ZipFile archive = new ZipFile(path.toFile())) {
-            JsonObject items = readPlan(archive, RegistrationPlanKind.ITEM);
-            JsonObject blocks = readPlan(archive, RegistrationPlanKind.BLOCK);
-            JsonObject sounds = readJson(archive, BedrockPackLayout.SOUND_MAPPINGS);
+            RegistrationJson items = RegistrationJson.read(archive, RegistrationPlanKind.ITEM.file(), RegistrationPlanKind.ITEM);
+            RegistrationJson blocks = RegistrationJson.read(archive, RegistrationPlanKind.BLOCK.file(), RegistrationPlanKind.BLOCK);
+            RegistrationJson sounds = RegistrationJson.read(archive, BedrockPackLayout.SOUND_MAPPINGS);
             JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
             Map<String, Integer> verticalOffsets = readVerticalOffsets(title);
             GeyserGlyphData glyphs = readFonts(archive, verticalOffsets);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
-            return new GeyserExtensionData(items, blocks, readJson(archive, BedrockPackLayout.MODEL_DISPLAYS),
-                    readJson(archive, BedrockPackLayout.ELYTRA_VARIANTS),
+            return new GeyserExtensionData(items, blocks, RegistrationJson.read(archive, BedrockPackLayout.MODEL_DISPLAYS),
+                    RegistrationJson.read(archive, BedrockPackLayout.ELYTRA_VARIANTS),
                     glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
                     forceJavaTitleLayout, verticalOffsets,
-                    readJson(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
-                    readJson(archive, BedrockPackLayout.BOSS_BARS),
+                    RegistrationJson.read(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
+                    RegistrationJson.read(archive, BedrockPackLayout.BOSS_BARS),
                     extractClientPack(archive, cacheDirectory));
         } catch (IOException | RuntimeException exception) {
             throw new IOException("Failed to load extension data from " + path, exception);
@@ -112,10 +117,18 @@ public final class GeyserExtensionData {
         }
         Files.createDirectories(cacheDirectory);
         Path pack = cacheDirectory.resolve(BedrockPackFiles.CLIENT_PACK);
+        String expected = BedrockPackFiles.readDigest(archive, BedrockPackFiles.CLIENT_SHA256);
+        if (Files.isRegularFile(pack) && Files.size(pack) == entry.getSize() && expected.equals(BedrockPackFiles.sha256(pack))) {
+            return pack;
+        }
         Path temporary = Files.createTempFile(cacheDirectory, "client-", ".tmp");
         try {
-            try (InputStream input = archive.getInputStream(entry)) {
+            MessageDigest digest = BedrockPackFiles.sha256();
+            try (InputStream input = new DigestInputStream(archive.getInputStream(entry), digest)) {
                 Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING);
+            }
+            if (!expected.equals(HexFormat.of().formatHex(digest.digest()))) {
+                throw new IOException("Checksum mismatch for " + BedrockPackFiles.CLIENT_PACK);
             }
             return Files.move(temporary, pack, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         } finally {
@@ -125,7 +138,7 @@ public final class GeyserExtensionData {
 
     @Nullable
     public JsonObject bossBars() {
-        return this.bossBars;
+        return this.bossBars == null ? null : this.bossBars.parse();
     }
 
     @Nullable
@@ -149,18 +162,6 @@ public final class GeyserExtensionData {
     }
 
     @Nullable
-    private static JsonObject readPlan(ZipFile archive, RegistrationPlanKind kind) throws IOException {
-        JsonObject plan = readJson(archive, kind.file());
-        if (plan == null) {
-            return null;
-        }
-        if (!plan.get(KIND).getAsString().equals(kind.id()) || plan.get(FORMAT_VERSION).getAsInt() != kind.formatVersion()) {
-            throw new IOException("Unsupported registration plan format: " + kind.file());
-        }
-        return plan;
-    }
-
-    @Nullable
     private static JsonObject readJson(ZipFile archive, String name) throws IOException {
         ZipEntry entry = archive.getEntry(name);
         if (entry == null) {
@@ -175,26 +176,88 @@ public final class GeyserExtensionData {
 
     @Nullable
     public JsonObject items() {
-        return this.items;
+        return this.items == null ? null : this.items.parse();
     }
 
     @Nullable
     public JsonObject blocks() {
-        return this.blocks;
+        return this.blocks == null ? null : this.blocks.parse();
     }
 
     @Nullable
     public JsonObject modelDisplays() {
-        return this.modelDisplays;
+        return this.modelDisplays == null ? null : this.modelDisplays.parse();
     }
 
     @Nullable
     public JsonObject elytraVariants() {
-        return this.elytraVariants;
+        return this.elytraVariants == null ? null : this.elytraVariants.parse();
     }
 
     public SidebarProfiles scoreboard() {
         return this.scoreboard;
+    }
+
+    private record RegistrationJson(byte[] utf8) {
+        @Nullable
+        private static RegistrationJson read(ZipFile archive, String name) throws IOException {
+            return read(archive, name, null);
+        }
+
+        @Nullable
+        private static RegistrationJson read(ZipFile archive, String name, @Nullable RegistrationPlanKind plan) throws IOException {
+            ZipEntry entry = archive.getEntry(name);
+            if (entry == null) {
+                return null;
+            }
+            try (DataInputStream input = new DataInputStream(archive.getInputStream(entry))) {
+                byte[] utf8 = new byte[Math.toIntExact(entry.getSize())];
+                input.readFully(utf8);
+                RegistrationJson snapshot = new RegistrationJson(utf8);
+                try (JsonReader reader = new JsonReader(snapshot.reader())) {
+                    reader.setStrictness(Strictness.LENIENT);
+                    if (reader.peek() != JsonToken.BEGIN_OBJECT) {
+                        throw new IOException("Expected an object in " + name);
+                    }
+                    if (plan == null) {
+                        reader.skipValue();
+                    } else {
+                        validatePlan(reader, plan);
+                    }
+                    if (reader.peek() != JsonToken.END_DOCUMENT) {
+                        throw new IOException("Unexpected trailing data in " + name);
+                    }
+                }
+                return snapshot;
+            } catch (RuntimeException exception) {
+                throw new IOException("Invalid extension data entry: " + name, exception);
+            }
+        }
+
+        private static void validatePlan(JsonReader reader, RegistrationPlanKind plan) throws IOException {
+            String kind = null;
+            int version = -1;
+            reader.beginObject();
+            while (reader.hasNext()) {
+                switch (reader.nextName()) {
+                    case KIND -> kind = reader.nextString();
+                    case FORMAT_VERSION -> version = reader.nextInt();
+                    default -> reader.skipValue();
+                }
+            }
+            reader.endObject();
+            if (!plan.id().equals(kind) || version != plan.formatVersion()) {
+                throw new IOException("Unsupported registration plan format: " + plan.file());
+            }
+        }
+
+        private InputStreamReader reader() {
+            return new InputStreamReader(new ByteArrayInputStream(this.utf8), StandardCharsets.UTF_8);
+        }
+
+        private JsonObject parse() {
+            return JsonParser.parseReader(this.reader()).getAsJsonObject();
+        }
     }
 
     private static Map<String, Integer> readVerticalOffsets(@Nullable JsonObject title) {
@@ -223,11 +286,11 @@ public final class GeyserExtensionData {
     }
 
     public JsonObject nativeModels() {
-        return this.nativeModels;
+        return this.nativeModels == null ? null : this.nativeModels.parse();
     }
 
     @Nullable
     public JsonObject soundMappings() {
-        return this.soundMappings;
+        return this.soundMappings == null ? null : this.soundMappings.parse();
     }
 }

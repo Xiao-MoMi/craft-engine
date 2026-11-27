@@ -27,7 +27,11 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext context, Object message) {
-        this.dispatch(context, () -> this.receive(context, message), message, null);
+        if (this.sessionLoop.inEventLoop()) {
+            this.receive(context, message);
+        } else {
+            this.enqueue(context, () -> this.receive(context, message), message, null);
+        }
     }
 
     private void receive(ChannelHandlerContext context, Object message) {
@@ -60,7 +64,11 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
 
     @Override
     public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) {
-        this.dispatch(context, () -> this.send(context, message, promise), message, promise);
+        if (this.sessionLoop.inEventLoop()) {
+            this.send(context, message, promise);
+        } else {
+            this.enqueue(context, () -> this.send(context, message, promise), message, promise);
+        }
     }
 
     private void send(ChannelHandlerContext context, Object message, ChannelPromise promise) {
@@ -83,12 +91,20 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
     // 完成一次读取、刷新和关闭也排入同一队列，防止越过尚在会话线程处理的包。
     @Override
     public void channelReadComplete(ChannelHandlerContext context) {
-        this.dispatch(context, context::fireChannelReadComplete, null, null);
+        if (this.sessionLoop.inEventLoop()) {
+            context.fireChannelReadComplete();
+        } else {
+            this.enqueue(context, context::fireChannelReadComplete, null, null);
+        }
     }
 
     @Override
     public void flush(ChannelHandlerContext context) {
-        this.dispatch(context, context::flush, null, null);
+        if (this.sessionLoop.inEventLoop()) {
+            context.flush();
+        } else {
+            this.enqueue(context, context::flush, null, null);
+        }
     }
 
     @Override
@@ -116,7 +132,11 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext context, Object event) {
-        this.dispatch(context, () -> context.fireUserEventTriggered(event), event, null);
+        if (this.sessionLoop.inEventLoop()) {
+            context.fireUserEventTriggered(event);
+        } else {
+            this.enqueue(context, () -> context.fireUserEventTriggered(event), event, null);
+        }
     }
 
     @Override
@@ -124,11 +144,7 @@ public final class GeyserPacketHandler extends ChannelDuplexHandler {
         this.afterPending(this::discardPendingClose);
     }
 
-    private void dispatch(ChannelHandlerContext context, Runnable task, Object message, ChannelPromise promise) {
-        if (this.sessionLoop.inEventLoop()) {
-            task.run();
-            return;
-        }
+    private void enqueue(ChannelHandlerContext context, Runnable task, Object message, ChannelPromise promise) {
         try {
             this.sessionLoop.execute(task);
         } catch (RejectedExecutionException error) {

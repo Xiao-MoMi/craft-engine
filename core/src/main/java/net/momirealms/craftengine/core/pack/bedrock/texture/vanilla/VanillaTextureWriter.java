@@ -89,13 +89,14 @@ final class VanillaTextureWriter {
             return false;
         }
         int interval = animation.interpolate() ? animation.uniformFrameTime() : animation.sampleInterval();
-        if (interval == 0 || animation.keyFrameCount() > frameLimit) {
+        TextureAnimation.KeyFrames frames = animation.keyFrames();
+        if (interval == 0 || frames.size() > frameLimit) {
             throw new IOException("Cannot fit animation in a " + MAX_FLIPBOOK_SIZE + " px Bedrock flipbook: " + target.path());
         }
         // 通过帧索引和时长复用关键帧，避免为重复帧复制像素。
-        BufferedImage strip = animation.keyFrameStrip(0xffffff);
+        BufferedImage strip = frames.strip(0xffffff);
         if (this.writeAnimationImages(owner, target, strip, data.image())) {
-            this.registerFlipbook(target, target.animationPath(), interval, animation.frameSequence(interval), animation.interpolate());
+            this.registerFlipbook(target, target.animationPath(), interval, frames.sequence(interval), animation.interpolate());
         }
         return true;
     }
@@ -136,9 +137,11 @@ final class VanillaTextureWriter {
         }
         BufferedImage strip = new BufferedImage(first.getWidth(), Math.multiplyExact(first.getHeight(), count), BufferedImage.TYPE_INT_ARGB);
         // 动画输入分配可重复写入的帧缓冲区；静态输入始终复用原图。
+        TextureAnimation.Sampler[] samplers = new TextureAnimation.Sampler[inputs.size()];
         for (int index = 0; index < inputs.size(); index++) {
             TextureAnimation animation = inputs.get(index).animation();
             if (animation != null) {
+                samplers[index] = animation.sampler();
                 frames.set(index, new BufferedImage(animation.width(), animation.height(), BufferedImage.TYPE_INT_ARGB));
             }
         }
@@ -149,10 +152,10 @@ final class VanillaTextureWriter {
             for (int frame = 0; frame < count; frame++) {
                 // 所有输入按同一个 tick 取样，各动画内部按自己的周期循环并处理插值。
                 for (int index = 0; index < inputs.size(); index++) {
-                    TextureAnimation animation = inputs.get(index).animation();
-                    if (animation != null) {
+                    TextureAnimation.Sampler sampler = samplers[index];
+                    if (sampler != null) {
                         // 白色乘色不改变原色；具体染色、叠图或裁剪由 transform 完成。
-                        animation.render(frame * interval, 0xffffff, frames.get(index));
+                        sampler.render(frame * interval, 0xffffff, frames.get(index));
                     }
                 }
                 graphics.drawImage(transform.apply(frames), 0, frame * first.getHeight(), null);

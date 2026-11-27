@@ -99,6 +99,10 @@ final class BedrockDisplayAssets {
         if (materials.isEmpty()) {
             return 0;
         }
+        List<Map<String, JsonArray>> layersByPart = new ArrayList<>(partsCubes.size());
+        for (BedrockItemGeometry geometry : partsCubes) {
+            layersByPart.add(geometry.splitMaterialFaces());
+        }
         int shape = ++this.shapes;
         if (BedrockTintSource.isDynamic(mesh.tintSource()) && mesh.tintSource() != BedrockTintSource.DYED_COLOR) {
             this.tintSources.addProperty(Integer.toString(shape), mesh.tintSource());
@@ -114,8 +118,8 @@ final class BedrockDisplayAssets {
             JsonArray bones = rig(modelRoot);
             for (int i = 0; i < parts.size(); i++) {
                 BedrockItemGeometry partGeometry = partsCubes.get(i);
-                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(partGeometry.cubes(), materialId);
-                if (!cubes.isEmpty()) {
+                JsonArray cubes = layersByPart.get(i).get(materialId);
+                if (cubes != null) {
                     addPart(bones, modelRoot, channels, i, parts.get(i), cubes, partGeometry.transformation());
                 }
             }
@@ -274,21 +278,30 @@ final class BedrockDisplayAssets {
             int last = Collections.max(draws.keySet());
             JsonArray meshes = new JsonArray();
             JsonArray textures = new JsonArray();
-            JsonElement fallback = draws.get(last).frames().get(0);
-            for (int i = first; i <= last; i++) {
-                Draw draw = draws.get(i);
-                meshes.add(draw == null ? "Geometry.empty" : "Geometry." + draw.geometry());
-                if (draw != null) {
-                    textures.addAll(draw.frames());
-                } else {
-                    for (int frame = 0; frame < page.frames(); frame++) {
-                        textures.add(fallback);
-                    }
+            Draw fallback = draws.get(last);
+            int gapEnd = first;
+            int gapSize = 0;
+            int previous = first;
+            for (int shape : draws.keySet()) {
+                int skipped = shape - previous - 1;
+                if (skipped > gapSize) {
+                    gapSize = skipped;
+                    gapEnd = shape;
                 }
+                previous = shape;
             }
-            String index = "(" + SHAPE_VARIABLE + " - " + first + ")";
-            String sample = page.interval() == 0 ? index : index + " * " + page.frames()
-                    + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
+            // 稀疏页只折叠最大的空段；可见性条件已排除空槽，至多增加一次索引修正。
+            boolean compact = gapSize * (page.frames() + 1) >= 8;
+            for (int i = first; i <= last; i++) {
+                if (compact && i == gapEnd - gapSize) {
+                    i = gapEnd;
+                }
+                Draw draw = draws.getOrDefault(i, fallback);
+                meshes.add("Geometry." + draw.geometry());
+                textures.addAll(draw.frames());
+            }
+            String index = "(" + SHAPE_VARIABLE + " - " + first + (compact ? " - (" + SHAPE_VARIABLE + " >= " + gapEnd + " ? " + gapSize + " : 0)" : "") + ")";
+            String sample = page.interval() == 0 ? index : index + " * " + page.frames() + " + math.mod(math.floor(query.life_time * 20 / " + page.interval() + "), " + page.frames() + ")";
             JsonObject controller = new JsonObject();
             controller.addProperty("geometry", ResourcePackUtils.selectBedrockResource(controller, "geometries", "array.meshes", meshes, index));
             JsonArray materials = new JsonArray();

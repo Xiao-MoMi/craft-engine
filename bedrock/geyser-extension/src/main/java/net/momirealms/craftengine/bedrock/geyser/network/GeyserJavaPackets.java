@@ -7,6 +7,7 @@ import net.momirealms.craftengine.bedrock.geyser.block.GeyserWorldBlocks;
 import net.momirealms.craftengine.bedrock.geyser.bossbar.GeyserBossBars;
 import net.momirealms.craftengine.bedrock.geyser.gui.GeyserGuiMenus;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserHeldDye;
+import net.momirealms.craftengine.bedrock.geyser.item.GeyserSelectedItemHandler;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserWorldItemViews;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayer;
 import net.momirealms.craftengine.bedrock.geyser.player.GeyserPlayerManager;
@@ -21,6 +22,9 @@ import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.player.PlayerAction;
 import org.geysermc.mcprotocollib.protocol.packet.common.clientbound.ClientboundCustomPayloadPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundBossEventPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundLoginPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundRespawnPacket;
+import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.player.ClientboundSetHeldSlotPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.ClientboundSystemChatPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundAddEntityPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.clientbound.entity.ClientboundSetEntityDataPacket;
@@ -47,6 +51,7 @@ public final class GeyserJavaPackets {
     private final PacketTranslatorRegistry<Packet> registry;
     private final GeyserPlayerManager players;
     private final Observers received = new Observers();
+    private volatile boolean hasObservers;
     private final Observers sent = new Observers();
     private final Map<Class<?>, BiFunction<GeyserPlayer, Packet, Packet>> sending = new ConcurrentHashMap<>();
     private final List<InterceptingTranslator<?>> translators = new ArrayList<>();
@@ -96,8 +101,23 @@ public final class GeyserJavaPackets {
         if (extension.itemManager().hasRegisteredItems()) {
             this.intercept(ClientboundSetEntityDataPacket.class, (player, packet, original) -> {
                 player.activeUse().onEntityData(packet);
-                GeyserWorldItemViews.translateMetadata(player.session(), packet, original);
+                if (extension.itemManager().hasEntityViews()) {
+                    GeyserWorldItemViews.translateMetadata(player.session(), packet, original);
+                } else {
+                    original.translate(player.session(), packet);
+                }
             });
+        }
+        if (extension.itemManager().hasSelectedItems()) {
+            this.onSent(ServerboundSetCarriedItemPacket.class, (player, packet) -> selectedSlotChanged(player));
+            this.intercept(ClientboundSetHeldSlotPacket.class, (player, packet, original) -> {
+                original.translate(player.session(), packet);
+                selectedSlotChanged(player);
+            });
+        }
+        if (extension.itemManager().hasDimensionItems()) {
+            this.intercept(ClientboundLoginPacket.class, GeyserJavaPackets::translateWorldChange);
+            this.intercept(ClientboundRespawnPacket.class, GeyserJavaPackets::translateWorldChange);
         }
         if (extension.itemManager().hasDyedItems()) {
             this.onSent(ServerboundSetCarriedItemPacket.class, (player, packet) -> refreshHands(player));
@@ -107,6 +127,21 @@ public final class GeyserJavaPackets {
                     refreshHands(player);
                 }
             });
+        }
+    }
+
+    private static void selectedSlotChanged(GeyserPlayer player) {
+        GeyserSelectedItemHandler items = player.selectedItems();
+        if (items != null) {
+            player.session().ensureInEventLoop(items::onSelectedSlotChanged);
+        }
+    }
+
+    private static <T extends Packet> void translateWorldChange(GeyserPlayer player, T packet, PacketTranslator<T> original) {
+        original.translate(player.session(), packet);
+        GeyserSelectedItemHandler items = player.selectedItems();
+        if (items != null) {
+            player.session().ensureInEventLoop(items::onWorldChanged);
         }
     }
 
@@ -138,10 +173,12 @@ public final class GeyserJavaPackets {
 
     public <T extends Packet> void onReceive(Class<T> type, BiConsumer<GeyserPlayer, T> listener) {
         this.received.register(type, listener);
+        this.activateObservers();
     }
 
     public <T extends Packet> void onSent(Class<T> type, BiConsumer<GeyserPlayer, T> listener) {
         this.sent.register(type, listener);
+        this.activateObservers();
     }
 
     public <T extends Packet> void onSending(Class<T> type, SendFilter<T> filter) {
@@ -150,6 +187,18 @@ public final class GeyserJavaPackets {
                     Packet current = first.apply(player, packet);
                     return current == null ? null : next.apply(player, current);
                 });
+        this.activateObservers();
+    }
+
+    boolean hasObservers() {
+        return this.hasObservers;
+    }
+
+    private synchronized void activateObservers() {
+        if (!this.hasObservers) {
+            this.hasObservers = true;
+            this.players.activateJavaListeners();
+        }
     }
 
     void receive(GeyserPlayer player, Packet packet) {
@@ -192,6 +241,7 @@ public final class GeyserJavaPackets {
             this.registry.get().replace(translator.type, translator, translator.original);
         }
         this.translators.clear();
+        this.hasObservers = false;
         this.sending.clear();
         this.received.listeners.clear();
         this.sent.listeners.clear();

@@ -29,8 +29,7 @@ public final class GeyserItemManager {
     private final CraftEngineGeyserExtension extension;
     private final Set<String> registeredItems = new HashSet<>();
     private final GeyserWorldItemViews worldItemViews = new GeyserWorldItemViews();
-    private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
-    private final Map<String, String> headIdentifiers = new HashMap<>();
+    private GeyserItemBindingPlan bindingPlan;
     private Map<String, CreativeItemCategory> creativeVariants = Map.of();
     private GeyserItemComponentPatchCache componentPatches;
     private GeyserDyeProperties mainHandDye;
@@ -39,7 +38,8 @@ public final class GeyserItemManager {
     private GeyserDyeProperties offHandThirdDye;
     private GeyserDyeProperties headDye;
     private boolean hasDyedItems;
-    private Map<String, GeyserItemTints> tintSources = Map.of();
+    private boolean shelfViews;
+    private boolean entityViews;
     private Map<String, Integer> elytraVariants = Map.of();
     private GeyserIntEntityProperty elytraProperty;
 
@@ -49,12 +49,12 @@ public final class GeyserItemManager {
 
     public void registerItems(@Nullable JsonObject plan, @Nullable JsonObject elytraPlan, GeyserDefineCustomItemsEvent event) {
         this.registeredItems.clear();
-        this.contextualItems.clear();
-        this.headIdentifiers.clear();
+        this.bindingPlan = null;
         this.creativeVariants = Map.of();
         this.extension.blockManager().clearBlockItems();
         this.hasDyedItems = false;
-        this.tintSources = Map.of();
+        this.shelfViews = false;
+        this.entityViews = false;
         this.elytraVariants = Map.of();
         this.elytraProperty = null;
         this.componentPatches = null;
@@ -97,7 +97,9 @@ public final class GeyserItemManager {
         if (!registration.patches.isEmpty() || !registration.itemText.isEmpty()) {
             this.componentPatches = new GeyserItemComponentPatchCache(registration.patches, registration.itemText);
         }
-        this.tintSources = Map.copyOf(registration.tintSources);
+        if (!registration.contextualItems.isEmpty() || !registration.headIdentifiers.isEmpty() || !registration.tintSources.isEmpty()) {
+            this.bindingPlan = new GeyserItemBindingPlan(registration.contextualItems, registration.headIdentifiers, registration.tintSources);
+        }
         this.elytraVariants = Map.copyOf(registration.elytraVariants);
         this.creativeVariants = Map.copyOf(registration.creativeVariants);
         GeyserTranslationManager.info("item.registered", registration.registered, registration.skipped, registration.failed);
@@ -108,6 +110,8 @@ public final class GeyserItemManager {
         String primaryId = definition.bedrockIdentifier().toString();
         try {
             this.registerDefinition(item, definition, registration);
+            this.shelfViews |= "ON_SHELF".equals(variant.worldView());
+            this.entityViews |= "GROUND".equals(variant.worldView()) || "FIXED".equals(variant.worldView());
             if (variant.creativeCategory() != null) {
                 registration.creativeVariants.put(primaryId, variant.creativeCategory());
             }
@@ -118,7 +122,7 @@ public final class GeyserItemManager {
             if (variant.head() != null) {
                 definition = variant.head();
                 this.registerDefinition(item, definition, registration);
-                this.headIdentifiers.put(primaryId, definition.bedrockIdentifier().toString());
+                registration.headIdentifiers.put(primaryId, definition.bedrockIdentifier().toString());
                 registration.patches.put(primaryId, GeyserItemComponentPatches.withoutWearable(item.componentPatch()));
             }
         } catch (RuntimeException exception) {
@@ -142,7 +146,7 @@ public final class GeyserItemManager {
             this.extension.blockManager().registerBlockItem(identifier);
         }
         if (item.contextual()) {
-            this.contextualItems.put(identifier, definition);
+            registration.contextualItems.put(identifier, definition);
         }
         if (item.componentPatch() != null) {
             registration.patches.put(identifier, item.componentPatch());
@@ -168,7 +172,15 @@ public final class GeyserItemManager {
     }
 
     public void init() {
-        this.worldItemViews.installShelf();
+        if (this.shelfViews) {
+            this.worldItemViews.installShelf();
+        } else {
+            this.worldItemViews.uninstallShelf();
+        }
+    }
+
+    public boolean hasEntityViews() {
+        return this.entityViews;
     }
 
     public boolean hasDyedItems() {
@@ -191,10 +203,15 @@ public final class GeyserItemManager {
     }
 
     public GeyserItemRuntime initPlayer(GeyserPlayer player) {
-        if (!this.contextualItems.isEmpty() || !this.headIdentifiers.isEmpty() || !this.tintSources.isEmpty()) {
-            return GeyserItemRuntime.install(player, this.contextualItems, this.headIdentifiers, this.tintSources);
-        }
-        return null;
+        return this.bindingPlan == null ? null : GeyserItemRuntime.install(player, this.bindingPlan);
+    }
+
+    public boolean hasSelectedItems() {
+        return this.bindingPlan != null && !this.bindingPlan.selected.isEmpty();
+    }
+
+    public boolean hasDimensionItems() {
+        return this.bindingPlan != null && this.bindingPlan.usesDimension;
     }
 
     @Nullable
@@ -221,6 +238,8 @@ public final class GeyserItemManager {
         private final Map<String, GeyserItemComponentPatch> patches = new HashMap<>();
         private final Map<String, GeyserItemText> itemText = new HashMap<>();
         private final Map<String, GeyserItemTints> tintSources = new HashMap<>();
+        private final Map<String, CustomItemDefinition> contextualItems = new HashMap<>();
+        private final Map<String, String> headIdentifiers = new HashMap<>();
         private final Map<String, CreativeItemCategory> creativeVariants = new HashMap<>();
         private int registered;
         private int skipped;

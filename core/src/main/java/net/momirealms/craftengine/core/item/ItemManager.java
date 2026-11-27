@@ -54,6 +54,8 @@ public interface ItemManager extends Manageable, ModelGenerator {
 
     List<Key> orderedItemIds();
 
+    List<Key> bedrockCreativeItemIds();
+
     List<Key> allItemIds();
 
     Optional<Equipment> getEquipment(Key key);

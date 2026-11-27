@@ -11,6 +11,7 @@ public final class ContainerTitleCodec {
     public static final String UNICODE_MARKER = "§r~u";
     public static final String SHADOW_OVERRIDE_MARKER = "§r~q";
     public static final String UNICODE_SHADOW_OVERRIDE_MARKER = "§r~v";
+    public static final String IMAGE_MARKER = "§r~i";
     public static final int POSITION_MARKER_BYTES = 5;
     public static final int X_BYTES = 6;
     public static final int X_BIAS = 500000;
@@ -23,13 +24,30 @@ public final class ContainerTitleCodec {
     private ContainerTitleCodec() {
     }
 
-    public static String positioned(String marker, ContainerTitleLayout.MeasuredLayout layout, boolean centered,
+    public static String positioned(String marker, ContainerTitleLayout.MeasuredLayout layout,
+                                    boolean centered,
                                     Function<List<ContainerTitleLayout.Run>, String> serialize) {
-        return encode(marker, positionedLayers(layout, centered, serialize));
+        return positioned(marker, layout, centered, 1, serialize);
     }
 
-    public static List<String> positionedLayers(ContainerTitleLayout.MeasuredLayout layout, boolean centered,
+    public static String positioned(String marker,
+                                    ContainerTitleLayout.MeasuredLayout layout,
+                                    boolean centered,
+                                    int imageScale,
+                                    Function<List<ContainerTitleLayout.Run>, String> serialize) {
+        return encode(marker, positionedLayers(layout, centered, imageScale, serialize));
+    }
+
+    public static List<String> positionedLayers(ContainerTitleLayout.MeasuredLayout layout,
+                                                boolean centered,
                                                 Function<List<ContainerTitleLayout.Run>, String> serialize) {
+        return positionedLayers(layout, centered, 1, serialize);
+    }
+
+    private static List<String> positionedLayers(ContainerTitleLayout.MeasuredLayout layout,
+                                                 boolean centered,
+                                                 int imageScale,
+                                                 Function<List<ContainerTitleLayout.Run>, String> serialize) {
         List<String> result = new ArrayList<>(layout.layers().size());
         for (int i = 0; i < layout.layers().size(); i++) {
             List<ContainerTitleLayout.Run> runs = layout.layers().get(i);
@@ -47,10 +65,18 @@ public final class ContainerTitleCodec {
             if (layout.shadowOverride(i)) {
                 marker = layout.unicode(i) ? UNICODE_SHADOW_OVERRIDE_MARKER : SHADOW_OVERRIDE_MARKER;
             }
+            boolean image = runs.getFirst().image();
+            if (image) {
+                marker = IMAGE_MARKER;
+            }
             StringBuilder line = new StringBuilder(marker);
             appendNumber(line, (int) x, 100000);
             line.append(y < 0 ? '-' : '+').append("0".repeat(Y_BYTES - 1 - magnitude.length())).append(magnitude);
-            line.append(serialize.apply(runs));
+            if (image) {
+                GuiGlyphImage.append(line, runs.getFirst().text(), imageScale);
+            } else {
+                line.append(serialize.apply(runs));
+            }
             result.add(line.toString());
         }
         return result;

@@ -10,7 +10,8 @@ import org.jetbrains.annotations.NotNull;
 public final class GeyserJavaPacketHandler extends SessionAdapter {
     private final GeyserPlayer player;
     private final GeyserJavaPackets packets;
-    private volatile Session connection;
+    private Session connection;
+    private boolean attached;
 
     public GeyserJavaPacketHandler(GeyserPlayer player, GeyserJavaPackets packets) {
         this.player = player;
@@ -23,14 +24,23 @@ public final class GeyserJavaPacketHandler extends SessionAdapter {
         }
         this.close();
         this.connection = connection;
-        connection.addListener(this);
+        return this.activate();
+    }
+
+    public synchronized boolean activate() {
+        if (this.attached || this.connection == null || this.player.isClosed() || !this.packets.hasObservers()) {
+            return false;
+        }
+        this.connection.addListener(this);
+        this.attached = true;
         return true;
     }
 
     public synchronized void close() {
         Session previous = this.connection;
-        if (previous != null) {
-            this.connection = null;
+        this.connection = null;
+        if (this.attached) {
+            this.attached = false;
             previous.removeListener(this);
         }
     }

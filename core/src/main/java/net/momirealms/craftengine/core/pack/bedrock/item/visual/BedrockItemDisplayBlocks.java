@@ -8,6 +8,7 @@ import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.block.BedrockBlockDefinitions;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry.EdgeMerging;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
 import net.momirealms.craftengine.core.pack.bedrock.texture.BedrockTerrainAtlas;
@@ -92,7 +93,7 @@ public final class BedrockItemDisplayBlocks {
                     BedrockElementGeometry.Material material = bindTexture(new TextureKey(layers.get(layer), color), bindings, images, textures);
                     TextureData data = textures.read(layers.get(layer), TextureUsage.ITEM);
                     int size = Math.max(data.image().getWidth(), data.image().getHeight());
-                    BedrockGeneratedGeometry.addLayer(part, data, material.name(), layer, size, size, mergeEdges);
+                    BedrockGeneratedGeometry.addLayer(part, textures.outline(data), material.name(), layer, size, size, mergeEdges ? EdgeMerging.SOLID_TEXTURE : EdgeMerging.NONE);
                 }
             } else if (model.kind() == JavaModel.GeometryKind.ELEMENTS) {
                 Map<JavaModel.Face, BedrockElementGeometry.Material> faces = new LinkedHashMap<>();

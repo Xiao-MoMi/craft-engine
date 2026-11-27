@@ -4,16 +4,19 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import net.momirealms.craftengine.bedrock.BedrockPackLayout;
 import net.momirealms.craftengine.core.util.GsonHelper;
 import net.momirealms.craftengine.core.util.Key;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 final class BedrockAttachableSharing {
     private static final Pattern PRIVATE_ID = Pattern.compile("(?:controller\\.render|animation)\\.ce\\.[a-z0-9_./-]+");
@@ -21,7 +24,45 @@ final class BedrockAttachableSharing {
     private BedrockAttachableSharing() {
     }
 
-    static void share(Path pack, List<String> files, Map<String, JsonObject> documents, Map<String, String> aliases) throws IOException {
+    static void writeSharedPoses(Path pack, Map<String, JsonObject> animationBundles, BedrockDefinitionIndex index) throws IOException {
+        Map<String, String> aliases = new HashMap<>();
+        for (JsonObject bundle : animationBundles.values()) {
+            for (Map.Entry<String, JsonElement> entry : bundle.getAsJsonObject("animations").entrySet()) {
+                if (entry.getKey().startsWith("animation.ce.") && isStaticPose(entry.getValue())) {
+                    aliases.put(entry.getKey(), entry.getKey());
+                }
+            }
+        }
+        if (!aliases.isEmpty()) {
+            List<String> files = new ArrayList<>(animationBundles.keySet());
+            try (Stream<Path> paths = Files.walk(pack)) {
+                paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".json"))
+                        .map(path -> pack.relativize(path).toString().replace('\\', '/'))
+                        .forEach(files::add);
+            }
+            Map<String, JsonObject> documents = new HashMap<>(animationBundles);
+            share(pack, files, documents, aliases, index);
+            aliases.entrySet().removeIf(entry -> entry.getKey().equals(entry.getValue()));
+            if (!aliases.isEmpty()) {
+                for (Map.Entry<String, JsonObject> entry : documents.entrySet()) {
+                    if (entry.getKey().startsWith("attachables/")) {
+                        JsonObject description = entry.getValue().getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
+                        if (GsonHelper.replaceStringValues(description, "animations", aliases)) {
+                            index.attachables.put(entry.getKey(), entry.getValue());
+                            index.dirtyAttachables.add(entry.getKey());
+                        }
+                    }
+                }
+            }
+        }
+        for (Map.Entry<String, JsonObject> entry : animationBundles.entrySet()) {
+            Path output = pack.resolve(entry.getKey());
+            Files.createDirectories(output.getParent());
+            GsonHelper.writeJsonFile(entry.getValue(), output);
+        }
+    }
+
+    static void share(Path pack, List<String> files, Map<String, JsonObject> documents, Map<String, String> aliases, BedrockDefinitionIndex index) throws IOException {
         Map<String, Use> uses = new HashMap<>();
         for (String id : aliases.keySet()) {
             if (id.startsWith("controller.render.ce.") || id.startsWith("animation.ce.")) {
@@ -31,14 +72,20 @@ final class BedrockAttachableSharing {
         if (uses.isEmpty()) {
             return;
         }
+        Object2IntMaps.fastForEach(index.occurrences, entry -> countReferences(entry.getKey(), uses, entry.getIntValue()));
         int owner = 0;
         for (String file : files) {
+            if (index.indexedFiles.contains(file)) {
+                continue;
+            }
             JsonElement document = documents.get(file);
+            if (document == null) {
+                document = index.attachables.get(file);
+            }
             if (document == null) {
                 document = GsonHelper.readJsonFromFile(pack.resolve(file));
             }
-            if (file.startsWith("attachables/")) {
-                JsonObject attachable = document.getAsJsonObject();
+            if (file.startsWith("attachables/") && document instanceof JsonObject attachable && attachable.has("minecraft:attachable")) {
                 documents.put(file, attachable);
                 JsonObject description = attachable.getAsJsonObject("minecraft:attachable").getAsJsonObject("description");
                 String identifier = description.get("identifier").getAsString();
@@ -48,10 +95,11 @@ final class BedrockAttachableSharing {
             }
             countReferences(document, uses);
         }
-        for (String file : files) {
+        for (Map.Entry<String, JsonObject> entry : documents.entrySet()) {
+            String file = entry.getKey();
             boolean animation = file.startsWith("animations/");
             if (animation || file.startsWith("render_controllers/")) {
-                JsonObject definitions = documents.get(file).getAsJsonObject(animation ? "animations" : "render_controllers");
+                JsonObject definitions = entry.getValue().getAsJsonObject(animation ? "animations" : "render_controllers");
                 if (definitions != null) {
                     shareDefinitions(definitions, animation, uses, aliases);
                 }
@@ -96,7 +144,7 @@ final class BedrockAttachableSharing {
     private static void countReferences(JsonElement value, Map<String, Use> uses) {
         if (value instanceof JsonObject object) {
             for (Map.Entry<String, JsonElement> entry : object.entrySet()) {
-                countReferences(entry.getKey(), uses);
+                countReferences(entry.getKey(), uses, 1);
                 countReferences(entry.getValue(), uses);
             }
         } else if (value instanceof JsonArray array) {
@@ -104,20 +152,20 @@ final class BedrockAttachableSharing {
                 countReferences(entry, uses);
             }
         } else if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
-            countReferences(value.getAsString(), uses);
+            countReferences(value.getAsString(), uses, 1);
         }
     }
 
-    private static void countReferences(String text, Map<String, Use> uses) {
+    private static void countReferences(String text, Map<String, Use> uses, int count) {
         Use exact = uses.get(text);
         if (exact != null) {
-            exact.references++;
+            exact.references += count;
         } else if (text.contains("animation.ce.") || text.contains("controller.render.ce.")) {
             Matcher matches = PRIVATE_ID.matcher(text);
             while (matches.find()) {
                 Use use = uses.get(matches.group());
                 if (use != null) {
-                    use.references++;
+                    use.references += count;
                 }
             }
         }

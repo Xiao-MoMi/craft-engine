@@ -17,9 +17,19 @@ public final class FontData {
     private static final float DEFAULT_BOLD_OFFSET = 1;
     public static final FontData EMPTY = new FontData(Map.of());
     private final Map<String, Font> fonts;
+    private final Map<String, Int2ObjectMap<String>> guiImages;
 
     public FontData(Map<String, Font> fonts) {
+        this(fonts, Map.of());
+    }
+
+    public FontData(Map<String, Font> fonts, Map<String, Int2ObjectMap<String>> guiImages) {
         this.fonts = Collections.unmodifiableMap(new LinkedHashMap<>(fonts));
+        this.guiImages = Map.copyOf(guiImages);
+    }
+
+    public Map<String, Int2ObjectMap<String>> guiImages() {
+        return this.guiImages;
     }
 
     public Font font(String id) {
@@ -47,34 +57,20 @@ public final class FontData {
     }
 
     public static final class Font {
-        private static final Font MISSING = new Font(Int2ObjectMaps.emptyMap());
+        private static final Font MISSING = new Font(new Rendering(), null, false);
         final Int2ObjectMap<WidthPage> pages = new Int2ObjectOpenHashMap<>();
         final BitSet hudUnicode;
         final boolean nativeFallback;
-        private final Int2ObjectMap<FontGlyph> rendering;
+        final Rendering rendering;
 
-        Font(Int2ObjectMap<FontGlyph> rendering) {
-            this(rendering, null, false);
-        }
-
-        Font(Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
-            this.rendering = Int2ObjectMaps.unmodifiable(rendering);
+        Font(Rendering rendering, BitSet hudUnicode, boolean nativeFallback) {
+            this.rendering = rendering;
             this.hudUnicode = hudUnicode;
             this.nativeFallback = nativeFallback;
         }
 
         public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
-                                  Int2ObjectMap<FontGlyph> rendering) {
-            return of(glyphs, advance, boldOffset, rendering, null);
-        }
-
-        public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
-                                  Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode) {
-            return of(glyphs, advance, boldOffset, rendering, hudUnicode, false);
-        }
-
-        public static <T> Font of(Int2ObjectMap<T> glyphs, ToDoubleFunction<T> advance, ToDoubleFunction<T> boldOffset,
-                                  Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
+                                  Rendering rendering, BitSet hudUnicode, boolean nativeFallback) {
             Font font = new Font(rendering, hudUnicode, nativeFallback);
             Int2ObjectMaps.fastForEach(glyphs, entry -> {
                 int code = entry.getIntKey();
@@ -94,12 +90,39 @@ public final class FontData {
             return page.advances[index] + (bold ? page.boldOffsets[index] : 0);
         }
 
-        public Int2ObjectMap<FontGlyph> rendering() {
-            return this.rendering;
+        public FontGlyph glyph(int codepoint) {
+            return this.rendering.get(codepoint);
+        }
+
+        public Int2ObjectMap<FontGlyph> mappedGlyphs() {
+            return Int2ObjectMaps.unmodifiable(this.rendering.mapped);
+        }
+
+        public boolean hasRendering() {
+            return !this.rendering.mapped.isEmpty() || !this.rendering.fallback.isEmpty();
         }
 
         public boolean hudUnicode(int codepoint) {
             return this.hudUnicode != null && this.hudUnicode.get(codepoint);
+        }
+    }
+
+    public static final class Rendering {
+        final BitSet fallback = new BitSet();
+        final Int2ObjectMap<FontGlyph> mapped = new Int2ObjectOpenHashMap<>();
+
+        public FontGlyph get(int codepoint) {
+            return codepoint >= 0 && this.fallback.get(codepoint) ? FontGlyph.IDENTITY_FALLBACK : this.mapped.get(codepoint);
+        }
+
+        public void put(int codepoint, FontGlyph glyph) {
+            if (glyph == FontGlyph.IDENTITY_FALLBACK || (glyph.character() == codepoint && glyph.renderedAdvance() == FontGlyph.NATIVE_FALLBACK && glyph.bearing() == 0)) {
+                this.fallback.set(codepoint);
+                this.mapped.remove(codepoint);
+            } else {
+                this.fallback.clear(codepoint);
+                this.mapped.put(codepoint, glyph);
+            }
         }
     }
 

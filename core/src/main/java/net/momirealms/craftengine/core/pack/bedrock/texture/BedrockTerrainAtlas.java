@@ -46,7 +46,7 @@ public final class BedrockTerrainAtlas {
         if (animation != null) {
             int frameLimit = MAX_FLIPBOOK_SIZE / Math.max(animation.width(), animation.height());
             if (!canBakeInterpolation(animation, frameLimit)) {
-                keyFrameInterval(animation, frameLimit, texture);
+                keyFrameInterval(animation, animation.keyFrames(), frameLimit, texture);
             }
         }
     }
@@ -55,9 +55,9 @@ public final class BedrockTerrainAtlas {
         return animation.interpolate() && animation.duration() <= frameLimit;
     }
 
-    private static int keyFrameInterval(TextureAnimation animation, int frameLimit, String texture) {
+    private static int keyFrameInterval(TextureAnimation animation, TextureAnimation.KeyFrames frames, int frameLimit, String texture) {
         int interval = animation.interpolate() ? animation.uniformFrameTime() : animation.sampleInterval();
-        if (interval == 0 || animation.keyFrameCount() > frameLimit) {
+        if (interval == 0 || frames.size() > frameLimit) {
             throw new UnsupportedOperationException("texture " + texture + " cannot fit its animation in a " + MAX_FLIPBOOK_SIZE + " px Bedrock flipbook while preserving frame timing");
         }
         return interval;
@@ -79,7 +79,8 @@ public final class BedrockTerrainAtlas {
         } else {
             int frameLimit = MAX_FLIPBOOK_SIZE / size;
             boolean bakeInterpolation = canBakeInterpolation(animation, frameLimit);
-            int interval = bakeInterpolation ? 1 : keyFrameInterval(animation, frameLimit, tile);
+            TextureAnimation.KeyFrames frames = bakeInterpolation ? null : animation.keyFrames();
+            int interval = bakeInterpolation ? 1 : keyFrameInterval(animation, frames, frameLimit, tile);
             JsonObject flipbook = new JsonObject();
             BufferedImage strip;
             if (bakeInterpolation) {
@@ -92,9 +93,9 @@ public final class BedrockTerrainAtlas {
                 });
                 first = strip.getSubimage(0, 0, size, size);
             } else {
-                strip = animation.keyFrameStrip(color);
-                flipbook.add("frames", animation.frameSequence(interval));
-                first = strip.getSubimage(0, animation.frames().getFirst().index() * size, size, size);
+                strip = frames.strip(color);
+                flipbook.add("frames", frames.sequence(interval));
+                first = strip.getSubimage(0, 0, size, size);
             }
             ImageUtils.writePng(strip, root.resolve(path + "_anim.png"));
             flipbook.addProperty("atlas_tile", tile);

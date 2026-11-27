@@ -14,12 +14,23 @@ import java.util.*;
 
 final class FontDataJson extends TypeAdapter<FontData> {
     static final FontDataJson INSTANCE = new FontDataJson();
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
 
     @Override
     public void write(JsonWriter writer, FontData data) throws IOException {
         writer.beginObject();
         writer.name("version").value(VERSION);
+        if (!data.guiImages().isEmpty()) {
+            writer.name("gui_images").beginObject();
+            for (String font : new TreeSet<>(data.guiImages().keySet())) {
+                writer.name(font).beginObject();
+                for (Int2ObjectMap.Entry<String> image : Int2ObjectMaps.fastIterable(data.guiImages().get(font))) {
+                    writer.name(Integer.toHexString(image.getIntKey())).value(image.getValue());
+                }
+                writer.endObject();
+            }
+            writer.endObject();
+        }
         writer.name("width_pages");
         Map<String, int[]> references = writeWidthPages(writer, data.fonts());
         writer.name("fonts").beginObject();
@@ -33,22 +44,43 @@ final class FontDataJson extends TypeAdapter<FontData> {
             if (entry.getValue().nativeFallback) {
                 writer.name("native_fallback").value(true);
             }
-            BitSet unicode = entry.getValue().hudUnicode;
+            FontData.Font font = entry.getValue();
+            BitSet unicode = font.hudUnicode;
             if (unicode != null) {
-                writer.name("hud_unicode_ranges").beginArray();
-                for (int start = unicode.nextSetBit(0); start >= 0;) {
-                    int end = unicode.nextClearBit(start);
-                    writer.value(start).value(end);
-                    start = unicode.nextSetBit(end);
-                }
-                writer.endArray();
+                writeRanges(writer.name("hud_unicode_ranges"), unicode);
+            }
+            if (!font.rendering.fallback.isEmpty()) {
+                writeRanges(writer.name("identity_fallback_ranges"), font.rendering.fallback);
             }
             writer.name("rendering");
-            writeRendering(writer, entry.getValue().rendering());
+            writeRendering(writer, font.rendering.mapped);
             writer.endObject();
         }
         writer.endObject();
         writer.endObject();
+    }
+
+    private static void writeRanges(JsonWriter writer, BitSet ranges) throws IOException {
+        writer.beginArray();
+        for (int start = ranges.nextSetBit(0); start >= 0;) {
+            int end = ranges.nextClearBit(start);
+            writer.value(start).value(end);
+            start = ranges.nextSetBit(end);
+        }
+        writer.endArray();
+    }
+
+    private static void readRanges(JsonReader reader, BitSet ranges) throws IOException {
+        reader.beginArray();
+        while (reader.hasNext()) {
+            int start = reader.nextInt();
+            int end = reader.nextInt();
+            if (start < 0 || end < start || end > Character.MAX_CODE_POINT + 1) {
+                throw new IllegalArgumentException("Invalid font codepoint range");
+            }
+            ranges.set(start, end);
+        }
+        reader.endArray();
     }
 
     private static Map<String, int[]> writeWidthPages(JsonWriter writer, Map<String, FontData.Font> fonts) throws IOException {
@@ -104,12 +136,32 @@ final class FontDataJson extends TypeAdapter<FontData> {
             throw new IllegalArgumentException("Missing craftengine/fonts.json; regenerate the Bedrock pack");
         }
         int version = -1;
+        Map<String, Int2ObjectMap<String>> guiImages = new HashMap<>();
         List<FontData.WidthPage> pages = null;
         Map<String, Definition> definitions = null;
         reader.beginObject();
         while (reader.hasNext()) {
             switch (reader.nextName()) {
-                case "version" -> version = reader.nextInt();
+                case "version" -> {
+                    version = reader.nextInt();
+                    if (version != VERSION) {
+                        throw new IllegalArgumentException("Unsupported craftengine/fonts.json version " + version + "; regenerate the Bedrock pack");
+                    }
+                }
+                case "gui_images" -> {
+                    reader.beginObject();
+                    while (reader.hasNext()) {
+                        String font = reader.nextName();
+                        Int2ObjectMap<String> images = new Int2ObjectOpenHashMap<>();
+                        reader.beginObject();
+                        while (reader.hasNext()) {
+                            images.put(Integer.parseInt(reader.nextName(), 16), reader.nextString());
+                        }
+                        reader.endObject();
+                        guiImages.put(font, images);
+                    }
+                    reader.endObject();
+                }
                 case "width_pages" -> {
                     pages = new ArrayList<>();
                     ObjectOpenCustomHashSet<float[]> sharedBoldOffsets = new ObjectOpenCustomHashSet<>(FloatArrays.HASH_STRATEGY);
@@ -146,13 +198,14 @@ final class FontDataJson extends TypeAdapter<FontData> {
             }
             fonts.put(entry.getKey(), font);
         }
-        return new FontData(fonts);
+        return new FontData(fonts, guiImages);
     }
 
     private static Definition readDefinition(JsonReader reader) throws IOException {
         IntArrayList pages = null;
         BitSet hudUnicode = null;
-        Int2ObjectMap<FontGlyph> rendering = null;
+        FontData.Rendering rendering = new FontData.Rendering();
+        boolean hasRendering = false;
         boolean nativeFallback = false;
         reader.beginObject();
         while (reader.hasNext()) {
@@ -160,17 +213,9 @@ final class FontDataJson extends TypeAdapter<FontData> {
                 case "native_fallback" -> nativeFallback = reader.nextBoolean();
                 case "hud_unicode_ranges" -> {
                     hudUnicode = new BitSet();
-                    reader.beginArray();
-                    while (reader.hasNext()) {
-                        int start = reader.nextInt();
-                        int end = reader.nextInt();
-                        if (start < 0 || end < start || end > Character.MAX_CODE_POINT + 1) {
-                            throw new IllegalArgumentException("Invalid HUD font range");
-                        }
-                        hudUnicode.set(start, end);
-                    }
-                    reader.endArray();
+                    readRanges(reader, hudUnicode);
                 }
+                case "identity_fallback_ranges" -> readRanges(reader, rendering.fallback);
                 case "pages" -> {
                     pages = new IntArrayList();
                     reader.beginArray();
@@ -180,7 +225,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
                     reader.endArray();
                 }
                 case "rendering" -> {
-                    rendering = new Int2ObjectOpenHashMap<>();
+                    hasRendering = true;
                     reader.beginObject();
                     while (reader.hasNext()) {
                         int code = Integer.parseInt(reader.nextName(), 16);
@@ -192,7 +237,7 @@ final class FontDataJson extends TypeAdapter<FontData> {
             }
         }
         reader.endObject();
-        if (pages == null || rendering == null) {
+        if (pages == null || !hasRendering) {
             throw new IllegalArgumentException("Incomplete font definition in craftengine/fonts.json");
         }
         return new Definition(pages, rendering, hudUnicode, nativeFallback);
@@ -212,9 +257,10 @@ final class FontDataJson extends TypeAdapter<FontData> {
             }
         }
         reader.endObject();
-        return new FontGlyph(character, advance, bearing);
+        return character == code && advance == FontGlyph.NATIVE_FALLBACK && bearing == 0
+                ? FontGlyph.IDENTITY_FALLBACK : new FontGlyph(character, advance, bearing);
     }
 
-    private record Definition(IntArrayList pages, Int2ObjectMap<FontGlyph> rendering, BitSet hudUnicode, boolean nativeFallback) {
+    private record Definition(IntArrayList pages, FontData.Rendering rendering, BitSet hudUnicode, boolean nativeFallback) {
     }
 }

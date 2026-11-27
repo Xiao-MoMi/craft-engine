@@ -1,7 +1,12 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.model;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMaps;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.momirealms.craftengine.bedrock.geyser.item.GeyserDyeProperties;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
 import net.momirealms.craftengine.bedrock.network.NativeModelPayload;
@@ -54,21 +59,24 @@ public final class GeyserNativeModels {
     }
 
     public final class Connection {
+        private static final int REMOVED = 1;
+        private static final int ADDED = 2;
         private final GeyserSession session;
         private final Map<UUID, Instance> instances = new HashMap<>();
-        private final Set<Integer> hidden = ConcurrentHashMap.newKeySet();
+        private final ConcurrentHashMap<Integer, Integer> hidden = new ConcurrentHashMap<>();
+        private final Int2IntOpenHashMap displayChanges = new Int2IntOpenHashMap();
         private final Map<Long, Integer> targets = new ConcurrentHashMap<>();
         private final ModelEngineAnchors anchors;
 
         private Connection(GeyserSession session) {
             this.session = session;
-            this.anchors = new ModelEngineAnchors(session, this.hidden);
+            this.anchors = new ModelEngineAnchors(session, this.hidden.keySet());
         }
 
         public void onAddEntity(GeyserPacketEvent<AddEntityPacket> event) {
             if (!this.hidden.isEmpty()) {
                 Entity entity = this.session.getEntityCache().getEntityByGeyserId(event.packet().getRuntimeEntityId());
-                if (entity != null && this.hidden.contains(entity.getEntityId())) {
+                if (entity != null && this.hidden.containsKey(entity.getEntityId())) {
                     event.setCancelled(true);
                     return;
                 }
@@ -138,7 +146,7 @@ public final class GeyserNativeModels {
             if (instance != null) {
                 this.targets.remove(instance.entity.geyserId());
                 this.session.getEntityCache().removeEntity(instance.entity);
-                this.refreshHidden();
+                this.replaceHidden(instance.state.displays(), List.of());
                 this.anchors.replace(instance.state.anchors(), List.of());
             }
         }
@@ -162,15 +170,15 @@ public final class GeyserNativeModels {
                 entity.updatePropertiesBatched(batch -> model.apply(batch, state, null), false);
                 instance = new Instance(entity, state);
                 this.instances.put(state.instance(), instance);
-                this.refreshHidden();
+                this.replaceHidden(List.of(), state.displays());
                 this.anchors.replace(List.of(), state.anchors());
                 this.session.getEntityCache().spawnEntity(entity);
             } else {
-                boolean displaysChanged = !instance.state.displays().equals(state.displays());
+                List<Integer> previousDisplays = instance.state.displays();
                 List<UUID> previousAnchors = instance.state.anchors();
                 instance.state = state;
-                if (displaysChanged) {
-                    this.refreshHidden();
+                if (delta.displays() != null) {
+                    this.replaceHidden(previousDisplays, state.displays());
                 }
                 if (delta.anchors() != null) {
                     this.anchors.replace(previousAnchors, state.anchors());
@@ -193,29 +201,41 @@ public final class GeyserNativeModels {
             }
         }
 
-        private void refreshHidden() {
-            Set<Integer> active = new HashSet<>();
-            for (Instance instance : this.instances.values()) {
-                active.addAll(instance.state.displays());
+        private void replaceHidden(List<Integer> previous, List<Integer> current) {
+            this.displayChanges.clear();
+            for (int id : previous) {
+                this.displayChanges.put(id, REMOVED);
             }
-            Set<Integer> restored = new HashSet<>(this.hidden);
-            restored.removeAll(active);
-            Set<Integer> added = new HashSet<>(active);
-            added.removeAll(this.hidden);
-            this.hidden.clear();
-            this.hidden.addAll(active);
-            // Keep Java entities cached so metadata and interaction IDs remain valid while their renderers are hidden.
-            for (int id : added) {
-                Entity entity = this.session.getEntityCache().getEntityByJavaId(id);
-                if (entity != null) {
+            for (int id : current) {
+                this.displayChanges.put(id, this.displayChanges.get(id) | ADDED);
+            }
+            // 只统计当前实例新增或移出的 ID。先提交所有引用计数，再重建客户端实体，以便生成包看到最终状态。
+            for (Int2IntMap.Entry change : Int2IntMaps.fastIterable(this.displayChanges)) {
+                int id = change.getIntKey();
+                if (change.getIntValue() == ADDED) {
+                    if (this.hidden.merge(id, 1, Integer::sum) != 1) {
+                        change.setValue(0);
+                    }
+                } else if (change.getIntValue() == REMOVED) {
+                    if (this.hidden.computeIfPresent(id, (key, count) -> count == 1 ? null : count - 1) != null) {
+                        change.setValue(0);
+                    }
+                }
+            }
+            for (Int2IntMap.Entry change : Int2IntMaps.fastIterable(this.displayChanges)) {
+                int transition = change.getIntValue();
+                if (transition != REMOVED && transition != ADDED) {
+                    continue;
+                }
+                Entity entity = this.session.getEntityCache().getEntityByJavaId(change.getIntKey());
+                if (entity == null) {
+                    continue;
+                }
+                if (transition == ADDED) {
                     RemoveEntityPacket remove = new RemoveEntityPacket();
                     remove.setUniqueEntityId(entity.geyserId());
                     this.session.sendUpstreamPacket(remove);
-                }
-            }
-            for (int id : restored) {
-                Entity entity = this.session.getEntityCache().getEntityByJavaId(id);
-                if (entity != null) {
+                } else {
                     entity.spawnEntity();
                 }
             }
@@ -235,7 +255,8 @@ public final class GeyserNativeModels {
     private static final class Model {
         private final Identifier id;
         private final boolean supportsDye;
-        private final List<String> animations = new ArrayList<>();
+        private final Object2IntOpenHashMap<String> animationIndices = new Object2IntOpenHashMap<>();
+        private final int animationCount;
         private final Map<String, Integer> boneIndices = new HashMap<>();
         private final List<GeyserIntEntityProperty> animationProperties = new ArrayList<>();
         private final List<GeyserIntEntityProperty> boneProperties = new ArrayList<>();
@@ -248,7 +269,12 @@ public final class GeyserNativeModels {
         private Model(JsonObject data) {
             this.id = Identifier.of(data.get("identifier").getAsString());
             this.supportsDye = data.get("dye").getAsBoolean();
-            data.getAsJsonArray("animations").forEach(name -> this.animations.add(name.getAsString()));
+            JsonArray animations = data.getAsJsonArray("animations");
+            this.animationCount = animations.size();
+            this.animationIndices.defaultReturnValue(-1);
+            for (int i = 0; i < this.animationCount; i++) {
+                this.animationIndices.putIfAbsent(animations.get(i).getAsString(), i);
+            }
             JsonObject bones = data.getAsJsonObject("bones");
             for (Map.Entry<String, JsonElement> entry : bones.entrySet()) {
                 String alias = entry.getValue().getAsString();
@@ -261,13 +287,15 @@ public final class GeyserNativeModels {
         }
 
         private void register(GeyserDefineEntityPropertiesEvent event) {
+            this.animationProperties.clear();
+            this.boneProperties.clear();
             if (this.supportsDye) {
                 this.dye = GeyserDyeProperties.register(event, this.id, "ce:model_dye");
             }
             this.sx = event.registerFloatProperty(this.id, Identifier.of("ce:model_sx"), -1000, 1000, 1f);
             this.sy = event.registerFloatProperty(this.id, Identifier.of("ce:model_sy"), -1000, 1000, 1f);
             this.sz = event.registerFloatProperty(this.id, Identifier.of("ce:model_sz"), -1000, 1000, 1f);
-            for (int i = 0; i < (this.animations.size() + 8) / 9; i++) {
+            for (int i = 0; i < (this.animationCount + 8) / 9; i++) {
                 this.animationProperties.add(event.registerIntegerProperty(this.id, Identifier.of("ce:model_anim" + i), 0, 262143, 0));
             }
             for (int i = 0; i < (this.boneIndices.size() + 18) / 19; i++) {
@@ -295,7 +323,7 @@ public final class GeyserNativeModels {
         private void applyAnimations(BatchPropertyUpdater batch, List<NativeModelPayload.Animation> animations) {
             int[] modes = new int[this.animationProperties.size()];
             for (NativeModelPayload.Animation animation : animations) {
-                int index = this.animations.indexOf(animation.name());
+                int index = this.animationIndices.getInt(animation.name());
                 if (index >= 0) {
                     modes[index / 9] |= animation.mode() << (index % 9 * 2);
                 }

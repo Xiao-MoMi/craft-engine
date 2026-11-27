@@ -11,7 +11,7 @@ import java.util.zip.ZipFile;
 
 public final class IndexedZipFile implements AutoCloseable {
     private final ZipFile archive;
-    private final Map<String, ZipEntry> entries;
+    private Map<String, ZipEntry> entries;
 
     public IndexedZipFile(Path path) throws IOException {
         this.archive = new ZipFile(path.toFile());
@@ -40,6 +40,10 @@ public final class IndexedZipFile implements AutoCloseable {
 
     public Collection<ZipEntry> entries() {
         return this.entries.values();
+    }
+
+    public void releaseIndex() {
+        this.entries = Map.of();
     }
 
     public InputStream getInputStream(ZipEntry entry) throws IOException {

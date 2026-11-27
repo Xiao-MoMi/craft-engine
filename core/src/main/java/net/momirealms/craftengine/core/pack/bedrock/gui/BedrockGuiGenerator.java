@@ -23,7 +23,7 @@ public final class BedrockGuiGenerator {
             }
             background = ClientPngReader.read(input);
         }
-        BedrockGuiWriter ui = new BedrockGuiWriter();
+        BedrockGuiWriter ui = new BedrockGuiWriter(BedrockTitleLayers.hasImages(root));
         for (int rows = 1; rows <= 6; rows++) {
             BufferedImage image = new BufferedImage(176, 114 + rows * 18, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = image.createGraphics();

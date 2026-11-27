@@ -89,6 +89,7 @@ public final class GeyserModelDisplayManager {
     }
 
     public void registerEntities(@Nullable JsonObject displays, GeyserDefineEntitiesEvent event) {
+        this.disable();
         if (displays == null) {
             return;
         }

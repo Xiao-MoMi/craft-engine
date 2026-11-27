@@ -2,6 +2,7 @@ package net.momirealms.craftengine.core.pack.bedrock.font;
 
 import it.unimi.dsi.fastutil.ints.*;
 import net.momirealms.craftengine.bedrock.text.FontGlyph;
+import net.momirealms.craftengine.bedrock.text.FontData;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.Key;
 
@@ -18,10 +19,10 @@ final class GlyphAtlas {
     private final Set<Glyph> unsupported = new HashSet<>();
     private final List<GlyphPage> pages = new ArrayList<>();
 
-    static Int2ObjectMap<FontGlyph> nativeFont(Int2ObjectMap<Glyph> glyphs) {
+    static FontData.Rendering nativeFont(Int2ObjectMap<Glyph> glyphs) {
         int[] codepoints = glyphs.keySet().toIntArray();
         IntArrays.quickSort(codepoints);
-        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.length);
+        FontData.Rendering result = new FontData.Rendering();
         for (int codepoint : codepoints) {
             Glyph glyph = glyphs.get(codepoint);
             if (glyph.advanceOnly()) {
@@ -40,10 +41,10 @@ final class GlyphAtlas {
 
     private static FontGlyph nativeGlyph(int codepoint, Glyph glyph) {
         int advance = glyph.nativeText() && glyph.image() != null ? (int) glyph.advance() : FontGlyph.NATIVE_FALLBACK;
-        return new FontGlyph(codepoint, advance, 0);
+        return advance == FontGlyph.NATIVE_FALLBACK ? FontGlyph.IDENTITY_FALLBACK : new FontGlyph(codepoint, advance, 0);
     }
 
-    Int2ObjectMap<FontGlyph> allocateFont(Key font, Int2ObjectMap<Glyph> glyphs) {
+    FontData.Rendering allocateFont(Key font, Int2ObjectMap<Glyph> glyphs, Set<Integer> guiOnly) {
         IntArrayList codepoints = new IntArrayList();
         Int2ObjectMaps.fastForEach(glyphs, entry -> {
             Glyph glyph = entry.getValue();
@@ -55,11 +56,12 @@ final class GlyphAtlas {
         IntArrays.quickSort(codepoints.elements(), 0, codepoints.size());
         // 多个字符可能引用同一字形，估算本字体所需空间时只计一个槽位。
         Set<Glyph> pending = new LinkedHashSet<>();
+        boolean hasImages = !guiOnly.isEmpty();
         for (int i = 0; i < codepoints.size(); i++) {
             int codepoint = codepoints.getInt(i);
             Glyph glyph = glyphs.get(codepoint);
             // 原生字符和纯间距字符无需绘制；此前已分配码位的字形可以复用原槽位。
-            if (glyph.nativeText() || glyph.advanceOnly() || this.allocations.containsKey(glyph) || this.unsupported.contains(glyph)) {
+            if ((hasImages && guiOnly.contains(codepoint)) || glyph.nativeText() || glyph.advanceOnly() || this.allocations.containsKey(glyph) || this.unsupported.contains(glyph)) {
                 continue;
             }
             // 测量得到的格子尺寸可供其他字体复用；失败也会记录，避免同一字形反复测量和告警。
@@ -79,17 +81,19 @@ final class GlyphAtlas {
         if (!allocate) {
             TranslationManager.warn("resource_pack.bedrock.font.capacity", font.asString());
         }
-        Int2ObjectMap<FontGlyph> result = new Int2ObjectLinkedOpenHashMap<>(codepoints.size());
+        FontData.Rendering result = new FontData.Rendering();
         for (int i = 0; i < codepoints.size(); i++) {
             int codepoint = codepoints.getInt(i);
             Glyph glyph = glyphs.get(codepoint);
-            if (glyph.nativeText()) {
+            if (hasImages && guiOnly.contains(codepoint)) {
+                result.put(codepoint, FontGlyph.IDENTITY_FALLBACK);
+            } else if (glyph.nativeText()) {
                 result.put(codepoint, nativeGlyph(codepoint, glyph));
             } else if (glyph.advanceOnly()) {
                 result.put(codepoint, spaceGlyph(codepoint, glyph.advance()));
             } else if (!allocate) {
                 FontGlyph existing = this.allocations.get(glyph);
-                result.put(codepoint, existing == null ? new FontGlyph(codepoint, FontGlyph.NATIVE_FALLBACK, 0) : existing);
+                result.put(codepoint, existing == null ? FontGlyph.IDENTITY_FALLBACK : existing);
             } else if (!this.unsupported.contains(glyph)) {
                 result.put(codepoint, this.allocateBitmap(glyph));
             }

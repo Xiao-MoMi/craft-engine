@@ -34,6 +34,7 @@ public final class GeyserBlockManager {
 
     public void registerBlocks(JsonObject plan, GeyserDefineCustomBlocksEvent event) {
         this.displayBlocks.clear();
+        this.worldBlocks.clearPending();
         if (plan == null) {
             return;
         }
@@ -80,7 +81,9 @@ public final class GeyserBlockManager {
     }
 
     public GeyserBlockPlacementHandler initPlayer(GeyserPlayer player) {
-        player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
+        if (!this.worldBlocks.isEmpty()) {
+            player.blockBreakHandler(new GeyserBlockBreakHandler(player.session(), this.worldBlocks));
+        }
         return this.placementItems.isEmpty() ? null : new GeyserBlockPlacementHandler(player.session(), this.placementItems);
     }
 

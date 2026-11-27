@@ -100,7 +100,8 @@ public final class GeyserItemRegistrationAdapter {
             head = buildDefinition(model, variant, headId, id, displayBlocks, 0, displayName);
         }
         boolean inventoryVisible = !variant.has(WORLD_VIEW) && (!variant.has(INVENTORY_VISIBLE) || variant.get(INVENTORY_VISIBLE).getAsBoolean());
-        return new ConvertedVariant(definition, head, tintSources(resources), inventoryVisible ? creativeCategory : null);
+        return new ConvertedVariant(definition, head, tintSources(resources), inventoryVisible ? creativeCategory : null,
+                variant.has(WORLD_VIEW) ? variant.get(WORLD_VIEW).getAsString() : null);
     }
 
     private static Map<String, Integer> tintSources(JsonObject resources) {
@@ -206,6 +207,7 @@ public final class GeyserItemRegistrationAdapter {
     public record ConvertedVariant(CustomItemDefinition definition,
                                    @Nullable CustomItemDefinition head,
                                    Map<String, Integer> tintSources,
-                                   @Nullable CreativeItemCategory creativeCategory) {
+                                   @Nullable CreativeItemCategory creativeCategory,
+                                   @Nullable String worldView) {
     }
 }

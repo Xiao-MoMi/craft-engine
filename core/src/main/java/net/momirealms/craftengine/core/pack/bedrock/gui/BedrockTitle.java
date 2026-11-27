@@ -26,7 +26,8 @@ public final class BedrockTitle {
         Files.createDirectories(path.getParent());
         JsonObject hud = Files.isRegularFile(path) ? GsonHelper.readJsonObjectFromFile(path) : new JsonObject();
         hud.addProperty("namespace", "hud");
-        BedrockActionBar.add(hud);
+        boolean images = BedrockTitleLayers.hasImages(root);
+        BedrockActionBar.add(hud, images);
         JsonArray nativeBindings = children(global("#hud_title_text_string", "#ce_display"));
         bind(nativeBindings, "(not (#ce_display = '" + TitleFrame.DISPLAY + "'))", "#visible");
         hud.add("hud_title_text", createObject("bindings", nativeBindings));
@@ -35,7 +36,7 @@ public final class BedrockTitle {
         host.addProperty("type", "panel");
         host.addProperty("layer", layer);
         host.addProperty("propagate_alpha", true);
-        host.add("controls", children(channel(hud, false), channel(hud, true)));
+        host.add("controls", children(channel(hud, false, images), channel(hud, true, images)));
         // A float property preserves fractional opacity in Bedrock's view expressions.
         JsonObject properties = new JsonObject();
         properties.addProperty("#ce_alpha_scale", 1.0 / 255.0);
@@ -72,7 +73,7 @@ public final class BedrockTitle {
         GsonHelper.writeJsonFile(hud, path);
     }
 
-    private static JsonObject channel(JsonObject hud, boolean subtitle) {
+    private static JsonObject channel(JsonObject hud, boolean subtitle, boolean images) {
         String collection = subtitle ? "ce_subtitle_display_layers" : "ce_title_display_layers";
         String template = collection + "_entry";
         JsonObject factory = new JsonObject();
@@ -129,7 +130,7 @@ public final class BedrockTitle {
         plain.add(fromControl(HOST, subtitle ? "#ce_subtitle_background" : "#ce_title_background", "#ce_plain"));
         bind(plain, "(#ce_plain and (#ce_collection_index = 0))", "#visible");
         background.add("bindings", plain);
-        hud.add(template, BedrockTitleLayers.titleLayer(label, bindings, subtitle ? 2 : 4, background));
+        hud.add(template, BedrockTitleLayers.titleLayer(label, bindings, subtitle ? 2 : 4, background, images));
         return createObject(collection, layers);
     }
 

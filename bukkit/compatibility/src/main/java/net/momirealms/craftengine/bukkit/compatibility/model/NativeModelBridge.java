@@ -124,7 +124,7 @@ public abstract class NativeModelBridge<T, V> implements Listener {
             } else if (!this.online.isEmpty()) {
                 BedrockModelIntegration mode = model.mode(this.namespace, settings);
                 if (mode != BedrockModelIntegration.DISABLED && model.prepare()) {
-                    this.syncModel(model, mode, tick, refresh);
+                    this.syncModel(model, mode, tick, (tick + model.visibilityPhase) % 20 == 0);
                 }
             }
         }
@@ -182,15 +182,18 @@ public abstract class NativeModelBridge<T, V> implements Listener {
         NativeModelPayload.Snapshot previous = model.snapshot;
         this.visibleViewers.clear();
         boolean newViewer = false;
-        NativeModelPayload.Delta delta = null;
-        for (int i = 0; i < this.online.size(); i++) {
-            Viewer viewer = this.online.get(i);
-            if (!model.visible(viewer.visibility)) {
-                continue;
+        Set<UUID> tracked = model.trackedViewers();
+        if (tracked != null && tracked.size() < this.online.size()) {
+            for (UUID id : tracked) {
+                Viewer viewer = this.viewers.get(id);
+                if (viewer != null && viewer.seen == tick) {
+                    newViewer |= this.collectVisible(model, viewer);
+                }
             }
-            viewer.prior = viewer.models.get(model.id);
-            newViewer |= viewer.prior == null;
-            this.visibleViewers.add(viewer);
+        } else {
+            for (int i = 0; i < this.online.size(); i++) {
+                newViewer |= this.collectVisible(model, this.online.get(i));
+            }
         }
         if (this.visibleViewers.isEmpty()) {
             return;
@@ -207,48 +210,65 @@ public abstract class NativeModelBridge<T, V> implements Listener {
         } finally {
             this.parts.clear();
         }
+        ClientboundNativeModelPacket full = null;
+        ClientboundNativeModelPacket delta = null;
+        Map<NativeModelPayload.NativeState, ClientboundNativeModelPacket> catchUp = null;
         for (int i = 0; i < this.visibleViewers.size(); i++) {
             Viewer viewer = this.visibleViewers.get(i);
             Sent sent = viewer.prior;
             viewer.prior = null;
-            if (sent == null) {
-                viewer.send(current);
-                viewer.models.put(model.id, new Sent(model, current, tick));
-                if (current instanceof NativeModelPayload.NativeState nativeState) {
-                    model.nativeDisplays(viewer.player, viewer.visibility, List.of(), nativeState.displays());
-                }
-                continue;
-            }
-            NativeModelPayload.Snapshot old = sent.snapshot;
+            NativeModelPayload.Snapshot old = sent == null ? null : sent.snapshot;
             if (!refresh && old == current) {
                 sent.seen = tick;
                 continue;
             }
-            NativeModelPayload update = current;
-            if (old.getClass() != current.getClass() || !old.model().equals(current.model())) {
+            ClientboundNativeModelPacket update = null;
+            if (old != null && (old.getClass() != current.getClass() || !old.model().equals(current.model()))) {
                 sent.release(viewer);
                 viewer.send(old.remove());
             } else if (!refresh && current instanceof NativeModelPayload.NativeState state && old instanceof NativeModelPayload.NativeState last) {
                 // 观察到同一上次快照的玩家共用增量，其余玩家从自己最后成功接收的状态追上。
                 if (old == previous) {
                     if (delta == null) {
-                        delta = state.changesSince(last);
+                        delta = new ClientboundNativeModelPacket(state.changesSince(last));
                     }
                     update = delta;
                 } else {
-                    update = state.changesSince(last);
+                    if (catchUp == null) {
+                        catchUp = new IdentityHashMap<>();
+                    }
+                    update = catchUp.computeIfAbsent(last, prior -> new ClientboundNativeModelPacket(state.changesSince(prior)));
                 }
             }
-            viewer.send(update);
+            if (update == null) {
+                if (full == null) {
+                    full = new ClientboundNativeModelPacket(current);
+                }
+                update = full;
+            }
+            viewer.player.sendCustomPacket(update);
             if (current instanceof NativeModelPayload.NativeState nativeState) {
                 List<Integer> before = old instanceof NativeModelPayload.NativeState last && old.model().equals(current.model()) ? last.displays() : List.of();
-                if (before != nativeState.displays()) {
+                if (sent == null || before != nativeState.displays()) {
                     model.nativeDisplays(viewer.player, viewer.visibility, before, nativeState.displays());
                 }
             }
-            sent.snapshot = current;
-            sent.seen = tick;
+            if (sent == null) {
+                viewer.models.put(model.id, new Sent(model, current, tick));
+            } else {
+                sent.snapshot = current;
+                sent.seen = tick;
+            }
         }
+    }
+
+    private boolean collectVisible(NativeModelInstance<T, V> model, Viewer viewer) {
+        if (!model.visible(viewer.visibility)) {
+            return false;
+        }
+        viewer.prior = viewer.models.get(model.id);
+        this.visibleViewers.add(viewer);
+        return viewer.prior == null;
     }
 
     protected void close() {

@@ -32,6 +32,7 @@ public final class BedrockItem3DAttachables {
     private final String resource;
     private final String prefix;
     private final List<Stage> stages;
+    private final List<Map<String, JsonArray>> materialFaces;
     private final List<Material> materials;
     private final JsonArray poseBones;
     private final JsonObject textureNames = new JsonObject();
@@ -53,6 +54,7 @@ public final class BedrockItem3DAttachables {
         this.resource = id.namespace() + '/' + id.value();
         this.prefix = ResourcePackUtils.bedrockResourceIdentifier(id);
         this.stages = stages;
+        this.materialFaces = new ArrayList<>(Collections.nCopies(stages.size(), null));
         this.materials = materials;
         this.poseBones = poseBones;
     }
@@ -165,8 +167,8 @@ public final class BedrockItem3DAttachables {
                     continue;
                 }
             } else {
-                JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
-                if (cubes.isEmpty()) {
+                JsonArray cubes = this.materialFaces(index, layerName);
+                if (cubes == null) {
                     continue;
                 }
                 this.registerGeometry(alias, cubes, stage.geometry(), layerGeometries);
@@ -179,14 +181,24 @@ public final class BedrockItem3DAttachables {
         }
     }
 
+    @Nullable
+    private JsonArray materialFaces(int stage, String material) {
+        Map<String, JsonArray> layers = this.materialFaces.get(stage);
+        if (layers == null) {
+            layers = this.stages.get(stage).geometry().splitMaterialFaces();
+            this.materialFaces.set(stage, layers);
+        }
+        return layers.remove(material);
+    }
+
     private boolean registerContextGeometry(int index, String layerName, String alias, String[] geometryIds) {
         int geometryIndex = this.contextGeometryIndices[index];
         String geometryId = geometryIds[geometryIndex];
         // 首阶段写出几何，只缓存该层的 ID 或空面的结果，后续场景直接登记别名
         if (geometryId == null) {
             Stage stage = this.stages.get(index);
-            JsonArray cubes = BedrockItemGeometry.selectMaterialFaces(stage.geometry().cubes(), layerName);
-            if (cubes.isEmpty()) {
+            JsonArray cubes = this.materialFaces(index, layerName);
+            if (cubes == null) {
                 geometryIds[geometryIndex] = "";
                 return false;
             }

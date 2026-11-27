@@ -10,6 +10,7 @@ import net.momirealms.craftengine.core.pack.atlas.UnstitchSource;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.JavaResourcePack;
 import net.momirealms.craftengine.core.pack.bedrock.model.JavaModel.Texture;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry;
 import net.momirealms.craftengine.core.pack.mcmeta.PackVersion;
 import net.momirealms.craftengine.core.pack.model.definition.tint.*;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
@@ -31,6 +32,7 @@ public final class JavaPackTextureSource {
     private static final Key ITEMS = Key.minecraft("items");
     private static final Key BLOCKS = Key.minecraft("blocks");
     private final JavaResourcePack pack;
+    private final Map<TextureData, BedrockGeneratedGeometry.Outline> outlines = new IdentityHashMap<>();
     private final Map<Key, Atlas> atlases = new HashMap<>();
     private final Map<Key, Map<Texture, TextureData>> textures = new HashMap<>();
     private final Map<Key, Map<Texture, String>> textureFailures = new HashMap<>();
@@ -44,6 +46,10 @@ public final class JavaPackTextureSource {
 
     public JavaPackTextureSource(JavaResourcePack pack) {
         this.pack = pack;
+    }
+
+    public BedrockGeneratedGeometry.Outline outline(TextureData data) {
+        return this.outlines.computeIfAbsent(data, BedrockGeneratedGeometry.Outline::new);
     }
 
     public Integer resolveTint(Tint tint) throws IOException {

@@ -107,7 +107,7 @@ final class BedrockParticleTextures implements BedrockTextureConverter {
                 }
                 Path file = context.root().resolve("particles/" + target.file() + ".json");
                 Files.createDirectories(file.getParent());
-                GsonHelper.writeJsonFile(definition, file);
+                GsonHelper.writeJsonFile(GsonHelper.sortObjectKeys(definition), file);
             } catch (IOException | IllegalArgumentException | IllegalStateException | ArithmeticException exception) {
                 CraftEngine.instance().logger().warn("Keeping original Bedrock particle " + target.identifier() + ": " + exception.getMessage());
             }

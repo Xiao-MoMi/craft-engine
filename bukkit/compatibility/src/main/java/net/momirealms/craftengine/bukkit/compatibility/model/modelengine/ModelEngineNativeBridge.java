@@ -112,6 +112,11 @@ public final class ModelEngineNativeBridge extends NativeModelBridge<ActiveModel
         }
 
         @Override
+        protected Set<UUID> trackedViewers() {
+            return this.tracking.keySet();
+        }
+
+        @Override
         protected void nativeDisplays(Player player, UUID viewer, List<Integer> previous, List<Integer> current) {
             ModelEngineDisplayFilter.update(player.nettyChannel(), previous, current);
         }

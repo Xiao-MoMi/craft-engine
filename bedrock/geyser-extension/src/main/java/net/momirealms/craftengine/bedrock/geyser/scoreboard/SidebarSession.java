@@ -41,6 +41,7 @@ public final class SidebarSession {
     private final Map<String, Integer> offsets;
     private final Map<String, ObjectiveText> objectives = new HashMap<>();
     private final Map<String, TeamText> teams = new HashMap<>();
+    private final Map<Objective, ObjectiveText> activeObjectives = new IdentityHashMap<>();
     private final Map<String, Map<String, String>> titles = new MapMaker().weakKeys().makeMap();
     private String displayed;
     private final Map<Long, ScoreInfo> sent = new HashMap<>();
@@ -61,7 +62,11 @@ public final class SidebarSession {
         boolean accepted = packet.getAction() == ObjectiveAction.ADD ? current == null : current != null;
         if (accepted && packet.getAction() != ObjectiveAction.REMOVE) {
             ObjectiveText text = this.objectives.computeIfAbsent(name, key -> new ObjectiveText());
-            text.title = ObjectivePacketProxy.INSTANCE.displayName(packet);
+            Object title = ObjectivePacketProxy.INSTANCE.displayName(packet);
+            if (!Objects.equals(text.title, title)) {
+                text.title = title;
+                text.titleMeasured = false;
+            }
             if (current != null) {
                 for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
                     if (slot instanceof SidebarDisplaySlot && slot.objective() == current) {
@@ -76,6 +81,7 @@ public final class SidebarSession {
         original.translate(this.session, packet);
         if (accepted && packet.getAction() == ObjectiveAction.REMOVE) {
             this.objectives.remove(name);
+            this.activeObjectives.remove(current);
         } else if (accepted) {
             this.bindTitle(this.scoreboard.getObjective(name), this.objectives.get(name));
         }
@@ -89,6 +95,7 @@ public final class SidebarSession {
         ObjectiveText text = this.objectives.get(packet.getName());
         if (sidebar && next != null && text != null && !text.active) {
             text.active = true;
+            this.activeObjectives.put(next, text);
             this.refreshObjective(next, text, next.getNumberFormat(), false);
         }
         original.translate(this.session, packet);
@@ -100,6 +107,8 @@ public final class SidebarSession {
             ObjectiveText old = this.objectives.get(removed.getObjectiveName());
             if (old != null && this.scoreboard.getObjectiveSlots().values().stream().noneMatch(slot -> slot instanceof SidebarDisplaySlot && slot.objective() == removed)) {
                 old.active = false;
+                this.activeObjectives.remove(removed);
+                old.layouts.clear();
                 this.refreshObjective(removed, old, removed.getNumberFormat(), false);
             }
         }
@@ -109,12 +118,18 @@ public final class SidebarSession {
         if (!text.active) {
             return;
         }
-        List<GuiTitlePart> parts = new ArrayList<>();
-        if (!this.collect(text.title, 0xffffff, parts)) {
-            return;
+        String locale = this.session.locale();
+        if (!text.titleMeasured || !Objects.equals(text.titleLocale, locale)) {
+            List<GuiTitlePart> parts = new ArrayList<>();
+            text.encodedTitle = null;
+            if (this.collect(text.title, 0xffffff, parts)) {
+                int profile = this.profiles.match(objective.getObjectiveName(), plain(parts));
+                text.encodedTitle = this.encode(parts, profile, null, SidebarCodec.ScoreColumn.plain(""));
+            }
+            text.titleLocale = locale;
+            text.titleMeasured = true;
         }
-        int profile = this.profiles.match(objective.getObjectiveName(), plain(parts));
-        String title = this.encode(parts, profile, null, SidebarCodec.ScoreColumn.plain(""));
+        String title = text.encodedTitle;
         if (title != null) {
             // Geyser 将槽位 ID 和标题字符串原样交给出站包。弱身份键随槽位和最后一个排队的包一起释放。
             for (DisplaySlot slot : this.scoreboard.getObjectiveSlots().values()) {
@@ -135,7 +150,7 @@ public final class SidebarSession {
             if (text.active) {
                 Objective objective = this.scoreboard.getObjective(packet.getObjective());
                 NumberFormat format = packet.getNumberFormat() == null ? objective.getNumberFormat() : packet.getNumberFormat();
-                String row = this.row(packet.getOwner(), display, this.team(packet.getOwner()), format, packet.getValue());
+                String row = this.row(text, packet.getOwner(), display, this.team(packet.getOwner()), format, packet.getValue());
                 if (row != null) {
                     Object component = AdventureComponentProxy.INSTANCE.font(AdventureComponentProxy.INSTANCE.text(row), AdventureKeyProxy.INSTANCE.key(GeyserGlyphSerializer.RESOLVED_FONT));
                     packet = ScorePacketProxy.INSTANCE.withDisplay(packet, component);
@@ -155,12 +170,12 @@ public final class SidebarSession {
         this.checkScoreboard();
         if (packet.getObjective() == null) {
             for (ObjectiveText text : this.objectives.values()) {
-                text.entries.remove(packet.getOwner());
+                text.remove(packet.getOwner());
             }
         } else {
             ObjectiveText text = this.objectives.get(packet.getObjective());
             if (text != null) {
-                text.entries.remove(packet.getOwner());
+                text.remove(packet.getOwner());
             }
         }
         original.translate(this.session, packet);
@@ -224,11 +239,11 @@ public final class SidebarSession {
     }
 
     private void refreshMember(String owner, TeamText team) {
-        for (Map.Entry<String, ObjectiveText> entry : this.objectives.entrySet()) {
+        for (Map.Entry<Objective, ObjectiveText> entry : this.activeObjectives.entrySet()) {
             ObjectiveText text = entry.getValue();
-            if (text.active && text.entries.containsKey(owner)) {
-                Objective objective = this.scoreboard.getObjective(entry.getKey());
-                this.refresh(objective.getScores().get(owner), text.entries.get(owner), team, objective.getNumberFormat(), true);
+            if (text.entries.containsKey(owner)) {
+                Objective objective = entry.getKey();
+                this.refresh(text, objective.getScores().get(owner), text.entries.get(owner), team, objective.getNumberFormat());
             }
         }
     }
@@ -237,19 +252,19 @@ public final class SidebarSession {
         for (Map.Entry<String, Object> entry : text.entries.entrySet()) {
             ScoreReference score = objective.getScores().get(entry.getKey());
             if (score != null && (!inheritedOnly || score.numberFormat() == null)) {
-                this.refresh(score, entry.getValue(), this.team(entry.getKey()), format, text.active);
+                this.refresh(text, score, entry.getValue(), this.team(entry.getKey()), format);
             }
         }
     }
 
-    private void refresh(ScoreReference score, Object original, TeamText team, NumberFormat inherited, boolean active) {
+    private void refresh(ObjectiveText text, ScoreReference score, Object original, TeamText team, NumberFormat inherited) {
         if (score == null) {
             return;
         }
         String name = null;
-        if (active) {
+        if (text.active) {
             NumberFormat format = score.numberFormat() == null ? inherited : score.numberFormat();
-            name = this.row(score.name(), original, team, format, score.score());
+            name = this.row(text, score.name(), original, team, format, score.score());
         }
         if (name == null && original != null) {
             name = MessageTranslatorProxy.INSTANCE.convertMessageRaw(original, this.session.locale());
@@ -260,20 +275,46 @@ public final class SidebarSession {
         }
     }
 
-    private String row(String owner, Object display, TeamText team, NumberFormat format, int value) {
-        if (display == null) {
-            display = LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), owner);
+    private String row(ObjectiveText objective, String owner, Object display, TeamText team, NumberFormat format, int value) {
+        String locale = this.session.locale();
+        RowLayout layout = objective.layouts.get(owner);
+        if (layout == null || !Objects.equals(layout.display, display) || !Objects.equals(layout.team, team) || !Objects.equals(layout.locale, locale)) {
+            layout = this.rowLayout(owner, display, team, locale);
+            objective.layouts.put(owner, layout);
         }
+        if (layout.layers == null) {
+            return null;
+        }
+        if (!layout.encoded || !Objects.equals(layout.format, format) || (layout.number != value && !(format instanceof FixedFormat) && !(format instanceof BlankFormat))) {
+            try {
+                String encoded = SidebarCodec.encode(0, null, layout.width, this.number(format, value), layout.layers);
+                layout.snapshot = this.rows.wrap(encoded, team == null ? 0 : team.prefixLength);
+            } catch (UnsupportedOperationException exception) {
+                layout.snapshot = null;
+            }
+            layout.format = format;
+            layout.number = value;
+            layout.encoded = true;
+        }
+        return layout.snapshot;
+    }
+
+    private RowLayout rowLayout(String owner, Object display, TeamText team, String locale) {
+        RowLayout layout = new RowLayout(display, team, locale);
+        Object component = display == null ? LegacyComponentSerializerProxy.INSTANCE.deserialize(MessageTranslatorProxy.INSTANCE.bedrockSerializer(), owner) : display;
         List<GuiTitlePart> parts = new ArrayList<>();
         int color = team == null ? 0xffffff : team.color;
-        if ((team != null && !this.collect(team.prefix, color, parts)) || !this.collect(display, color, parts) || (team != null && !this.collect(team.suffix, color, parts))) {
-            return null;
+        if ((team != null && !this.collect(team.prefix, color, parts)) || !this.collect(component, color, parts) || (team != null && !this.collect(team.suffix, color, parts))) {
+            return layout;
         }
-        String encoded = this.encode(parts, 0, null, this.number(format, value));
-        if (encoded == null) {
-            return null;
+        try {
+            ContainerTitleLayout.MeasuredLayout measured = this.layout.positioned(parts, this.offsets, true);
+            layout.width = measured.width();
+            layout.layers = ContainerTitleCodec.positionedLayers(measured, false, layer -> GeyserTextParts.serializeLayer(layer, parts, locale));
+        } catch (UnsupportedOperationException ignored) {
+            // Geyser displays its original row when the layout exceeds the wire limits.
         }
-        return this.rows.wrap(encoded, team == null ? 0 : team.prefixLength);
+        return layout;
     }
 
     public synchronized void onDisplay(GeyserPacketEvent<SetDisplayObjectivePacket> event) {
@@ -359,6 +400,7 @@ public final class SidebarSession {
         Scoreboard current = this.session.getWorldCache().getScoreboard();
         if (current != this.scoreboard) {
             this.objectives.clear();
+            this.activeObjectives.clear();
             this.teams.clear();
             this.scoreboard = current;
         }
@@ -372,6 +414,7 @@ public final class SidebarSession {
         this.titles.clear();
         this.displayed = null;
         this.sent.clear();
+        this.activeObjectives.clear();
         this.objectives.clear();
         this.teams.clear();
     }
@@ -449,7 +492,34 @@ public final class SidebarSession {
     private static final class ObjectiveText {
         private Object title;
         private boolean active;
+        private boolean titleMeasured;
+        private String titleLocale;
+        private String encodedTitle;
         private final Map<String, Object> entries = new HashMap<>();
+        private final Map<String, RowLayout> layouts = new HashMap<>();
+
+        private void remove(String owner) {
+            this.entries.remove(owner);
+            this.layouts.remove(owner);
+        }
+    }
+
+    private static final class RowLayout {
+        private final Object display;
+        private final TeamText team;
+        private final String locale;
+        private int width;
+        private List<String> layers;
+        private boolean encoded;
+        private NumberFormat format;
+        private int number;
+        private String snapshot;
+
+        private RowLayout(Object display, TeamText team, String locale) {
+            this.display = display;
+            this.team = team;
+            this.locale = locale;
+        }
     }
 
     private record TeamText(Object prefix, Object suffix, int color, int prefixLength) {

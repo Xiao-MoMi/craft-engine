@@ -45,6 +45,10 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
     private int displayContext;
     private int billboard;
     private boolean hidden;
+    private boolean renderingSuspended;
+    private double viewDistanceSquared = 64d * 64d;
+    private Vector3f lastViewerPosition;
+    private Vector3f lastDisplayPosition;
     private boolean appearanceDirty = true;
     private boolean orientationDirty;
 
@@ -168,7 +172,32 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
     }
 
     void viewRange(float value) {
-        boolean hidden = value == 0;
+        double distance = Math.max(0, value) * 64d;
+        if (this.viewDistanceSquared != distance * distance) {
+            this.viewDistanceSquared = distance * distance;
+            this.lastViewerPosition = null;
+        }
+    }
+
+    private void updateVisibility() {
+        Vector3f viewer = this.session.getPlayerEntity().getPosition();
+        Vector3f display = this.renderPosition;
+        if (this.vehicle != null) {
+            Entity root = this.vehicle;
+            while (root.getVehicle() != null) {
+                root = root.getVehicle();
+            }
+            display = root.getPosition();
+        }
+        if (viewer == this.lastViewerPosition && display == this.lastDisplayPosition) {
+            return;
+        }
+        this.lastViewerPosition = viewer;
+        this.lastDisplayPosition = display;
+        double dx = (double) display.getX() - viewer.getX();
+        double dy = (double) display.getY() - viewer.getY();
+        double dz = (double) display.getZ() - viewer.getZ();
+        boolean hidden = dx * dx + dy * dy + dz * dz >= this.viewDistanceSquared;
         if (this.hidden != hidden) {
             this.hidden = hidden;
             this.orientationDirty = true;
@@ -210,8 +239,21 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
     }
 
     private void updateDisplay(boolean spawning) {
+        this.updateVisibility();
+        if (!spawning && this.hidden) {
+            if (!this.renderingSuspended) {
+                this.renderingSuspended = true;
+                int style = BedrockDisplayStyle.pack(this.billboard, true, this.heldItemType);
+                this.updatePropertiesBatched(batch -> this.carrier.style(batch, style), false);
+                this.sentStyle = style;
+                this.updateEquipment();
+            }
+            return;
+        }
+        boolean resuming = this.renderingSuspended;
+        this.renderingSuspended = this.hidden;
         boolean appearanceDirty = this.appearanceDirty;
-        if (!spawning && !appearanceDirty && !this.orientationDirty && !this.interpolation.dirty()) {
+        if (!spawning && !resuming && !appearanceDirty && !this.orientationDirty && !this.interpolation.dirty()) {
             return;
         }
         this.appearanceDirty = false;
@@ -231,7 +273,7 @@ public final class GeyserModelDisplayEntity extends Entity implements Tickable {
         }
 
         DisplayPose pose = this.interpolation.target();
-        boolean fullUpdate = spawning || carrierChanged || this.sentPose == null;
+        boolean fullUpdate = spawning || resuming || carrierChanged || this.sentPose == null;
         boolean appearanceChanged = fullUpdate || appearance != this.sentAppearance;
         boolean dyeChanged = fullUpdate || dyeColor != this.sentDyeColor;
         boolean interpolationChanged = fullUpdate || this.interpolation.dirty();

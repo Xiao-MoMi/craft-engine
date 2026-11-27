@@ -7,37 +7,38 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fc;
 
+import java.util.HashMap;
 import java.util.Map;
 
 // cubes 无法直接表达的仿射变换保留在 transformation 中，由实体骨骼或图标投影应用。
 public record BedrockItemGeometry(JavaModel model, JsonArray cubes, Matrix4fc transformation) {
-    public static JsonArray selectMaterialFaces(JsonArray source, String material) {
-        // 一个立方体的不同面可能属于不同材质层，只复制当前层的面，原始几何留给后续层使用。
-        JsonArray cubes = new JsonArray();
-        for (JsonElement value : source) {
+    public Map<String, JsonArray> splitMaterialFaces() {
+        Map<String, JsonArray> layers = new HashMap<>();
+        Map<String, JsonObject> facesByLayer = new HashMap<>();
+        for (JsonElement value : this.cubes) {
             JsonObject original = value.getAsJsonObject();
-            JsonObject faces = null;
             for (Map.Entry<String, JsonElement> entry : original.getAsJsonObject("uv").entrySet()) {
                 JsonObject face = entry.getValue().getAsJsonObject();
-                if (face.get("material_instance").getAsString().equals(material)) {
-                    if (faces == null) {
-                        faces = new JsonObject();
+                String material = face.get("material_instance").getAsString();
+                JsonObject selected = new JsonObject();
+                for (Map.Entry<String, JsonElement> property : face.entrySet()) {
+                    if (!property.getKey().equals("material_instance")) {
+                        selected.add(property.getKey(), property.getValue());
                     }
-                    JsonObject selected = face.deepCopy();
-                    selected.remove("material_instance");
-                    faces.add(entry.getKey(), selected);
                 }
+                facesByLayer.computeIfAbsent(material, ignored -> new JsonObject()).add(entry.getKey(), selected);
             }
-            if (faces != null) {
-                JsonObject cube = new JsonObject();
-                // UV 已按材质筛选，不能再复制整套 UV 后立即丢弃。
-                for (Map.Entry<String, JsonElement> entry : original.entrySet()) {
-                    cube.add(entry.getKey(), entry.getKey().equals("uv") ? faces : entry.getValue().deepCopy());
+            for (Map.Entry<String, JsonObject> layer : facesByLayer.entrySet()) {
+                JsonObject copy = new JsonObject();
+                // 展示实体会平移 origin/pivot。各层的立方体独占这些坐标，UV 子节点只读。
+                for (Map.Entry<String, JsonElement> property : original.entrySet()) {
+                    copy.add(property.getKey(), property.getKey().equals("uv") ? layer.getValue() : property.getValue().deepCopy());
                 }
-                cubes.add(cube);
+                layers.computeIfAbsent(layer.getKey(), ignored -> new JsonArray()).add(copy);
             }
+            facesByLayer.clear();
         }
-        return cubes;
+        return layers;
     }
 
     // color 是烘焙贴图的静态颜色；dyeColor 非空时保留动态染色，并记录未染色实例的默认色。

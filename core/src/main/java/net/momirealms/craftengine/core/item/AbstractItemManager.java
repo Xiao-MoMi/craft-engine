@@ -80,6 +80,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
     protected final Map<Key, List<UniqueKey>> ingredientSubstitutes = new HashMap<>();
     // 有序物品id
     protected final List<Key> orderedItemIds = new ObjectArrayList<>();
+    private volatile List<Key> bedrockCreativeItemIds = List.of();
     // 原版物品 + 自定义物品
     protected final List<Key> allItemIds = new ObjectArrayList<>();
     // 其他设置
@@ -156,6 +157,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
         this.modernItemModels1_21_2.clear();
         this.ingredientSubstitutes.clear();
         this.orderedItemIds.clear();
+        this.bedrockCreativeItemIds = List.of();
         this.allItemIds.clear();
         this.dyeableItems.clear();
         this.vanillaItemDataOverrides.clear();
@@ -256,6 +258,11 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
     public List<Key> orderedItemIds() {
         return this.orderedItemIds;
+    }
+
+    @Override
+    public List<Key> bedrockCreativeItemIds() {
+        return this.bedrockCreativeItemIds;
     }
 
     @Override
@@ -470,6 +477,7 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
 
             AbstractItemManager.this.allItemIds.clear();
             AbstractItemManager.this.allItemIds.addAll(VANILLA_ITEMS);
+            int firstCustom = AbstractItemManager.this.allItemIds.size();
 
             // 获取有序的物品id
             int size = this.pendingConfigSections.size();
@@ -527,6 +535,8 @@ public abstract class AbstractItemManager extends AbstractModelGenerator impleme
                     }
                 }
             }
+            List<Key> allItems = AbstractItemManager.this.allItemIds;
+            AbstractItemManager.this.bedrockCreativeItemIds = List.copyOf(allItems.subList(firstCustom, allItems.size()));
             ARROW_ONLY.setDynamic(customProjectiles);
             ARROW_OR_FIREWORK.setDynamic(customProjectiles);
             AbstractItemManager.this.loadedItems = Map.copyOf(AbstractItemManager.this.itemDefinitionById);

@@ -7,7 +7,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
 import com.mojang.authlib.properties.PropertyMap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -65,7 +64,6 @@ import net.momirealms.craftengine.core.plugin.network.ConnectionState;
 import net.momirealms.craftengine.core.plugin.network.EntityPacketHandler;
 import net.momirealms.craftengine.core.plugin.network.PacketPosition;
 import net.momirealms.craftengine.core.plugin.network.ProtocolVersion;
-import net.momirealms.craftengine.core.plugin.network.codec.NetworkCodec;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacketType;
 import net.momirealms.craftengine.core.plugin.network.mod.protocol.ClientboundBedrockHandshakePacket;
@@ -650,20 +648,11 @@ public class BukkitServerPlayer extends BukkitLivingEntity implements Player {
     @Override
     public void sendCustomPacket(ClientCustomPacket packet) {
         ClientCustomPacketType<? extends ClientCustomPacket> type = BuiltInRegistries.CLIENTBOUND_CUSTOM_PACKET.getValue(packet.id());
-        if (type == null || !type.checkPermission(this)) return;
-        FriendlyByteBuf result = new FriendlyByteBuf(Unpooled.buffer());
-        byte[] data;
-        try {
-            @SuppressWarnings("unchecked")
-            NetworkCodec<FriendlyByteBuf, ClientCustomPacket> codec = (NetworkCodec<FriendlyByteBuf, ClientCustomPacket>) packet.codec();
-            codec.encode(result, packet);
-            data = new byte[result.readableBytes()];
-            result.readBytes(data);
-        } finally {
-            result.release();
+        if (type == null || !type.checkPermission(this)) {
+            return;
         }
         // 交给 Connection 排队和 NMS 编码器选择协议包 ID，与普通实体包使用相同发送路径。
-        this.sendPacket(PacketUtils.createClientboundCustomPayloadPacket(packet.id(), data), false);
+        this.sendPacket(PacketUtils.createClientboundCustomPayloadPacket(packet.id(), packet.encode()), false);
     }
 
     @Override

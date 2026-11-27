@@ -1,7 +1,6 @@
 package net.momirealms.craftengine.core.util;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -31,60 +30,64 @@ public final class ZipUtils {
     }
 
     public static void compress(Path in, Path out, boolean storePng, boolean includeDirectories) throws IOException {
-        compress(in, out, storePng, includeDirectories, null, null);
+        try (OutputStream output = Files.newOutputStream(out)) {
+            compress(in, output, storePng, includeDirectories);
+        }
     }
 
-    public static void compressWithStoredFile(Path in, Path out, Path storedFile, String entryName) throws IOException {
-        compress(in, out, false, false, storedFile, entryName);
+    public static void compress(Path in, OutputStream output, boolean storePng, boolean includeDirectories) throws IOException {
+        try (ZipOutputStream archive = new ZipOutputStream(new BufferedOutputStream(output, ZIP_OUTPUT_BUFFER_SIZE))) {
+            writeDirectory(in, archive, storePng, includeDirectories);
+        }
     }
 
-    private static void compress(Path in, Path out, boolean storePng, boolean includeDirectories,
-                                 @Nullable Path storedFile, @Nullable String entryName) throws IOException {
-        byte[] buffer = new byte[16 * 1024];
-        CRC32 crc = storePng || storedFile != null ? new CRC32() : null;
+    public static void compressWithStoredEntry(Path in, Path out, String entryName, InputStream input, long size, long crc) throws IOException {
         try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(out), ZIP_OUTPUT_BUFFER_SIZE);
              ZipOutputStream zos = new ZipOutputStream(os)) {
+            writeDirectory(in, zos, false, false);
+            ZipEntry entry = new ZipEntry(entryName);
+            entry.setTime(0L);
+            entry.setMethod(ZipEntry.STORED);
+            entry.setSize(size);
+            entry.setCrc(crc);
+            zos.putNextEntry(entry);
+            input.transferTo(zos);
+            zos.closeEntry();
+        }
+    }
 
-            Files.walkFileTree(in, new SimpleFileVisitor<>() {
-                @Override
-                public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
-                    if (includeDirectories && !dir.equals(in)) {
-                        String relativePath = in.relativize(dir).toString().replace("\\", "/") + "/";
-                        ZipEntry entry = new ZipEntry(relativePath);
-                        entry.setTime(0L);
-                        zos.putNextEntry(entry);
-                        zos.closeEntry();
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                    String relativePath = in.relativize(file).toString().replace("\\", "/");
+    private static void writeDirectory(Path in, ZipOutputStream zos, boolean storePng, boolean includeDirectories) throws IOException {
+        byte[] buffer = new byte[16 * 1024];
+        CRC32 crc = storePng ? new CRC32() : null;
+        Files.walkFileTree(in, new SimpleFileVisitor<>() {
+            @Override
+            public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs) throws IOException {
+                if (includeDirectories && !dir.equals(in)) {
+                    String relativePath = in.relativize(dir).toString().replace("\\", "/") + "/";
                     ZipEntry entry = new ZipEntry(relativePath);
                     entry.setTime(0L);
-                    if (storePng && FileUtils.isPngFile(file)) {
-                        prepareStoredEntry(entry, file, attrs.size(), crc, buffer);
-                    }
                     zos.putNextEntry(entry);
-                    try (InputStream input = Files.newInputStream(file)) {
-                        FileUtils.copy(input, zos, buffer);
-                    }
                     zos.closeEntry();
-                    return FileVisitResult.CONTINUE;
                 }
-            });
-            if (storedFile != null) {
-                ZipEntry entry = new ZipEntry(entryName);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                String relativePath = in.relativize(file).toString().replace("\\", "/");
+                ZipEntry entry = new ZipEntry(relativePath);
                 entry.setTime(0L);
-                prepareStoredEntry(entry, storedFile, Files.size(storedFile), crc, buffer);
+                if (storePng && FileUtils.isPngFile(file)) {
+                    prepareStoredEntry(entry, file, attrs.size(), crc, buffer);
+                }
                 zos.putNextEntry(entry);
-                try (InputStream input = Files.newInputStream(storedFile)) {
+                try (InputStream input = Files.newInputStream(file)) {
                     FileUtils.copy(input, zos, buffer);
                 }
                 zos.closeEntry();
+                return FileVisitResult.CONTINUE;
             }
-        }
+        });
     }
 
     private static void prepareStoredEntry(ZipEntry entry, Path file, long size, CRC32 crc, byte[] buffer) throws IOException {

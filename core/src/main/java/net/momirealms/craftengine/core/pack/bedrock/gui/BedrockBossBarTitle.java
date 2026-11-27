@@ -5,6 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.momirealms.craftengine.bedrock.text.BossBarStyle;
 import net.momirealms.craftengine.bedrock.text.BossBarTitleCodec;
+import net.momirealms.craftengine.bedrock.text.GuiGlyphImage;
 
 import java.util.List;
 import java.util.Map;
@@ -22,9 +23,9 @@ final class BedrockBossBarTitle {
     private BedrockBossBarTitle() {
     }
 
-    static JsonObject panel(JsonObject hud, List<Integer> offsets) {
+    static JsonObject panel(JsonObject hud, List<Integer> offsets, boolean images) {
         int entryBytes = BossBarTitleCodec.entryBytes(offsets.size() + 1);
-        JsonObject templates = layerTemplates(offsets, entryBytes);
+        JsonObject templates = layerTemplates(offsets, entryBytes, images);
         for (Map.Entry<String, JsonElement> template : templates.entrySet()) {
             hud.add(TEMPLATE + template.getKey(), template.getValue());
         }
@@ -66,7 +67,7 @@ final class BedrockBossBarTitle {
         return panel;
     }
 
-    private static JsonObject layerTemplates(List<Integer> offsets, int entryBytes) {
+    private static JsonObject layerTemplates(List<Integer> offsets, int entryBytes, boolean images) {
         int baselineCount = offsets.size() + 1;
         JsonObject data = topPanel(0, 0);
         data.addProperty("$ce_half", 0.5);
@@ -76,12 +77,12 @@ final class BedrockBossBarTitle {
         bindings.add(fromSibling(HEADER, "#ce_bias", "#ce_bias"));
         bindings.add(fromSibling(HEADER, "#ce_body", "#ce_body"));
         bindings.add(fromSibling(HEADER, "(#ce_table + ($ce_index * #ce_entry_bytes))", "#ce_entry"));
-        bindings.add(fromSibling(HEADER, "(#ce_count > $ce_index)", "#ce_positioned"));
+        bindings.add(fromSibling(HEADER, "(#ce_count > $ce_index)", images ? "#ce_has_layer" : "#ce_positioned"));
         int trailerBytes = entryBytes - BossBarTitleCodec.POSITION_BYTES;
         bind(bindings, "(#ce_entry + #ce_entry_bytes - " + trailerBytes + ")", "#ce_middle");
         bind(bindings, "(" + slice("#ce_entry", "#ce_middle") + " + 0)", "#ce_x");
         bind(bindings, "($ce_half * (#ce_x - #ce_bias))", "#ce_offset_x");
-        bindTag(bindings, baselineCount);
+        bindTag(bindings, baselineCount, images);
         if (!offsets.isEmpty()) {
             bind(bindings, "(#ce_style - (#ce_unicode * " + baselineCount + "))", "#ce_baseline");
             StringJoiner offsetY = new StringJoiner(" + ");
@@ -102,6 +103,13 @@ final class BedrockBossBarTitle {
         bind(bindings, "(#ce_body + #ce_previous_code)", "#ce_from");
         bind(bindings, "(#ce_body + #ce_end_code - (#ce_percent * 1))", "#ce_to");
         bind(bindings, "(('§r§f' + " + slice("#ce_from", "#ce_to") + ") + (('%.' + (#ce_percent * 1) + 's') * '%'))", "#ce_ink_text");
+        if (images) {
+            // 图片正文没有百分号。直接用 Boss 名称表中的绝对端点读取，避免将以数字开头的正文再次切片。
+            String widthEnd = "(#ce_from + " + GuiGlyphImage.DIMENSION_BYTES + ")";
+            String heightEnd = "(#ce_from + " + (2 * GuiGlyphImage.DIMENSION_BYTES) + ")";
+            String ascentEnd = "(#ce_from + " + (2 * GuiGlyphImage.DIMENSION_BYTES + GuiGlyphImage.ASCENT_BYTES) + ")";
+            BedrockTitleLayers.imageFields(bindings, slice("#ce_from", widthEnd), slice(widthEnd, heightEnd), slice(heightEnd, ascentEnd), slice(ascentEnd, "(#ce_body + #ce_end_code)"));
+        }
         data.add("bindings", bindings);
 
         JsonObject label = new JsonObject();
@@ -114,13 +122,18 @@ final class BedrockBossBarTitle {
         label.addProperty("enable_profanity_filter", true);
         label.addProperty("localize", false);
 
-        return BedrockTitleLayers.faceTemplates(data, label, !offsets.isEmpty(), "$ce_boss_data");
+        return BedrockTitleLayers.faceTemplates(data, label, !offsets.isEmpty(), "$ce_boss_data", images, 1);
     }
 
-    private static void bindTag(JsonArray bindings, int baselineCount) {
+    private static void bindTag(JsonArray bindings, int baselineCount, boolean images) {
         bind(bindings, "(#ce_entry + #ce_entry_bytes - 3)", "#ce_end_start");
-        bind(bindings, "(" + slice("#ce_middle", "#ce_end_start") + " + 0)", "#ce_tag");
+        bind(bindings, "(" + slice("#ce_middle", "#ce_end_start") + " + 0)", images ? "#ce_raw_tag" : "#ce_tag");
         int styles = baselineCount * 2;
+        if (images) {
+            bind(bindings, "(#ce_has_layer and (#ce_raw_tag > " + (4 * styles - 1) + "))", "#ce_image");
+            bind(bindings, "(#ce_has_layer and (not #ce_image))", "#ce_positioned");
+            bind(bindings, "(#ce_raw_tag - (#ce_image * " + (4 * styles) + "))", "#ce_tag");
+        }
         bind(bindings, "(#ce_tag > " + (2 * styles - 1) + ")", "#ce_shadow_override");
         bind(bindings, "(#ce_tag - (#ce_shadow_override * " + (2 * styles) + "))", "#ce_text_tag");
         bind(bindings, "(#ce_text_tag > " + (styles - 1) + ")", "#ce_percent");

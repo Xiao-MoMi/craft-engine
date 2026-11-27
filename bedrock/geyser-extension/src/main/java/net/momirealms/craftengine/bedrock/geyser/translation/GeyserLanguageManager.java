@@ -9,6 +9,10 @@ public final class GeyserLanguageManager {
     private GeyserTranslationMap installed;
 
     public void load(GeyserLanguageData languages) {
+        if (languages.translations().isEmpty()) {
+            this.disable();
+            return;
+        }
         Map<String, Map<String, String>> current = MinecraftLocaleProxy.INSTANCE.localeMappings();
         Map<String, Map<String, String>> base = current == this.installed ? this.original : current;
         GeyserTranslationMap replacement = new GeyserTranslationMap(base, languages);

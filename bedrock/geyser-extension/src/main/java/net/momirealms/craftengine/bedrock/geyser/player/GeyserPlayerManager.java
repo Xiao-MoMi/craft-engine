@@ -23,13 +23,19 @@ public final class GeyserPlayerManager {
             return;
         }
         GeyserPlayer player = new GeyserPlayer(this.extension, session);
-        this.players.put(session, player);
-        try {
-            player.initialize();
-        } catch (Throwable e) {
-            this.players.remove(session, player);
-            player.close();
-            throw e;
+        synchronized (player) {
+            synchronized (this) {
+                if (this.closed || session.isClosed() || this.players.putIfAbsent(session, player) != null) {
+                    return;
+                }
+            }
+            try {
+                player.initialize();
+            } catch (Throwable e) {
+                this.players.remove(session, player);
+                player.close();
+                throw e;
+            }
         }
     }
 
@@ -45,10 +51,19 @@ public final class GeyserPlayerManager {
         }
     }
 
+    public void activateJavaListeners() {
+        for (GeyserPlayer player : this.players.values()) {
+            player.javaConnection().activate();
+        }
+    }
+
     public void disable() {
-        this.closed = true;
-        List<GeyserPlayer> players = List.copyOf(this.players.values());
-        this.players.clear();
+        List<GeyserPlayer> players;
+        synchronized (this) {
+            this.closed = true;
+            players = List.copyOf(this.players.values());
+            this.players.clear();
+        }
         for (GeyserPlayer player : players) {
             player.close();
         }

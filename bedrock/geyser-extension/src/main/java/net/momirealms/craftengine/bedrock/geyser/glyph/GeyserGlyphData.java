@@ -31,7 +31,7 @@ public final class GeyserGlyphData {
         this.verticalOffsets = verticalOffsets;
         this.layout = new ContainerTitleLayout(data);
         for (Map.Entry<String, FontData.Font> font : data.fonts().entrySet()) {
-            Int2ObjectMap<FontGlyph> glyphs = font.getValue().rendering();
+            Int2ObjectMap<FontGlyph> glyphs = font.getValue().mappedGlyphs();
             for (Int2ObjectMap.Entry<FontGlyph> entry : Int2ObjectMaps.fastIterable(glyphs)) {
                 int code = entry.getIntKey();
                 FontGlyph glyph = entry.getValue();

@@ -49,10 +49,7 @@ public final class BedrockCreativeItemSender {
         ItemManager manager = plugin.itemManager();
         FriendlyByteBuf encoded = new FriendlyByteBuf(Unpooled.buffer());
         try (CreativeItemChunkWriter chunks = new CreativeItemChunkWriter(sendChunk)) {
-            for (Key id : manager.orderedItemIds()) {
-                if (manager.isVanillaItem(id)) {
-                    continue;
-                }
+            for (Key id : manager.bedrockCreativeItemIds()) {
                 encoded.clear();
                 try {
                     Item item = Item.byId(id, player);

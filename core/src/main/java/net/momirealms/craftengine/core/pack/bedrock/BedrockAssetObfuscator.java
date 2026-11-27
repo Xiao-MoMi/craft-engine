@@ -29,7 +29,7 @@ final class BedrockAssetObfuscator {
     private BedrockAssetObfuscator() {
     }
 
-    static void obfuscate(Path pack, Path data, Map<String, JsonObject> bundles) throws IOException {
+    static void obfuscate(Path pack, Path data, Map<String, JsonObject> bundles, BedrockDefinitionIndex index) throws IOException {
         List<String> textures = new ArrayList<>();
         List<String> sounds = new ArrayList<>();
         List<String> definitions = new ArrayList<>();
@@ -49,7 +49,7 @@ final class BedrockAssetObfuscator {
         definitions.addAll(bundles.keySet());
         Map<String, JsonObject> definitionDocuments = new HashMap<>(bundles);
         Map<String, String> identifiers = definitionNames(pack, definitions, definitionDocuments);
-        BedrockAttachableSharing.share(pack, definitions, definitionDocuments, identifiers);
+        BedrockAttachableSharing.share(pack, definitions, definitionDocuments, identifiers, index);
         shortenNativeEntities(data.resolve(BedrockPackLayout.NATIVE_MODELS), identifiers);
 
         Map<String, String> paths = new HashMap<>();
@@ -74,9 +74,16 @@ final class BedrockAssetObfuscator {
         for (String definition : definitions) {
             Path file = pack.resolve(paths.getOrDefault(definition, definition));
             JsonObject document = definitionDocuments.remove(definition);
+            JsonObject attachable = index.attachables.remove(definition);
+            if (document == null) {
+                document = attachable;
+            }
             if (bundles.containsKey(definition)) {
                 GsonHelper.replaceStrings(document, clientValues, clientKeys);
                 Files.createDirectories(file.getParent());
+                GsonHelper.writeJsonFile(document, file);
+            } else if (index.dirtyAttachables.remove(definition)) {
+                GsonHelper.replaceStrings(document, clientValues, clientKeys);
                 GsonHelper.writeJsonFile(document, file);
             } else if (document == null) {
                 rewriteReferences(file, clientValues, clientKeys);

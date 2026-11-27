@@ -25,9 +25,14 @@ public final class GeyserWorldBlocks {
     private final List<JsonObject> pendingDefinitions = new ArrayList<>();
     private final List<JsonObject> pendingStateMappings = new ArrayList<>();
     private final Object2IntMap<String> registeredAliases = new Object2IntOpenHashMap<>();
-    private final Int2ObjectMap<BlockCollision> originalCollisions = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<CollisionOverride> collisions = new Int2ObjectOpenHashMap<>();
     private volatile boolean[] customVisualStates = NO_CUSTOM_VISUAL_STATES;
     private GeyserSpigotWorldManagerHook worldManagerHook;
+
+    void clearPending() {
+        this.pendingDefinitions.clear();
+        this.pendingStateMappings.clear();
+    }
 
     public void add(JsonObject definition) {
         this.pendingDefinitions.add(definition);
@@ -91,7 +96,10 @@ public final class GeyserWorldBlocks {
             customStates[visualState] = true;
             if (definition.has("collision_boxes")) {
                 List<BlockCollision> collisions = BlockRegistries.COLLISIONS.get();
-                this.originalCollisions.put(visualState, collisions.set(visualState, collision(definition.getAsJsonArray("collision_boxes"))));
+                BlockCollision installed = collision(definition.getAsJsonArray("collision_boxes"));
+                BlockCollision original = collisions.set(visualState, installed);
+                CollisionOverride previous = this.collisions.get(visualState);
+                this.collisions.put(visualState, new CollisionOverride(previous != null && previous.installed() == original ? previous.original() : original, installed));
             }
             for (JsonElement element : definition.getAsJsonArray("server_states")) {
                 JsonObject server = element.getAsJsonObject();
@@ -143,15 +151,22 @@ public final class GeyserWorldBlocks {
         for (Object2IntMap.Entry<String> entry : Object2IntMaps.fastIterable(this.registeredAliases)) {
             identifiers.remove(entry.getKey(), entry.getIntValue());
         }
-        if (!this.originalCollisions.isEmpty()) {
+        if (!this.collisions.isEmpty()) {
             List<BlockCollision> collisions = BlockRegistries.COLLISIONS.get();
-            for (Int2ObjectMap.Entry<BlockCollision> entry : Int2ObjectMaps.fastIterable(this.originalCollisions)) {
-                collisions.set(entry.getIntKey(), entry.getValue());
+            for (Int2ObjectMap.Entry<CollisionOverride> entry : Int2ObjectMaps.fastIterable(this.collisions)) {
+                int index = entry.getIntKey();
+                CollisionOverride override = entry.getValue();
+                if (collisions.get(index) == override.installed()) {
+                    collisions.set(index, override.original());
+                }
             }
-            this.originalCollisions.clear();
+            this.collisions.clear();
         }
         this.customVisualStates = NO_CUSTOM_VISUAL_STATES;
         this.registeredAliases.clear();
+    }
+
+    private record CollisionOverride(BlockCollision original, BlockCollision installed) {
     }
 
     private static BlockCollision collision(JsonArray boxes) {

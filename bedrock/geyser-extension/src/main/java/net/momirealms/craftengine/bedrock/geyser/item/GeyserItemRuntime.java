@@ -23,6 +23,8 @@ import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.translator.item.CustomItemTranslator;
 
 import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public final class GeyserItemRuntime {
     private final GeyserSession session;
@@ -40,30 +42,15 @@ public final class GeyserItemRuntime {
         this.tintSources = tintSources;
     }
 
-    public static GeyserItemRuntime install(GeyserPlayer player,
-                                            Map<String, CustomItemDefinition> definitions,
-                                            Map<String, String> headIdentifiers,
-                                            Map<String, GeyserItemTints> tintSources) {
+    static GeyserItemRuntime install(GeyserPlayer player, GeyserItemBindingPlan plan) {
         GeyserSession session = player.session();
-        Set<String> selectedModels = new HashSet<>();
-        for (CustomItemDefinition definition : definitions.values()) {
-            if (definition.predicates().stream().anyMatch(GeyserItemPredicates::usesSelection)) {
-                selectedModels.add(definition.model().toString());
-            }
+        GeyserItemRuntime runtime = new GeyserItemRuntime(session, plan.selected, plan.tints);
+        GeyserItemBindingPlan.Bindings bindings = plan.forMappings(runtime.originalMappings);
+        if (bindings.affected().length != 0) {
+            session.setItemMappings(runtime.bindMappings(runtime.originalMappings, bindings.affected(), plan.contextual));
         }
-        Set<String> selectedItems = new HashSet<>();
-        for (CustomItemDefinition definition : definitions.values()) {
-            if (selectedModels.contains(definition.model().toString())) {
-                selectedItems.add(definition.bedrockIdentifier().toString());
-            }
-        }
-        GeyserItemRuntime runtime = new GeyserItemRuntime(session, selectedItems, tintSources);
-        if (!definitions.isEmpty()) {
-            session.setItemMappings(runtime.bindMappings(session.getItemMappings(), definitions));
-        }
-        GeyserHeadItemViews heads = new GeyserHeadItemViews(session.getItemMappings(), headIdentifiers);
         runtime.boundMappings = session.getItemMappings();
-        runtime.selectedHandler = GeyserSelectedItemHandler.install(player, runtime, heads, !definitions.isEmpty());
+        runtime.selectedHandler = GeyserSelectedItemHandler.install(player, runtime, bindings.heads(), plan.usesDimension);
         return runtime;
     }
 
@@ -78,14 +65,13 @@ public final class GeyserItemRuntime {
         }
     }
 
-    ItemMappings bindMappings(ItemMappings original, Map<String, CustomItemDefinition> definitions) {
+    private ItemMappings bindMappings(ItemMappings original, int[] affected, Set<String> contextual) {
         ItemMapping[] items = original.getItems().clone();
-        for (int i = 0; i < items.length; i++) {
-            ItemMapping item = items[i];
-            SortedSetMultimap<?, GeyserCustomMappingData> mappings = item.getCustomItemDefinitions();
-            if (mappings != null && mappings.values().stream().anyMatch(mapping -> definitions.containsKey(mapping.definition().bedrockIdentifier().toString()))) {
-                items[i] = this.bind(item, mappings, definitions);
-            }
+        Supplier<String> dimension = this::dimension;
+        BooleanSupplier selection = () -> this.selected;
+        for (int index : affected) {
+            ItemMapping item = items[index];
+            items[index] = this.bind(item, item.getCustomItemDefinitions(), contextual, dimension, selection);
         }
         return ItemMappingsProxy.INSTANCE.copy(original, items);
     }
@@ -93,15 +79,15 @@ public final class GeyserItemRuntime {
     @SuppressWarnings({"rawtypes", "unchecked"})
     private <K> ItemMapping bind(ItemMapping item,
                                  SortedSetMultimap<K, GeyserCustomMappingData> source,
-                                 Map<String, CustomItemDefinition> definitions) {
+                                 Set<String> contextual, Supplier<String> dimension, BooleanSupplier selection) {
         SortedSetMultimap<K, GeyserCustomMappingData> mappings = MultimapBuilder.hashKeys().treeSetValues(source.valueComparator()).build();
         for (Map.Entry<K, GeyserCustomMappingData> entry : source.entries()) {
             GeyserCustomMappingData mapping = entry.getValue();
             CustomItemDefinition definition = mapping.definition();
-            if (definitions.containsKey(definition.bedrockIdentifier().toString())) {
+            if (contextual.contains(definition.bedrockIdentifier().toString())) {
                 List<MinecraftPredicate<? super ItemPredicateContext>> predicates = new ArrayList<>(definition.predicates().size());
                 for (MinecraftPredicate<? super ItemPredicateContext> predicate : definition.predicates()) {
-                    predicates.add(GeyserItemPredicates.bind(predicate, this::dimension, () -> this.selected));
+                    predicates.add(GeyserItemPredicates.bind(predicate, dimension, selection));
                 }
                 CustomItemDefinition bound = new SessionDefinition(
                         definition.bedrockIdentifier(),
@@ -130,6 +116,10 @@ public final class GeyserItemRuntime {
     String dimension() {
         Object world = GeyserSessionProxy.INSTANCE.worldName(this.session);
         return world == null ? null : world.toString();
+    }
+
+    boolean usesSelection() {
+        return !this.selectedItems.isEmpty();
     }
 
     boolean hasTints() {

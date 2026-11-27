@@ -14,7 +14,7 @@ final class BedrockActionBar {
     private BedrockActionBar() {
     }
 
-    static void add(JsonObject hud) {
+    static void add(JsonObject hud, boolean images) {
         String marker = ContainerTitleCodec.ACTIONBAR_MARKER;
         JsonObject bar = new JsonObject();
         bar.addProperty("$ce_action_raw", "$actionbar_text");
@@ -79,6 +79,6 @@ final class BedrockActionBar {
         label.addProperty("enable_profanity_filter", true);
         label.addProperty("alpha", "@hud.anim_actionbar_text_alpha_out");
         JsonArray layerBindings = BedrockTitleLayers.layerBindings(COLLECTION, COLLECTION);
-        hud.add("ce_action_layer", BedrockTitleLayers.positionedLayer(label, layerBindings, false));
+        hud.add("ce_action_layer", BedrockTitleLayers.positionedLayer(label, layerBindings, false, images));
     }
 }

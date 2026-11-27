@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bedrock.geyser.util.GeyserAdventureHelper;
 public final class GeyserGlyphManager {
     private GeyserGlyphData glyphs;
     private Object originalSerializer;
+    private Object installedSerializer;
 
     public GeyserGlyphManager() {
         GeyserAdventureHelper.disableLegacyFormattingWarning();
@@ -13,9 +14,13 @@ public final class GeyserGlyphManager {
 
     // 替换掉 geyser 的旧版文本序列化器
     public void load(GeyserGlyphData glyphs) {
+        this.disable();
         this.glyphs = glyphs;
-        this.originalSerializer = MessageTranslatorProxy.INSTANCE.bedrockSerializer();
-        MessageTranslatorProxy.INSTANCE.bedrockSerializer(new GeyserGlyphSerializer(this.originalSerializer, glyphs.replacements()).wrap());
+        if (!glyphs.replacements().isEmpty()) {
+            this.originalSerializer = MessageTranslatorProxy.INSTANCE.bedrockSerializer();
+            this.installedSerializer = new GeyserGlyphSerializer(this.originalSerializer, glyphs.replacements()).wrap();
+            MessageTranslatorProxy.INSTANCE.bedrockSerializer(this.installedSerializer);
+        }
     }
 
     public GeyserGlyphData glyphs() {
@@ -23,8 +28,10 @@ public final class GeyserGlyphManager {
     }
 
     public void disable() {
-        if (this.originalSerializer != null) {
+        if (this.installedSerializer != null && MessageTranslatorProxy.INSTANCE.bedrockSerializer() == this.installedSerializer) {
             MessageTranslatorProxy.INSTANCE.bedrockSerializer(this.originalSerializer);
         }
+        this.installedSerializer = null;
+        this.originalSerializer = null;
     }
 }

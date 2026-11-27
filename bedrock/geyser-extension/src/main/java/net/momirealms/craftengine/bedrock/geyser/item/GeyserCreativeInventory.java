@@ -3,6 +3,7 @@ package net.momirealms.craftengine.bedrock.geyser.item;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import net.momirealms.craftengine.bedrock.geyser.network.GeyserPacketEvent;
+import net.momirealms.craftengine.bedrock.geyser.proxy.session.GeyserSessionProxy;
 import net.momirealms.craftengine.bedrock.network.BedrockProtocol;
 import org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemCategory;
 import org.cloudburstmc.protocol.bedrock.packet.CreativeContentPacket;
@@ -16,13 +17,23 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class GeyserCreativeInventory {
+    private static final int ITEMS_PER_BATCH = 128;
     private final GeyserSession session;
     private final Map<String, CreativeItemCategory> categoriesByVariant;
     private final ExtensionLogger logger;
-    private List<ItemStack> pendingStacks = new ArrayList<>();
+    private final List<ByteBuffer> chunks = new ArrayList<>();
+    private int chunkIndex;
+    private int chunkOffset;
+    private boolean scheduled;
+    private boolean finished;
+    private GeyserCreativeCatalog catalog;
+    private ItemMappings catalogBase;
+    private Object catalogWorld;
+    private String catalogLocale;
     private boolean receivingChunks = true;
     private boolean initialContentSeen;
     private ItemMappings originalMappings;
@@ -39,33 +50,91 @@ public final class GeyserCreativeInventory {
             return;
         }
         this.initialContentSeen = true;
-        this.publishCatalogIfReady(event::setPacket);
+        this.drain(event::setPacket);
     }
 
     public void receive(boolean last, ByteBuffer stacks) {
-        if (!this.receivingChunks) {
+        if (!this.receivingChunks || this.finished) {
             return;
         }
-        ByteBuf chunk = Unpooled.wrappedBuffer(stacks);
-        try {
-            if (chunk.readableBytes() > BedrockProtocol.CREATIVE_ITEMS_CHUNK_BYTES) {
-                throw new IllegalArgumentException("Creative item chunk exceeds its size limit");
-            }
-            while (chunk.isReadable()) {
-                this.readStack(chunk);
-            }
-        } catch (RuntimeException exception) {
-            this.logger.error("Could not read CraftEngine creative items", exception);
-            this.receivingChunks = false;
-            this.pendingStacks = List.of();
+        if (stacks.remaining() > BedrockProtocol.CREATIVE_ITEMS_CHUNK_BYTES) {
+            this.logger.error("Creative item chunk exceeds its size limit");
+            this.discard();
             return;
-        } finally {
-            chunk.release();
         }
+        if (stacks.hasRemaining()) {
+            this.chunks.add(stacks.slice().asReadOnlyBuffer());
+        }
+        this.receivingChunks = !last;
+        this.drain(this.session::sendUpstreamPacket);
+    }
 
-        if (last) {
-            this.receivingChunks = false;
-            this.publishCatalogIfReady(this.session::sendUpstreamPacket);
+    private void drain(Consumer<CreativeContentPacket> writer) {
+        if (this.finished) {
+            return;
+        }
+        if (this.session.isClosed() || (!this.receivingChunks && this.chunks.isEmpty())) {
+            this.discard();
+            return;
+        }
+        if (this.chunks.isEmpty()) {
+            return;
+        }
+        ItemMappings base = this.session.getItemMappings();
+        Object world = GeyserSessionProxy.INSTANCE.worldName(this.session);
+        String locale = this.session.locale();
+        if (base != this.catalogBase || !Objects.equals(world, this.catalogWorld) || !Objects.equals(locale, this.catalogLocale)) {
+            // Rebuild against one mapping, world and locale if a transfer overlaps the handshake.
+            this.catalog = new GeyserCreativeCatalog(base, this.categoriesByVariant.size());
+            this.catalogBase = base;
+            this.catalogWorld = world;
+            this.catalogLocale = locale;
+            this.chunkIndex = 0;
+            this.chunkOffset = 0;
+        }
+        int budget = ITEMS_PER_BATCH;
+        while (budget > 0 && this.chunkIndex < this.chunks.size()) {
+            ByteBuffer encoded = this.chunks.get(this.chunkIndex).duplicate().position(this.chunkOffset);
+            ByteBuf chunk = Unpooled.wrappedBuffer(encoded);
+            try {
+                while (budget > 0 && chunk.isReadable()) {
+                    this.readStack(chunk);
+                    budget--;
+                }
+                if (chunk.isReadable()) {
+                    this.chunkOffset += chunk.readerIndex();
+                } else {
+                    this.chunkIndex++;
+                    this.chunkOffset = 0;
+                }
+            } catch (RuntimeException exception) {
+                this.logger.error("Could not read CraftEngine creative items", exception);
+                this.discard();
+                return;
+            } finally {
+                chunk.release();
+            }
+        }
+        if (this.chunkIndex < this.chunks.size()) {
+            if (!this.scheduled) {
+                this.scheduled = true;
+                this.session.executeInEventLoop(() -> {
+                    this.scheduled = false;
+                    this.drain(this.session::sendUpstreamPacket);
+                });
+            }
+        } else if (!this.receivingChunks && this.initialContentSeen) {
+            ItemMappings extended = this.catalog.finish(base);
+            this.discard();
+            if (extended != null) {
+                this.originalMappings = base;
+                this.creativeMappings = extended;
+                this.session.setItemMappings(extended);
+                CreativeContentPacket content = new CreativeContentPacket();
+                content.getContents().addAll(extended.getCreativeItems());
+                content.getGroups().addAll(extended.getCreativeItemGroups());
+                writer.accept(content);
+            }
         }
     }
 
@@ -78,37 +147,25 @@ public final class GeyserCreativeInventory {
         try {
             ItemStack item = MinecraftTypes.readOptionalItemStack(encoded);
             if (item != null && !encoded.isReadable()) {
-                this.pendingStacks.add(item);
+                this.catalog.append(this.session, item, this.categoriesByVariant, this.logger);
             }
         } catch (RuntimeException exception) {
             this.logger.error("Could not decode a CraftEngine creative item stack", exception);
         }
     }
 
-    private void publishCatalogIfReady(Consumer<CreativeContentPacket> sendContent) {
-        if (this.receivingChunks || !this.initialContentSeen || this.pendingStacks.isEmpty()) {
-            return;
-        }
-        List<ItemStack> stacks = this.pendingStacks;
-        this.pendingStacks = List.of();
-        ItemMappings base = this.session.getItemMappings();
-        ItemMappings extended = GeyserCreativeCatalog.build(this.session, base, stacks, this.categoriesByVariant, this.logger);
-        if (extended == null) {
-            return;
-        }
-        this.originalMappings = base;
-        this.creativeMappings = extended;
-        this.session.setItemMappings(extended);
-
-        CreativeContentPacket content = new CreativeContentPacket();
-        content.getContents().addAll(extended.getCreativeItems());
-        content.getGroups().addAll(extended.getCreativeItemGroups());
-        sendContent.accept(content);
+    private void discard() {
+        this.finished = true;
+        this.receivingChunks = false;
+        this.chunks.clear();
+        this.catalog = null;
+        this.catalogBase = null;
+        this.catalogWorld = null;
+        this.catalogLocale = null;
     }
 
     public void close() {
-        this.receivingChunks = false;
-        this.pendingStacks = List.of();
+        this.discard();
         if (this.creativeMappings != null && this.session.getItemMappings() == this.creativeMappings) {
             this.session.setItemMappings(this.originalMappings);
         }

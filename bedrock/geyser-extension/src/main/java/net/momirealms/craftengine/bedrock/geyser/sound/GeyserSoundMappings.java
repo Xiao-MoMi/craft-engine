@@ -41,7 +41,10 @@ public final class GeyserSoundMappings {
     }
 
     private void add(Map<String, SoundMapping> registry, String id, SoundMapping mapping) {
-        this.previous.put(id, registry.put(id, mapping));
+        SoundMapping replaced = registry.put(id, mapping);
+        if (!this.installed.containsKey(id) || this.installed.get(id) != replaced) {
+            this.previous.put(id, replaced);
+        }
         this.installed.put(id, mapping);
     }
 

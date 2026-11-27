@@ -23,7 +23,7 @@ public final class BossBarTitleCodec {
     public static int entryBytes(int baselineCount) {
         int bytes = ENTRY_BYTES;
         // 每条基线有两种字体、两种百分号状态和两种阴影状态。
-        for (long tag = 8L * baselineCount - 1; tag >= 10; tag /= 10) {
+        for (long tag = 9L * baselineCount - 1; tag >= 10; tag /= 10) {
             bytes++;
         }
         return bytes;
@@ -61,7 +61,8 @@ public final class BossBarTitleCodec {
             if (position < 0 || position >= 2 * bias) {
                 return null;
             }
-            String text = serialize.apply(layer);
+            boolean image = !layer.isEmpty() && layer.getFirst().image();
+            String text = image ? layer.getFirst().text() : serialize.apply(layer);
             int textLength = compactTextLength(text);
             if (textLength == 0) {
                 continue;
@@ -88,6 +89,9 @@ public final class BossBarTitleCodec {
             int tag = style + (percent < 0 ? 0 : styles);
             if (layout.shadowOverride(index)) {
                 tag += 2 * styles;
+            }
+            if (image) {
+                tag = 4 * styles + baseline;
             }
             ContainerTitleCodec.appendNumber(header, tag, tagDivisor);
             ContainerTitleCodec.appendNumber(header, endBytes, 100);

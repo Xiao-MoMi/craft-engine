@@ -5,6 +5,7 @@ import net.momirealms.craftengine.bedrock.BedrockTintSource;
 import net.momirealms.craftengine.core.pack.bedrock.BedrockResourceException;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemBindingRule;
 import net.momirealms.craftengine.core.pack.bedrock.item.plan.ItemRenderTarget;
+import net.momirealms.craftengine.core.pack.bedrock.model.BedrockGeneratedGeometry.EdgeMerging;
 import net.momirealms.craftengine.core.pack.bedrock.model.*;
 import net.momirealms.craftengine.core.pack.bedrock.texture.JavaPackTextureSource;
 import net.momirealms.craftengine.core.pack.bedrock.texture.TextureData;
@@ -90,7 +91,7 @@ public final class BedrockItemGeometryBuilder {
             for (int layer = 0; layer < layers.size(); layer++) {
                 BedrockElementGeometry.Material material = this.material(layers.get(layer), target, layer, preserveDye);
                 TextureData data = this.textures.read(layers.get(layer), this.textureUsage);
-                BedrockGeneratedGeometry.addLayer(cubes, data, material.name(), layer, data.image().getWidth(), data.image().getHeight(), mergeEdges);
+                BedrockGeneratedGeometry.addLayer(cubes, this.textures.outline(data), material.name(), layer, data.image().getWidth(), data.image().getHeight(), mergeEdges ? EdgeMerging.PER_PIXEL : EdgeMerging.NONE);
             }
             return cubes;
         }

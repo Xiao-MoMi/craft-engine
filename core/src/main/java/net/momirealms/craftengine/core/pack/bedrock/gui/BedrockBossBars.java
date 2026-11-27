@@ -93,7 +93,7 @@ public final class BedrockBossBars {
         JsonObject hud = Files.exists(hudPath) ? GsonHelper.readJsonObjectFromFile(hudPath) : new JsonObject();
         hud.addProperty("namespace", "hud");
         JsonArray modifications = new JsonArray();
-        modifications.add(replaceControl("boss_name", "boss_name", BedrockBossBarTitle.panel(hud, baselines)));
+        modifications.add(replaceControl("boss_name", "boss_name", BedrockBossBarTitle.panel(hud, baselines, BedrockTitleLayers.hasImages(pack))));
         if (hasStyles) {
             JsonObject nativeBar = new JsonObject();
             nativeBar.add("offset", GsonHelper.createArray(0, 10));

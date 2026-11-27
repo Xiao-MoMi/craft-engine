@@ -31,7 +31,7 @@ final class GeyserCreativeCatalog {
     private final Map<ItemData, ItemStack> javaStacksByEntry;
     private final Map<ItemDefinition, ItemMapping> reverseMappings;
 
-    private GeyserCreativeCatalog(ItemMappings base, int expectedEntries) {
+    GeyserCreativeCatalog(ItemMappings base, int expectedEntries) {
         this.entries = new ArrayList<>(base.getCreativeItems().size() + expectedEntries);
         this.entries.addAll(base.getCreativeItems());
         this.groups = new ArrayList<>(base.getCreativeItemGroups());
@@ -47,27 +47,23 @@ final class GeyserCreativeCatalog {
         this.reverseMappings = LinkedHashMap.newLinkedHashMap(expectedEntries);
     }
 
+    void append(GeyserSession session, ItemStack stack, Map<String, CreativeItemCategory> categoriesByVariant, ExtensionLogger logger) {
+        ItemData appearance;
+        try {
+            appearance = ItemTranslator.translateToBedrock(session, stack);
+        } catch (RuntimeException exception) {
+            logger.error("Could not translate a CraftEngine creative item with Java ID " + stack.getId(), exception);
+            return;
+        }
+        CreativeItemCategory category = categoriesByVariant.get(appearance.getDefinition().getIdentifier());
+        if (category != null) {
+            this.add(stack, appearance, category);
+        }
+    }
+
     @Nullable
-    static ItemMappings build(GeyserSession session, ItemMappings base, List<ItemStack> stacks,
-                              Map<String, CreativeItemCategory> categoriesByVariant, ExtensionLogger logger) {
-        GeyserCreativeCatalog catalog = new GeyserCreativeCatalog(base, Math.min(stacks.size(), categoriesByVariant.size()));
-        for (ItemStack stack : stacks) {
-            ItemData appearance;
-            try {
-                appearance = ItemTranslator.translateToBedrock(session, stack);
-            } catch (RuntimeException exception) {
-                logger.error("Could not translate a CraftEngine creative item with Java ID " + stack.getId(), exception);
-                continue;
-            }
-            CreativeItemCategory category = categoriesByVariant.get(appearance.getDefinition().getIdentifier());
-            if (category != null) {
-                catalog.add(stack, appearance, category);
-            }
-        }
-        if (catalog.reverseMappings.isEmpty()) {
-            return null;
-        }
-        return catalog.extendMappings(base);
+    ItemMappings finish(ItemMappings base) {
+        return this.reverseMappings.isEmpty() ? null : this.extendMappings(base);
     }
 
     private void add(ItemStack stack, ItemData appearance, CreativeItemCategory category) {

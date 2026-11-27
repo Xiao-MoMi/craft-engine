@@ -22,14 +22,14 @@ final class GlyphPage {
     private final int index;
     private final int cellSize;
     private final int side;
-    private final int[] pixels;
+    private final Glyph[] glyphs = new Glyph[CELLS_PER_PAGE];
+    private final int[] widths = new int[CELLS_PER_PAGE];
     private int usedSlots;
 
     GlyphPage(int index, int cellSize) {
         this.index = index;
         this.cellSize = cellSize;
         this.side = cellSize * CELLS_PER_ROW;
-        this.pixels = new int[this.side * this.side];
     }
 
     int cellSize() {
@@ -41,8 +41,18 @@ final class GlyphPage {
     }
 
     void write(Path directory) throws IOException {
+        int[] pixels = new int[this.side * this.side];
+        for (int slot = 0; slot < this.usedSlots; slot++) {
+            Glyph glyph = this.glyphs[slot];
+            int width = this.widths[slot];
+            int left = slot % CELLS_PER_ROW * this.cellSize + (this.cellSize - width) / 2;
+            int top = slot / CELLS_PER_ROW * this.cellSize + this.cellSize / 2 + BASELINE_OFFSET - glyph.ascent();
+            int markerY = top + drawGlyph(glyph, pixels, this.side, width, left, top);
+            markEdge(pixels, markerY * this.side + left);
+            markEdge(pixels, markerY * this.side + left + width - 1);
+        }
         try (OutputStream output = Files.newOutputStream(file(directory, this.index))) {
-            PngOptimizer.writeArgb(output, this.side, this.side, this.pixels);
+            PngOptimizer.writeArgb(output, this.side, this.side, pixels);
         }
     }
 
@@ -52,16 +62,12 @@ final class GlyphPage {
 
     int add(Glyph glyph, GlyphMetrics metrics) {
         int slot = this.usedSlots++;
-        int cellX = slot % CELLS_PER_ROW * this.cellSize;
-        int cellY = slot / CELLS_PER_ROW * this.cellSize;
-        int left = cellX + (this.cellSize - metrics.width()) / 2;
-        // 页内基线位于字格中心下方 3 像素。从基线向上移 Java 字形的 ascent，得到绘制起点。
-        int top = cellY + this.cellSize / 2 + BASELINE_OFFSET - glyph.ascent();
-        this.drawGlyph(glyph, metrics.width(), left, top);
+        this.glyphs[slot] = glyph;
+        this.widths[slot] = metrics.width();
         return this.index * CELLS_PER_PAGE + slot;
     }
 
-    private void drawGlyph(Glyph glyph, int width, int left, int top) {
+    static int drawGlyph(Glyph glyph, int[] pixels, int stride, int width, int left, int top) {
         int firstInkRow = -1;
         float scale = (float) glyph.height() / glyph.sourceHeight();
         // 将目标像素的中心映回源字形，直接取该位置的像素颜色，缩放时保留像素边缘。
@@ -73,20 +79,16 @@ final class GlyphPage {
                 if (firstInkRow < 0 && (pixel >>> 24) != 0) {
                     firstInkRow = y;
                 }
-                this.pixels[(top + y) * this.side + left + x] = pixel;
+                pixels[(top + y) * stride + left + x] = pixel;
             }
         }
 
-        // 基岩会裁掉左右的全透明列。用最低非零透明度标出两端，保留预期字宽，同时保留已有的可见像素。
-        int markerY = top + Math.max(firstInkRow, 0);
-        this.markEdge(left, markerY);
-        this.markEdge(left + width - 1, markerY);
+        return Math.max(firstInkRow, 0);
     }
 
-    private void markEdge(int x, int y) {
-        int index = y * this.side + x;
-        if ((this.pixels[index] >>> 24) == 0) {
-            this.pixels[index] = ALMOST_TRANSPARENT;
+    private static void markEdge(int[] pixels, int index) {
+        if ((pixels[index] >>> 24) == 0) {
+            pixels[index] = ALMOST_TRANSPARENT;
         }
     }
 }

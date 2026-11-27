@@ -31,15 +31,15 @@ public final class ItemModelBindingCompiler {
     }
 
     static Function<Key, ItemModelDefinitionBinding> lazy(JavaResourcePack pack) throws IOException {
-        Map<Key, JsonObject> definitions = pack.itemDefinitions();
+        pack.validateItemDefinitions();
         Map<Key, ItemModelDefinitionBinding> bindings = new HashMap<>();
         return key -> bindings.computeIfAbsent(key, id -> {
-            JsonObject definition = definitions.get(id);
-            if (definition == null) {
+            String path = ResourcePackUtils.itemDefinitionPath(id);
+            if (!pack.hasCustomResource(path)) {
                 return null;
             }
             try {
-                return compile(id, definition);
+                return compile(id, pack.readJson(path));
             } catch (IOException exception) {
                 throw new UncheckedIOException(exception);
             }

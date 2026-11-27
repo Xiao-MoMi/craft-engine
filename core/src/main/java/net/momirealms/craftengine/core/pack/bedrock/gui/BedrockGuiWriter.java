@@ -18,6 +18,10 @@ public final class BedrockGuiWriter {
     private final JsonArray smallRoutes = new JsonArray();
 
     public BedrockGuiWriter() {
+        this(false);
+    }
+
+    BedrockGuiWriter(boolean images) {
         this.controls.addProperty("namespace", "ce_gui");
         JsonObject empty = new JsonObject();
         empty.addProperty("type", "panel");
@@ -26,7 +30,7 @@ public final class BedrockGuiWriter {
         slot.addProperty("$item_collection_name", "container_items");
         slot.addProperty("$background_images", "ce_gui.empty");
         this.controls.add("slot@common.container_item", slot);
-        this.addTitleLayerTemplate();
+        this.addTitleLayerTemplate(images);
     }
 
     public void add(int rows, String texture) {
@@ -111,7 +115,7 @@ public final class BedrockGuiWriter {
         content.add(GsonHelper.createObject("title_layers", panel));
     }
 
-    private void addTitleLayerTemplate() {
+    private void addTitleLayerTemplate(boolean images) {
         JsonObject label = this.position(0, 0, 0, 0);
         JsonArray size = new JsonArray();
         size.add("default");
@@ -123,7 +127,7 @@ public final class BedrockGuiWriter {
         label.addProperty("text_alignment", "left");
         label.addProperty("shadow", false);
         JsonArray bindings = BedrockTitleLayers.layerBindings("ce_title_layers", "title_layers");
-        this.controls.add("title_layer", BedrockTitleLayers.positionedLayer(label, bindings, true));
+        this.controls.add("title_layer", BedrockTitleLayers.positionedLayer(label, bindings, true, images));
     }
 
     public void write(Path root) throws IOException {

@@ -1,6 +1,5 @@
 package net.momirealms.craftengine.bedrock.geyser.entity.display;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.momirealms.craftengine.bedrock.GuiTitlePart;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphData;
 import net.momirealms.craftengine.bedrock.geyser.glyph.GeyserGlyphSerializer;
@@ -78,7 +77,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             GuiTitlePart part = parts.getFirst();
             if (part.font().equals(DEFAULT_FONT) && glyphs.verticalOffset(DEFAULT_FONT) == 0 && part.color() == 0xffffff && part.decorations() == 0) {
                 FontData.Font font = glyphs.font(DEFAULT_FONT);
-                if (isPlainText(part.text(), font.rendering())) {
+                if (isPlainText(part.text(), font)) {
                     return splitPlain(part.text(), maxWidth, font, formatted.trailingFormat());
                 }
             }
@@ -95,7 +94,6 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         for (int partIndex = 0; partIndex < parts.size(); partIndex++) {
             GuiTitlePart part = parts.get(partIndex);
             FontData.Font font = glyphs.font(part.font());
-            Int2ObjectMap<FontGlyph> rendering = font.rendering();
             boolean bold = (part.decorations() & 2) != 0;
             boolean shifted = glyphs.verticalOffset(part.font()) != 0;
             needsPositioning |= shifted;
@@ -109,7 +107,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
                 if (codepoint != '\n') {
                     advances[index] = font.advance(codepoint, bold);
                     needsPositioning |= advances[index] < 0;
-                    plain = plain && isPlainGlyph(codepoint, rendering);
+                    plain = plain && isPlainGlyph(codepoint, font);
                 }
                 index += Character.charCount(codepoint);
             }
@@ -138,22 +136,22 @@ public record DisplayTextLayout(List<Line> lines, int width) {
         Line slice(int start, int end, int width);
     }
 
-    private static boolean isPlainText(String text, Int2ObjectMap<FontGlyph> rendering) {
+    private static boolean isPlainText(String text, FontData.Font font) {
         for (int i = 0; i < text.length(); i++) {
             char character = text.charAt(i);
-            if (character != '\n' && !isPlainGlyph(character, rendering)) {
+            if (character != '\n' && !isPlainGlyph(character, font)) {
                 return false;
             }
         }
         return true;
     }
 
-    private static boolean isPlainGlyph(int codepoint, Int2ObjectMap<FontGlyph> rendering) {
+    private static boolean isPlainGlyph(int codepoint, FontData.Font font) {
         if (codepoint < ' ' || codepoint > '~') {
             return false;
         }
-        FontGlyph glyph = rendering.get(codepoint);
-        return glyph == null || glyph.character() == codepoint;
+        FontGlyph glyph = font.glyph(codepoint);
+        return glyph == null || glyph.character(codepoint) == codepoint;
     }
 
     @FunctionalInterface
@@ -247,7 +245,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             for (int offset = 0; offset < text.length();) {
                 int code = text.codePointAt(offset);
                 int next = offset + Character.charCount(code);
-                FontGlyph glyph = font.rendering().get(code);
+                FontGlyph glyph = font.glyph(code);
                 if (glyph != null && !glyph.visible()) {
                     if (output == null) {
                         output = new GuiTitlePart.Builder(new ArrayList<>(parts.subList(0, index)));
@@ -300,7 +298,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             for (int i = 0; i < part.text().length();) {
                 int code = part.text().codePointAt(i);
                 i += Character.charCount(code);
-                FontGlyph glyph = font.rendering().get(code);
+                FontGlyph glyph = font.glyph(code);
                 float advance = font.advance(code, bold);
                 width += advance;
                 if (glyph != null && !glyph.visible()) {
@@ -334,7 +332,7 @@ public record DisplayTextLayout(List<Line> lines, int width) {
             for (int i = 0; i < text.length();) {
                 int code = text.codePointAt(i);
                 int next = i + Character.charCount(code);
-                FontGlyph glyph = font.rendering().get(code);
+                FontGlyph glyph = font.glyph(code);
                 float advance = font.advance(code, bold);
                 if (glyph != null && !glyph.visible()) {
                     run.append(part.font(), text.substring(slice, i), part.color(), part.decorations());

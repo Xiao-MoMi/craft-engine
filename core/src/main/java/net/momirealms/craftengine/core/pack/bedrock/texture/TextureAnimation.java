@@ -2,6 +2,8 @@ package net.momirealms.craftengine.core.pack.bedrock.texture;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonPrimitive;
+import it.unimi.dsi.fastutil.ints.Int2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 import net.momirealms.craftengine.core.util.ImageUtils;
 import net.momirealms.craftengine.core.util.MiscUtils;
 import org.jetbrains.annotations.Nullable;
@@ -40,8 +42,13 @@ public record TextureAnimation(BufferedImage sheet,
         return interval;
     }
 
-    public int keyFrameCount() {
-        return (this.sheet.getWidth() / this.width) * (this.sheet.getHeight() / this.height);
+    public KeyFrames keyFrames() {
+        Int2IntLinkedOpenHashMap indices = new Int2IntLinkedOpenHashMap();
+        indices.defaultReturnValue(-1);
+        for (Frame frame : this.frames) {
+            indices.putIfAbsent(frame.index(), indices.size());
+        }
+        return new KeyFrames(indices);
     }
 
     public int uniformFrameTime() {
@@ -54,56 +61,96 @@ public record TextureAnimation(BufferedImage sheet,
         return interval;
     }
 
-    public BufferedImage keyFrameStrip(int color) {
-        BufferedImage source = color == 0xffffff ? this.sheet : ImageUtils.multiplyColor(this.sheet, color);
-        int columns = source.getWidth() / this.width;
-        if (columns == 1 && this.width == this.height) {
-            return source;
+    public final class KeyFrames {
+        private final Int2IntLinkedOpenHashMap indices;
+
+        private KeyFrames(Int2IntLinkedOpenHashMap indices) {
+            this.indices = indices;
         }
-        int count = this.keyFrameCount();
-        int size = Math.max(this.width, this.height);
-        BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, count), BufferedImage.TYPE_INT_ARGB);
-        int[] pixels = new int[this.width * this.height];
-        for (int index = 0; index < count; index++) {
-            source.getRGB(index % columns * this.width, index / columns * this.height, this.width, this.height, pixels, 0, this.width);
-            strip.setRGB(0, index * size, this.width, this.height, pixels, 0, this.width);
+
+        public int size() {
+            return this.indices.size();
         }
-        return strip;
+
+        public BufferedImage strip(int color) {
+            BufferedImage source = TextureAnimation.this.sheet;
+            int width = TextureAnimation.this.width;
+            int height = TextureAnimation.this.height;
+            int columns = source.getWidth() / width;
+            boolean originalOrder = columns == 1 && width == height && this.size() == source.getHeight() / height;
+            if (originalOrder) {
+                int expected = 0;
+                for (IntIterator iterator = this.indices.keySet().iterator(); iterator.hasNext();) {
+                    if (iterator.nextInt() != expected++) {
+                        originalOrder = false;
+                        break;
+                    }
+                }
+            }
+            if (originalOrder) {
+                return color == 0xffffff ? source : ImageUtils.multiplyColor(source, color);
+            }
+            int size = Math.max(width, height);
+            BufferedImage strip = new BufferedImage(size, Math.multiplyExact(size, this.size()), BufferedImage.TYPE_INT_ARGB);
+            int[] pixels = new int[width * height];
+            int destination = 0;
+            for (IntIterator iterator = this.indices.keySet().iterator(); iterator.hasNext();) {
+                int index = iterator.nextInt();
+                source.getRGB(index % columns * width, index / columns * height, width, height, pixels, 0, width);
+                strip.setRGB(0, destination++ * size, width, height, pixels, 0, width);
+            }
+            return color == 0xffffff ? strip : ImageUtils.multiplyColor(strip, color);
+        }
+
+        public JsonArray sequence(int interval) {
+            JsonArray sequence = new JsonArray(TextureAnimation.this.duration / interval);
+            for (Frame frame : TextureAnimation.this.frames) {
+                JsonPrimitive index = new JsonPrimitive(this.indices.get(frame.index()));
+                int repeats = frame.time() / interval;
+                for (int i = 0; i < repeats; i++) {
+                    sequence.add(index);
+                }
+            }
+            return sequence;
+        }
     }
 
-    public JsonArray frameSequence(int interval) {
-        JsonArray sequence = new JsonArray(this.duration / interval);
-        for (Frame frame : this.frames) {
-            JsonPrimitive index = new JsonPrimitive(frame.index());
-            int repeats = frame.time() / interval;
-            for (int i = 0; i < repeats; i++) {
-                sequence.add(index);
-            }
+    public Sampler sampler() {
+        return new Sampler();
+    }
+
+    public final class Sampler {
+        private int index;
+        private int start;
+        private final int[] nextPixels = TextureAnimation.this.interpolate ? new int[TextureAnimation.this.width * TextureAnimation.this.height] : null;
+
+        private Sampler() {
         }
-        return sequence;
+
+        public void render(int tick, int color, BufferedImage target) {
+            int position = tick % TextureAnimation.this.duration;
+            if (position < this.start) {
+                this.start = 0;
+                this.index = 0;
+            }
+            while (position - this.start >= TextureAnimation.this.frames.get(this.index).time()) {
+                this.start += TextureAnimation.this.frames.get(this.index++).time();
+            }
+            TextureAnimation.this.render(this.index, position - this.start, color, target, this.nextPixels);
+        }
     }
 
     public void forEachFrame(int color, FrameConsumer consumer) throws IOException {
         int interval = this.sampleInterval();
         BufferedImage image = new BufferedImage(this.width, this.height, BufferedImage.TYPE_INT_ARGB);
-        int[] nextPixels = this.interpolate ? new int[this.width * this.height] : null;
-        // 所有采样复用同一画布；消费者必须在回调内完成读取或复制。
+        Sampler sampler = this.sampler();
         for (int tick = 0; tick < this.duration; tick += interval) {
-            this.render(tick, color, image, nextPixels);
+            sampler.render(tick, color, image);
             consumer.accept(tick / interval, image);
         }
     }
 
-    public void render(int tick, int color, BufferedImage target) {
-        this.render(tick, color, target, null);
-    }
-
-    private void render(int tick, int color, BufferedImage target, @Nullable int[] nextPixels) {
-        int position = tick % this.duration;
-        int frameIndex = 0;
-        while (position >= this.frames.get(frameIndex).time()) {
-            position -= this.frames.get(frameIndex++).time();
-        }
+    private void render(int frameIndex, int position, int color, BufferedImage target, @Nullable int[] nextPixels) {
         Frame current = this.frames.get(frameIndex);
         Frame next = this.frames.get((frameIndex + 1) % this.frames.size());
         int columns = this.sheet.getWidth() / this.width;

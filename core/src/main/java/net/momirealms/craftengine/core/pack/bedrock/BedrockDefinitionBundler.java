@@ -30,24 +30,38 @@ public final class BedrockDefinitionBundler {
     }
 
     public static void bundle(Path root) throws IOException {
-        bundle(root, new HashMap<>(), false);
+        bundle(root, new BedrockDefinitionIndex(), false);
     }
 
-    static Map<String, JsonObject> bundle(Path root, Map<Path, JsonObject> models, boolean protection) throws IOException {
-        // 保护模式下等引用改写完成再写出合并后的 JSON
-        Map<String, JsonObject> deferred = protection ? new LinkedHashMap<>() : null;
+    static Map<String, JsonObject> bundle(Path root, BedrockDefinitionIndex index, boolean protection) throws IOException {
+        Map<String, JsonObject> deferred = new LinkedHashMap<>();
         BedrockItemUseScripts useScripts = new BedrockItemUseScripts();
         for (DefinitionType type : TYPES) {
             Path directory = root.resolve(type.directory());
             if (Files.exists(directory)) {
-                bundleType(directory, type, models, deferred, useScripts);
+                // 普通模式只暂存动画，保护模式还需改写其他合并文件的资源标识。
+                bundleType(directory, type, index, protection || type.key().equals("animations") ? deferred : null, useScripts);
             }
         }
-        useScripts.trimAttachables(root.resolve("attachables").resolve(NAMESPACE));
-        return deferred == null ? Map.of() : deferred;
+        if (index.attachables.isEmpty()) {
+            useScripts.trimAttachables(root.resolve("attachables").resolve(NAMESPACE));
+        } else {
+            for (Map.Entry<String, JsonObject> entry : index.attachables.entrySet()) {
+                if (entry.getKey().startsWith("attachables/" + NAMESPACE + "/")
+                        && useScripts.trimUnused(entry.getValue().getAsJsonObject("minecraft:attachable").getAsJsonObject("description"))) {
+                    index.dirtyAttachables.add(entry.getKey());
+                }
+            }
+        }
+        if (!protection) {
+            BedrockAttachableSharing.writeSharedPoses(root, deferred, index);
+            index.flushAttachables(root);
+            return Map.of();
+        }
+        return deferred;
     }
 
-    private static void bundleType(Path directory, DefinitionType type, Map<Path, JsonObject> models,
+    private static void bundleType(Path directory, DefinitionType type, BedrockDefinitionIndex index,
                                    @Nullable Map<String, JsonObject> deferred, BedrockItemUseScripts useScripts) throws IOException {
         List<Path> files;
         try (Stream<Path> paths = Files.walk(directory)) {
@@ -59,7 +73,7 @@ public final class BedrockDefinitionBundler {
         Map<JsonObject, Group> groups = new LinkedHashMap<>();
         List<Path> sources = new ArrayList<>(files.size());
         for (Path file : files) {
-            JsonObject header = models.remove(file);
+            JsonObject header = index.geometries.remove(file);
             if (header == null) {
                 header = GsonHelper.readJsonFromFile(file).getAsJsonObject();
             }
@@ -89,7 +103,7 @@ public final class BedrockDefinitionBundler {
         }
         Path temporary = deferred == null ? Files.createTempDirectory(directory, "bundles-") : null;
         List<Path> outputs = new ArrayList<>(groups.size());
-        int index = 0;
+        int sequence = 0;
         for (Map.Entry<JsonObject, Group> entry : groups.entrySet()) {
             Group group = entry.getValue();
             if (group.identifiers.isEmpty()) {
@@ -98,9 +112,11 @@ public final class BedrockDefinitionBundler {
             JsonObject document = new JsonObject();
             entry.getKey().entrySet().forEach(header -> document.add(header.getKey(), header.getValue()));
             document.add(type.key(), group.definitions);
-            String name = index++ + type.suffix();
+            String name = sequence++ + type.suffix();
+            String relative = type.directory() + '/' + NAMESPACE + '/' + name;
+            index.index(relative, document);
             if (deferred != null) {
-                deferred.put(type.directory() + '/' + NAMESPACE + '/' + name, document);
+                deferred.put(relative, document);
             } else {
                 Path output = temporary.resolve(name);
                 GsonHelper.writeJsonFile(document, output);

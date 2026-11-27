@@ -27,9 +27,10 @@ public final class BedrockSidebarWriter {
     }
 
     public void write(Path root) throws IOException {
-        this.controls.add("ce_sidebar_title_layer", this.layer(true, false));
-        this.controls.add("ce_sidebar_player_layer", this.layer(false, false));
-        this.controls.add("ce_sidebar_score_layer", this.layer(false, true));
+        boolean images = BedrockTitleLayers.hasImages(root);
+        this.controls.add("ce_sidebar_title_layer", this.layer(true, false, images));
+        this.controls.add("ce_sidebar_player_layer", this.layer(false, false, images));
+        this.controls.add("ce_sidebar_score_layer", this.layer(false, true, images));
         this.controls.add("scoreboard_sidebar_player", this.line(false));
         this.controls.add("scoreboard_sidebar_score", this.number());
         this.controls.add("scoreboard_sidebar/main/displayed_objective", this.line(true));
@@ -223,7 +224,7 @@ public final class BedrockSidebarWriter {
         return panel;
     }
 
-    private JsonObject layer(boolean title, boolean score) {
+    private JsonObject layer(boolean title, boolean score, boolean images) {
         JsonObject text = label();
         JsonArray bindings = new JsonArray();
         JsonObject details = new JsonObject();
@@ -245,7 +246,7 @@ public final class BedrockSidebarWriter {
         }
         String offset = "((" + index + " + 2) * " + ContainerTitleCodec.ENTRY_BYTES + ")";
         decode(bindings, "('%.' + " + offset + " + 's')", "('%.' + (" + offset + " + " + ContainerTitleCodec.FORMAT_BYTES + ") + 's')", "#ce_line");
-        return BedrockTitleLayers.positionedLayer(text, bindings, true);
+        return BedrockTitleLayers.positionedLayer(text, bindings, true, images);
     }
 
     private JsonObject textInput(boolean title) {

@@ -30,26 +30,38 @@ public final class BedrockFontGenerator {
 
     public static void write(JavaResourcePack resources, Path root, Path fontFile) throws IOException {
         JavaFontResolver fonts = new JavaFontResolver(resources, Config.bedrockExcludedFonts());
-        write(fonts, Config.bedrockFontVerticalOffsets().keySet(), root, fontFile);
+        write(fonts, Config.bedrockFontVerticalOffsets().keySet(), Config.bedrockGuiOnlyGlyphs(), root, fontFile);
     }
 
     static void write(JavaFontResolver fonts, Set<Key> nativeFonts, Path root, Path fontFile) throws IOException {
+        write(fonts, nativeFonts, Map.of(), root, fontFile);
+    }
+
+    static void write(JavaFontResolver fonts, Set<Key> nativeFonts, Map<Key, Set<Integer>> guiOnly, Path root, Path fontFile) throws IOException {
         // 所有字体共用的位图页和码位
         GlyphAtlas atlas = new GlyphAtlas();
+        GuiGlyphAssets images = new GuiGlyphAssets(root);
+        for (Key selected : guiOnly.keySet()) {
+            if (!fonts.fonts().contains(selected)) {
+                throw new IOException("Unknown GUI-only font " + selected);
+            }
+        }
 
         Map<String, FontData.Font> entries = new LinkedHashMap<>();
         for (Key font : fonts.fonts()) {
             Int2ObjectMap<Glyph> glyphs = fonts.resolve(font);
             boolean excluded = fonts.isExcluded(font);
+            Set<Integer> selected = guiOnly.getOrDefault(font, Set.of());
+            images.write(font, selected, glyphs);
             if (glyphs.isEmpty() && !excluded) {
                 continue;
             }
-            Int2ObjectMap<FontGlyph> allocated = nativeFonts.contains(font) ? GlyphAtlas.nativeFont(glyphs) : atlas.allocateFont(font, glyphs);
+            FontData.Rendering allocated = nativeFonts.contains(font) ? GlyphAtlas.nativeFont(glyphs) : atlas.allocateFont(font, glyphs, selected);
             BitSet unicode = new BitSet();
             Int2ObjectMaps.fastForEach(glyphs, entry -> {
                 int code = entry.getIntKey();
                 FontGlyph mapped = allocated.get(code);
-                if (entry.getValue().unicode() && (mapped == null || (mapped.character() == code && mapped.bearing() == 0))) {
+                if (entry.getValue().unicode() && (mapped == null || (mapped.character(code) == code && mapped.bearing() == 0))) {
                     unicode.set(code);
                 }
             });
@@ -60,7 +72,7 @@ public final class BedrockFontGenerator {
         copySpacerPage(directory);
         Files.createDirectories(fontFile.getParent());
         try (JsonWriter writer = new JsonWriter(Files.newBufferedWriter(fontFile))) {
-            new FontData(entries).write(writer);
+            new FontData(entries, images.fonts()).write(writer);
         }
     }
 

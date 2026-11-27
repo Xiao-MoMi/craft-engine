@@ -29,7 +29,7 @@ public final class BedrockResourceSharing {
         share(root, root.resolve(RegistrationPlanKind.BLOCK.file()), null);
     }
 
-    static void share(Path root, Path blockPlan, @Nullable Map<Path, JsonObject> modelDocuments) throws IOException {
+    static void share(Path root, Path blockPlan, @Nullable BedrockDefinitionIndex index) throws IOException {
         // 展示方块可能在后续场景中补充姿态，必须等所有资源定稿后再共享；缓存只存活于本次生成。
         Set<String> animatedTiles = new HashSet<>();
         List<References> references = readReferences(root, blockPlan, animatedTiles);
@@ -41,7 +41,7 @@ public final class BedrockResourceSharing {
         }
         List<Path> redundantFiles = new ArrayList<>();
         Map<String, String> textureAliases = shareTextures(root, textures, animatedTiles, redundantFiles);
-        Map<String, String> geometryAliases = shareGeometries(root, geometries, redundantFiles, modelDocuments);
+        Map<String, String> geometryAliases = shareGeometries(root, geometries, redundantFiles, index == null ? null : index.geometries);
         for (References reference : references) {
             boolean changed = false;
             for (Reference value : reference.textures()) {
@@ -50,7 +50,16 @@ public final class BedrockResourceSharing {
             for (Reference value : reference.geometries()) {
                 changed |= value.replace(geometryAliases);
             }
-            if (changed) {
+            if (reference.path().equals(root.resolve("entity/item_display.entity.json"))) {
+                changed |= BedrockDisplaySharing.share(root, reference.document().getAsJsonObject());
+            }
+            if (index != null && reference.path().startsWith(root.resolve("attachables"))) {
+                String name = root.relativize(reference.path()).toString().replace('\\', '/');
+                index.attachables.put(name, reference.document().getAsJsonObject());
+                if (changed) {
+                    index.dirtyAttachables.add(name);
+                }
+            } else if (changed) {
                 GsonHelper.writeJsonFile(reference.document(), reference.path());
             }
         }

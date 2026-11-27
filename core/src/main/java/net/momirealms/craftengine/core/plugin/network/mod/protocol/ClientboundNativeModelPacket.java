@@ -6,18 +6,30 @@ import net.momirealms.craftengine.core.plugin.network.mod.ClientCustomPacket;
 import net.momirealms.craftengine.core.util.FriendlyByteBuf;
 import net.momirealms.craftengine.core.util.Key;
 
-import java.nio.ByteBuffer;
-
-public record ClientboundNativeModelPacket(NativeModelPayload state) implements ClientCustomPacket {
+public final class ClientboundNativeModelPacket implements ClientCustomPacket {
     public static final Key ID = Key.of(NativeModelPayload.CHANNEL);
     public static final NetworkCodec<FriendlyByteBuf, ClientboundNativeModelPacket> CODEC = ClientCustomPacket.codec(
-            (packet, buffer) -> buffer.writeBytes(NativeModelPayload.CODEC.encode(packet.state)),
+            (packet, buffer) -> buffer.writeBytes(packet.bytes),
             buffer -> {
                 byte[] bytes = new byte[buffer.readableBytes()];
                 buffer.readBytes(bytes);
-                return new ClientboundNativeModelPacket(NativeModelPayload.CODEC.decode(ByteBuffer.wrap(bytes)));
+                return new ClientboundNativeModelPacket(bytes);
             }
     );
+    private final byte[] bytes;
+
+    public ClientboundNativeModelPacket(NativeModelPayload state) {
+        this(NativeModelPayload.CODEC.encode(state));
+    }
+
+    private ClientboundNativeModelPacket(byte[] bytes) {
+        this.bytes = bytes;
+    }
+
+    @Override
+    public byte[] encode() {
+        return this.bytes;
+    }
 
     @Override
     public Key id() {
