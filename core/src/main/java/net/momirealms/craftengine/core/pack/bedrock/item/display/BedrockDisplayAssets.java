@@ -22,6 +22,7 @@ import net.momirealms.craftengine.core.pack.bedrock.texture.TextureUsage;
 import net.momirealms.craftengine.core.plugin.locale.TranslationManager;
 import net.momirealms.craftengine.core.util.ResourcePackUtils;
 import net.momirealms.craftengine.core.util.VectorUtils;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
@@ -57,6 +58,7 @@ final class BedrockDisplayAssets {
     private final JsonArray activeControllers = new JsonArray();
     private final Map<TextureFrames, JsonArray> frames = new HashMap<>();
     private final Map<MaskKey, Int2ObjectMap<JsonArray>> dyeMasks = new HashMap<>();
+    private final Map<AtlasKey, AtlasTextures> dyeAtlases = new HashMap<>();
     private final Map<RenderPage, Map<Integer, Draw>> pages = new LinkedHashMap<>();
     private int shapes;
 
@@ -99,6 +101,9 @@ final class BedrockDisplayAssets {
         if (materials.isEmpty()) {
             return 0;
         }
+        Map<Integer, DisplayDyeAtlas.Layer> dyeLayers = materials.size() > 1
+                && textureUsage == TextureUsage.ITEM
+                && dye.maxLayers() > 0 ? DisplayDyeAtlas.merge(materials, partsCubes, parts, dye.maxLayers()) : Map.of();
         List<Map<String, JsonArray>> layersByPart = new ArrayList<>(partsCubes.size());
         for (BedrockItemGeometry geometry : partsCubes) {
             layersByPart.add(geometry.splitMaterialFaces());
@@ -111,6 +116,12 @@ final class BedrockDisplayAssets {
         JsonObject channels = new JsonObject();
         JsonArray geometries = new JsonArray(materials.size());
         for (int layer = 0; layer < materials.size(); layer++) {
+            DisplayDyeAtlas.Layer prepared = dyeLayers.get(layer);
+            DisplayDyeAtlas atlas = prepared == null ? null : prepared.atlas();
+            if (atlas != null && layer != atlas.firstLayer()) {
+                this.reserveAtlasPages(shape, layer, atlas, dye);
+                continue;
+            }
             String alias = "s" + shape + "l" + layer;
             String geometry = "geometry." + this.name + "." + alias;
             String materialId = "layer" + layer;
@@ -132,7 +143,9 @@ final class BedrockDisplayAssets {
             geometries.add(file);
             this.geometryNames.addProperty(alias, geometry);
             BedrockItemGeometry.Material material = materials.get(layer);
-            if (material.dyeColor() == null) {
+            if (atlas != null) {
+                this.addAtlas(shape, layer, alias, atlas, material.dyeColor(), dye);
+            } else if (material.dyeColor() == null) {
                 this.addDraw(shape, layer, alias, material.data(), material.color(), "");
             } else {
                 this.addDraw(shape, layer, alias, material.data(), material.dyeColor(), dye.baseCondition(DISPLAY_DYE, false));
@@ -140,7 +153,7 @@ final class BedrockDisplayAssets {
                     this.addDraw(shape, layer, alias, material.data(), rgb, BedrockEntityDye.matches(DISPLAY_DYE, rgb));
                 }
                 if (dye.maxLayers() > 0) {
-                    this.addDyeMasks(shape, layer, alias, material.data(), bones, dye);
+                    this.addDyeMasks(shape, layer, alias, material.data(), bones, dye, prepared);
                 }
             }
         }
@@ -242,30 +255,72 @@ final class BedrockDisplayAssets {
         JsonArray frames = this.frames.get(key);
         if (frames == null) {
             String texture = "t" + this.frames.size();
-            frames = BedrockItemTextures.writeFrames(data, color, texture,
-                    this.texturePrefix + texture, this.textures, this.root);
+            frames = this.writeFrames(data, color, texture);
             this.frames.put(key, frames);
         }
         this.addDraw(shape, layer, alias, frames, data.animation(), condition, -1);
     }
 
-    private void addDyeMasks(int shape, int layer, String alias, TextureData data, JsonArray bones, BedrockEntityDye dye) throws IOException {
-        DisplayDyeMasks source = DisplayDyeMasks.from(data, bones);
+    private JsonArray writeFrames(TextureData data, int color, String name) throws IOException {
+        return BedrockItemTextures.writeFrames(data, color, name, this.texturePrefix + name, this.textures, this.root);
+    }
+
+    private void addAtlas(int shape, int layer, String alias, DisplayDyeAtlas atlas, int defaultColor, BedrockEntityDye dye) throws IOException {
+        AtlasKey key = new AtlasKey(atlas.sources(), defaultColor, dye);
+        AtlasTextures textures = this.dyeAtlases.get(key);
+        if (textures == null) {
+            String name = "a" + this.dyeAtlases.size();
+            DisplayDyeAtlas.Image image = atlas.image();
+            TextureData data = new TextureData(image.base(), null);
+            JsonArray base = this.writeFrames(data, defaultColor, name);
+            List<JsonArray> baked = new ArrayList<>(dye.prebakedColors().size());
+            for (int rgb : dye.prebakedColors()) {
+                baked.add(this.writeFrames(data, rgb, name + "_b" + Integer.toHexString(rgb)));
+            }
+            textures = new AtlasTextures(base, baked, image.writeMasks(name, this.texturePrefix, this.textures, this.root));
+            this.dyeAtlases.put(key, textures);
+        }
+        this.addDraw(shape, layer, alias, textures.base(), null, dye.baseCondition(DISPLAY_DYE, false), -1);
+        for (int i = 0; i < textures.baked().size(); i++) {
+            this.addDraw(shape, layer, alias, textures.baked().get(i), null, BedrockEntityDye.matches(DISPLAY_DYE, dye.prebakedColors().get(i)), -1);
+        }
+        this.addMaskDraws(shape, layer, alias, textures.masks(), null, dye);
+    }
+
+    private void addDyeMasks(int shape, int layer, String alias, TextureData data, JsonArray bones, BedrockEntityDye dye,
+                             @Nullable DisplayDyeAtlas.Layer prepared) throws IOException {
+        DisplayDyeMasks source = prepared == null ? DisplayDyeMasks.from(data, bones) : prepared.masks();
         MaskKey key = new MaskKey(source, dye.maxLayers());
         Int2ObjectMap<JsonArray> masks = this.dyeMasks.get(key);
         if (masks == null) {
-            masks = source.write("m" + this.dyeMasks.size(), this.texturePrefix, this.textures, this.root, dye.maxLayers());
+            masks = source.write("m" + this.dyeMasks.size(), this.texturePrefix, this.textures, this.root, dye.maxLayers(),
+                    prepared == null ? null : prepared.palette());
             this.dyeMasks.put(key, masks);
         }
+        this.addMaskDraws(shape, layer, alias, masks, data.animation(), dye);
+    }
+
+    private void addMaskDraws(int shape, int layer, String alias, Int2ObjectMap<JsonArray> masks, TextureAnimation animation, BedrockEntityDye dye) {
+        String condition = dye.dynamicCondition(DISPLAY_DYE, false);
         for (Int2ObjectMap.Entry<JsonArray> mask : masks.int2ObjectEntrySet()) {
-            this.addDraw(shape, layer, alias, mask.getValue(), data.animation(), dye.dynamicCondition(DISPLAY_DYE, false), mask.getIntKey());
+            this.addDraw(shape, layer, alias, mask.getValue(), animation, condition, mask.getIntKey());
+        }
+    }
+
+    private void reserveAtlasPages(int shape, int layer, DisplayDyeAtlas atlas, BedrockEntityDye dye) {
+        // 后续形状可能在这些页上绘制重叠面。保留原页的首次出现顺序，始终空置的页不写入客户端。
+        this.pages.putIfAbsent(RenderPage.of(shape, layer, 1, 0, dye.baseCondition(DISPLAY_DYE, false), -1), null);
+        for (int rgb : dye.prebakedColors()) {
+            this.pages.putIfAbsent(RenderPage.of(shape, layer, 1, 0, BedrockEntityDye.matches(DISPLAY_DYE, rgb), -1), null);
+        }
+        String condition = dye.dynamicCondition(DISPLAY_DYE, false);
+        for (int shade : atlas.shades()) {
+            this.pages.putIfAbsent(RenderPage.of(shape, layer, 1, 0, condition, shade), null);
         }
     }
 
     private void addDraw(int shape, int layer, String alias, JsonArray frames, TextureAnimation animation, String dyeCondition, int shade) {
-        int pageSize = Math.clamp(256 / frames.size(), 1, 64);
-        int start = (shape - 1) / pageSize * pageSize + 1;
-        RenderPage page = new RenderPage(start, layer, frames.size(), animation == null ? 0 : animation.sampleInterval(), dyeCondition, shade);
+        RenderPage page = RenderPage.of(shape, layer, frames.size(), animation == null ? 0 : animation.sampleInterval(), dyeCondition, shade);
         this.pages.computeIfAbsent(page, ignored -> new TreeMap<>()).put(shape, new Draw(alias, frames));
     }
 
@@ -274,6 +329,9 @@ final class BedrockDisplayAssets {
         for (Map.Entry<RenderPage, Map<Integer, Draw>> entry : this.pages.entrySet()) {
             RenderPage page = entry.getKey();
             Map<Integer, Draw> draws = entry.getValue();
+            if (draws == null) {
+                continue;
+            }
             int first = Collections.min(draws.keySet());
             int last = Collections.max(draws.keySet());
             JsonArray meshes = new JsonArray();
@@ -500,10 +558,20 @@ final class BedrockDisplayAssets {
     private record MaskKey(DisplayDyeMasks masks, int maxLayers) {
     }
 
+    private record AtlasKey(List<DisplayDyeMasks> sources, int defaultColor, BedrockEntityDye dye) {
+    }
+
+    private record AtlasTextures(JsonArray base, List<JsonArray> baked, Int2ObjectMap<JsonArray> masks) {
+    }
+
     private record TextureFrames(TextureData data, int color) {
     }
 
     private record RenderPage(int start, int layer, int frames, int interval, String dyeCondition, int shade) {
+        private static RenderPage of(int shape, int layer, int frames, int interval, String dyeCondition, int shade) {
+            int pageSize = Math.clamp(256 / frames, 1, 64);
+            return new RenderPage((shape - 1) / pageSize * pageSize + 1, layer, frames, interval, dyeCondition, shade);
+        }
     }
 
     private record Draw(String geometry, JsonArray frames) {

@@ -126,27 +126,30 @@ public final class BedrockElementGeometry {
 
     public static void bounds(JsonArray cubes, Vector3f minimum, Vector3f maximum, Matrix4fc transformation) {
         for (JsonElement value : cubes) {
-            JsonObject cube = value.getAsJsonObject();
-            Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
-            Vector3f size = VectorUtils.vector3f(cube.getAsJsonArray("size"));
-            Vector3f pivot = new Vector3f();
-            Matrix3f rotation = new Matrix3f();
-            if (cube.has("rotation")) {
-                pivot.set(VectorUtils.vector3f(cube.getAsJsonArray("pivot")));
-                Vector3f angles = VectorUtils.vector3f(cube.getAsJsonArray("rotation")).mul(RADIANS);
-                rotation.rotationZYX(-angles.z, angles.y, -angles.x);
+            bounds(value.getAsJsonObject(), minimum, maximum, transformation);
+        }
+    }
+
+    public static void bounds(JsonObject cube, Vector3f minimum, Vector3f maximum, Matrix4fc transformation) {
+        Vector3f origin = VectorUtils.vector3f(cube.getAsJsonArray("origin"));
+        Vector3f size = VectorUtils.vector3f(cube.getAsJsonArray("size"));
+        Vector3f pivot = new Vector3f();
+        Matrix3f rotation = new Matrix3f();
+        if (cube.has("rotation")) {
+            pivot.set(VectorUtils.vector3f(cube.getAsJsonArray("pivot")));
+            Vector3f angles = VectorUtils.vector3f(cube.getAsJsonArray("rotation")).mul(RADIANS);
+            rotation.rotationZYX(-angles.z, angles.y, -angles.x);
+        }
+        Vector3f point = new Vector3f();
+        for (int corner = 0; corner < 8; corner++) {
+            point.set(origin).add((corner & 1) == 0 ? 0 : size.x, (corner & 2) == 0 ? 0 : size.y, (corner & 4) == 0 ? 0 : size.z);
+            rotation.transform(point.sub(pivot)).add(pivot);
+            point.set(8 - point.x, point.y, point.z + 8);
+            if (transformation != null) {
+                transformation.transformPosition(point);
             }
-            Vector3f point = new Vector3f();
-            for (int corner = 0; corner < 8; corner++) {
-                point.set(origin).add((corner & 1) == 0 ? 0 : size.x, (corner & 2) == 0 ? 0 : size.y, (corner & 4) == 0 ? 0 : size.z);
-                rotation.transform(point.sub(pivot)).add(pivot);
-                point.set(8 - point.x, point.y, point.z + 8);
-                if (transformation != null) {
-                    transformation.transformPosition(point);
-                }
-                minimum.min(point);
-                maximum.max(point);
-            }
+            minimum.min(point);
+            maximum.max(point);
         }
     }
 
