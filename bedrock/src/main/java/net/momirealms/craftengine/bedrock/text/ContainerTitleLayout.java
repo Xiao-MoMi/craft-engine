@@ -31,6 +31,47 @@ public final class ContainerTitleLayout {
         this.hudFonts = fonts.fonts().values().stream().anyMatch(font -> font.hudUnicode != null);
     }
 
+    public boolean hasMenuImage(List<GuiTitlePart> parts, boolean includeAtlas) {
+        for (GuiTitlePart part : parts) {
+            Int2ObjectMap<String> images = this.fonts.guiImages().get(part.font());
+            if (images == null && !includeAtlas) {
+                continue;
+            }
+            FontData.Font font = this.fonts.font(part.font());
+            for (int offset = 0; offset < part.text().length();) {
+                int code = part.text().codePointAt(offset);
+                FontGlyph glyph = includeAtlas ? font.glyph(code) : null;
+                if ((images != null && images.containsKey(code)) || (glyph != null && glyph.usesAtlas(code))) {
+                    return true;
+                }
+                offset += Character.charCount(code);
+            }
+        }
+        return false;
+    }
+
+    public String nativeTitleText(GuiTitlePart part) {
+        String text = part.text();
+        FontData.Font font = this.fonts.font(part.font());
+        Int2ObjectMap<String> images = this.fonts.guiImages().get(part.font());
+        StringBuilder result = null;
+        for (int offset = 0; offset < text.length();) {
+            int code = text.codePointAt(offset);
+            FontGlyph glyph = font.glyph(code);
+            boolean guiImage = images != null && images.containsKey(code);
+            boolean customGlyph = glyph != null && (!glyph.visible() || glyph.usesAtlas(code));
+            if (guiImage || customGlyph) {
+                if (result == null) {
+                    result = new StringBuilder(text.length()).append(text, 0, offset);
+                }
+            } else if (result != null) {
+                result.appendCodePoint(code);
+            }
+            offset += Character.charCount(code);
+        }
+        return result == null ? text : result.toString();
+    }
+
     public MeasuredLayout positioned(List<GuiTitlePart> parts, Map<String, Integer> offsets, boolean force) {
         return this.positioned(parts, offsets, force, true);
     }
@@ -114,7 +155,7 @@ public final class ContainerTitleLayout {
                 // 用 bearing 修正落笔位置，使两端字形的可见部分对齐。
                 double position = (this.hudFonts ? Math.rint(2 * javaCursor) * 0.5 : Math.rint(javaCursor)) - glyph.bearing();
                 double advance = unknownWidth ? 0 : renderedAdvance;
-                Face face = !this.hudFonts ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.bearing() != 0 || glyph.character(codepoint) != codepoint ? Face.ATLAS : Face.DEFAULT));
+                Face face = !this.hudFonts ? Face.LEGACY : (unicode ? Face.UNICODE : (glyph.usesAtlas(codepoint) ? Face.ATLAS : Face.DEFAULT));
                 double inkStart = position + glyph.bearing();
                 // 实际原生字宽未知时，以当前字符结束本层。之后的字符仍按各自的 Java 光标定位。
                 double inkEnd = unknownWidth ? Double.POSITIVE_INFINITY : inkStart + advance - 1;

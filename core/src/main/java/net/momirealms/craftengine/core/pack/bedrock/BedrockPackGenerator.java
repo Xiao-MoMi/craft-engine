@@ -54,7 +54,8 @@ public final class BedrockPackGenerator {
                 GsonHelper.writeJsonFile(translations, data.resolve(BedrockPackLayout.TRANSLATIONS));
             }
             BedrockFontGenerator.write(resources, pack, data.resolve(BedrockPackLayout.FONTS));
-            BedrockGuiGenerator.write(resources, pack);
+            boolean pocketClassicMenus = Config.bedrockPocketClassicMenus();
+            BedrockGuiGenerator.write(resources, pack, pocketClassicMenus);
             BedrockSidebarGenerator.write(resources, pack, data.resolve(BedrockPackLayout.SCOREBOARD), Config.bedrockScoreboard());
             if (Config.bedrockBossBarUseJavaLayout()) {
                 BedrockBossBars.write(resources, pack, data.resolve(BedrockPackLayout.BOSS_BARS));
@@ -65,6 +66,7 @@ public final class BedrockPackGenerator {
             Config.bedrockFontVerticalOffsets().forEach((font, offset) -> offsets.addProperty(font.asString(), offset));
             title.add(BedrockPackLayout.TEXT_VERTICAL_OFFSETS, offsets);
             title.addProperty(BedrockPackLayout.FORCE_JAVA_LAYOUT, Config.bedrockTitleForceJavaLayout());
+            title.addProperty(BedrockPackLayout.POCKET_CLASSIC_MENUS, pocketClassicMenus);
             GsonHelper.writeJsonFile(title, data.resolve(BedrockPackLayout.TITLE));
             NativeModelAssets.write(plan.nativeModels(), pack, data.resolve(BedrockPackLayout.NATIVE_MODELS), Config.bedrockEntities()::dye);
 

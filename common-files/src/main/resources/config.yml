@@ -899,6 +899,10 @@ bedrock:
     #   - "minecraft:oak_stairs[facing=east]"
     #   - "minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]"
     vanilla-blocks: []
+  container:
+    # classic: forces the classic container layout
+    # native: uses the native pocket two-column layout and removes the images
+    pocket-layout: classic
   title:
     # Draw layer of the custom Bedrock title panel in the generated resource pack.
     layer: 1

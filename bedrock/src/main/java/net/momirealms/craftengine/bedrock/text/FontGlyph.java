@@ -11,4 +11,8 @@ public record FontGlyph(int character, int renderedAdvance, int bearing) {
     public boolean visible() {
         return this == IDENTITY_FALLBACK || this.character >= 0;
     }
+
+    public boolean usesAtlas(int sourceCodepoint) {
+        return this.character >= 0 && (this.bearing != 0 || this.character != sourceCodepoint);
+    }
 }

@@ -76,7 +76,7 @@ public final class GeyserJavaPackets {
         ContainerTitleLayout layout = extension.glyphManager().glyphs().layout();
         if (layout != null) {
             Map<String, Integer> offsets = extension.extensionData().verticalOffsets();
-            this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout, offsets));
+            this.intercept(ClientboundOpenScreenPacket.class, new GeyserGuiMenus(layout, offsets, extension.extensionData().pocketClassicMenus()));
             GeyserTitle titles = new GeyserTitle(layout, extension.extensionData().forceJavaTitleLayout(), offsets);
             this.intercept(ClientboundSetActionBarTextPacket.class, titles::actionBar);
             this.intercept(ClientboundSystemChatPacket.class, titles::systemChat);

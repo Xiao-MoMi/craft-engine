@@ -308,6 +308,7 @@ public final class Config {
     private int client_optimization$entity_culling$rate_limiting$restore_per_tick;
 
     private boolean bedrock$enable = true;
+    private PocketContainerLayout bedrock$container$pocket_layout = PocketContainerLayout.CLASSIC;
     private int bedrock$title$layer;
     private boolean bedrock$title$force_java_layout;
     private boolean bedrock$bossbar$use_java_layout = true;
@@ -818,6 +819,7 @@ public final class Config {
         if (this.firstTime) {
             this.bedrock$enable = config.getBoolean("bedrock.enable", true);
         }
+        this.bedrock$container$pocket_layout = config.getEnum("bedrock.container.pocket-layout", PocketContainerLayout.class, PocketContainerLayout.CLASSIC);
         this.bedrock$title$layer = config.getInt("bedrock.title.layer", 1);
         this.bedrock$title$force_java_layout = config.getBoolean("bedrock.title.force-java-layout", false);
         this.bedrock$bossbar$use_java_layout = config.getBoolean("bedrock.bossbar.use-java-layout", true);
@@ -1581,6 +1583,14 @@ public final class Config {
 
     public static String packDescription() {
         return instance.resource_pack$description;
+    }
+
+    private enum PocketContainerLayout {
+        CLASSIC, NATIVE
+    }
+
+    public static boolean bedrockPocketClassicMenus() {
+        return instance.bedrock$container$pocket_layout == PocketContainerLayout.CLASSIC;
     }
 
     public static int bedrockTitleLayer() {

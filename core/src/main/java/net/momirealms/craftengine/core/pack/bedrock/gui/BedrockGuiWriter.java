@@ -16,12 +16,14 @@ public final class BedrockGuiWriter {
     private final JsonObject controls = new JsonObject();
     private final JsonArray routes = new JsonArray();
     private final JsonArray smallRoutes = new JsonArray();
+    private final boolean pocketClassicMenus;
 
     public BedrockGuiWriter() {
-        this(false);
+        this(false, false);
     }
 
-    BedrockGuiWriter(boolean images) {
+    BedrockGuiWriter(boolean images, boolean pocketClassicMenus) {
+        this.pocketClassicMenus = pocketClassicMenus;
         this.controls.addProperty("namespace", "ce_gui");
         JsonObject empty = new JsonObject();
         empty.addProperty("type", "panel");
@@ -36,13 +38,19 @@ public final class BedrockGuiWriter {
     public void add(int rows, String texture) {
         String id = "container_" + rows;
         String marker = ContainerTitleLayout.MARKER + rows + "/";
+        String matchesTitle = "(not (($ce_title - '" + marker + "') = $ce_title))";
+        JsonArray screenRoutes = rows <= 3 ? this.smallRoutes : this.routes;
         JsonObject route = new JsonObject();
-        route.addProperty("requires", "($desktop_screen and (not (($ce_title - '" + marker + "') = $ce_title)))");
+        route.addProperty("requires", "($desktop_screen and " + matchesTitle + ")");
         route.addProperty("$screen_content", "ce_gui." + id);
-        if (rows <= 3) {
-            this.smallRoutes.add(route);
-        } else {
-            this.routes.add(route);
+        screenRoutes.add(route);
+        if (this.pocketClassicMenus) {
+            JsonObject pocket = route.deepCopy();
+            pocket.addProperty("requires", "($pocket_screen and " + matchesTitle + ")");
+            pocket.addProperty("$use_custom_pocket_toast", false);
+            pocket.addProperty("$screen_bg_content", "common.screen_background");
+            pocket.addProperty("$screen_background_alpha", 0.4);
+            screenRoutes.add(pocket);
         }
         this.addPanel(id, rows, texture);
     }

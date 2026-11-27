@@ -14,7 +14,7 @@ public final class BedrockGuiGenerator {
     private BedrockGuiGenerator() {
     }
 
-    public static void write(JavaResourcePack resources, Path root) throws IOException {
+    public static void write(JavaResourcePack resources, Path root, boolean pocketClassicMenus) throws IOException {
         BufferedImage background;
         // 六种行数只改变裁剪区域，共用一次读取、解码后的原始容器背景。
         try (InputStream input = resources.openResource("assets/minecraft/textures/gui/container/generic_54.png")) {
@@ -23,7 +23,7 @@ public final class BedrockGuiGenerator {
             }
             background = ClientPngReader.read(input);
         }
-        BedrockGuiWriter ui = new BedrockGuiWriter(BedrockTitleLayers.hasImages(root));
+        BedrockGuiWriter ui = new BedrockGuiWriter(BedrockTitleLayers.hasImages(root), pocketClassicMenus);
         for (int rows = 1; rows <= 6; rows++) {
             BufferedImage image = new BufferedImage(176, 114 + rows * 18, BufferedImage.TYPE_INT_ARGB);
             Graphics2D graphics = image.createGraphics();

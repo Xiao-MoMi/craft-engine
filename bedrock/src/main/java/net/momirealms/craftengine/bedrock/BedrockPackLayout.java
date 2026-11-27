@@ -17,6 +17,7 @@ public final class BedrockPackLayout {
     public static final String SCOREBOARD = "craftengine/scoreboard.json";
     public static final String TITLE = "craftengine/title.json";
     public static final String FORCE_JAVA_LAYOUT = "force_java_layout";
+    public static final String POCKET_CLASSIC_MENUS = "pocket_classic_menus";
     public static final String TEXT_VERTICAL_OFFSETS = "vertical_offsets";
     public static final String FONTS = "craftengine/fonts.json";
     public static final String CRAFTENGINE_TEXTURES = "textures/" + NAMESPACE;

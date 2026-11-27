@@ -34,12 +34,13 @@ import static net.momirealms.craftengine.bedrock.BedrockPackLayout.KIND;
 public final class GeyserExtensionData {
     public static final GeyserExtensionData EMPTY = new GeyserExtensionData(
             null, null, null, null,
-            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, Map.of(),
+            GeyserGlyphData.EMPTY, GeyserLanguageData.EMPTY, SidebarProfiles.EMPTY, false, false, Map.of(),
             null, null, null, null
     );
     private final RegistrationJson bossBars;
     private final SidebarProfiles scoreboard;
     private final boolean forceJavaTitleLayout;
+    private final boolean pocketClassicMenus;
     private final Map<String, Integer> verticalOffsets;
     private final RegistrationJson items;
     private final RegistrationJson blocks;
@@ -59,6 +60,7 @@ public final class GeyserExtensionData {
                                 GeyserLanguageData languages,
                                 SidebarProfiles scoreboard,
                                 boolean forceJavaTitleLayout,
+                                boolean pocketClassicMenus,
                                 Map<String, Integer> verticalOffsets,
                                 @Nullable RegistrationJson nativeModels,
                                 @Nullable RegistrationJson soundMappings,
@@ -69,6 +71,7 @@ public final class GeyserExtensionData {
         this.clientPack = clientPack;
         this.scoreboard = scoreboard;
         this.forceJavaTitleLayout = forceJavaTitleLayout;
+        this.pocketClassicMenus = pocketClassicMenus;
         this.verticalOffsets = verticalOffsets;
         this.nativeModels = nativeModels;
         this.items = items;
@@ -89,13 +92,14 @@ public final class GeyserExtensionData {
             RegistrationJson sounds = RegistrationJson.read(archive, BedrockPackLayout.SOUND_MAPPINGS);
             JsonObject title = readJson(archive, BedrockPackLayout.TITLE);
             boolean forceJavaTitleLayout = title != null && title.has(BedrockPackLayout.FORCE_JAVA_LAYOUT) && title.get(BedrockPackLayout.FORCE_JAVA_LAYOUT).getAsBoolean();
+            boolean pocketClassicMenus = title != null && title.has(BedrockPackLayout.POCKET_CLASSIC_MENUS) && title.get(BedrockPackLayout.POCKET_CLASSIC_MENUS).getAsBoolean();
             Map<String, Integer> verticalOffsets = readVerticalOffsets(title);
             GeyserGlyphData glyphs = readFonts(archive, verticalOffsets);
             GeyserLanguageData languages = GeyserTranslations.parse(readJson(archive, BedrockPackLayout.TRANSLATIONS));
             return new GeyserExtensionData(items, blocks, RegistrationJson.read(archive, BedrockPackLayout.MODEL_DISPLAYS),
                     RegistrationJson.read(archive, BedrockPackLayout.ELYTRA_VARIANTS),
                     glyphs, languages, SidebarProfiles.parse(readJson(archive, BedrockPackLayout.SCOREBOARD)),
-                    forceJavaTitleLayout, verticalOffsets,
+                    forceJavaTitleLayout, pocketClassicMenus, verticalOffsets,
                     RegistrationJson.read(archive, BedrockPackLayout.NATIVE_MODELS), sounds,
                     RegistrationJson.read(archive, BedrockPackLayout.BOSS_BARS),
                     extractClientPack(archive, cacheDirectory));
@@ -270,6 +274,10 @@ public final class GeyserExtensionData {
 
     public boolean forceJavaTitleLayout() {
         return this.forceJavaTitleLayout;
+    }
+
+    public boolean pocketClassicMenus() {
+        return this.pocketClassicMenus;
     }
 
     public GeyserGlyphData glyphs() {

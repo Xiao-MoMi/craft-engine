@@ -22,22 +22,26 @@ public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<Clien
     private static final int DEFAULT_TITLE_COLOR = 0x404040;
     private final ContainerTitleLayout layout;
     private final Map<String, Integer> offsets;
+    private final boolean pocketClassicMenus;
 
-    public GeyserGuiMenus(ContainerTitleLayout layout, Map<String, Integer> offsets) {
+    public GeyserGuiMenus(ContainerTitleLayout layout, Map<String, Integer> offsets, boolean pocketClassicMenus) {
         this.layout = layout;
         this.offsets = offsets;
+        this.pocketClassicMenus = pocketClassicMenus;
     }
 
     @Override
     public void translate(GeyserPlayer player, ClientboundOpenScreenPacket packet, PacketTranslator<ClientboundOpenScreenPacket> original) {
-        // 资源包的容器布局仅适配经典 UI，Pocket 布局沿用原生处理。
-        if (player.clientPackLoaded() && player.uiProfile() == UiProfile.CLASSIC) {
-            packet = this.rewrite(packet, player.locale());
+        if (player.clientPackLoaded()) {
+            UiProfile profile = player.uiProfile();
+            if (profile == UiProfile.CLASSIC || profile == UiProfile.POCKET) {
+                packet = this.rewrite(packet, player.locale(), profile);
+            }
         }
         original.translate(player.session(), packet);
     }
 
-    public ClientboundOpenScreenPacket rewrite(ClientboundOpenScreenPacket packet, String locale) {
+    public ClientboundOpenScreenPacket rewrite(ClientboundOpenScreenPacket packet, String locale, UiProfile profile) {
         int rows = switch (packet.getType()) {
             case GENERIC_9X1 -> 1;
             case GENERIC_9X2 -> 2;
@@ -57,6 +61,14 @@ public final class GeyserGuiMenus implements GeyserJavaPackets.Interceptor<Clien
             return packet;
         }
         try {
+            if (profile == UiProfile.POCKET) {
+                if (!this.layout.hasMenuImage(parts, !this.pocketClassicMenus)) {
+                    return packet;
+                }
+                if (!this.pocketClassicMenus) {
+                    return OpenScreenPacketProxy.INSTANCE.withTitle(packet, GeyserTextParts.nativeContainerTitle(parts, this.layout));
+                }
+            }
             Object title = this.createTitle(parts, rows, locale);
             return title == null ? packet : OpenScreenPacketProxy.INSTANCE.withTitle(packet, title);
         } catch (Throwable t) {

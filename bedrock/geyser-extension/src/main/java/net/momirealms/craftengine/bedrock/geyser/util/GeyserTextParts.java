@@ -20,6 +20,17 @@ public final class GeyserTextParts {
         return proxy.font(proxy.text(text), RESOLVED_FONT);
     }
 
+    public static Object nativeContainerTitle(List<GuiTitlePart> parts, ContainerTitleLayout layout) {
+        List<Object> children = new ArrayList<>(parts.size());
+        for (GuiTitlePart part : parts) {
+            String text = layout.nativeTitleText(part);
+            if (!text.isEmpty()) {
+                children.add(component(part, text, RESOLVED_FONT));
+            }
+        }
+        return AdventureComponentProxy.INSTANCE.children(resolvedText(""), children);
+    }
+
     public static String serializeLayer(List<ContainerTitleLayout.Run> layer, List<GuiTitlePart> parts, String locale) {
         if (layer.size() == 1) {
             ContainerTitleLayout.Run run = layer.getFirst();
