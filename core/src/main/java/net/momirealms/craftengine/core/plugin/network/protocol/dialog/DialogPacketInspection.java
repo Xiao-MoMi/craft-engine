@@ -21,6 +21,10 @@ public final class DialogPacketInspection {
             if (compound.containsKey("item")) {
                 return true;
             }
+            // Items carried by show_item hover events need the same conversion.
+            if (compound.get("action") instanceof StringTag action && action.value().equals("show_item")) {
+                return true;
+            }
             for (Map.Entry<String, Tag> entry : compound.entrySet()) {
                 if (requiresProcessing(entry.getValue(), hasNetworkTag)) {
                     return true;

@@ -6,6 +6,7 @@ import net.momirealms.craftengine.bukkit.plugin.network.BukkitNetworkManager;
 import net.momirealms.craftengine.bukkit.plugin.user.BukkitServerPlayer;
 import net.momirealms.craftengine.bukkit.util.ComponentUtils;
 import net.momirealms.craftengine.bukkit.util.RegistryOps;
+import net.momirealms.craftengine.core.item.network.ItemPacketSource;
 import net.momirealms.craftengine.core.plugin.config.Config;
 import net.momirealms.craftengine.core.plugin.context.NetworkTextReplaceContext;
 import net.momirealms.craftengine.core.plugin.network.NetWorkUser;
@@ -46,7 +47,7 @@ public final class SystemChatListener {
                 }
             }
             if (!Config.disableItemOperations()) {
-                component = AdventureHelper.replaceShowItem(component, s -> ComponentUtils.replaceShowItem(s, (BukkitServerPlayer) user));
+                component = AdventureHelper.replaceShowItem(component, s -> ComponentUtils.replaceShowItem(s, (BukkitServerPlayer) user, ItemPacketSource.MESSAGE));
             }
             buf.writeUtf(RegistryOps.SPARROW_NBT.convertTo(RegistryOps.JSON, AdventureHelper.componentToNbt(component)).toString());
             buf.writeBoolean(overlay);
@@ -74,7 +75,7 @@ public final class SystemChatListener {
                 }
             }
             if (!Config.disableItemOperations()) {
-                component = AdventureHelper.replaceShowItem(component, s -> ComponentUtils.replaceShowItem(s, (BukkitServerPlayer) user));
+                component = AdventureHelper.replaceShowItem(component, s -> ComponentUtils.replaceShowItem(s, (BukkitServerPlayer) user, ItemPacketSource.MESSAGE));
             }
             buf.writeNbt(AdventureHelper.componentToTag(component), false);
             buf.writeBoolean(overlay);
